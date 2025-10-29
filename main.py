@@ -1,7 +1,5 @@
-# Entry point, runs the game loop
-
-from src.game import Game
+from src.core.game_loop import GameLoop
 
 if __name__ == "__main__":
-    game = Game()
+    game = GameLoop()
     game.run()
