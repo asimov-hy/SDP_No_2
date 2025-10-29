@@ -8,7 +8,12 @@ class GameLoop:
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-        pygame.display.set_caption("Vertical Shooter 194X")
+        pygame.display.set_caption("202X")
+
+        icon = pygame.image.load("assets/images/icons/202X_icon.png")
+        pygame.display.set_icon(icon)
+
+
         self.clock = pygame.time.Clock()
         self.running = True
 
