@@ -3,11 +3,12 @@ from src.entities.player import Player
 from src.graphics.draw_manager import DrawManager
 from src.core.settings import *
 from src.core.input_manager import InputManager
+from src.core.display_manager import DisplayManager
 
 class GameLoop:
     def __init__(self):
         pygame.init()
-        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        self.display = DisplayManager(GAME_WIDTH, GAME_HEIGHT)
         pygame.display.set_caption("202X")
 
         icon = pygame.image.load("assets/images/icons/202X_icon.png")
@@ -38,6 +39,11 @@ class GameLoop:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_F11:  # F11 for fullscreen
+                    self.display.toggle_fullscreen()
+            elif event.type == pygame.VIDEORESIZE:
+                self.display.handle_resize(event)
 
     def _update(self, dt):
         # Poll all inputs (keyboard, controller)
@@ -52,12 +58,14 @@ class GameLoop:
             print("Attack!")
 
     def _draw(self):
-        # Clear previous frame
+        # Get the game surface to draw on
+        game_surface = self.display.get_game_surface()
+
+        # Clear and draw to game surface
         self.draw_manager.clear()
-
-        # Add player to draw queue
         self.draw_manager.draw_entity(self.player, layer=1)
+        self.draw_manager.render(game_surface)
 
-        # Render everything in queue to the screen
-        self.draw_manager.render(self.screen)
+        # Display manager handles scaling and letterboxing
+        self.display.render()
 

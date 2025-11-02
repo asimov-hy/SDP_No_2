@@ -4,7 +4,7 @@ from src.core.settings import GAME_WIDTH, GAME_HEIGHT
 
 
 class DisplayManager:
-    """Handles window management, scaling, and fullscreen with fixed 16:9 aspect ratio."""
+    """Handles window management, scaling, and borderless fullscreen with fixed 16:9 aspect ratio."""
 
     def __init__(self, game_width=1280, game_height=720):
         self.game_width = game_width
@@ -24,10 +24,11 @@ class DisplayManager:
     def _create_window(self, fullscreen=False):
         """Create or recreate the display window."""
         if fullscreen:
+            # True fullscreen - fills entire screen
             self.window = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
             self.is_fullscreen = True
         else:
-            # Default windowed size (can be changed)
+            # Default windowed size
             self.window = pygame.display.set_mode((self.game_width, self.game_height), pygame.RESIZABLE)
             self.is_fullscreen = False
         self._calculate_scale()
@@ -38,24 +39,23 @@ class DisplayManager:
 
         # Calculate scale based on which dimension is the limiting factor
         scale_x = window_width / self.game_width
-
         scale_y = window_height / self.game_height
 
-        # Use the smaller scale to ensure game fits entirely
+        # Use the SMALLER scale to maintain aspect ratio (no stretching)
         self.scale = min(scale_x, scale_y)
 
         # Calculate scaled dimensions
         scaled_width = int(self.game_width * self.scale)
         scaled_height = int(self.game_height * self.scale)
 
-        # Center the game surface (letterboxing)
+        # Center the game surface (letterboxing with black bars)
         self.offset_x = (window_width - scaled_width) // 2
         self.offset_y = (window_height - scaled_height) // 2
 
         self.scaled_size = (scaled_width, scaled_height)
 
     def toggle_fullscreen(self):
-        """Toggle between windowed and fullscreen mode."""
+        """Toggle between windowed and borderless fullscreen mode."""
         self._create_window(not self.is_fullscreen)
 
     def handle_resize(self, event):

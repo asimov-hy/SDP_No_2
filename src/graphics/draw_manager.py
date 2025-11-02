@@ -29,7 +29,7 @@ class DrawManager:
 
     def render(self, surface):
         """Sort draw calls by layer and render to surface."""
-        surface.fill((0, 0, 0))  # clear background
+        surface.fill((50, 50, 100))  # clear background
         for image, rect, _ in sorted(self.draw_queue, key=lambda x: x[2]):
             surface.blit(image, rect)
         pygame.display.flip()
