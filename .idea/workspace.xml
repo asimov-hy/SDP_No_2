@@ -36,17 +36,24 @@
     &quot;Python.settings.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/minch/programming/ERICA/SDP-202X&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/minch/Programming/ERICA/SDP-202X/src/scenes&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
   }
 }</component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\minch\Programming\ERICA\SDP-202X\src\scenes" />
+      <recent name="C:\Users\minch\Programming\ERICA\SDP-202X\src\ui\effects" />
+      <recent name="C:\Users\minch\Programming\ERICA\SDP-202X\src\ui" />
+      <recent name="C:\Users\minch\Programming\ERICA\SDP-202X\src\systems" />
+      <recent name="C:\Users\minch\Programming\ERICA\SDP-202X\src\ui\subsystems" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\minch\Programming\ERICA\SDP-202X\src\core" />
+      <recent name="C:\Users\minch\Programming\ERICA\SDP-202X\src\ui\subsystems" />
+      <recent name="C:\Users\minch\Programming\ERICA\SDP-202X\src" />
+      <recent name="C:\Users\minch\Programming\ERICA\SDP-202X\src\core\engine" />
       <recent name="C:\Users\minch\programming\ERICA\SDP-202X\assets\images\icons" />
-      <recent name="C:\Users\minch\programming\ERICA\SDP-202X\src\graphics" />
-      <recent name="C:\Users\minch\programming\ERICA\SDP-202X\src\core" />
-      <recent name="C:\Users\minch\programming\ERICA\SDP-202X\assets" />
-      <recent name="C:\Users\minch\programming\ERICA\SDP-202X" />
     </key>
   </component>
   <component name="RunManager">
