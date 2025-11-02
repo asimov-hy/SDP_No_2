@@ -19,36 +19,37 @@ VerticalShooter/
 │
 ├─ src/
 │  ├─ core/
+│  │   ├─ __init__.py
+│  │   ├─ display_manager.py
 │  │   ├─ game_loop.py
 │  │   ├─ input_manager.py
 │  │   ├─ scene_manager.py
 │  │   └─ settings.py
 │  │
 │  ├─ graphics/
+│  │   ├─ __init__.py
 │  │   ├─ draw_manager.py
 │  │   └─ effects.py
 │  │
 │  ├─ entities/
-│  │   ├─ player.py
-│  │   ├─ enemy.py
-│  │   ├─ bullet.py
-│  │   ├─ boss.py
-│  │   └─ item.py
+│  │   ├─ __init__.py
+│  │   └─ player.py
 │  │
 │  ├─ systems/
 │  │   ├─ collision_manager.py
 │  │   ├─ spawn_manager.py
 │  │   └─ sound_manager.py
 │  │
-│  ├─ ui/
-│  │   ├─ hud.py
-│  │   ├─ menu.py
-│  │   └─ game_over.py
-│  │
-│  └─ utils/
-│      ├─ math_utils.py
-│      ├─ resource_loader.py
-│      └─ timer.py
+│  └─ ui/
+│      ├─ effects/
+│      │  ├─ ui_animation.py - null
+│      │  └─ ui_fade.py - null
+│      ├─ subsystems/
+│      ├─ button.py
+│      ├─ hud_manager.py
+│      ├─ menu_manager.py
+│      ├─ ui_element.py
+│      └─ ui_manager.py
 │
 ├─ assets/
 │  ├─ images/

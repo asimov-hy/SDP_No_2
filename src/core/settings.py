@@ -1,6 +1,10 @@
 # Screen and game constants
-SCREEN_WIDTH = 480
-SCREEN_HEIGHT = 640
+GAME_WIDTH = 1280
+GAME_HEIGHT = 720
+# backward compatibility
+SCREEN_WIDTH = GAME_WIDTH
+SCREEN_HEIGHT = GAME_HEIGHT
+
 FPS = 60
 
 # Player settings
