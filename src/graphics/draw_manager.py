@@ -1,6 +1,4 @@
 """
-NOTE: This module is theoretical and can be modified freely.
-
 draw_manager.py
 ---------------
 Handles all rendering operations — batching draw calls, sorting layers,
@@ -34,7 +32,12 @@ class DrawManager:
     # --------------------------------------------------------
     def load_image(self, key, path, scale=1.0):
         """
-        Load an image from file and store it under a given key.
+        Load an image from file and store it in the cache.
+
+        Args:
+            key (str): Identifier used to retrieve this image later.
+            path (str): File path to the image asset.
+            scale (float): Optional scaling factor to resize the image.
         """
         try:
             img = pygame.image.load(path).convert_alpha()
@@ -57,8 +60,13 @@ class DrawManager:
     def load_icon(self, name, size=(24, 24)):
         """
         Load or retrieve a cached UI icon.
-        Icons should be stored in 'assets/images/icons/'.
-        Automatically caches icons based on name and size.
+
+        Args:
+            name (str): Name of the icon file (without extension).
+            size (tuple[int, int]): Target icon size in pixels.
+
+        Returns:
+            pygame.Surface: The loaded or cached icon surface.
         """
         key = f"icon_{name}_{size[0]}x{size[1]}"
         if key in self.images:
@@ -80,7 +88,15 @@ class DrawManager:
         return self.images[key]
 
     def get_image(self, key):
-        """Retrieve a previously loaded image."""
+        """
+        Retrieve a previously loaded image by key.
+
+        Args:
+            key (str): Identifier used when loading the image.
+
+        Returns:
+            pygame.Surface | None: The corresponding image or None if missing.
+        """
         img = self.images.get(key)
         if img is None:
             DebugLogger.warn("DrawManager", f"No cached image for key '{key}'")
@@ -94,11 +110,24 @@ class DrawManager:
         self.draw_queue.clear()
 
     def queue_draw(self, surface, rect, layer=0):
-        """Add a drawable surface to the draw queue."""
+        """
+        Add a drawable surface to the queue.
+
+        Args:
+            surface (pygame.Surface): The surface to draw.
+            rect (pygame.Rect): The position rectangle.
+            layer (int): Rendering layer (lower values draw first).
+        """
         self.draw_queue.append((layer, surface, rect))
 
     def draw_entity(self, entity, layer=0):
-        """Queue an entity (must have .image and .rect)."""
+        """
+        Queue an entity that contains an image and rect.
+
+        Args:
+            entity: Object with `.image` and `.rect` attributes.
+            layer (int): Rendering layer.
+        """
         if hasattr(entity, "image") and hasattr(entity, "rect"):
             self.queue_draw(entity.image, entity.rect, layer)
         else:
@@ -112,8 +141,8 @@ class DrawManager:
         Render all queued surfaces to the given target surface.
 
         Args:
-            target_surface (pygame.Surface): Main game surface or display.
-            debug (bool): If True, print how many items were rendered.
+            target_surface (pygame.Surface): The main display or game surface.
+            debug (bool): If True, logs the number of items rendered.
         """
         target_surface.fill((50, 50, 100))  # Background color
 

@@ -25,10 +25,14 @@ Optional: Hover Scale (Pop Effect)
 
 import pygame
 from src.ui.ui_element import UIElement
+from src.core.utils.debug_logger import DebugLogger
 
 class Button(UIElement):
-    """Configurable button that can trigger actions."""
+    """Configurable button capable of visual feedback and user interaction."""
 
+    # ===========================================================
+    # Initialization
+    # ===========================================================
     def __init__(self, x, y, width, height, action=None,
                  color=(100, 100, 100), hover_color=None,
                  pressed_color=None, border_color=(255, 255, 255),
@@ -38,13 +42,18 @@ class Button(UIElement):
         Initialize the button with appearance and behavior parameters.
 
         Args:
-            action: String identifier for the action triggered on click.
-            color: Default background color.
-            hover_color: Color when hovered (auto-generated if None).
-            border_color: Border color.
-            border_width: Border thickness (0 = no border).
-            icon_type: Optional small icon ('close', 'pause', 'play', etc.).
-            layer: Rendering order layer.
+            x (int): X position of the button.
+            y (int): Y position of the button.
+            width (int): Button width in pixels.
+            height (int): Button height in pixels.
+            action (str): Action identifier triggered on click.
+            color (tuple): Default button color (R, G, B).
+            hover_color (tuple): Color when hovered; auto-generated if None.
+            pressed_color (tuple): Color when pressed; auto-generated if None.
+            border_color (tuple): Border color.
+            border_width (int): Thickness of the border (0 = no border).
+            icon_type (str): Optional small icon ('close', 'pause', 'play', etc.).
+            layer (int): Rendering order layer.
         """
         super().__init__(x, y, width, height, layer)
         self.action = action
@@ -64,20 +73,27 @@ class Button(UIElement):
 
         self.draw_manager = None
 
-    # -----------------------------
-    # Logic
-    # -----------------------------
+        # DebugLogger.system("Button", f"Initialized at ({x}, {y}) with action '{action}'")
 
+    # ===========================================================
+    # Update Logic
+    # ===========================================================
     def update(self, mouse_pos):
-        """Check if the mouse is hovering over the button."""
+        """
+        Update the hover and pressed states based on mouse position.
+
+        Args:
+            mouse_pos (tuple): Current mouse position in screen coordinates.
+        """
         if not self.enabled:
             self.is_hovered = False
             self.is_pressed = False
             return
 
+        was_hovered = self.is_hovered
         self.is_hovered = self.rect.collidepoint(mouse_pos)
 
-        # Smooth interpolation factor
+        # Smooth hover interpolation (fade-in/out)
         target = 1.0 if self.is_hovered else 0.0
         self.hover_t += (target - self.hover_t) * self.transition_speed * (1 / 60)
         self.hover_t = max(0.0, min(1.0, self.hover_t))
@@ -85,24 +101,37 @@ class Button(UIElement):
         # Track pressed state
         self.is_pressed = self.is_hovered and pygame.mouse.get_pressed()[0]
 
+        # Debug logging (commented out for normal builds)
+        # if self.is_hovered and not was_hovered:
+        #     DebugLogger.state("Button", f"Hover entered for '{self.action}'")
+        # elif not self.is_hovered and was_hovered:
+        #     DebugLogger.state("Button", f"Hover exited for '{self.action}'")
+
     def handle_click(self, mouse_pos):
-        """Return the assigned action string if clicked."""
+        """
+        Return the assigned action string if clicked.
+
+        Args:
+            mouse_pos (tuple): Position of the mouse click.
+
+        Returns:
+            str | None: The action identifier if clicked, else None.
+        """
         if self.enabled and self.rect.collidepoint(mouse_pos):
+            # DebugLogger.action("Button", f"Clicked '{self.action}'")
             return self.action
         return None
 
-    # -----------------------------
+    # ===========================================================
     # Rendering
-    # -----------------------------
-
-    # --------------------------------------------------------
-    # Rendering
-    # --------------------------------------------------------
-
+    # ===========================================================
     def render_surface(self):
         """
         Create and return a pygame.Surface representing the button’s current state.
-        Handles background, border, and optional icon rendering.
+        Handles background fill, border, and optional icon rendering.
+
+        Returns:
+            pygame.Surface: The rendered button surface.
         """
         surf = pygame.Surface(self.rect.size, pygame.SRCALPHA)
 
@@ -121,24 +150,30 @@ class Button(UIElement):
         if self.border_width > 0:
             pygame.draw.rect(surf, self.border_color, surf.get_rect(), self.border_width)
 
-        # --- ICON RENDERING ---
+        # Icon rendering (from DrawManager or vector fallback)
         if self.icon_type:
             if self.draw_manager:
                 icon = self.draw_manager.load_icon(self.icon_type, size=(24, 24))
                 rect = icon.get_rect(center=surf.get_rect().center)
                 surf.blit(icon, rect)
             else:
-                # fallback to vector icon drawing if draw_manager isn't set
                 self._draw_icon(surf, self.icon_type, self.border_color)
 
+        # DebugLogger.state("Button", f"Rendered '{self.action}' at {self.rect.topleft}")
         return surf
 
-    # --------------------------------------------------------
+    # ===========================================================
     # Helper Functions
-    # --------------------------------------------------------
-
+    # ===========================================================
     def _draw_icon(self, surface, icon_type, color):
-        """Draw vector icons (used as fallback when no DrawManager is provided)."""
+        """
+        Draw vector-based icons as a fallback when no DrawManager is available.
+
+        Args:
+            surface (pygame.Surface): Target surface for drawing.
+            icon_type (str): Icon name ('close', 'pause', 'play', 'fullscreen', etc.).
+            color (tuple): RGB color of the icon lines.
+        """
         w, h = surface.get_size()
         if icon_type == 'close':
             pygame.draw.line(surface, color, (w*0.25, h*0.25), (w*0.75, h*0.75), 3)
@@ -158,5 +193,15 @@ class Button(UIElement):
             pygame.draw.rect(surface, color, (w*0.2, h*0.2, w*0.6, h*0.6), 3)
 
     def _lerp_color(self, start, end, t):
-        """Linear interpolation between two colors."""
+        """
+        Linearly interpolate between two colors.
+
+        Args:
+            start (tuple): Starting color (R, G, B).
+            end (tuple): Target color (R, G, B).
+            t (float): Interpolation factor between 0.0 and 1.0.
+
+        Returns:
+            tuple: Interpolated RGB color.
+        """
         return tuple(int(s + (e - s) * t) for s, e in zip(start, end))

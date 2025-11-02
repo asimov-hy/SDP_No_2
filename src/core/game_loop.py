@@ -68,8 +68,14 @@ class GameLoop:
     # Core Runtime Loop
     # ===========================================================
     def run(self):
-        """Main loop that continues until the game is closed."""
+        """
+        Main loop that runs until the game is closed.
 
+        Responsibilities:
+            - Process input events.
+            - Update active scene and debug systems.
+            - Render all visual elements each frame.
+        """
         DebugLogger.action("GameLoop", "Entering main loop")
 
         while self.running:
@@ -97,7 +103,14 @@ class GameLoop:
     # Event Handling
     # ===========================================================
     def _handle_events(self):
-        """Process all pygame events and route them appropriately."""
+        """
+        Process pygame events and route them to subsystems.
+
+        Responsibilities:
+            - Handle quit requests and window resizing.
+            - Manage global hotkeys (F3 for debug, F11 for fullscreen).
+            - Delegate input events to SceneManager and DebugHUD.
+        """
         for event in pygame.event.get():
             # System-level quit event
             if event.type == pygame.QUIT:
@@ -128,7 +141,12 @@ class GameLoop:
     # Update Logic
     # ===========================================================
     def _update(self, dt: float):
-        """Update all core systems, including input and active scene."""
+        """
+        Update all core systems.
+
+        Args:
+            dt (float): Delta time (seconds) since last frame.
+        """
         self.input.update()
         self.scenes.update(dt)
         self.debug_hud.update(pygame.mouse.get_pos())

@@ -2,32 +2,70 @@
 start_scene.py
 --------------
 Temporary start screen scene that auto-skips to the main GameScene.
-Later, this can be replaced with a real title screen or main menu.
+Later, this can be replaced with a full title screen or menu interface.
+
+Responsibilities
+----------------
+- Initialize the temporary start scene.
+- Detect user input or timeout to transition to GameScene.
+- Render a placeholder start screen (optional).
 """
 
 import pygame
 
+from src.core.utils.debug_logger import DebugLogger
+
 class StartScene:
+    """Temporary start scene that auto-transitions to GameScene."""
+
+    # ===========================================================
+    # Initialization
+    # ===========================================================
     def __init__(self, scene_manager):
         self.scene_manager = scene_manager
         self.timer = 0.0
-        print("[INFO] StartScene: active (temporary auto-skip enabled).")
+        DebugLogger.system("StartScene", "Active (temporary auto-skip enabled)")
 
+    # ===========================================================
+    # Event Handling
+    # ===========================================================
     def handle_event(self, event):
-        """Skip immediately if any key or mouse button is pressed."""
+        """
+        Detect user input to immediately skip to GameScene.
+
+        Args:
+            event (pygame.event.Event): The current Pygame event.
+        """
         if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
-            print("[StartScene] Input detected → switching to GameScene.")
+            DebugLogger.action("StartScene", "Input detected → switching to GameScene")
             self.scene_manager.set_scene("game")
+
+    # ===========================================================
+    # Update Logic
+    # ===========================================================
 
     def update(self, dt):
-        """Auto-skip after short delay."""
+        """
+        Update the scene timer and auto-transition after a delay.
+
+        Args:
+            dt (float): Delta time (in seconds) since the last frame.
+        """
         self.timer += dt
         if self.timer > 1.0:  # 1 second delay
-            print("[StartScene] Auto-transition → GameScene.")
+            DebugLogger.action("StartScene", "Auto-transition → GameScene")
             self.scene_manager.set_scene("game")
 
+    # ===========================================================
+    # Rendering
+    # ===========================================================
     def draw(self, draw_manager):
-        """Optional placeholder render."""
+        """
+        Render a placeholder start screen surface.
+
+        Args:
+            draw_manager: DrawManager instance responsible for rendering.
+        """
         # Draw a simple background or message
         surf = pygame.Surface((200, 80))
         surf.fill((0, 0, 0))

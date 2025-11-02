@@ -21,6 +21,14 @@ class Player:
     # Initialization
     # ===========================================================
     def __init__(self, x, y, image):
+        """
+        Initialize the player with position and sprite.
+
+        Args:
+            x (float): Initial x-coordinate.
+            y (float): Initial y-coordinate.
+            image (pygame.Surface): The sprite surface for rendering.
+        """
         self.image = image
         self.rect = self.image.get_rect(center=(x, y))
 

@@ -19,7 +19,14 @@ class SceneManager:
     # Initialization
     # ===========================================================
     def __init__(self, display_manager, input_manager, draw_manager):
-        """Initialize all scenes and set the starting scene."""
+        """
+        Initialize all scenes and set the starting scene.
+
+        Args:
+            display_manager: Reference to the DisplayManager handling rendering.
+            input_manager: Reference to the InputManager managing user input.
+            draw_manager: Reference to the DrawManager responsible for rendering entities.
+        """
         from src.scenes.start_scene import StartScene
         from src.scenes.game_scene import GameScene
         # from src.scenes.pause_scene import PauseScene
@@ -44,7 +51,15 @@ class SceneManager:
     # Scene Control
     # ===========================================================
     def set_scene(self, name: str):
-        """Switch to another scene by name."""
+        """
+        Switch to another scene by name.
+
+        Args:
+            name (str): Identifier of the target scene.
+
+        Notes:
+            Logs scene transitions and ignores invalid scene requests.
+        """
         if name in self.scenes:
             prev = self.active_scene
             self.active_scene = name
@@ -56,13 +71,28 @@ class SceneManager:
     # Event, Update, Draw Delegation
     # ===========================================================
     def handle_event(self, event):
-        """Forward events to the active scene."""
+        """
+        Forward a pygame event to the active scene.
+
+        Args:
+            event (pygame.event.Event): The event object to be handled.
+        """
         self.scenes[self.active_scene].handle_event(event)
 
     def update(self, dt: float):
-        """Update the active scene’s logic."""
+        """
+        Update the currently active scene.
+
+        Args:
+            dt (float): Delta time (in seconds) since the last frame.
+        """
         self.scenes[self.active_scene].update(dt)
 
     def draw(self, draw_manager):
-        """Render the active scene."""
+        """
+        Render the active scene using the provided DrawManager.
+
+        Args:
+            draw_manager: The DrawManager instance responsible for queuing draw calls.
+        """
         self.scenes[self.active_scene].draw(draw_manager)
