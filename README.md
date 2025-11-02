@@ -2,18 +2,31 @@
 Repository for Phase 2 of CSE2024 Software Development Practices
 
 Team: No_1
-Members
+Members:
+| Name | Role | Responsibilities |
+|------|------|------------------|
+| **Lim Kang Jun** | Team Leader / Scrum Master | Oversees project direction, manages sprints, ensures communication |
+| **Jang Gi Jun** | Calendar Manager / Main Tester | Maintains project schedule, coordinates deadlines, performs primary testing |
+| **Kim Min Chan** | Git Manager | Manages repository branches, handles version control, reviews PRs |
+| **Lee Jun Myeong** | QA Manager | Oversees code quality, ensures testing coverage and documentation |
+| **Jo In Jun** | Balance Designer | Adjusts gameplay balance, tuning difficulty and progression |
+| **Kim Isak** | CI/CD Engineer | Manages build pipeline, automates testing and deployment |
+
 
 Project
 
-Details:
+**202X** is a 2D vertical scrolling shooting game inspired by Capcom’s classic *194x* series, developed in **Python** (using `pygame` or a similar framework).  
+The player controls a spaceship, dodges enemies, and shoots down incoming threats while aiming for a high score.
 
-file:
-
-# VerticalShooter Project Structure
+This project demonstrates the use of:
+- Modular software architecture  
+- Team-based version control using Git  
+- Agile development (Scrum-based iterations)  
+- CI/CD integration and automated testing
+## 202X Project Structure
 
 ```
-VerticalShooter/
+202X/
 │
 ├─ main.py
 │

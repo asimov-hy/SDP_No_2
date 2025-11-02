@@ -51,7 +51,7 @@ class GameScene:
         # Base HUD (game overlay)
         try:
             self.ui.attach_subsystem("hud", HUDManager())
-            DebugLogger.system("GameScene", "HUDManager attached successfully")
+            DebugLogger.init("GameScene", "HUDManager attached successfully")
         except Exception as e:
             DebugLogger.warn("GameScene", f"HUDManager unavailable: {e}")
 
@@ -64,7 +64,7 @@ class GameScene:
         # Spawn player at bottom-center of screen
         width, height = self.display.get_window_size()
         self.player = Player(width // 2, height - 80, player_img)
-        DebugLogger.system("GameScene", f"Player entity initialized at ({width // 2}, {height - 80})")
+        DebugLogger.init("GameScene", f"Player entity initialized at ({width // 2}, {height - 80})")
 
     # ===========================================================
     # Event Handling

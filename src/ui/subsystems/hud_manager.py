@@ -25,7 +25,7 @@ class HUDManager:
     # ===========================================================
     def __init__(self, *args, **kwargs):
         """Initialize the placeholder HUD manager."""
-        DebugLogger.system("HUDManager", "Placeholder active (no HUD loaded)")
+        DebugLogger.init("HUDManager", "Placeholder active (no HUD loaded)")
 
     # ===========================================================
     # Update Logic

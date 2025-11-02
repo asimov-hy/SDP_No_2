@@ -36,7 +36,7 @@ class Player:
         self.velocity = pygame.Vector2(0, 0)
         self.health = 3
         self.alive = True
-        DebugLogger.system("Player", f"Initialized at position ({x}, {y})")
+        DebugLogger.init("Player", f"Initialized at position ({x}, {y})")
 
     # ===========================================================
     # Update Logic
