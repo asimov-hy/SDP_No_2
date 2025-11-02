@@ -24,7 +24,7 @@ class StartScene:
     def __init__(self, scene_manager):
         self.scene_manager = scene_manager
         self.timer = 0.0
-        DebugLogger.system("StartScene", "Active (temporary auto-skip enabled)")
+        DebugLogger.init("", "║{:<57}║".format(f"\t\t└─ [StartScene][INIT]\t→ Initialized Starting Scene"))
 
     # ===========================================================
     # Event Handling
@@ -38,7 +38,7 @@ class StartScene:
         """
         if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
             DebugLogger.action("StartScene", "Input detected → switching to GameScene")
-            self.scene_manager.set_scene("game")
+            self.scene_manager.set_scene("GAME")
 
     # ===========================================================
     # Update Logic
@@ -54,7 +54,7 @@ class StartScene:
         self.timer += dt
         if self.timer > 1.0:  # 1 second delay
             DebugLogger.action("StartScene", "Auto-transition → GameScene")
-            self.scene_manager.set_scene("game")
+            self.scene_manager.set_scene("GAME")
 
     # ===========================================================
     # Rendering

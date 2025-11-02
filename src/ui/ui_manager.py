@@ -57,14 +57,7 @@ class UIManager:
     # ===========================================================
     def _create_base_ui(self):
         """Initialize developer/debug UI elements (optional for builds)."""
-        try:
-            from src.ui.subsystems.debug_hud import DebugHUD
-            self.debug_hud = DebugHUD(self.display_manager)
-            self.debug_hud.draw_manager = self.draw_manager
-            self.attach_subsystem("debug", self.debug_hud)
-            # DebugLogger.system("UIManager", "DebugHUD subsystem attached successfully")
-        except Exception as e:
-            DebugLogger.warn("UIManager", f"DebugHUD unavailable: {e}")
+        pass
 
     # ===========================================================
     # Group Management

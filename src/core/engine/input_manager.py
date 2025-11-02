@@ -45,9 +45,9 @@ class InputManager:
         if pygame.joystick.get_count() > 0:
             self.controller = pygame.joystick.Joystick(0)
             self.controller.init()
-            DebugLogger.system("InputManager", f"Controller detected: {self.controller.get_name()}")
+            DebugLogger.init("", "║{:<62}║".format(f"\t[InputManager][INIT]\t→  Controller: {self.controller.get_name()}"))
         else:
-            DebugLogger.system("InputManager", "Initialized (keyboard only)")
+            DebugLogger.init("", "║{:<59}║".format(f"\t[InputManager][INIT]\t→  Keyboard"))
 
         # Movement and state tracking
         self.move = pygame.Vector2(0, 0)

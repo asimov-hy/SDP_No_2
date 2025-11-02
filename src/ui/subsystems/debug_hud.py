@@ -37,7 +37,7 @@ class DebugHUD:
 
         self._create_elements()
 
-        DebugLogger.system("DebugHUD", "Initialized")
+        DebugLogger.init("", "║{:<59}║".format(f"\t[DEBUGHUD][INIT]\t→ Initialized"))
 
     # ===========================================================
     # Element Creation
@@ -172,4 +172,4 @@ class DebugHUD:
         """Toggle the HUD’s visibility."""
         self.visible = not self.visible
         state = "Shown" if self.visible else "Hidden"
-        DebugLogger.state("DebugHUD", f"Toggled visibility → {state}")
+        DebugLogger.action("DebugHUD", f"Toggled visibility → {state}")

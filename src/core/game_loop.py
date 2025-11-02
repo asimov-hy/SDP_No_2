@@ -31,38 +31,53 @@ class GameLoop:
 
     def __init__(self):
         """Initialize pygame and all foundational systems."""
-        pygame.display.set_caption("202X")
+        DebugLogger.init("GameLoop", "Begin GameLoop Initialization")
 
-        # -------------------------------------------------------
-        # Engine Core Systems
-        # -------------------------------------------------------
-        self.display = DisplayManager(GAME_WIDTH, GAME_HEIGHT)
-        self.input = InputManager()
-        self.draw_manager = DrawManager()
-        self.clock = pygame.time.Clock()
-        self.running = True
-        DebugLogger.system("GameLoop", "Core systems initialized")
-
-        # -------------------------------------------------------
-        # Scene Management
-        # -------------------------------------------------------
-        self.scenes = SceneManager(
-            self.display,
-            self.input,
-            self.draw_manager
-        )
-        DebugLogger.system("GameLoop", "SceneManager initialized")
-
-        # -------------------------------------------------------
-        # Global Debug HUD (independent of scenes)
-        # -------------------------------------------------------
-        self.debug_hud = DebugHUD(self.display)
-        self.debug_hud.draw_manager = self.draw_manager
+        DebugLogger.init("", "╔" + "═" * 64 + "╗")
+        DebugLogger.init("", "║{:^64}║".format("INITIALIZING GAMELOOP"))
+        DebugLogger.init("", "╠" + "═" * 64 + "╣")
+        # DebugLogger.init("", "║{:^64}║".format())
 
         # -------------------------------------------------------
         # Window Setup
         # -------------------------------------------------------
         self._set_icon()
+        pygame.display.set_caption("202X")
+        DebugLogger.init("", "║{:<56}║".format(f"\t[GameLoop][INIT]\t\t→  Icon Set. Caption Set."))
+        DebugLogger.init("", "║" + " " * 64 + "║")
+
+        # -------------------------------------------------------
+        # Engine Core Systems
+        # -------------------------------------------------------
+
+        DebugLogger.init("", "╠────────────────────── ENGINE CORE SYSTEMS ─────────────────────╣")
+        self.display = DisplayManager(GAME_WIDTH, GAME_HEIGHT)
+        self.input = InputManager()
+        self.draw_manager = DrawManager()
+        self.clock = pygame.time.Clock()
+        self.running = True
+        DebugLogger.init("", "║" + " " * 64 + "║")
+
+        # -------------------------------------------------------
+        # Scene Management
+        # -------------------------------------------------------
+
+        DebugLogger.init("", "╠─────────────────── SCENE MANAGEMENT SYSTEMS ───────────────────╣")
+        self.scenes = SceneManager(
+            self.display,
+            self.input,
+            self.draw_manager
+        )
+        DebugLogger.init("", "║" + " " * 64 + "║")
+
+        # -------------------------------------------------------
+        # Global Debug HUD (independent of scenes)
+        # -------------------------------------------------------
+        DebugLogger.init("", "╠─────────────────────────── DEBUG HUD ──────────────────────────╣")
+        self.debug_hud = DebugHUD(self.display)
+        self.debug_hud.draw_manager = self.draw_manager
+        DebugLogger.init("", "║" + " " * 64 + "║")
+        DebugLogger.init("", "╚" + "═" * 64 + "╝")
 
     # ===========================================================
     # Core Runtime Loop
@@ -95,7 +110,7 @@ class GameLoop:
         try:
             icon = pygame.image.load("assets/images/icons/202X_icon.png")
             pygame.display.set_icon(icon)
-            DebugLogger.state("GameLoop", "Window icon set successfully")
+            # DebugLogger.state("GameLoop", "Window icon set successfully")
         except FileNotFoundError:
             DebugLogger.warn("GameLoop", "Missing icon image")
 

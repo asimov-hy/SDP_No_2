@@ -11,6 +11,8 @@ Responsibilities
 """
 
 from src.core.utils.debug_logger import DebugLogger
+from src.scenes.start_scene import StartScene
+from src.scenes.game_scene import GameScene
 
 class SceneManager:
     """Coordinates scene transitions and delegates update/draw logic."""
@@ -27,30 +29,32 @@ class SceneManager:
             input_manager: Reference to the InputManager managing user input.
             draw_manager: Reference to the DrawManager responsible for rendering entities.
         """
-        from src.scenes.start_scene import StartScene
-        from src.scenes.game_scene import GameScene
-        # from src.scenes.pause_scene import PauseScene
 
         self.display = display_manager
         self.input = input_manager
         self.draw_manager = draw_manager
+        DebugLogger.init("", "║{:<59}║".format(f"\t[SceneManager][INIT]\t→ Initialized Core Systems"))
 
         # Create scene instances
         self.scenes = {
-            "start": StartScene(self),
-            "game": GameScene(self),
-            # "pause": PauseScene(self)
+            "START": StartScene,
+            "GAME": GameScene
         }
+        DebugLogger.init("", "║{:<59}║".format(f"\t[SceneManager][INIT]\t→ Setting Up Scenes"))
 
-        # Default active scene
-        self.active_scene = "start"
-        DebugLogger.system("SceneManager", f"Initialized with active scene: {self.active_scene}")
-
+        # Activate default starting scene
+        self.set_scene("START", silent=True)
+        DebugLogger.init("", "║{:<57}║".format(f"\t\t└─ [StartScene][INIT]\t→ Active Scene: {self.active_scene}"))
 
     # ===========================================================
     # Scene Control
     # ===========================================================
-    def set_scene(self, name: str):
+    def register_scene(self, name, scene_class):
+        """Register a scene class by name."""
+        self.scenes[name] = scene_class
+        DebugLogger.state("SceneManager", f"Registered scene '{name}'")
+
+    def set_scene(self, name: str, silent=False):
         """
         Switch to another scene by name.
 
@@ -60,12 +64,32 @@ class SceneManager:
         Notes:
             Logs scene transitions and ignores invalid scene requests.
         """
-        if name in self.scenes:
-            prev = self.active_scene
-            self.active_scene = name
-            DebugLogger.action("SceneManager", f"Scene switched: {prev} → {name}")
-        else:
+        prev = getattr(self, "active_scene", None)
+        self.active_scene = name
+
+        # Transition formatting
+        if not silent:
+            if prev:
+                DebugLogger.action("SceneManager", f"Begin Scene Transition [{prev.upper()}] → [{name.upper()}]")
+            else:
+                DebugLogger.action("SceneManager", f"Initializing Scene: [{name.upper()}]")
+
+        if name not in self.scenes:
             DebugLogger.warn("SceneManager", f"Attempted to switch to unknown scene: '{name}'")
+            return
+
+        if isinstance(self.scenes[name], type):
+            scene_class = self.scenes[name]
+            self.scenes[name] = scene_class(self)
+            if not silent:
+                DebugLogger.action("SceneManager", f"Scene [{name}] instantiated")
+
+        # Log active scene
+        width = 60
+        if not silent:
+            DebugLogger.state("SceneManager", "─" * width)
+            DebugLogger.state("SceneManager", f"{'Active Scene: ' + self.active_scene:^{width}}")
+            DebugLogger.state("SceneManager", "─" * width)
 
     # ===========================================================
     # Event, Update, Draw Delegation

@@ -39,7 +39,8 @@ class DisplayManager:
         # Current window and fullscreen state
         self.is_fullscreen = False
         self.window = None
-        self._create_window()
+        self._create_window(silent=True)
+        DebugLogger.init("", "║{:<61}║".format(f"\t[DisplayManager][INIT]\t→ Windowed Mode ({game_width}x{game_height})"))
 
         # Calculated values for scaling/letterboxing
         self.scale = 1.0
@@ -47,12 +48,10 @@ class DisplayManager:
         self.offset_y = 0
         self._calculate_scale()
 
-        DebugLogger.system("DisplayManager", f"Initialized ({game_width}x{game_height}) windowed mode")
-
     # ===========================================================
     # Window Creation and Scaling
     # ===========================================================
-    def _create_window(self, fullscreen=False):
+    def _create_window(self, fullscreen=False, silent=False):
         """
         Create or recreate the display window.
 
@@ -63,12 +62,14 @@ class DisplayManager:
             # True fullscreen - fills entire screen
             self.window = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
             self.is_fullscreen = True
-            DebugLogger.state("DisplayManager", "Switched to fullscreen mode")
+            if not silent:
+                DebugLogger.state("DisplayManager", "Switched to fullscreen mode")
         else:
             # Default windowed size
             self.window = pygame.display.set_mode((self.game_width, self.game_height), pygame.RESIZABLE)
             self.is_fullscreen = False
-            DebugLogger.state("DisplayManager", "Switched to windowed mode")
+            if not silent:
+                DebugLogger.state("DisplayManager", "Switched to windowed mode")
 
         self._calculate_scale()
 

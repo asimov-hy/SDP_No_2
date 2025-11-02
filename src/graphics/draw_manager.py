@@ -25,7 +25,8 @@ class DrawManager:
     def __init__(self):
         self.images = {}          # Cached loaded images
         self.draw_queue = []      # (layer, surface, rect)
-        DebugLogger.system("DrawManager", "Initialized draw system")
+        DebugLogger.init("", "║{:<59}║".format(f"\t[DrawManager][INIT]\t\t→ Initialized"))
+
 
     # --------------------------------------------------------
     # Image Loading
