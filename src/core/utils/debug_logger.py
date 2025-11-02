@@ -17,11 +17,15 @@ class DebugLogger:
 
     COLORS = {
         "reset":  "\033[0m",
-        "action": "\033[92m",   # Green
-        "state":  "\033[96m",   # Cyan
-        "warn":   "\033[93m",   # Yellow
-        "system": "\033[95m",   # Magenta
-        "init":   "\033[97m",  # Dim gray
+
+        "init": "\033[97m",  # Bright white
+        "system": "\033[95m",  # Magenta
+
+        "action": "\033[92m",  # Green
+        "state": "\033[96m",  # Cyan
+        "warn": "\033[93m",  # Yellow
+
+        "trace": "\033[94m",    #
     }
 
     # ===========================================================
@@ -66,6 +70,11 @@ class DebugLogger:
         DebugLogger._log(source, "WARN", msg, "warn")
 
     @staticmethod
+    def trace(source: str, msg: str):
+        """Low-level debug trace for per-frame or high-frequency events."""
+        DebugLogger._log(source, "TRACE", msg, "trace")
+
+    @staticmethod
     def init(source: str = "", msg: str = "", color: str = "init"):
         """
         Log visually-structured initialization text without timestamp clutter.
@@ -95,4 +104,3 @@ class DebugLogger:
             print(f"{color_code}[{source}][INIT] {msg}{reset}")
         else:
             print(f"{color_code}{msg}{reset}")
-

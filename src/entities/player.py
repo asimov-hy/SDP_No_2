@@ -11,10 +11,42 @@ Responsibilities
 - (Optional) Integrate with DebugLogger for movement and state tracking.
 """
 import pygame
+import json
+import os
+
 from src.core.settings import PLAYER_SPEED, SCREEN_WIDTH, SCREEN_HEIGHT
 from src.core.utils.debug_logger import DebugLogger
 
-class Player:
+from src.entities.base_entity import BaseEntity
+
+# ===========================================================
+# Player Configuration Loader
+# ===========================================================
+
+DEFAULT_CONFIG = {
+    "scale": 1.0,
+    "speed": 300,
+    "health": 3,
+    "invincible": False,
+    "hitbox_scale": 0.85
+}
+
+CONFIG_PATH = os.path.join("src", "data", "player_config.json")
+
+def load_player_config():
+    """Load player configuration from JSON file or fallback to defaults."""
+    try:
+        with open(CONFIG_PATH, "r") as f:
+            cfg = json.load(f)
+            DebugLogger.system("Player", f"Loaded config from {CONFIG_PATH}")
+            return {**DEFAULT_CONFIG, **cfg}
+    except Exception as e:
+        DebugLogger.warn("Player", f"Failed to load config: {e} — using defaults")
+        return DEFAULT_CONFIG
+
+PLAYER_CONFIG = load_player_config()
+
+class Player(BaseEntity):
     """Represents the controllable player entity."""
 
     # ===========================================================
@@ -29,14 +61,24 @@ class Player:
             y (float): Initial y-coordinate.
             image (pygame.Surface): The sprite surface for rendering.
         """
-        self.image = image
-        self.rect = self.image.get_rect(center=(x, y))
+        cfg = PLAYER_CONFIG
 
-        # Future extensions
+        # Apply scale to image
+        if cfg["scale"] != 1.0:
+            w, h = image.get_size()
+            image = pygame.transform.scale(image, (int(w * cfg["scale"]), int(h * cfg["scale"])))
+            DebugLogger.state("Player", f"Scaled sprite to {image.get_size()}")
+
+        super().__init__(x, y, image)
+
+        # Player attributes
         self.velocity = pygame.Vector2(0, 0)
-        self.health = 3
-        self.alive = True
-        DebugLogger.init("Player", f"Initialized at position ({x}, {y})")
+        self.speed = cfg["speed"]
+        self.health = cfg["health"]
+        self.invincible = cfg["invincible"]
+        self.hitbox_scale = cfg["hitbox_scale"]
+
+        DebugLogger.init("Player", f"Initialized at ({x}, {y}) | Speed={self.speed} | HP={self.health}")
 
     # ===========================================================
     # Update Logic
@@ -52,15 +94,12 @@ class Player:
         if not self.alive:
             return
 
-        # Apply normalized movement vector
         if move_vec.length_squared() > 0:
-            self.velocity = move_vec * PLAYER_SPEED * dt
+            self.velocity = move_vec * self.speed * dt
             self.rect.x += self.velocity.x
             self.rect.y += self.velocity.y
-            # DebugLogger.state("Player", f"Moved to ({self.rect.x:.1f}, {self.rect.y:.1f}) | Velocity: {self.velocity}")
         else:
             self.velocity.update(0, 0)
 
         # Keep player inside screen bounds
         self.rect.clamp_ip(pygame.Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))
-        # DebugLogger.state("Player", "Position clamped within screen bounds")

@@ -21,6 +21,10 @@ from src.entities.player import Player
 from src.ui.ui_manager import UIManager
 from src.ui.subsystems.hud_manager import HUDManager
 
+from src.systems.spawn_manager import SpawnManager
+from src.systems.stage_manager import StageManager
+
+
 
 class GameScene:
     """Handles all gameplay entities, logic, and UI systems."""
@@ -66,6 +70,28 @@ class GameScene:
         self.player = Player(width // 2, height - 80, player_img)
         DebugLogger.init("GameScene", f"Player entity initialized at ({width // 2}, {height - 80})")
 
+        self.draw_manager.load_image("enemy_basic", "assets/images/enemies/enemy_basic.png", scale=1.0)
+        DebugLogger.init("GameScene", "EnemyBasic image loaded successfully")
+
+        # ===========================================================
+        # Spawn Manager Setup (Wave-Based Enemy Spawning)
+        # ===========================================================
+        self.spawner = SpawnManager(self.draw_manager, self.display)
+        DebugLogger.init("GameScene", "SpawnManager initialized successfully")
+
+        # ===========================================================
+        # Stage Manager Setup (Predefined Waves)
+        # ===========================================================
+        # Example stage definition — can be replaced with data or JSON later
+        STAGE_1_WAVES = [
+            {"spawn_time": 0.0, "enemy_type": "basic", "count": 3, "pattern": "line"},
+            {"spawn_time": 4.0, "enemy_type": "basic", "count": 5, "pattern": "v"},
+            {"spawn_time": 9.0, "enemy_type": "basic", "count": 8, "pattern": "line"},
+        ]
+
+        self.stage_manager = StageManager(self.spawner, STAGE_1_WAVES)
+        DebugLogger.init("GameScene", "StageManager initialized with Stage 1 waves")
+
     # ===========================================================
     # Event Handling
     # ===========================================================
@@ -90,7 +116,15 @@ class GameScene:
         """
         self.input.update()
         move = self.input.get_normalized_move()
+
+        # Player movement
         self.player.update(dt, move)
+
+        # Wave-based enemy spawning
+        self.stage_manager.update(dt)
+        self.spawner.update(dt)
+
+        # UI updates (HUD, menus)
         self.ui.update(pygame.mouse.get_pos())
 
     # ===========================================================
@@ -103,5 +137,11 @@ class GameScene:
         Args:
             draw_manager: DrawManager responsible for batching and rendering.
         """
+        # Player rendering
         draw_manager.draw_entity(self.player, layer=1)
+
+        # Wave-based enemies
+        self.spawner.draw()
+
+        # UI overlays
         self.ui.draw(draw_manager)

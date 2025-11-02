@@ -9,3 +9,9 @@ FPS = 60
 
 # Player settings
 PLAYER_SPEED = 300  # pixels per second
+
+class DebugConfig:
+    VERBOSE_ENTITY_INIT = False
+    VERBOSE_ENTITY_DEATH = False
+    TRACE_UPDATES = False
+    STAGE_SUMMARY = True
