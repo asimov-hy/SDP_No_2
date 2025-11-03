@@ -9,6 +9,10 @@ FPS = 60
 
 # Player settings
 PLAYER_SPEED = 300  # pixels per second
+# ===========================================================
+# Global Runtime References
+# ===========================================================
+GLOBAL_PLAYER = None
 
 class DebugConfig:
     VERBOSE_ENTITY_INIT = False

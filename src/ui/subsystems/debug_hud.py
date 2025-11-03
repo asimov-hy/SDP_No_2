@@ -14,6 +14,7 @@ Responsibilities
 import pygame
 
 from src.core.utils.debug_logger import DebugLogger
+from src.core import settings
 
 from src.ui.button import Button
 
@@ -161,9 +162,32 @@ class DebugHUD:
         """
         if not self.visible:
             return
+
+        # --------------------------------------------------------
+        # Draw buttons
+        # --------------------------------------------------------
         for elem in self.elements:
             if elem.visible:
                 draw_manager.queue_draw(elem.render_surface(), elem.rect, elem.layer)
+
+        # --------------------------------------------------------
+        # Player Debug Info (global, scene-independent)
+        # --------------------------------------------------------
+        player = settings.GLOBAL_PLAYER
+        if player:
+            font = pygame.font.SysFont("consolas", 18)
+            pos_text = f"Pos: ({player.rect.x:.1f}, {player.rect.y:.1f})"
+            vel_text = f"Vel: ({player.velocity.x:.2f}, {player.velocity.y:.2f})"
+
+            surface_pos = font.render(pos_text, True, (255, 255, 255))
+            surface_vel = font.render(vel_text, True, (255, 255, 255))
+
+            # Display near the top-left corner
+            rect_pos = surface_pos.get_rect(topleft=(70, 20))
+            rect_vel = surface_vel.get_rect(topleft=(70, 40))
+
+            draw_manager.queue_draw(surface_pos, rect_pos, 999)
+            draw_manager.queue_draw(surface_vel, rect_vel, 999)
 
     # ===========================================================
     # Visibility Controls

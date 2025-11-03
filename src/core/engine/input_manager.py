@@ -230,5 +230,9 @@ class InputManager:
                 Returns (0, 0) if no movement input is active.
         """
         if self.move.length_squared() > 0:
-            return self.move.normalize()
+            v = self.move.normalize()
+            # Round tiny floating-point errors for symmetry
+            v.x = round(v.x, 3)
+            v.y = round(v.y, 3)
+            return v
         return pygame.Vector2(0, 0)
