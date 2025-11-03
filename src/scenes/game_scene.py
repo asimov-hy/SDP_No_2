@@ -15,6 +15,7 @@ Responsibilities
 import pygame
 
 from src.core.utils.debug_logger import DebugLogger
+from src.core import settings
 
 from src.entities.player import Player
 
@@ -66,9 +67,12 @@ class GameScene:
         player_img = self.draw_manager.get_image("player")
 
         # Spawn player at bottom-center of screen
-        width, height = self.display.get_window_size()
-        self.player = Player(width // 2, height - 80, player_img)
-        DebugLogger.init("GameScene", f"Player entity initialized at ({width // 2}, {height - 80})")
+        start_x = (settings.SCREEN_WIDTH / 2) - (player_img.get_width() / 2)
+        start_y = settings.SCREEN_HEIGHT - player_img.get_height() - 10
+
+        self.player = Player(start_x, start_y, player_img)
+
+        DebugLogger.init("GameScene", f"Player entity initialized at ({start_x}, {start_y})")
 
         self.draw_manager.load_image("enemy_basic", "assets/images/enemies/enemy_basic.png", scale=1.0)
         DebugLogger.init("GameScene", "EnemyBasic image loaded successfully")

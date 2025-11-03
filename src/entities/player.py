@@ -71,6 +71,7 @@ class Player(BaseEntity):
         super().__init__(x, y, image)
 
         # Player attributes
+        self.pos = pygame.Vector2(x, y)
         self.velocity = pygame.Vector2(0, 0)
         self.speed = cfg["speed"]
         self.health = cfg["health"]
@@ -106,19 +107,15 @@ class Player(BaseEntity):
         max_speed = self.speed  # The maximum movement speed
 
         # ==========================================================
-        # Apply Acceleration (when moving)
+        # Apply Acceleration (Additive Model)
         # ==========================================================
         if move_vec.length_squared() > 0:
-            # Accelerate in direction of input
-            target_velocity = move_vec * max_speed
-            to_target = target_velocity - self.velocity
+            # Add velocity directly based on input direction and acceleration
+            self.velocity += move_vec * accel_rate * dt
 
-            # Limit acceleration for smoothness
-            if to_target.length() > accel_rate * dt:
-                to_target.scale_to_length(accel_rate * dt)
-
-            # Apply acceleration
-            self.velocity += to_target
+            # Clamp velocity to maximum speed
+            if self.velocity.length() > max_speed:
+                self.velocity.scale_to_length(max_speed)
         else:
             # ======================================================
             # Apply Friction (when no input)
@@ -126,21 +123,10 @@ class Player(BaseEntity):
             speed = self.velocity.length()
             if speed > 0:
                 decel = friction_rate * dt
-                # Gradually reduce speed
                 if decel >= speed:
                     self.velocity.update(0, 0)
                 else:
                     self.velocity.scale_to_length(speed - decel)
 
-        # ==========================================================
-        # Cap Velocity to Max Speed
-        # ==========================================================
-        if self.velocity.length() > max_speed:
-            self.velocity.scale_to_length(max_speed)
-
-        # ==========================================================
-        # Update Position and Clamp
-        # ==========================================================
-        self.rect.x += self.velocity.x * dt
-        self.rect.y += self.velocity.y * dt
-        self.rect.clamp_ip(pygame.Rect(0, 0, settings.SCREEN_WIDTH, settings.SCREEN_HEIGHT))
+        self.pos += self.velocity * dt
+        self.rect.topleft = self.pos
