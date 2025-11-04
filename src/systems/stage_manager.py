@@ -32,7 +32,7 @@ class StageManager:
         self.wave_index = 0
         self.stage_active = True
 
-        DebugLogger.init("StageManager", "Initialized StageManager with predefined waves")
+        DebugLogger.init("Initialized StageManager with predefined waves")
 
     # ===========================================================
     # Update Logic
@@ -59,7 +59,7 @@ class StageManager:
         # End condition: all waves spawned and all enemies cleared
         if self.wave_index >= len(self.stage_data) and not self.spawner.enemies:
             self.stage_active = False
-            DebugLogger.state("StageManager", "Stage complete — all waves cleared")
+            DebugLogger.state("Stage complete — all waves cleared")
 
     # ===========================================================
     # Wave Triggering
@@ -79,12 +79,9 @@ class StageManager:
 
         width = self.spawner.display.get_window_size()[0] if self.spawner.display else 800
 
-        DebugLogger.system("StageManager", f"Triggering wave: {wave}")
+        DebugLogger.system(f"Triggering wave: {wave}")
 
-        DebugLogger.system(
-            "StageManager",
-            f"Triggering wave {self.wave_index + 1}: {enemy_type} ×{count} ({pattern})"
-        )
+        DebugLogger.system(f"Triggering wave {self.wave_index + 1}: {enemy_type} ×{count} ({pattern})")
 
         # Basic formation patterns
         if pattern == "line":
@@ -110,4 +107,4 @@ class StageManager:
                 self.spawner.spawn_enemy(enemy_type, x, y)
 
         else:
-            DebugLogger.warn("StageManager", f"Unknown pattern: {pattern}")
+            DebugLogger.warn(f"Unknown pattern: {pattern}")

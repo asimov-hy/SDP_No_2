@@ -34,7 +34,7 @@ class EnemyBasic(Enemy):
         super().__init__(x, y, image, speed=speed, hp=hp)
 
         if Debug.VERBOSE_ENTITY_INIT:
-            DebugLogger.init("EnemyBasic", f"Spawned at ({x}, {y}) | Speed={speed}")
+            DebugLogger.init(f"Spawned at ({x}, {y}) | Speed={speed}")
 
     # ===========================================================
     # Update Logic
@@ -55,4 +55,4 @@ class EnemyBasic(Enemy):
         if self.rect.top > Display.HEIGHT:
             self.alive = False
             if Debug.VERBOSE_ENTITY_DEATH:
-                DebugLogger.state("EnemyBasic", f"Destroyed (off-screen) at Y={self.rect.y:.1f}")
+                DebugLogger.state(f"Destroyed (off-screen) at Y={self.rect.y:.1f}")

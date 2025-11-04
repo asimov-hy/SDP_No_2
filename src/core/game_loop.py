@@ -31,7 +31,7 @@ class GameLoop:
 
     def __init__(self):
         """Initialize pygame and all foundational systems."""
-        DebugLogger.init("GameLoop", "Begin GameLoop Initialization")
+        DebugLogger.init("Begin GameLoop Initialization")
 
         # -------------------------------------------------------
         # Initialize pygame systems
@@ -39,51 +39,51 @@ class GameLoop:
         pygame.init()
         pygame.font.init()
 
-        DebugLogger.init("", "╔" + "═" * 64 + "╗")
-        DebugLogger.init("", "║{:^64}║".format("INITIALIZING GAMELOOP"))
-        DebugLogger.init("", "╠" + "═" * 64 + "╣")
-        # DebugLogger.init("", "║{:^64}║".format())
+        DebugLogger.init("╔" + "═" * 64 + "╗", show_meta=False)
+        DebugLogger.init("║{:^64}║".format("INITIALIZING GAMELOOP"), show_meta=False)
+        DebugLogger.init("╠" + "═" * 64 + "╣", show_meta=False)
+        # DebugLogger.init"║{:^64}║".format())
 
         # -------------------------------------------------------
         # Window Setup
         # -------------------------------------------------------
         self._set_icon()
         pygame.display.set_caption(Display.CAPTION)
-        DebugLogger.init("", "║{:<56}║".format(f"\t[GameLoop][INIT]\t\t→  Icon Set. Caption Set."))
-        DebugLogger.init("", "║" + " " * 64 + "║")
+        DebugLogger.init("║{:<56}║".format(f"\t[GameLoop][INIT]\t\t→  Icon Set. Caption Set."), show_meta=False)
+        DebugLogger.init("║" + " " * 64 + "║", show_meta=False)
 
         # -------------------------------------------------------
         # Engine Core Systems
         # -------------------------------------------------------
 
-        DebugLogger.init("", "╠────────────────────── ENGINE CORE SYSTEMS ─────────────────────╣")
+        DebugLogger.init("╠────────────────────── ENGINE CORE SYSTEMS ─────────────────────╣", show_meta=False)
         self.display = DisplayManager(Display.WIDTH, Display.HEIGHT)
         self.input = InputManager()
         self.draw_manager = DrawManager()
         self.clock = pygame.time.Clock()
         self.running = True
-        DebugLogger.init("", "║" + " " * 64 + "║")
+        DebugLogger.init("║" + " " * 64 + "║", show_meta=False)
 
         # -------------------------------------------------------
         # Scene Management
         # -------------------------------------------------------
 
-        DebugLogger.init("", "╠─────────────────── SCENE MANAGEMENT SYSTEMS ───────────────────╣")
+        DebugLogger.init("╠─────────────────── SCENE MANAGEMENT SYSTEMS ───────────────────╣", show_meta=False)
         self.scenes = SceneManager(
             self.display,
             self.input,
             self.draw_manager
         )
-        DebugLogger.init("", "║" + " " * 64 + "║")
+        DebugLogger.init("║" + " " * 64 + "║", show_meta=False)
 
         # -------------------------------------------------------
         # Global Debug HUD (independent of scenes)
         # -------------------------------------------------------
-        DebugLogger.init("", "╠─────────────────────────── DEBUG HUD ──────────────────────────╣")
+        DebugLogger.init("╠─────────────────────────── DEBUG HUD ──────────────────────────╣", show_meta=False)
         self.debug_hud = DebugHUD(self.display)
         self.debug_hud.draw_manager = self.draw_manager
-        DebugLogger.init("", "║" + " " * 64 + "║")
-        DebugLogger.init("", "╚" + "═" * 64 + "╝")
+        DebugLogger.init("║" + " " * 64 + "║", show_meta=False)
+        DebugLogger.init("╚" + "═" * 64 + "╝", show_meta=False)
 
     # ===========================================================
     # Core Runtime Loop
@@ -97,7 +97,7 @@ class GameLoop:
             - Update active scene and debug systems.
             - Render all visual elements each frame.
         """
-        DebugLogger.action("GameLoop", "Entering main loop")
+        DebugLogger.action("Entering main loop")
 
         fixed_dt = Physics.FIXED_DT
         accumulator = 0.0
@@ -122,7 +122,7 @@ class GameLoop:
             self._draw()
 
         pygame.quit()
-        DebugLogger.system("GameLoop", "Pygame terminated")
+        DebugLogger.system("Pygame terminated")
 
     # ===========================================================
     # Initialization Helpers
@@ -132,9 +132,9 @@ class GameLoop:
         try:
             icon = pygame.image.load("assets/images/icons/202X_icon.png")
             pygame.display.set_icon(icon)
-            # DebugLogger.state("GameLoop", "Window icon set successfully")
+            # DebugLogger.state("Window icon set successfully")
         except FileNotFoundError:
-            DebugLogger.warn("GameLoop", "Missing icon image")
+            DebugLogger.warn("Missing icon image")
 
     # ===========================================================
     # Event Handling
@@ -152,7 +152,7 @@ class GameLoop:
             # System-level quit event
             if event.type == pygame.QUIT:
                 self.running = False
-                DebugLogger.action("GameLoop", "Quit signal received")
+                DebugLogger.action("Quit signal received")
                 return
 
             # Global keyboard shortcuts

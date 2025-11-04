@@ -38,10 +38,10 @@ def load_player_config():
     try:
         with open(CONFIG_PATH, "r") as f:
             cfg = json.load(f)
-            DebugLogger.system("Player", f"Loaded config from {CONFIG_PATH}")
+            DebugLogger.system(f"Loaded config from {CONFIG_PATH}")
             return {**DEFAULT_CONFIG, **cfg}
     except Exception as e:
-        DebugLogger.warn("Player", f"Failed to load config: {e} — using defaults")
+        DebugLogger.warn(f"Failed to load config: {e} — using defaults")
         return DEFAULT_CONFIG
 
 PLAYER_CONFIG = load_player_config()
@@ -67,7 +67,7 @@ class Player(BaseEntity):
         if cfg["scale"] != 1.0:
             w, h = image.get_size()
             image = pygame.transform.scale(image, (int(w * cfg["scale"]), int(h * cfg["scale"])))
-            DebugLogger.state("Player", f"Scaled sprite to {image.get_size()}")
+            DebugLogger.state(f"Scaled sprite to {image.get_size()}")
 
         super().__init__(x, y, image)
 
@@ -79,7 +79,7 @@ class Player(BaseEntity):
         self.invincible = cfg["invincible"]
         self.hitbox_scale = cfg["hitbox_scale"]
 
-        DebugLogger.init("Player", f"Initialized at ({x}, {y}) | Speed={self.speed} | HP={self.health}")
+        DebugLogger.init(f"Initialized at ({x}, {y}) | Speed={self.speed} | HP={self.health}")
 
         # -----------------------------------------------------------
         # Register this player globally (scene-independent)

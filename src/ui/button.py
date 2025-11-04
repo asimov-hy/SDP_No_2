@@ -73,7 +73,7 @@ class Button(UIElement):
 
         self.draw_manager = None
 
-        # DebugLogger.system("Button", f"Initialized at ({x}, {y}) with action '{action}'")
+        # DebugLogger.system(f"Initialized at ({x}, {y}) with action '{action}'")
 
     # ===========================================================
     # Update Logic
@@ -103,9 +103,9 @@ class Button(UIElement):
 
         # Debug logging (commented out for normal builds)
         # if self.is_hovered and not was_hovered:
-        #     DebugLogger.state("Button", f"Hover entered for '{self.action}'")
+        #     DebugLogger.state(f"Hover entered for '{self.action}'")
         # elif not self.is_hovered and was_hovered:
-        #     DebugLogger.state("Button", f"Hover exited for '{self.action}'")
+        #     DebugLogger.state(f"Hover exited for '{self.action}'")
 
     def handle_click(self, mouse_pos):
         """
@@ -118,7 +118,7 @@ class Button(UIElement):
             str | None: The action identifier if clicked, else None.
         """
         if self.enabled and self.rect.collidepoint(mouse_pos):
-            # DebugLogger.action("Button", f"Clicked '{self.action}'")
+            # DebugLogger.action(f"Clicked '{self.action}'")
             return self.action
         return None
 
@@ -159,7 +159,7 @@ class Button(UIElement):
             else:
                 self._draw_icon(surf, self.icon_type, self.border_color)
 
-        # DebugLogger.state("Button", f"Rendered '{self.action}' at {self.rect.topleft}")
+        # DebugLogger.state(f"Rendered '{self.action}' at {self.rect.topleft}")
         return surf
 
     # ===========================================================

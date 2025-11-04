@@ -47,7 +47,7 @@ class GameScene:
         self.input = scene_manager.input
         self.draw_manager = scene_manager.draw_manager
 
-        DebugLogger.system("GameScene", "Initializing game scene")
+        DebugLogger.system("Initializing game scene")
 
         # ===========================================================
         # UI System Setup
@@ -57,9 +57,9 @@ class GameScene:
         # Base HUD (game overlay)
         try:
             self.ui.attach_subsystem("hud", HUDManager())
-            DebugLogger.init("GameScene", "HUDManager attached successfully")
+            DebugLogger.init("HUDManager attached successfully")
         except Exception as e:
-            DebugLogger.warn("GameScene", f"HUDManager unavailable: {e}")
+            DebugLogger.warn(f"HUDManager unavailable: {e}")
 
         # ===========================================================
         # Entity Setup
@@ -73,16 +73,16 @@ class GameScene:
 
         self.player = Player(start_x, start_y, player_img)
 
-        DebugLogger.init("GameScene", f"Player entity initialized at ({start_x}, {start_y})")
+        DebugLogger.init(f"Player entity initialized at ({start_x}, {start_y})")
 
         self.draw_manager.load_image("enemy_basic", "assets/images/enemies/enemy_basic.png", scale=1.0)
-        DebugLogger.init("GameScene", "EnemyBasic image loaded successfully")
+        DebugLogger.init("EnemyBasic image loaded successfully")
 
         # ===========================================================
         # Spawn Manager Setup (Wave-Based Enemy Spawning)
         # ===========================================================
         self.spawner = SpawnManager(self.draw_manager, self.display)
-        DebugLogger.init("GameScene", "SpawnManager initialized successfully")
+        DebugLogger.init("SpawnManager initialized successfully")
 
         # ===========================================================
         # Stage Manager Setup (Predefined Waves)
@@ -95,7 +95,7 @@ class GameScene:
         ]
 
         self.stage_manager = StageManager(self.spawner, STAGE_1_WAVES)
-        DebugLogger.init("GameScene", "StageManager initialized with Stage 1 waves")
+        DebugLogger.init("StageManager initialized with Stage 1 waves")
 
     # ===========================================================
     # Event Handling

@@ -36,7 +36,7 @@ class SpawnManager:
         # Timer used to limit log spam for trace-level outputs
         self._trace_timer = 0.0
 
-        DebugLogger.init("SpawnManager", "Initialized enemy spawn system")
+        DebugLogger.init("Initialized enemy spawn system")
 
     # ===========================================================
     # Enemy Spawning
@@ -55,16 +55,16 @@ class SpawnManager:
                 img = self.draw_manager.get_image("enemy_basic")
                 enemy = EnemyBasic(x, y, img)
             else:
-                DebugLogger.warn("SpawnManager", f"Unknown enemy type: '{type_name}'")
+                DebugLogger.warn(f"Unknown enemy type: '{type_name}'")
                 return
 
             self.enemies.append(enemy)
             if Debug.VERBOSE_ENTITY_INIT:
-                DebugLogger.action("SpawnManager", f"Spawned '{type_name}' enemy at ({x}, {y})")
+                DebugLogger.action(f"Spawned '{type_name}' enemy at ({x}, {y})")
 
 
         except Exception as e:
-            DebugLogger.warn("SpawnManager", f"Failed to spawn enemy '{type_name}': {e}")
+            DebugLogger.warn(f"Failed to spawn enemy '{type_name}': {e}")
 
     # ===========================================================
     # Update Loop
@@ -89,7 +89,7 @@ class SpawnManager:
         removed_count = initial_count - len(self.enemies)
 
         if removed_count > 0 and Debug.VERBOSE_ENTITY_DEATH:
-            DebugLogger.state("SpawnManager", f"Removed {removed_count} inactive enemies")
+            DebugLogger.state(f"Removed {removed_count} inactive enemies")
 
     # ===========================================================
     # Rendering Pass

@@ -36,7 +36,7 @@ class BaseEntity:
         self.alive = True
 
         if Debug.VERBOSE_ENTITY_INIT:
-            DebugLogger.init("BaseEntity", f"Entity initialized at ({x}, {y})")
+            DebugLogger.init(f"Entity initialized at ({x}, {y})")
 
     # ===========================================================
     # Update Logic
@@ -50,7 +50,7 @@ class BaseEntity:
         """
         # Base class provides no movement or logic.
         # Subclasses such as Player, Enemy, or Bullet implement behavior here.
-        DebugLogger.trace("BaseEntity", f"Update called (dt={dt:.4f})")
+        DebugLogger.trace(f"Update called (dt={dt:.4f})")
 
     # ===========================================================
     # Rendering Hook

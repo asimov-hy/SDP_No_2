@@ -28,7 +28,7 @@ class DrawManager:
         self.layers = {}  # {layer: [(surface, rect), ...]}
         self._layer_keys_cache = []
         self._layers_dirty = False
-        DebugLogger.init("", "║{:<59}║".format(f"\t[DrawManager][INIT]\t\t→ Initialized"))
+        DebugLogger.init("║{:<59}║".format(f"\t[DrawManager][INIT]\t\t→ Initialized"), show_meta=False)
 
 
     # --------------------------------------------------------
@@ -45,19 +45,19 @@ class DrawManager:
         """
         try:
             img = pygame.image.load(path).convert_alpha()
-            # DebugLogger.action("DrawManager", f"Loaded image '{key}' from {path}")
+            # DebugLogger.action(f"Loaded image '{key}' from {path}")
 
         except FileNotFoundError:
-            print(f"[DrawManager] WARN: Missing image at {path}")
+            DebugLogger.warn(f"Missing image at {path}")
             img = pygame.Surface((40, 40))
             img.fill((255, 255, 255))
-            DebugLogger.warn("DrawManager", f"Missing image: {path}")
+            DebugLogger.warn(f"Missing image: {path}")
 
         if scale != 1.0:
             w, h = img.get_size()
             img = pygame.transform.scale(img, (int(w * scale), int(h * scale)))
             print(f"[DrawManager] SCALE: '{key}' → {img.get_size()} ({scale}x)")
-            DebugLogger.state("DrawManager", f"Scaled '{key}' to {img.get_size()} ({scale:.2f}x)")
+            DebugLogger.state(f"Scaled '{key}' to {img.get_size()} ({scale:.2f}x)")
 
         self.images[key] = img
 
@@ -81,13 +81,13 @@ class DrawManager:
             img = pygame.image.load(path).convert_alpha()
             img = pygame.transform.scale(img, size)
             self.images[key] = img
-            DebugLogger.action("DrawManager", f"Loaded icon '{name}' ({size[0]}x{size[1]})")
+            DebugLogger.action(f"Loaded icon '{name}' ({size[0]}x{size[1]})")
 
         except FileNotFoundError:
             img = pygame.Surface(size, pygame.SRCALPHA)
             pygame.draw.rect(img, (255, 255, 255), img.get_rect(), 1)
             self.images[key] = img
-            DebugLogger.warn("DrawManager", f"Missing icon '{name}' at {path}")
+            DebugLogger.warn(f"Missing icon '{name}' at {path}")
 
         return self.images[key]
 
@@ -103,7 +103,7 @@ class DrawManager:
         """
         img = self.images.get(key)
         if img is None:
-            DebugLogger.warn("DrawManager", f"No cached image for key '{key}'")
+            DebugLogger.warn(f"No cached image for key '{key}'")
         return img
 
     # ===========================================================
@@ -139,7 +139,7 @@ class DrawManager:
         if hasattr(entity, "image") and hasattr(entity, "rect"):
             self.queue_draw(entity.image, entity.rect, layer)
         else:
-            DebugLogger.warn("DrawManager", f"Invalid entity: {entity} (missing image/rect)")
+            DebugLogger.warn(f"Invalid entity: {entity} (missing image/rect)")
 
     # ===========================================================
     # Rendering
@@ -166,4 +166,4 @@ class DrawManager:
 
         if debug:
             draw_count = sum(len(items) for items in self.layers.values())
-            DebugLogger.state("DrawManager", f"Rendered {draw_count} queued surfaces")
+            DebugLogger.state(f"Rendered {draw_count} queued surfaces")

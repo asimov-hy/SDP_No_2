@@ -38,7 +38,7 @@ class Enemy(BaseEntity):
         self._trace_timer = 0.0
 
         if Debug.VERBOSE_ENTITY_INIT:
-            DebugLogger.init("Enemy", f"Enemy initialized at ({x}, {y})")
+            DebugLogger.init(f"Enemy initialized at ({x}, {y})")
 
     # ===========================================================
     # Damage and State Handling
@@ -51,15 +51,15 @@ class Enemy(BaseEntity):
             amount (int, optional): Amount of HP to subtract. Defaults to 1.
         """
         if not self.alive:
-            DebugLogger.trace("Enemy", "Damage ignored (already destroyed)")
+            DebugLogger.trace("Damage ignored (already destroyed)")
             return
 
         self.hp -= amount
-        DebugLogger.state("Enemy", f"HP reduced by {amount} → {self.hp}")
+        DebugLogger.state(f"HP reduced by {amount} → {self.hp}")
 
         if self.hp <= 0:
             self.alive = False
-            DebugLogger.state("Enemy", f"Destroyed at {self.rect.topleft}")
+            DebugLogger.state(f"Destroyed at {self.rect.topleft}")
 
     # ===========================================================
     # Update Logic (To Be Overridden)
@@ -85,5 +85,5 @@ class Enemy(BaseEntity):
         """
         draw_manager.draw_entity(self, layer=Layers.ENEMIES)
         # if __debug__:  # or custom flag
-        #     DebugLogger.trace("Enemy", f"Drew enemy at {self.rect.topleft}")
+        #     DebugLogger.trace(f"Drew enemy at {self.rect.topleft}")
 

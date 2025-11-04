@@ -39,7 +39,7 @@ class DebugHUD:
 
         self._create_elements()
 
-        DebugLogger.init("", "║{:<59}║".format(f"\t[DEBUGHUD][INIT]\t→ Initialized"))
+        DebugLogger.init("║{:<59}║".format(f"\t[DEBUGHUD][INIT]\t→ Initialized"), show_meta=False)
 
     # ===========================================================
     # Element Creation
@@ -136,18 +136,14 @@ class DebugHUD:
         if action == "toggle_fullscreen":
             self.display_manager.toggle_fullscreen()
             state = "ON" if getattr(self.display_manager, "is_fullscreen", False) else "OFF"
-            DebugLogger.action(
-                "DebugHUD",
-                f"Fullscreen toggled → {state}"
-            )
+            DebugLogger.action(f"Fullscreen toggled → {state}")
 
         elif action == "quit":
-            DebugLogger.action(
-                "DebugHUD","Quit requested (GameLoop will terminate)")
+            DebugLogger.action("Quit requested (GameLoop will terminate)")
             pygame.event.post(pygame.event.Event(pygame.QUIT))
 
         else:
-            DebugLogger.warn("DebugHUD", f"Unrecognized button action: {action}")
+            DebugLogger.warn(f"Unrecognized button action: {action}")
 
         return action
 
@@ -197,4 +193,4 @@ class DebugHUD:
         """Toggle the HUD’s visibility."""
         self.visible = not self.visible
         state = "Shown" if self.visible else "Hidden"
-        DebugLogger.action("DebugHUD", f"Toggled visibility → {state}")
+        DebugLogger.action(f"Toggled visibility → {state}")

@@ -35,7 +35,7 @@ class UIElement:
         self.layer = layer
         self.visible = True
         self.enabled = True
-        # DebugLogger.system("UIElement", f"Initialized element at ({x}, {y}) | Layer={layer}")
+        # DebugLogger.system(f"Initialized element at ({x}, {y}) | Layer={layer}")
 
     # ===========================================================
     # Update Logic
@@ -47,7 +47,7 @@ class UIElement:
         Args:
             mouse_pos (tuple): Current mouse position.
         """
-        # DebugLogger.state("UIElement", f"Updated base element at {self.rect.topleft}")
+        # DebugLogger.state(f"Updated base element at {self.rect.topleft}")
         pass
 
     # ===========================================================
@@ -63,7 +63,7 @@ class UIElement:
         Returns:
             str | None: Action identifier or None if not clicked.
         """
-        # DebugLogger.action("UIElement", f"Click handled at {mouse_pos}")
+        # DebugLogger.action(f"Click handled at {mouse_pos}")
         return None
 
     # ===========================================================
@@ -77,5 +77,5 @@ class UIElement:
         Returns:
             pygame.Surface: Visual representation of the element.
         """
-        # DebugLogger.warn("UIElement", "Base render_surface() called directly (not implemented)")
+        # DebugLogger.warn("Base render_surface() called directly (not implemented)")
         raise NotImplementedError

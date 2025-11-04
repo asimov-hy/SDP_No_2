@@ -52,7 +52,7 @@ class InputManager:
         self.key_bindings = key_bindings or DEFAULT_KEY_BINDINGS
         self.context = "gameplay"  # active context ("gameplay" or "ui")
 
-        DebugLogger.init("", "║{:<59}║".format(f"\t[InputManager][INIT]\t→  Initialized"))
+        DebugLogger.init("║{:<59}║".format(f"\t[InputManager][INIT]\t→  Initialized"), show_meta=False)
 
         # Controller setup
         pygame.joystick.init()
@@ -60,9 +60,9 @@ class InputManager:
         if pygame.joystick.get_count() > 0:
             self.controller = pygame.joystick.Joystick(0)
             self.controller.init()
-            DebugLogger.init("", "║{:<57}║".format(f"\t\t└─ [INIT]\t→  {self.controller.get_name()}"))
+            DebugLogger.init("║{:<57}║".format(f"\t\t└─ [INIT]\t→  {self.controller.get_name()}"), show_meta=False)
 
-        DebugLogger.init("", "║{:<57}║".format(f"\t\t└─ [INIT]\t→  Keyboard"))
+        DebugLogger.init("║{:<57}║".format(f"\t\t└─ [INIT]\t→  Keyboard"), show_meta=False)
 
         # Movement and state tracking
         self.move = pygame.Vector2(0, 0)
@@ -90,10 +90,10 @@ class InputManager:
         Switch between contexts ("gameplay", "ui").
         """
         if name not in self.key_bindings:
-            DebugLogger.warn("InputManager", f"Unknown context: {name}")
+            DebugLogger.warn(f"Unknown context: {name}")
             return
         self.context = name
-        DebugLogger.state("InputManager", f"Context switched to [{name.upper()}]")
+        DebugLogger.state(f"Context switched to [{name.upper()}]")
 
     def get_context(self):
         return self.context
