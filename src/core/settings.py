@@ -38,8 +38,8 @@ class Layers:
 # ===========================================================
 class Player:
     SPEED = 300  # pixels per second
-    FOCUSED_SPEED = 150  # For bullet hell "focus mode" (hold shift)
-    HITBOX_RADIUS = 2  # Tiny hitbox for bullet hell fairness
+    FOCUSED_SPEED = 150  # For bullets hell "focus mode" (hold shift)
+    HITBOX_RADIUS = 2  # Tiny hitbox for bullets hell fairness
 
 # ===========================================================
 # Bullet Configuration - EXAMPLE

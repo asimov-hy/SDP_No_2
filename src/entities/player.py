@@ -6,10 +6,12 @@ Defines the Player entity and its core update logic.
 Responsibilities
 ----------------
 - Maintain player position, movement, and health state.
+- Handle shooting behavior via BulletManager.
 - Update position based on input direction and delta time.
 - Stay within screen boundaries.
 - (Optional) Integrate with DebugLogger for movement and state tracking.
 """
+
 import pygame
 import json
 import os
@@ -88,6 +90,13 @@ class Player(BaseEntity):
 
         self.layer = Layers.PLAYER
 
+        # -----------------------------------------------------------
+        # Bullet / Shooting System
+        # -----------------------------------------------------------
+        self.bullet_manager = None  # Linked externally by GameScene
+        self.shoot_cooldown = 0.1  # Seconds between shots
+        self.shoot_timer = 0.0
+
     # ===========================================================
     # Update Logic
     # ===========================================================
@@ -163,3 +172,30 @@ class Player(BaseEntity):
 
         self.rect.x = int(self.pos.x)
         self.rect.y = int(self.pos.y)
+
+        # ===========================================================
+        # Shooting Control
+        # ===========================================================
+        keys = pygame.key.get_pressed()
+        self.shoot_timer += dt
+
+        if keys[pygame.K_SPACE] and self.shoot_timer >= self.shoot_cooldown:
+            self.shoot_timer = 0.0
+            self.shoot()
+
+    # ===========================================================
+    # Shooting Logic
+    # ===========================================================
+    def shoot(self):
+        """Spawn bullets via the global BulletManager."""
+        if not self.bullet_manager:
+            DebugLogger.warn("Player attempted to shoot without BulletManager reference")
+            return
+
+        self.bullet_manager.spawn(
+            pos=self.rect.center,
+            vel=(0, -900),
+            color=(255, 255, 100),
+            radius=4,
+            owner="player"
+        )

@@ -71,6 +71,8 @@ class InputManager:
 
         # Action states (gameplay)
         self.attack_pressed = False
+        self.attack_held = False  # NEW - continuous press tracking
+
         self.bomb_pressed = False
         self.pause_pressed = False
 
@@ -126,7 +128,12 @@ class InputManager:
         self._move_keyboard.update(x, y)
 
         # Actions
+        # -----------------------------------------------------------
+        # Attack input
+        # -----------------------------------------------------------
         self.attack_pressed = self._is_pressed("attack", keys)
+        self.attack_held = self.attack_pressed
+
         self.bomb_pressed = self._is_pressed("bomb", keys)
         self.pause_pressed = self._is_pressed("pause", keys)
 
@@ -232,3 +239,7 @@ class InputManager:
         if self.move.length_squared() > 0:
             return self.move.normalize()
         return pygame.Vector2(0, 0)
+
+    def is_attack_held(self):
+        """Return whether the attack key/button is currently held."""
+        return self.attack_held

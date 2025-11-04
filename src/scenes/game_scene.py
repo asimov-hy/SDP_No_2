@@ -25,6 +25,7 @@ from src.ui.subsystems.hud_manager import HUDManager
 
 from src.systems.spawn_manager import SpawnManager
 from src.systems.stage_manager import StageManager
+from src.systems.bullet_manager import BulletManager
 
 
 
@@ -97,6 +98,13 @@ class GameScene:
         self.stage_manager = StageManager(self.spawner, STAGE_1_WAVES)
         DebugLogger.init("StageManager initialized with Stage 1 waves")
 
+        # ===========================================================
+        # Bullet Manager Setup
+        # ===========================================================
+        self.bullet_manager = BulletManager()
+        self.player.bullet_manager = self.bullet_manager  # Give player access
+        DebugLogger.init("BulletManager initialized and linked to Player")
+
     # ===========================================================
     # Event Handling
     # ===========================================================
@@ -121,15 +129,22 @@ class GameScene:
         """
         move = self.input.get_normalized_move()
 
-        # Player movement
+        # ===========================================================
+        # Player and Bullets
+        # ===========================================================
         self.player.move_vec = move
-        self.player.update(dt)
+        self.player.update(dt)  # Handles movement and shooting internally
+        self.bullet_manager.update(dt)  # Updates all active bullets
 
-        # Wave-based enemy spawning
+        # ===========================================================
+        # Enemies and Waves
+        # ===========================================================
         self.stage_manager.update(dt)
         self.spawner.update(dt)
 
-        # UI updates (HUD, menus)
+        # ===========================================================
+        # UI
+        # ===========================================================
         self.ui.update(pygame.mouse.get_pos())
 
     # ===========================================================
@@ -144,6 +159,11 @@ class GameScene:
         """
         # Player rendering
         draw_manager.draw_entity(self.player, layer=Layers.PLAYER)
+
+        # ===========================================================
+        # Bullets
+        # ===========================================================
+        self.bullet_manager.draw(draw_manager)  # NEW
 
         # Wave-based enemies
         self.spawner.draw()
