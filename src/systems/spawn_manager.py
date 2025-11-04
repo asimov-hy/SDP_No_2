@@ -10,7 +10,7 @@ Responsibilities
 - Handle update and render passes for all active enemies.
 """
 
-from src.core.settings import DebugConfig
+from src.core.settings import Debug
 from src.core.utils.debug_logger import DebugLogger
 from src.entities.enemies.enemy_basic import EnemyBasic
 
@@ -59,7 +59,7 @@ class SpawnManager:
                 return
 
             self.enemies.append(enemy)
-            if DebugConfig.VERBOSE_ENTITY_INIT:
+            if Debug.VERBOSE_ENTITY_INIT:
                 DebugLogger.action("SpawnManager", f"Spawned '{type_name}' enemy at ({x}, {y})")
 
 
@@ -79,14 +79,16 @@ class SpawnManager:
         if not self.enemies:
             return
 
-        removed_count = 0
-        for e in list(self.enemies):  # Safe iteration for removal
-            e.update(dt)
-            if not e.alive:
-                self.enemies.remove(e)
-                removed_count += 1
+        # Update all enemies
+        for enemy in self.enemies:
+            enemy.update(dt)
 
-        if removed_count > 0:
+        # Remove dead enemies efficiently
+        initial_count = len(self.enemies)
+        self.enemies = [e for e in self.enemies if e.alive]
+        removed_count = initial_count - len(self.enemies)
+
+        if removed_count > 0 and Debug.VERBOSE_ENTITY_DEATH:
             DebugLogger.state("SpawnManager", f"Removed {removed_count} inactive enemies")
 
     # ===========================================================

@@ -14,6 +14,7 @@ Responsibilities
 import pygame
 
 from src.core.utils.debug_logger import DebugLogger
+from src.core.settings import Layers
 from src.core import settings
 
 from src.ui.button import Button
@@ -60,7 +61,7 @@ class DebugHUD:
             border_color=(255, 255, 255),
             border_width=2,
             icon_type="fullscreen",
-            layer=200
+            layer=Layers.UI
         )
 
         exit_btn = Button(
@@ -75,7 +76,7 @@ class DebugHUD:
             border_color=(255, 255, 255),
             border_width=2,
             icon_type="close",
-            layer=200
+            layer=Layers.UI
         )
 
         self.elements = [fullscreen_btn, exit_btn]
@@ -186,8 +187,8 @@ class DebugHUD:
             rect_pos = surface_pos.get_rect(topleft=(70, 20))
             rect_vel = surface_vel.get_rect(topleft=(70, 40))
 
-            draw_manager.queue_draw(surface_pos, rect_pos, 999)
-            draw_manager.queue_draw(surface_vel, rect_vel, 999)
+            draw_manager.queue_draw(surface_pos, rect_pos, Layers.UI)
+            draw_manager.queue_draw(surface_vel, rect_vel, Layers.UI)
 
     # ===========================================================
     # Visibility Controls

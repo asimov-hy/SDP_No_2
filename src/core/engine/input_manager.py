@@ -114,7 +114,6 @@ class InputManager:
     # ===========================================================
     def _update_gameplay_controls(self):
         keys = pygame.key.get_pressed()
-        x = y = 0
 
         left = self._is_pressed("move_left", keys)
         right = self._is_pressed("move_right", keys)
@@ -230,15 +229,6 @@ class InputManager:
             pygame.Vector2: Normalized direction vector.
                 Returns (0, 0) if no movement input is active.
         """
-        if not hasattr(self, "_smoothed_move"):
-            self._smoothed_move = pygame.Vector2(0, 0)
-
-        target = self.move
-        self._smoothed_move = self._smoothed_move.lerp(target, 0.3)  # adjust 0.3 → 0.15 for heavier smoothing
-
-        if self._smoothed_move.length_squared() > 0.001:
-            v = self._smoothed_move.normalize()
-            v.x = round(v.x, 3)
-            v.y = round(v.y, 3)
-            return v
+        if self.move.length_squared() > 0:
+            return self.move.normalize()
         return pygame.Vector2(0, 0)

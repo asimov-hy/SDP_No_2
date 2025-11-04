@@ -14,6 +14,7 @@ import pygame
 import json
 import os
 
+from src.core.settings import Display, Player as PlayerSettings, Layers
 from src.core import settings
 from src.core.utils.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
@@ -24,7 +25,7 @@ from src.entities.base_entity import BaseEntity
 
 DEFAULT_CONFIG = {
     "scale": 1.0,
-    "speed": 300,
+    "speed": PlayerSettings.SPEED,  # Uses 300 from settings
     "health": 3,
     "invincible": False,
     "hitbox_scale": 0.85
@@ -85,19 +86,22 @@ class Player(BaseEntity):
         # -----------------------------------------------------------
         settings.GLOBAL_PLAYER = self
 
+        self.layer = Layers.PLAYER
+
     # ===========================================================
     # Update Logic
     # ===========================================================
-    def update(self, dt, move_vec):
+    def update(self, dt):
         """
         Update player position with velocity buildup and gradual slowdown.
 
         Args:
             dt (float): Delta time.
-            move_vec (pygame.Vector2): Normalized input direction vector.
         """
         if not self.alive:
             return
+
+        move_vec = getattr(self, "move_vec", pygame.Vector2(0, 0))
 
         # ==========================================================
         # Tunable Physics Parameters
@@ -121,9 +125,6 @@ class Player(BaseEntity):
             # Apply additive acceleration for gradual buildup
             self.velocity += move_vec * accel_rate * dt
 
-            # Clamp velocity to prevent overshoot
-            if self.velocity.length() > max_speed:
-                self.velocity.scale_to_length(max_speed)
         else:
             # ======================================================
             # Apply Unified Friction (preserves direction)
@@ -131,7 +132,7 @@ class Player(BaseEntity):
             current_speed = self.velocity.length()
             if current_speed > 0:
                 # Reduce speed while maintaining direction
-                new_speed = max(0, current_speed - friction_rate * dt)
+                new_speed = max(0.0, current_speed - friction_rate * dt)
 
                 if new_speed < 5:  # Stop near zero
                     self.velocity.x = 0
@@ -143,16 +144,16 @@ class Player(BaseEntity):
         # Apply final movement
         # ==========================================================
         self.pos += self.velocity * dt
-        
+
         # ==========================================================
         # Clamp to screen boundaries
         # ==========================================================
-        screen_width = settings.SCREEN_WIDTH
-        screen_height = settings.SCREEN_HEIGHT
+        screen_width = Display.WIDTH
+        screen_height = Display.HEIGHT
 
         # Clamp position
-        self.pos.x = max(0, min(self.pos.x, screen_width - self.rect.width))
-        self.pos.y = max(0, min(self.pos.y, screen_height - self.rect.height))
+        self.pos.x = max(0.0, min(self.pos.x, screen_width - self.rect.width))
+        self.pos.y = max(0.0, min(self.pos.y, screen_height - self.rect.height))
 
         # Stop velocity when hitting walls (prevents "pushing" against boundaries)
         if self.pos.x <= 0 or self.pos.x >= screen_width - self.rect.width:
@@ -160,4 +161,5 @@ class Player(BaseEntity):
         if self.pos.y <= 0 or self.pos.y >= screen_height - self.rect.height:
             self.velocity.y = 0
 
-        self.rect.topleft = self.pos
+        self.rect.x = int(self.pos.x)
+        self.rect.y = int(self.pos.y)

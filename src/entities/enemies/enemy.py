@@ -9,10 +9,9 @@ Responsibilities
 - Handle common behaviors such as damage, destruction, and drawing.
 - Provide a base interface for all enemy subclasses (basic, zigzag, etc.).
 """
-from src.core.settings import DebugConfig
+from src.core.settings import Debug, Display, Layers
 from src.entities.base_entity import BaseEntity
 from src.core.utils.debug_logger import DebugLogger
-from src.core.settings import SCREEN_HEIGHT
 
 
 
@@ -38,8 +37,8 @@ class Enemy(BaseEntity):
         self.hp = hp
         self._trace_timer = 0.0
 
-        if DebugConfig.VERBOSE_ENTITY_INIT:
-            DebugLogger.init("BaseEntity", f"Entity initialized at ({x}, {y})")
+        if Debug.VERBOSE_ENTITY_INIT:
+            DebugLogger.init("Enemy", f"Enemy initialized at ({x}, {y})")
 
     # ===========================================================
     # Damage and State Handling
@@ -72,19 +71,7 @@ class Enemy(BaseEntity):
         Args:
             dt (float): Delta time (in seconds) since the last frame.
         """
-        if not self.alive:
-            return
-
-        self.rect.y += self.speed * dt
-        if self.rect.top > SCREEN_HEIGHT:
-            self.rect.bottom = 0
-            DebugLogger.state("EnemyBasic", f"Reset position to top ({self.rect.centerx}, {self.rect.bottom})")
-
-        # Log every 1 second, not every frame
-        self._trace_timer += dt
-        if self._trace_timer >= 1.0:
-            DebugLogger.trace("EnemyBasic", f"Y={self.rect.y:.1f}")
-            self._trace_timer = 0
+        pass
 
     # ===========================================================
     # Rendering
@@ -96,7 +83,7 @@ class Enemy(BaseEntity):
         Args:
             draw_manager: DrawManager instance responsible for batching render calls.
         """
-        draw_manager.draw_entity(self, layer=1)
+        draw_manager.draw_entity(self, layer=Layers.ENEMIES)
         # if __debug__:  # or custom flag
         #     DebugLogger.trace("Enemy", f"Drew enemy at {self.rect.topleft}")
 

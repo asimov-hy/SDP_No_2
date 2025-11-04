@@ -14,7 +14,7 @@ Responsibilities
 
 import pygame
 
-from src.core.settings import *
+from src.core.settings import Display, Physics, Debug, Layers
 
 from src.core.engine.input_manager import InputManager
 from src.core.engine.display_manager import DisplayManager
@@ -48,7 +48,7 @@ class GameLoop:
         # Window Setup
         # -------------------------------------------------------
         self._set_icon()
-        pygame.display.set_caption("202X")
+        pygame.display.set_caption(Display.CAPTION)
         DebugLogger.init("", "║{:<56}║".format(f"\t[GameLoop][INIT]\t\t→  Icon Set. Caption Set."))
         DebugLogger.init("", "║" + " " * 64 + "║")
 
@@ -57,7 +57,7 @@ class GameLoop:
         # -------------------------------------------------------
 
         DebugLogger.init("", "╠────────────────────── ENGINE CORE SYSTEMS ─────────────────────╣")
-        self.display = DisplayManager(GAME_WIDTH, GAME_HEIGHT)
+        self.display = DisplayManager(Display.WIDTH, Display.HEIGHT)
         self.input = InputManager()
         self.draw_manager = DrawManager()
         self.clock = pygame.time.Clock()
@@ -99,11 +99,13 @@ class GameLoop:
         """
         DebugLogger.action("GameLoop", "Entering main loop")
 
-        fixed_dt = 1 / 120.0  # Physics step (120 Hz)
+        fixed_dt = Physics.FIXED_DT
         accumulator = 0.0
+        frame_count = 0
 
         while self.running:
-            frame_time = self.clock.tick(FPS) / 1000.0
+            frame_time = self.clock.tick() / 1000.0
+            frame_time = min(frame_time, Physics.MAX_FRAME_TIME)
             accumulator += frame_time
 
             self._handle_events()
@@ -111,8 +113,11 @@ class GameLoop:
             while accumulator >= fixed_dt:
                 self.input.update()
                 self.scenes.update(fixed_dt)
-                self.debug_hud.update(pygame.mouse.get_pos())
+
                 accumulator -= fixed_dt
+                frame_count += 1
+
+            self.debug_hud.update(pygame.mouse.get_pos())
 
             self._draw()
 
@@ -155,11 +160,9 @@ class GameLoop:
 
                 if event.key == pygame.K_F11:
                     self.display.toggle_fullscreen()
-                    state = "ON" if getattr(self.display, "is_fullscreen", False) else "OFF"
 
                 elif event.key == pygame.K_F3:
                     self.debug_hud.toggle()
-
 
             # Window resizing
             if event.type == pygame.VIDEORESIZE:
@@ -170,24 +173,13 @@ class GameLoop:
             self.debug_hud.handle_event(event)
 
     # ===========================================================
-    # Update Logic
-    # ===========================================================
-    def _update(self, dt: float):
-        """
-        Update all core systems.
-
-        Args:
-            dt (float): Delta time (seconds) since last frame.
-        """
-        self.input.update()
-        self.scenes.update(dt)
-        self.debug_hud.update(pygame.mouse.get_pos())
-
-    # ===========================================================
     # Rendering Pipeline
     # ===========================================================
     def _draw(self):
         """Draw everything managed by the active scene."""
+        import time
+        start = time.perf_counter()
+
         game_surface = self.display.get_game_surface()
         self.draw_manager.clear()
 
@@ -198,3 +190,8 @@ class GameLoop:
         # Final render pass
         self.draw_manager.render(game_surface)
         self.display.render()
+
+        end = time.perf_counter()
+        frame_time_ms = (end - start) * 1000
+        if frame_time_ms > Debug.FRAME_TIME_WARNING:  # Slower than 60 FPS
+            print(f"⚠️ SLOW FRAME: {frame_time_ms:.2f}ms")
