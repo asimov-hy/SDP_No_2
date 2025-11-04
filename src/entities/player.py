@@ -102,31 +102,62 @@ class Player(BaseEntity):
         # ==========================================================
         # Tunable Physics Parameters
         # ==========================================================
-        accel_rate = 3000  # How fast player accelerates toward max speed
-        friction_rate = 500  # How quickly the player slows when not pressing keys
-        max_speed = self.speed  # The maximum movement speed
+        accel_rate = 3000  # Acceleration strength
+        friction_rate = 500  # Friction strength (per-axis)
+        max_speed = self.speed
+        smooth_factor = 0.2  # How smoothly direction turns
 
         # ==========================================================
-        # Apply Acceleration (Additive Model)
+        # Apply Acceleration
         # ==========================================================
         if move_vec.length_squared() > 0:
-            # Add velocity directly based on input direction and acceleration
+            # Normalize for consistent diagonal speed
+            move_vec = move_vec.normalize()
+
+            # Smoothly blend velocity toward the desired direction
+            desired_velocity = move_vec * max_speed
+            self.velocity = self.velocity.lerp(desired_velocity, smooth_factor)
+
+            # Apply additive acceleration for gradual buildup
             self.velocity += move_vec * accel_rate * dt
 
-            # Clamp velocity to maximum speed
+            # Clamp velocity to prevent overshoot
             if self.velocity.length() > max_speed:
                 self.velocity.scale_to_length(max_speed)
         else:
             # ======================================================
-            # Apply Friction (when no input)
+            # Apply Unified Friction (preserves direction)
             # ======================================================
-            speed = self.velocity.length()
-            if speed > 0:
-                decel = friction_rate * dt
-                if decel >= speed:
-                    self.velocity.update(0, 0)
-                else:
-                    self.velocity.scale_to_length(speed - decel)
+            current_speed = self.velocity.length()
+            if current_speed > 0:
+                # Reduce speed while maintaining direction
+                new_speed = max(0, current_speed - friction_rate * dt)
 
+                if new_speed < 5:  # Stop near zero
+                    self.velocity.x = 0
+                    self.velocity.y = 0
+                else:
+                    self.velocity.scale_to_length(new_speed)
+
+        # ==========================================================
+        # Apply final movement
+        # ==========================================================
         self.pos += self.velocity * dt
+        
+        # ==========================================================
+        # Clamp to screen boundaries
+        # ==========================================================
+        screen_width = settings.SCREEN_WIDTH
+        screen_height = settings.SCREEN_HEIGHT
+
+        # Clamp position
+        self.pos.x = max(0, min(self.pos.x, screen_width - self.rect.width))
+        self.pos.y = max(0, min(self.pos.y, screen_height - self.rect.height))
+
+        # Stop velocity when hitting walls (prevents "pushing" against boundaries)
+        if self.pos.x <= 0 or self.pos.x >= screen_width - self.rect.width:
+            self.velocity.x = 0
+        if self.pos.y <= 0 or self.pos.y >= screen_height - self.rect.height:
+            self.velocity.y = 0
+
         self.rect.topleft = self.pos

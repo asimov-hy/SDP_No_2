@@ -114,23 +114,24 @@ class InputManager:
     # ===========================================================
     def _update_gameplay_controls(self):
         keys = pygame.key.get_pressed()
-        self._move_keyboard.update(0, 0)
+        x = y = 0
 
-        if self._is_pressed("move_left", keys):
-            self._move_keyboard.x -= 1
-        if self._is_pressed("move_right", keys):
-            self._move_keyboard.x += 1
-        if self._is_pressed("move_up", keys):
-            self._move_keyboard.y -= 1
-        if self._is_pressed("move_down", keys):
-            self._move_keyboard.y += 1
+        left = self._is_pressed("move_left", keys)
+        right = self._is_pressed("move_right", keys)
+        up = self._is_pressed("move_up", keys)
+        down = self._is_pressed("move_down", keys)
+
+        x = int(right) - int(left)
+        y = int(down) - int(up)
+
+        self._move_keyboard.update(x, y)
 
         # Actions
         self.attack_pressed = self._is_pressed("attack", keys)
         self.bomb_pressed = self._is_pressed("bomb", keys)
         self.pause_pressed = self._is_pressed("pause", keys)
 
-        # Merge controller and keyboard
+        # Merge controller input (unchanged)
         self._update_controller()
         self._merge_inputs()
 
@@ -229,9 +230,14 @@ class InputManager:
             pygame.Vector2: Normalized direction vector.
                 Returns (0, 0) if no movement input is active.
         """
-        if self.move.length_squared() > 0:
-            v = self.move.normalize()
-            # Round tiny floating-point errors for symmetry
+        if not hasattr(self, "_smoothed_move"):
+            self._smoothed_move = pygame.Vector2(0, 0)
+
+        target = self.move
+        self._smoothed_move = self._smoothed_move.lerp(target, 0.3)  # adjust 0.3 → 0.15 for heavier smoothing
+
+        if self._smoothed_move.length_squared() > 0.001:
+            v = self._smoothed_move.normalize()
             v.x = round(v.x, 3)
             v.y = round(v.y, 3)
             return v
