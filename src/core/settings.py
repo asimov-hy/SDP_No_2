@@ -27,8 +27,8 @@ class Physics:
 class Layers:
     BACKGROUND = 0
     ENEMIES = 1
-    PLAYER = 2
-    BULLETS = 3
+    BULLETS = 2
+    PLAYER = 3
     PARTICLES = 4
     EFFECTS = 5
     UI = 10  # Always on top
