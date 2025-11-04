@@ -13,7 +13,7 @@ Responsibilities
 """
 
 import pygame
-from src.core.settings import GAME_WIDTH, GAME_HEIGHT
+from src.core.settings import Display
 from src.core.utils.debug_logger import DebugLogger
 
 
@@ -48,6 +48,9 @@ class DisplayManager:
         self.offset_y = 0
         self._calculate_scale()
 
+        self.scaled_surface_cache = None
+        self.last_scaled_size = None
+
     # ===========================================================
     # Window Creation and Scaling
     # ===========================================================
@@ -60,13 +63,19 @@ class DisplayManager:
         """
         if fullscreen:
             # True fullscreen - fills entire screen
-            self.window = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+            self.window = pygame.display.set_mode(
+                (0, 0),
+                pygame.FULLSCREEN | pygame.DOUBLEBUF | pygame.HWSURFACE
+            )
             self.is_fullscreen = True
             if not silent:
                 DebugLogger.state("DisplayManager", "Switched to fullscreen mode")
         else:
             # Default windowed size
-            self.window = pygame.display.set_mode((self.game_width, self.game_height), pygame.RESIZABLE)
+            self.window = pygame.display.set_mode(
+                (self.game_width, self.game_height),
+                pygame.RESIZABLE | pygame.DOUBLEBUF | pygame.HWSURFACE
+            )
             self.is_fullscreen = False
             if not silent:
                 DebugLogger.state("DisplayManager", "Switched to windowed mode")
@@ -114,7 +123,10 @@ class DisplayManager:
             event (pygame.event.Event): The VIDEORESIZE event from pygame.
         """
         if event.type == pygame.VIDEORESIZE and not self.is_fullscreen:
-            self.window = pygame.display.set_mode((event.w, event.h), pygame.RESIZABLE)
+            self.window = pygame.display.set_mode(
+                (event.w, event.h),
+                pygame.RESIZABLE | pygame.DOUBLEBUF | pygame.HWSURFACE  # Add flags
+            )
             self._calculate_scale()
             DebugLogger.state("DisplayManager", f"Window resized → {event.w}x{event.h}")
 
@@ -135,9 +147,14 @@ class DisplayManager:
         # Clear window with black bars
         self.window.fill((0, 0, 0))
 
-        # Scale game surface and blit to center
-        scaled_surface = pygame.transform.scale(self.game_surface, self.scaled_size)
-        self.window.blit(scaled_surface, (self.offset_x, self.offset_y))
+        # Only rescale if window size changed
+        if self.scaled_size != self.last_scaled_size:
+            self.scaled_surface_cache = pygame.Surface(self.scaled_size)
+            self.last_scaled_size = self.scaled_size
+
+        # Fast blit to cached surface, then to window
+        pygame.transform.scale(self.game_surface, self.scaled_size, self.scaled_surface_cache)
+        self.window.blit(self.scaled_surface_cache, (self.offset_x, self.offset_y))
 
         pygame.display.flip()
 

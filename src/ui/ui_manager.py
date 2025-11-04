@@ -14,7 +14,7 @@ Responsibilities
 """
 
 import pygame
-from src.core.settings import GAME_WIDTH
+from src.core.settings import Display
 from src.ui.button import Button
 from src.core.utils.debug_logger import DebugLogger
 

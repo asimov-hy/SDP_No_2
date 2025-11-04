@@ -23,8 +23,11 @@ class DrawManager:
     # Initialization
     # ===========================================================
     def __init__(self):
-        self.images = {}          # Cached loaded images
-        self.draw_queue = []      # (layer, surface, rect)
+        self.images = {}
+        # Layer buckets instead of flat queue
+        self.layers = {}  # {layer: [(surface, rect), ...]}
+        self._layer_keys_cache = []
+        self._layers_dirty = False
         DebugLogger.init("", "║{:<59}║".format(f"\t[DrawManager][INIT]\t\t→ Initialized"))
 
 
@@ -76,7 +79,7 @@ class DrawManager:
         path = os.path.join("assets", "images", "icons", f"{name}.png")
         try:
             img = pygame.image.load(path).convert_alpha()
-            img = pygame.transform.smoothscale(img, size)
+            img = pygame.transform.scale(img, size)
             self.images[key] = img
             DebugLogger.action("DrawManager", f"Loaded icon '{name}' ({size[0]}x{size[1]})")
 
@@ -108,7 +111,8 @@ class DrawManager:
     # ===========================================================
     def clear(self):
         """Clear the draw queue before a new frame."""
-        self.draw_queue.clear()
+        self.layers.clear()
+        self._layers_dirty = True
 
     def queue_draw(self, surface, rect, layer=0):
         """
@@ -119,7 +123,10 @@ class DrawManager:
             rect (pygame.Rect): The position rectangle.
             layer (int): Rendering layer (lower values draw first).
         """
-        self.draw_queue.append((layer, surface, rect))
+        if layer not in self.layers:
+            self.layers[layer] = []
+            self._layers_dirty = True
+        self.layers[layer].append((surface, rect))
 
     def draw_entity(self, entity, layer=0):
         """
@@ -147,8 +154,16 @@ class DrawManager:
         """
         target_surface.fill((50, 50, 100))  # Background color
 
-        for layer, image, rect in sorted(self.draw_queue, key=lambda x: x[0]):
-            target_surface.blit(image, rect)
+        # Cache sorted layer keys to avoid sorting every frame
+        if self._layers_dirty:
+            self._layer_keys_cache = sorted(self.layers.keys())
+            self._layers_dirty = False
+
+        # Render each layer
+        for layer in self._layer_keys_cache:
+            for surface, rect in self.layers[layer]:
+                target_surface.blit(surface, (round(rect.x), round(rect.y)))
 
         if debug:
-            DebugLogger.state("DrawManager", f"Rendered {len(self.draw_queue)} queued surfaces")
+            draw_count = sum(len(items) for items in self.layers.values())
+            DebugLogger.state("DrawManager", f"Rendered {draw_count} queued surfaces")

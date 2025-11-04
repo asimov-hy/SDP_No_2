@@ -14,9 +14,9 @@ import pygame
 import json
 import os
 
-from src.core.settings import PLAYER_SPEED, SCREEN_WIDTH, SCREEN_HEIGHT
+from src.core.settings import Display, Player as PlayerSettings, Layers
+from src.core import settings
 from src.core.utils.debug_logger import DebugLogger
-
 from src.entities.base_entity import BaseEntity
 
 # ===========================================================
@@ -25,7 +25,7 @@ from src.entities.base_entity import BaseEntity
 
 DEFAULT_CONFIG = {
     "scale": 1.0,
-    "speed": 300,
+    "speed": PlayerSettings.SPEED,  # Uses 300 from settings
     "health": 3,
     "invincible": False,
     "hitbox_scale": 0.85
@@ -72,6 +72,7 @@ class Player(BaseEntity):
         super().__init__(x, y, image)
 
         # Player attributes
+        self.pos = pygame.Vector2(x, y)
         self.velocity = pygame.Vector2(0, 0)
         self.speed = cfg["speed"]
         self.health = cfg["health"]
@@ -80,26 +81,85 @@ class Player(BaseEntity):
 
         DebugLogger.init("Player", f"Initialized at ({x}, {y}) | Speed={self.speed} | HP={self.health}")
 
+        # -----------------------------------------------------------
+        # Register this player globally (scene-independent)
+        # -----------------------------------------------------------
+        settings.GLOBAL_PLAYER = self
+
+        self.layer = Layers.PLAYER
+
     # ===========================================================
     # Update Logic
     # ===========================================================
-    def update(self, dt, move_vec):
+    def update(self, dt):
         """
-        Update player position based on input vector and time delta.
+        Update player position with velocity buildup and gradual slowdown.
 
         Args:
-            dt (float): Time elapsed since last frame.
-            move_vec (pygame.Vector2): Normalized movement direction.
+            dt (float): Delta time.
         """
         if not self.alive:
             return
 
-        if move_vec.length_squared() > 0:
-            self.velocity = move_vec * self.speed * dt
-            self.rect.x += self.velocity.x
-            self.rect.y += self.velocity.y
-        else:
-            self.velocity.update(0, 0)
+        move_vec = getattr(self, "move_vec", pygame.Vector2(0, 0))
 
-        # Keep player inside screen bounds
-        self.rect.clamp_ip(pygame.Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))
+        # ==========================================================
+        # Tunable Physics Parameters
+        # ==========================================================
+        accel_rate = 3000  # Acceleration strength
+        friction_rate = 500  # Friction strength (per-axis)
+        max_speed = self.speed
+        smooth_factor = 0.2  # How smoothly direction turns
+
+        # ==========================================================
+        # Apply Acceleration
+        # ==========================================================
+        if move_vec.length_squared() > 0:
+            # Normalize for consistent diagonal speed
+            move_vec = move_vec.normalize()
+
+            # Smoothly blend velocity toward the desired direction
+            desired_velocity = move_vec * max_speed
+            self.velocity = self.velocity.lerp(desired_velocity, smooth_factor)
+
+            # Apply additive acceleration for gradual buildup
+            self.velocity += move_vec * accel_rate * dt
+
+        else:
+            # ======================================================
+            # Apply Unified Friction (preserves direction)
+            # ======================================================
+            current_speed = self.velocity.length()
+            if current_speed > 0:
+                # Reduce speed while maintaining direction
+                new_speed = max(0.0, current_speed - friction_rate * dt)
+
+                if new_speed < 5:  # Stop near zero
+                    self.velocity.x = 0
+                    self.velocity.y = 0
+                else:
+                    self.velocity.scale_to_length(new_speed)
+
+        # ==========================================================
+        # Apply final movement
+        # ==========================================================
+        self.pos += self.velocity * dt
+
+        # ==========================================================
+        # Clamp to screen boundaries
+        # ==========================================================
+        screen_width = Display.WIDTH
+        screen_height = Display.HEIGHT
+
+        # Clamp position
+        self.pos.x = max(0.0, min(self.pos.x, screen_width - self.rect.width))
+        self.pos.y = max(0.0, min(self.pos.y, screen_height - self.rect.height))
+
+        # Stop velocity when hitting walls (prevents "pushing" against boundaries)
+        if self.pos.x <= 0 or self.pos.x >= screen_width - self.rect.width:
+            self.velocity.x = 0
+        if self.pos.y <= 0 or self.pos.y >= screen_height - self.rect.height:
+            self.velocity.y = 0
+
+        self.rect.x = int(self.pos.x)
+        self.rect.y = int(self.pos.y)

@@ -12,7 +12,7 @@ Responsibilities
 """
 
 import pygame
-from src.core.settings import DebugConfig
+from src.core.settings import Debug, Layers
 from src.core.utils.debug_logger import DebugLogger
 
 
@@ -35,7 +35,7 @@ class BaseEntity:
         self.rect = self.image.get_rect(center=(x, y))
         self.alive = True
 
-        if DebugConfig.VERBOSE_ENTITY_INIT:
+        if Debug.VERBOSE_ENTITY_INIT:
             DebugLogger.init("BaseEntity", f"Entity initialized at ({x}, {y})")
 
     # ===========================================================
@@ -62,5 +62,4 @@ class BaseEntity:
         Args:
             draw_manager: The DrawManager instance responsible for batching.
         """
-        draw_manager.draw_entity(self, layer=1)
-        DebugLogger.trace("BaseEntity", f"Entity drawn at {self.rect.topleft}")
+        draw_manager.draw_entity(self, layer=getattr(self, 'layer', Layers.ENEMIES))

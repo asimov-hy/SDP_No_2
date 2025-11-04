@@ -12,7 +12,6 @@ Responsibilities
 
 from src.core.utils.debug_logger import DebugLogger
 
-
 class StageManager:
     """Handles stage timing, wave scheduling, and progression."""
 
@@ -81,10 +80,6 @@ class StageManager:
         width = self.spawner.display.get_window_size()[0] if self.spawner.display else 800
 
         DebugLogger.system("StageManager", f"Triggering wave: {wave}")
-
-        enemy_type = wave.get("enemy_type", "basic")
-        count = wave.get("count", 1)
-        pattern = wave.get("pattern", "line")
 
         DebugLogger.system(
             "StageManager",

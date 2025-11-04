@@ -15,6 +15,8 @@ Responsibilities
 import pygame
 
 from src.core.utils.debug_logger import DebugLogger
+from src.core.settings import Display, Layers
+from src.core import settings
 
 from src.entities.player import Player
 
@@ -66,9 +68,12 @@ class GameScene:
         player_img = self.draw_manager.get_image("player")
 
         # Spawn player at bottom-center of screen
-        width, height = self.display.get_window_size()
-        self.player = Player(width // 2, height - 80, player_img)
-        DebugLogger.init("GameScene", f"Player entity initialized at ({width // 2}, {height - 80})")
+        start_x = (Display.WIDTH / 2) - (player_img.get_width() / 2)
+        start_y = Display.HEIGHT - player_img.get_height() - 10
+
+        self.player = Player(start_x, start_y, player_img)
+
+        DebugLogger.init("GameScene", f"Player entity initialized at ({start_x}, {start_y})")
 
         self.draw_manager.load_image("enemy_basic", "assets/images/enemies/enemy_basic.png", scale=1.0)
         DebugLogger.init("GameScene", "EnemyBasic image loaded successfully")
@@ -114,11 +119,11 @@ class GameScene:
         Args:
             dt (float): Delta time (in seconds) since the last frame.
         """
-        self.input.update()
         move = self.input.get_normalized_move()
 
         # Player movement
-        self.player.update(dt, move)
+        self.player.move_vec = move
+        self.player.update(dt)
 
         # Wave-based enemy spawning
         self.stage_manager.update(dt)
@@ -138,7 +143,7 @@ class GameScene:
             draw_manager: DrawManager responsible for batching and rendering.
         """
         # Player rendering
-        draw_manager.draw_entity(self.player, layer=1)
+        draw_manager.draw_entity(self.player, layer=Layers.PLAYER)
 
         # Wave-based enemies
         self.spawner.draw()
