@@ -36,7 +36,7 @@ class Button(UIElement):
     def __init__(self, x, y, width, height, action=None,
                  color=(100, 100, 100), hover_color=None,
                  pressed_color=None, border_color=(255, 255, 255),
-                 border_width=2, icon_type=None, layer=100):
+                 border_width=2, icon_type=None, text='', text_color=(255, 255, 255), font_size=30, layer=100):
 
         """
         Initialize the button with appearance and behavior parameters.
@@ -63,6 +63,12 @@ class Button(UIElement):
         self.border_color = border_color
         self.border_width = border_width
         self.icon_type = icon_type
+        self.text = text
+        self.text_color = text_color
+        if self.text:
+            self.font = pygame.font.Font("assets/fonts/arcade.ttf", font_size)
+            self.text_surf = self.font.render(self.text, True, self.text_color)
+            self.text_rect = self.text_surf.get_rect(center=(width // 2, height // 2))
 
         # Button state
         self.is_hovered = False
@@ -158,6 +164,8 @@ class Button(UIElement):
                 surf.blit(icon, rect)
             else:
                 self._draw_icon(surf, self.icon_type, self.border_color)
+        elif self.text:
+            surf.blit(self.text_surf, self.text_rect)
 
         # DebugLogger.state(f"Rendered '{self.action}' at {self.rect.topleft}")
         return surf
