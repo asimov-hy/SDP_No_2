@@ -50,10 +50,16 @@ class EnemyStraight(EnemyBaseEntity):
         if not self.alive:
             return
 
-        self.rect.y += self.speed * dt
+        # Move downward
+        self.pos.y += self.speed * dt
+        self.rect.topleft = (int(self.pos.x), int(self.pos.y))
 
-        # Destroy once off-screen
-        if self.rect.top > Display.HEIGHT:
+        # Update hitbox
+        if self.hitbox:
+            self.hitbox.update()
+
+        # Destroy when off-screen
+        if self.pos.y > Display.HEIGHT:
             self.alive = False
             if Debug.VERBOSE_ENTITY_DEATH:
-                DebugLogger.state(f"Destroyed (off-screen) at Y={self.rect.y:.1f}")
+                DebugLogger.state(f"[Death] {type(self).__name__} off-screen at y={self.pos.y:.1f}")

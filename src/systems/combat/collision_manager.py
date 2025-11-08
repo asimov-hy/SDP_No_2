@@ -1,18 +1,18 @@
 """
 collision_manager.py
 --------------------
-Simplified modular collision handler.
-Detects overlaps and delegates actual effects
-to entities and bullets themselves.
+Optimized modular collision handler.
+Uses spatial hashing to reduce redundant collision checks
+and delegates actual responses to entities and bullets.
 
 Responsibilities
 ----------------
 - Detect collisions between bullets ↔ entities.
 - Delegate behavior to bullet.on_hit() or entity.on_collision().
-- Provide optional hitbox debug visualization.
+- Support collision rules for flexible filtering.
+- Provide optional hitbox debug visualization and profiling.
 """
 
-import pygame
 from src.core.game_settings import Debug
 from src.core.utils.debug_logger import DebugLogger
 
@@ -20,78 +20,193 @@ from src.core.utils.debug_logger import DebugLogger
 class CollisionManager:
     """Detects collisions but lets objects decide what happens."""
 
+    # ===========================================================
+    # Configuration
+    # ===========================================================
+    BASE_CELL_SIZE = 64
+
+    # ===========================================================
+    # Initialization
+    # ===========================================================
     def __init__(self, player, bullet_manager, spawn_manager):
+        """
+        Initialize the collision manager and register key systems.
+
+        Args:
+            player: Player entity instance to include in collision checks.
+            bullet_manager: Reference to the BulletManager containing active bullets.
+            spawn_manager: Reference to the SpawnManager containing active enemies.
+        """
         self.player = player
         self.bullet_manager = bullet_manager
         self.spawn_manager = spawn_manager
+        self.CELL_SIZE = self.BASE_CELL_SIZE
+
+        self.rules = {
+            ("player", "enemy"),
+            ("player_bullet", "enemy"),
+            ("enemy_bullet", "player"),
+        }
+
+        DebugLogger.init("Collision system initialized")
 
     # ===========================================================
-    # Per-frame update
+    # Utility: Grid Assignment
     # ===========================================================
-    def update(self, surface=None):
+    def _add_to_grid(self, grid, obj):
         """
-        Perform collision detection only — no direct damage logic.
+        Assign an entity to a grid cell based on its hitbox center.
+
+        Args:
+            grid (dict): Spatial hash table mapping cell → list of entities.
+            obj: Any entity with a valid hitbox attribute.
         """
+        hitbox = getattr(obj, "hitbox", None)
+        if not hitbox:
+            return
+
+        rect = hitbox.rect
+        start_x = int(rect.left // self.CELL_SIZE)
+        end_x   = int(rect.right // self.CELL_SIZE)
+        start_y = int(rect.top // self.CELL_SIZE)
+        end_y   = int(rect.bottom // self.CELL_SIZE)
+
+        for cx in range(start_x, end_x + 1):
+            for cy in range(start_y, end_y + 1):
+                grid.setdefault((cx, cy), []).append(obj)
+
+    # ===========================================================
+    # Optimized Collision Detection
+    # ===========================================================
+    def detect(self):
+        """
+        Optimized collision detection using spatial hashing.
+
+        Groups entities by screen regions to minimize redundant checks.
+        Delegates all responses to each entity’s `on_collision()` or `on_hit()`.
+
+        Returns:
+            list[tuple]: List of (object_a, object_b) pairs that have collided.
+        """
+
+        collisions = []
+
         # -------------------------------------------------------
-        # 1. Player ↔ Enemy
+        # Pre-filter active objects
         # -------------------------------------------------------
+        active_bullets = [b for b in self.bullet_manager.active if b.alive]
+        active_enemies = [e for e in self.spawn_manager.enemies if e.alive]
+        player = self.player if self.player.alive else None
 
-        for enemy in self.spawn_manager.enemies:
-            if not (enemy.alive and self.player.alive):
-                continue
-            if getattr(self.player, "hitbox", None) and getattr(enemy, "hitbox", None):
-                # Sync hitbox positions before checking
-                self.player.hitbox.rect.topleft = self.player.rect.topleft
-                enemy.hitbox.rect.topleft = enemy.rect.topleft
-
-                if self.player.hitbox.rect.colliderect(enemy.hitbox.rect):
-                    DebugLogger.state(f"[Collision] Player <-> {type(enemy).__name__}")
-                    enemy.on_collision(self.player)
-                    self.player.on_collision(enemy)
+        total_entities = len(active_bullets) + len(active_enemies) + (1 if player else 0)
+        if total_entities == 0:
+            return collisions
 
         # -------------------------------------------------------
-        # 2. Bullets ↔ Entities (PlayerBullets → Enemies, EnemyBullets → Player)
+        # 2) Dynamic grid size adjustment
         # -------------------------------------------------------
+        if total_entities > 800:
+            self.CELL_SIZE = 48  # tighter grid for dense scenes
+        elif total_entities < 100:
+            self.CELL_SIZE = 96  # looser grid for sparse scenes
+        else:
+            self.CELL_SIZE = self.BASE_CELL_SIZE
 
-        for bullet in list(self.bullet_manager.active):
-            if not bullet.alive:
-                continue
+        # -------------------------------------------------------
+        # 3) Build Spatial Grid
+        # -------------------------------------------------------
+        grid = {}
+        add_to_grid = self._add_to_grid  # micro-optimization (local ref)
 
-            # Player bullets hit enemies
-            if bullet.owner == "player":
-                for enemy in self.spawn_manager.enemies:
-                    if not (enemy.alive and getattr(enemy, "hitbox", None)):
+        if player:
+            add_to_grid(grid, player)
+        for enemy in active_enemies:
+            add_to_grid(grid, enemy)
+        for bullet in active_bullets:
+            add_to_grid(grid, bullet)
+
+        # -------------------------------------------------------
+        # 4) Localized Collision Checks (per cell + neighbors)
+        # -------------------------------------------------------
+        neighbor_offsets = [
+            (0, 0), (1, 0), (-1, 0), (0, 1), (0, -1),
+            (1, 1), (-1, 1), (1, -1), (-1, -1)
+        ]
+
+        checked_pairs = set()
+        append_collision = collisions.append
+        rules = self.rules
+        get_hitbox = getattr
+        get_tag = getattr
+
+        for cell_key, cell_objects in grid.items():
+            for dx, dy in neighbor_offsets:
+                neighbor_key = (cell_key[0] + dx, cell_key[1] + dy)
+                neighbor_objs = grid.get(neighbor_key)
+                if not neighbor_objs:
+                    continue
+
+                for a in cell_objects:
+                    a_hitbox = get_hitbox(a, "hitbox", None)
+                    if not a_hitbox:
                         continue
 
-                    # Sync hitbox positions before check
-                    if hasattr(bullet, "hitbox"):
-                        bullet.hitbox.rect.topleft = bullet.rect.topleft
-                    enemy.hitbox.rect.topleft = enemy.rect.topleft
+                    for b in neighbor_objs:
+                        if a is b:
+                            continue
+                        b_hitbox = get_hitbox(b, "hitbox", None)
+                        if not b_hitbox:
+                            continue
 
-                    bullet_rect = bullet.hitbox.rect if hasattr(bullet, "hitbox") else bullet.rect
-                    if bullet_rect.colliderect(enemy.hitbox.rect):
-                        DebugLogger.state(f"[Collision] PlayerBullet -> {type(enemy).__name__}")
-                        bullet.on_hit(enemy)
-                        break
+                        # Avoid redundant duplicate checks
+                        pair_key = tuple(sorted((id(a), id(b))))
+                        if pair_key in checked_pairs:
+                            continue
+                        checked_pairs.add(pair_key)
 
-            # Enemy bullets hit player
-            elif bullet.owner == "enemy":
-                bullet_rect = bullet.hitbox.rect if hasattr(bullet, "hitbox") else bullet.rect
-                if self.player.alive and getattr(self.player, "hitbox", None):
-                    if bullet_rect.colliderect(self.player.hitbox.rect):
-                        DebugLogger.state("[Collision] EnemyBullet -> Player")
-                        bullet.on_hit(self.player)
+                        # Rule-based filtering
+                        tag_a = get_tag(a, "collision_tag", None)
+                        tag_b = get_tag(b, "collision_tag", None)
+                        pair = tuple(sorted((tag_a, tag_b)))
+                        if pair not in rules:
+                            continue
 
-        # -------------------------------------------------------
-        # 3. Optional debug visualization
-        # -------------------------------------------------------
-        if Debug.ENABLE_HITBOX and surface:
-            if getattr(self.player, "hitbox", None):
-                self.player.hitbox.draw_debug(surface)
-            for enemy in self.spawn_manager.enemies:
-                if getattr(enemy, "hitbox", None):
-                    enemy.hitbox.draw_debug(surface)
+                        # Perform overlap check
+                        if a_hitbox.rect.colliderect(b_hitbox.rect):
+                            append_collision((a, b))
 
-            for bullet in self.bullet_manager.active:
-                if getattr(bullet, "hitbox", None):
-                    bullet.hitbox.draw_debug(surface)
+                            # Optional centralized collision handling
+                            if hasattr(a, "on_collision"):
+                                a.on_collision(b)
+                            if hasattr(b, "on_collision"):
+                                b.on_collision(a)
+
+                            # Throttled debug output
+                            if Debug.ENABLE_HITBOX and len(collisions) <= 10:
+                                DebugLogger.state(
+                                    f"Collision detected between {type(a).__name__} and {type(b).__name__}")
+        return collisions
+
+    # ===========================================================
+    # Debug Visualization
+    # ===========================================================
+    def draw_debug(self, surface):
+        """
+        Draw hitboxes for all entities if debug mode is enabled.
+
+        Args:
+            surface (pygame.Surface): The surface used for drawing hitboxes.
+        """
+        if not Debug.ENABLE_HITBOX:
+            return
+
+        if getattr(self.player, "hitbox", None):
+            self.player.hitbox.draw_debug(surface)
+
+        for enemy in self.spawn_manager.enemies:
+            if getattr(enemy, "hitbox", None):
+                enemy.hitbox.draw_debug(surface)
+
+        for bullet in self.bullet_manager.active:
+            if getattr(bullet, "hitbox", None):
+                bullet.hitbox.draw_debug(surface)

@@ -12,7 +12,7 @@ Responsibilities
 """
 
 import pygame
-from src.core.game_settings import Debug, Layers
+from src.core.game_settings import Layers
 from src.core.utils.debug_logger import DebugLogger
 
 
@@ -31,16 +31,27 @@ class BaseEntity:
             y (float): Initial y-coordinate.
             image (pygame.Surface): Surface image used for rendering.
         """
+        # -------------------------------------------------------
+        # Core spatial attributes
+        # -------------------------------------------------------
         self.image = image
         self.rect = self.image.get_rect(center=(x, y))
         self.pos = pygame.Vector2(x, y)
 
+        # -------------------------------------------------------
+        # Entity state
+        # -------------------------------------------------------
         self.alive = True
+        self.layer = Layers.ENEMIES
 
-        DebugLogger.init(f"[EntityBase] {type(self).__name__} initialized at ({x:.1f}, {y:.1f})")
-
+        # -------------------------------------------------------
+        # Collision attributes
+        # -------------------------------------------------------
         self.hitbox = None
         self.has_hitbox = False
+        self.collision_tag = "neutral"
+
+        # DebugLogger.init(f" {type(self).__name__} initialized at ({x:.1f}, {y:.1f})")
 
     # ===========================================================
     # Update Logic
@@ -67,3 +78,31 @@ class BaseEntity:
             draw_manager: The DrawManager instance responsible for batching.
         """
         draw_manager.draw_entity(self, layer=getattr(self, 'layer', Layers.ENEMIES))
+
+    # ===========================================================
+    # Collision Handling
+    # ===========================================================
+    def on_collision(self, other):
+        """
+        Handle collision with another entity.
+        Should be overridden by subclasses to define specific behavior.
+
+        Args:
+            other (BaseEntity): The other entity involved in the collision.
+        """
+        DebugLogger.trace(
+            f"[CollisionIgnored] {type(self).__name__} collided with {type(other).__name__} (no override)"
+        )
+
+    # ===========================================================
+    # Hitbox Accessor
+    # ===========================================================
+    def get_hitbox_rect(self):
+        """
+        Safely return the current hitbox rect for this entity.
+
+        Returns:
+            pygame.Rect | None: The hitbox rect if available.
+        """
+        return self.hitbox.rect if getattr(self, "hitbox", None) else None
+

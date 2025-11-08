@@ -12,12 +12,8 @@ Responsibilities
 
 from src.core.game_settings import Debug
 from src.core.utils.debug_logger import DebugLogger
-
 from src.systems.combat.collision_hitbox import CollisionHitbox
-
 from src.entities.enemies.enemy_straight import EnemyStraight
-# Future: from src.entities.enemies.enemy_zigzag import EnemyZigzag
-# Future: from src.entities.enemies.enemy_shooter import EnemyShooter
 
 # ===========================================================
 # Enemy Type Registry
@@ -47,10 +43,10 @@ class SpawnManager:
         self.display = display
         self.enemies = []  # Active enemy entities
 
-        # Timer used to limit log spam for trace-level outputs
+        # Internal cache used to sync with collision manager
         self._trace_timer = 0.0
 
-        DebugLogger.init("Initialized enemy spawn system")
+        DebugLogger.init("Enemy spawn system initialized")
 
     # ===========================================================
     # Enemy Spawning
@@ -64,34 +60,37 @@ class SpawnManager:
             x (float): X spawn coordinate.
             y (float): Y spawn coordinate.
         """
+        cls = ENEMY_TYPES.get(type_name)
+        if not cls:
+            DebugLogger.warn(f"Unknown enemy type: '{type_name}'")
+            return
+
+        # -------------------------------------------------------
+        # Load enemy sprite (fallback to None if not found)
+        # -------------------------------------------------------
+        image_key = f"enemy_{type_name}"
         try:
-            # -------------------------------------------------------
-            # Resolve enemy class dynamically from registry
-            # -------------------------------------------------------
-            cls = ENEMY_TYPES.get(type_name)
-            if not cls:
-                DebugLogger.warn(f"Unknown enemy type: '{type_name}'")
-                return
+            img = self.draw_manager.get_image(image_key)
+        except Exception:
+            DebugLogger.warn(f"Missing image asset for '{image_key}', using fallback")
+            img = None
 
-            # -------------------------------------------------------
-            # Auto-load matching image asset (enemy_straight, etc.)
-            # -------------------------------------------------------
-            image_key = f"enemy_{type_name}"
-            try:
-                img = self.draw_manager.get_image(image_key)
-            except Exception:
-                DebugLogger.warn(f"Missing image asset for '{image_key}', using fallback.")
-                img = None
-
-            # -------------------------------------------------------
-            # Instantiate enemy and register hitbox
-            # -------------------------------------------------------
+        # -------------------------------------------------------
+        # Instantiate enemy and attach hitbox
+        # -------------------------------------------------------
+        try:
             enemy = cls(x, y, img)
-            enemy.hitbox = CollisionHitbox(enemy, scale=getattr(enemy, "hitbox_scale", 1.0))
+            enemy.collision_tag = getattr(enemy, "collision_tag", "enemy")
+
+            # Attach scaled hitbox for spatial hashing
+            hitbox_scale = getattr(enemy, "hitbox_scale", 1.0)
+            enemy.hitbox = CollisionHitbox(enemy, scale=hitbox_scale)
+            enemy.has_hitbox = True
+
             self.enemies.append(enemy)
 
             if Debug.VERBOSE_ENTITY_INIT:
-                DebugLogger.action(f"Spawned '{type_name}' enemy at ({x}, {y})")
+                DebugLogger.action(f"Spawned enemy '{type_name}' at ({x:.0f}, {y:.0f})")
 
         except Exception as e:
             DebugLogger.warn(f"Failed to spawn enemy '{type_name}': {e}")
@@ -109,17 +108,23 @@ class SpawnManager:
         if not self.enemies:
             return
 
-        # Update all enemies
+        # Update positions and hitboxes before collision checks
         for enemy in self.enemies:
+            if not enemy.alive:
+                continue
             enemy.update(dt)
+            if enemy.has_hitbox:
+                enemy.hitbox.update()
 
-        # Remove dead enemies efficiently
-        initial_count = len(self.enemies)
+        # -------------------------------------------------------
+        # Cleanup inactive enemies efficiently
+        # -------------------------------------------------------
+        before = len(self.enemies)
         self.enemies = [e for e in self.enemies if e.alive]
-        removed_count = initial_count - len(self.enemies)
+        removed = before - len(self.enemies)
 
-        if removed_count > 0 and Debug.VERBOSE_ENTITY_DEATH:
-            DebugLogger.state(f"Removed {removed_count} inactive enemies")
+        if removed > 0 and Debug.VERBOSE_ENTITY_DEATH:
+            DebugLogger.state(f"Removed {removed} inactive enemies")
 
     # ===========================================================
     # Rendering Pass

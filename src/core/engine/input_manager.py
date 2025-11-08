@@ -35,6 +35,7 @@ DEFAULT_KEY_BINDINGS = {
     }
 }
 
+
 class InputManager:
     """Processes player input from keyboard and (optionally) controllers."""
 
@@ -109,7 +110,6 @@ class InputManager:
             self._update_ui_navigation()
         else:
             self._update_gameplay_controls()
-
 
     # ===========================================================
     # Gameplay Input

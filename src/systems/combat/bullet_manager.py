@@ -11,9 +11,11 @@ Responsibilities
 - Maintain ownership (player/enemy) for collision and effects.
 """
 
+import pygame
 from src.entities.bullets.bullet_straight import StraightBullet
-from src.core.game_settings import Layers
+from src.core.game_settings import Layers, Debug
 from src.core.utils.debug_logger import DebugLogger
+from src.systems.combat.collision_hitbox import CollisionHitbox
 
 
 class BulletManager:
@@ -23,10 +25,58 @@ class BulletManager:
     # Initialization
     # ===========================================================
     def __init__(self):
-        self.active = []  # currently active bullets
-        self.pool = []    # inactive bullets ready for reuse
-        self.bullets = self.active
+        self.active = []  # Active bullets currently in flight
+        self.pool = []    # Inactive bullets available for reuse
+        self._circle_cache = {}  # Cache for colored bullet circles
+
         DebugLogger.init("║{:<59}║".format(f"\t[BulletManager][INIT]\t→ Pool ready"), show_meta=False)
+
+    # ===========================================================
+    # Bullet Creation / Reuse
+    # ===========================================================
+    def _get_bullet(self, pos, vel, image, color, radius, owner, damage, hitbox_scale):
+        """Return a recycled or newly created bullet."""
+        if self.pool:
+            bullet = self.pool.pop()
+            self._reset_bullet(bullet, pos, vel, image, color, radius, owner, damage, hitbox_scale)
+        else:
+            bullet = StraightBullet(
+                pos, vel,
+                image=image, color=color,
+                radius=radius, owner=owner,
+                damage=damage, hitbox_scale=hitbox_scale,
+            )
+
+        bullet.collision_tag = f"{owner}_bullet"
+        bullet.has_hitbox = True
+
+        return bullet
+
+    def _reset_bullet(self, b, pos, vel, image, color, radius, owner, damage, hitbox_scale):
+        """Reset an existing bullet from the pool."""
+        b.pos.update(pos)
+        b.vel.update(vel)
+        b.image = image
+        b.color = color
+        b.radius = radius
+        b.owner = owner
+        b.damage = damage
+        b.alive = True
+        b.collision_tag = f"{owner}_bullet"
+        b.has_hitbox = True
+
+        # Recreate or sync rect
+        if b.image:
+            b.rect = b.image.get_rect(center=pos)
+        else:
+            b.rect = pygame.Rect(0, 0, radius * 2, radius * 2)
+            b.rect.center = pos
+
+        # Ensure hitbox consistency
+        if not getattr(b, "hitbox", None):
+            b.hitbox = CollisionHitbox(b, scale=hitbox_scale)
+        else:
+            b.hitbox.update()
 
     # ===========================================================
     # Spawning
@@ -46,46 +96,9 @@ class BulletManager:
             damage (int): Damage dealt upon collision.
             hitbox_scale (float): Scale factor for bullet hitbox size.
         """
-        # Reuse from pool if possible
-        if self.pool:
-            b = self.pool.pop()
-            b.pos.update(pos)
-            b.vel.update(vel)
-            b.alive = True
-            b.owner = owner
-            b.image = image
-            b.color = color
-            b.radius = radius
-            b.damage = damage
-
-            if b.image:
-                b.rect = b.image.get_rect(center=pos)
-            else:
-                if b.image:
-                    b.rect = b.image.get_rect(center=pos)
-                else:
-                    import pygame
-                    b.rect = pygame.Rect(0, 0, radius * 2, radius * 2)
-                    b.rect.center = pos
-
-        else:
-            b = StraightBullet(
-                pos, vel, image=image, color=color,
-                radius=radius, owner=owner, damage=damage,
-                hitbox_scale=hitbox_scale
-            )
-
-        # Update or recreate hitbox
-        if not hasattr(b, "hitbox"):
-            from src.systems.combat.collision_hitbox import CollisionHitbox
-            b.hitbox = CollisionHitbox(b, scale=hitbox_scale)
-        else:
-            b.hitbox.update()
-
-        b.hitbox.rect.topleft = b.rect.topleft
-
+        b = self._get_bullet(pos, vel, image, color, radius, owner, damage, hitbox_scale)
         self.active.append(b)
-
+        # DebugLogger.trace(f" {b.collision_tag} at {pos} → Vel={vel}")
 
     # ===========================================================
     # Update Cycle
@@ -96,13 +109,16 @@ class BulletManager:
         for b in self.active:
             b.update(dt)
 
-            if hasattr(b, "hitbox"):
+            # Sync hitbox position
+            if b.hitbox:
                 b.hitbox.rect.topleft = b.rect.topleft
 
+            # Keep alive or recycle
             if b.alive:
                 alive_bullets.append(b)
             else:
                 self.pool.append(b)
+
         self.active = alive_bullets
 
     # ===========================================================
@@ -115,18 +131,19 @@ class BulletManager:
         Args:
             draw_manager (DrawManager): Global DrawManager instance.
         """
-        import pygame
-        from src.core.game_settings import Debug
-
         for b in self.active:
             if b.image:
                 draw_manager.queue_draw(b.image, b.rect, layer=Layers.BULLETS)
             else:
-                surf = pygame.Surface((b.radius * 2, b.radius * 2), pygame.SRCALPHA)
-                pygame.draw.circle(surf, b.color, (b.radius, b.radius), b.radius)
+                # Cache circle surfaces to avoid recreating each frame
+                key = (b.color, b.radius)
+                surf = self._circle_cache.get(key)
+                if not surf:
+                    surf = pygame.Surface((b.radius * 2, b.radius * 2), pygame.SRCALPHA)
+                    pygame.draw.circle(surf, b.color, (b.radius, b.radius), b.radius)
+                    self._circle_cache[key] = surf
                 draw_manager.queue_draw(surf, b.rect, layer=Layers.BULLETS)
 
-            # Optional: render hitbox overlay
-            if getattr(Debug, "ENABLE_HITBOX", False) and hasattr(b, "hitbox"):
-                if hasattr(draw_manager, "surface") and getattr(Debug, "ENABLE_HITBOX", False):
-                    b.hitbox.draw_debug(draw_manager.surface)
+            # Debug: render hitbox overlay
+            if Debug.ENABLE_HITBOX and b.hitbox:
+                b.hitbox.draw_debug(draw_manager.surface)

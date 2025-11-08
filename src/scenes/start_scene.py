@@ -15,6 +15,7 @@ import pygame
 
 from src.core.utils.debug_logger import DebugLogger
 
+
 class StartScene:
     """Temporary start scene that auto-transitions to GameScene."""
 

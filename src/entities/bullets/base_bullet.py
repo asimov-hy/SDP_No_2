@@ -14,11 +14,10 @@ Responsibilities
 import pygame
 from src.core import game_settings
 from src.core.utils.debug_logger import DebugLogger
-
 from src.systems.combat.collision_hitbox import CollisionHitbox
 
 
-class BulletBase:
+class BaseBullet:
     """Base class for all bullet entities."""
 
     # ===========================================================
@@ -48,10 +47,10 @@ class BulletBase:
         self.image = image
         self.color = color
         self.radius = radius
-        self.damage = damage  # NEW: bullet carries its own damage value
+        self.damage = damage
 
         # -------------------------------------------------------
-        # Rect for collision & rendering
+        # Rect Setup
         # -------------------------------------------------------
         if self.image:
             self.rect = self.image.get_rect(center=pos)
@@ -60,9 +59,13 @@ class BulletBase:
             self.rect.center = pos
 
         # -------------------------------------------------------
-        # Hitbox Setup (matches sprite or circle)
+        # Collision Tag & Hitbox
         # -------------------------------------------------------
+        self.collision_tag = f"{owner}_bullet"
         self.hitbox = CollisionHitbox(self, scale=hitbox_scale)
+        self.has_hitbox = True
+
+        # DebugLogger.state(f"[BulletSpawn] {self.collision_tag} created at {pos} → Vel={vel}")
 
     # ===========================================================
     # Update Logic
@@ -75,19 +78,24 @@ class BulletBase:
             - Move bullet according to velocity and delta time.
             - Deactivate when moving outside screen area.
         """
+        if not self.alive:
+            return
+
         self.pos += self.vel * dt
         self.rect.center = self.pos
 
         # Keep hitbox synced
-        if hasattr(self, "hitbox"):
+        if self.hitbox:
             self.hitbox.update()
 
-        # Off-screen cleanup (with buffer)
+        # Off-screen cleanup (buffer for smooth exit)
         if (
-            self.pos.y < -50 or self.pos.y > settings.Display.HEIGHT + 50 or
-            self.pos.x < -50 or self.pos.x > settings.Display.WIDTH + 50
+            self.pos.y < -50 or self.pos.y > game_settings.Display.HEIGHT + 50 or
+            self.pos.x < -50 or self.pos.x > game_settings.Display.WIDTH + 50
         ):
             self.alive = False
+            if game_settings.Debug.VERBOSE_ENTITY_DEATH:
+                DebugLogger.state(f"[BulletOffscreen] {self.collision_tag} removed at {self.pos}")
 
     # ===========================================================
     # Collision Logic
@@ -100,7 +108,7 @@ class BulletBase:
             target: Entity hit by this bullet (Player, Enemy, etc.)
         """
         if not self.alive:
-            return  # Prevent multiple hits in one frame
+            return  # Prevent multiple hits per frame
 
         if not hasattr(target, "take_damage"):
             DebugLogger.warn(f"[BulletBase] Target {type(target).__name__} has no take_damage()")
@@ -130,6 +138,6 @@ class BulletBase:
         else:
             pygame.draw.circle(surface, self.color, self.rect.center, self.radius)
 
-        # Optional debug overlay
-        if hasattr(self, "hitbox") and getattr(game_settings.Debug, "ENABLE_HITBOX", False):
+        # Optional hitbox debug overlay
+        if game_settings.Debug.ENABLE_HITBOX:
             self.hitbox.draw_debug(surface)

@@ -10,11 +10,25 @@ Responsibilities
 - Provide an entry point for future visual or sound effects.
 """
 
-from src.entities.bullets.base_bullet import BulletBase
+from src.entities.bullets.base_bullet import BaseBullet
+from src.core.utils.debug_logger import DebugLogger
 
 
-class StraightBullet(BulletBase):
+class StraightBullet(BaseBullet):
     """Basic straight-line bullet using default BulletBase movement."""
+
+    # ===========================================================
+    # Initialization
+    # ===========================================================
+    def __init__(self, *args, **kwargs):
+        """Initialize and register a simple linear bullet."""
+        super().__init__(*args, **kwargs)
+
+        # Safety: Ensure consistent tag setup
+        self.collision_tag = f"{self.owner}_bullet"
+
+        # Optional trace log for debug builds
+        # DebugLogger.trace(f"[BulletInit] {type(self).__name__} ({self.owner}) initialized")
 
     # ===========================================================
     # Update Logic

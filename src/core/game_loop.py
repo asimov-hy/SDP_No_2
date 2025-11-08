@@ -14,7 +14,7 @@ Responsibilities
 
 import pygame
 
-from src.core.game_settings import Display, Physics, Debug, Layers
+from src.core.game_settings import Display, Physics, Debug
 
 from src.core.engine.input_manager import InputManager
 from src.core.engine.display_manager import DisplayManager
@@ -70,11 +70,7 @@ class GameLoop:
         # -------------------------------------------------------
 
         DebugLogger.init("╠─────────────────── SCENE MANAGEMENT SYSTEMS ───────────────────╣", show_meta=False)
-        self.scenes = SceneManager(
-            self.display,
-            self.input,
-            self.draw_manager
-        )
+        self.scenes = SceneManager(self.display, self.input,self.draw_manager)
         DebugLogger.init("║" + " " * 64 + "║", show_meta=False)
 
         # -------------------------------------------------------

@@ -13,11 +13,11 @@ Responsibilities
 
 import pygame
 
-from src.core.utils.debug_logger import DebugLogger
-from src.core.game_settings import Layers, Debug
 from src.core import game_settings
-
+from src.core.game_state import STATE
+from src.core.utils.debug_logger import DebugLogger
 from src.ui.ui_button import UIButton
+
 
 class DebugHUD:
     """Displays developer buttons for quick debugging actions."""
@@ -61,7 +61,7 @@ class DebugHUD:
             border_color=(255, 255, 255),
             border_width=2,
             icon_type="fullscreen",
-            layer=Layers.UI
+            layer=game_settings.Layers.UI
         )
 
         exit_btn = UIButton(
@@ -76,7 +76,7 @@ class DebugHUD:
             border_color=(255, 255, 255),
             border_width=2,
             icon_type="close",
-            layer=Layers.UI
+            layer=game_settings.Layers.UI
         )
 
         self.elements = [fullscreen_btn, exit_btn]
@@ -170,7 +170,8 @@ class DebugHUD:
         # --------------------------------------------------------
         # Player Debug Info (global, scene-independent)
         # --------------------------------------------------------
-        player = settings.GLOBAL_PLAYER
+        player = STATE.player_ref
+
         if player:
             font = pygame.font.SysFont("consolas", 18)
             pos_text = f"Pos: ({player.rect.x:.1f}, {player.rect.y:.1f})"
@@ -183,17 +184,17 @@ class DebugHUD:
             rect_pos = surface_pos.get_rect(topleft=(70, 20))
             rect_vel = surface_vel.get_rect(topleft=(70, 40))
 
-            draw_manager.queue_draw(surface_pos, rect_pos, Layers.UI)
-            draw_manager.queue_draw(surface_vel, rect_vel, Layers.UI)
+            draw_manager.queue_draw(surface_pos, rect_pos, game_settings.Layers.UI)
+            draw_manager.queue_draw(surface_vel, rect_vel, game_settings.Layers.UI)
 
         # --------------------------------------------------------
         # Hitbox Debug Toggle Indicator
         # --------------------------------------------------------
         y_offset = 60
-        hitbox_state = "ON" if Debug.ENABLE_HITBOX else "OFF"
-        hitbox_color = (0, 255, 0) if Debug.ENABLE_HITBOX else (255, 80, 80)
+        hitbox_state = "ON" if game_settings.Debug.ENABLE_HITBOX else "OFF"
+        hitbox_color = (0, 255, 0) if game_settings.Debug.ENABLE_HITBOX else (255, 80, 80)
         surface_hitbox = font.render(f"Hitbox: {hitbox_state}", True, hitbox_color)
-        draw_manager.queue_draw(surface_hitbox, surface_hitbox.get_rect(topleft=(70, y_offset)), Layers.UI)
+        draw_manager.queue_draw(surface_hitbox, surface_hitbox.get_rect(topleft=(70, y_offset)), game_settings.Layers.UI)
 
     # ===========================================================
     # Visibility Controls

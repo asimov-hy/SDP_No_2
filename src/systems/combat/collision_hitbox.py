@@ -19,6 +19,8 @@ from src.core.game_settings import Debug
 class CollisionHitbox:
     """Represents a rectangular collision boundary tied to an entity."""
 
+    __slots__ = ("owner", "scale", "offset", "rect", "_size_cache", "_color_cache")
+
     # ===========================================================
     # Initialization
     # ===========================================================
@@ -28,83 +30,85 @@ class CollisionHitbox:
 
         Args:
             owner: The parent entity this hitbox belongs to.
-            scale (float): Proportional size of the hitbox relative to the entity sprite.
-                           Example: 0.85 → 85% of the sprite’s width and height.
-            offset (tuple[float, float]): Positional offset applied to the hitbox center.
+            scale (float): Proportional size of the hitbox relative to the sprite (e.g., 0.85).
+            offset (tuple[float, float]): Additional offset applied to the hitbox center.
         """
         self.owner = owner
         self.scale = scale
         self.offset = pygame.Vector2(offset)
-        self.rect = self._compute_rect()
+        self.rect = pygame.Rect(0, 0, 0, 0)
+        self._size_cache = None
+        self._color_cache = None
 
-        DebugLogger.init(
-            f"Created Hitbox for {type(owner).__name__} | Scale={scale} | Offset={offset}"
-        )
+        if hasattr(owner, "rect"):
+            self._initialize_from_owner()
+            self._cache_color()
+            # DebugLogger.init(f"[Hitbox] Created for {type(owner).__name__} | Scale={scale} | Offset={offset}")
+        else:
+            DebugLogger.warn(f"[Hitbox] {type(owner).__name__} missing 'rect' attribute!")
 
     # ===========================================================
-    # Internal Computation
+    # Internal Setup
     # ===========================================================
-    def _compute_rect(self) -> pygame.Rect:
-        """
-        Compute a scaled rectangle based on the owner's current sprite rect.
+    def _initialize_from_owner(self):
+        """Initialize hitbox dimensions based on the owner's sprite rect."""
+        rect = self.owner.rect
+        scaled_size = (int(rect.width * self.scale), int(rect.height * self.scale))
+        self.rect.size = scaled_size
+        self.rect.center = (rect.centerx + self.offset.x, rect.centery + self.offset.y)
+        self._size_cache = scaled_size
 
-        Returns:
-            pygame.Rect: The calculated hitbox rectangle.
-        """
-        base_rect = getattr(self.owner, "rect", None)
-        if base_rect is None:
-            DebugLogger.warn(f"[Hitbox] {type(self.owner).__name__} missing rect attribute.")
-            return pygame.Rect(0, 0, 0, 0)
-
-        width = int(base_rect.width * self.scale)
-        height = int(base_rect.height * self.scale)
-
-        hitbox = pygame.Rect(0, 0, width, height)
-        hitbox.center = base_rect.center + self.offset
-        return hitbox
+    def _cache_color(self):
+        """Cache debug color based on entity tag for faster draw calls."""
+        tag = getattr(self.owner, "collision_tag", "neutral")
+        if "enemy" in tag:
+            self._color_cache = (255, 60, 60)
+        elif "player" in tag:
+            self._color_cache = (60, 160, 255)
+        else:
+            self._color_cache = (80, 255, 80)
 
     # ===========================================================
     # Update Cycle
     # ===========================================================
     def update(self):
         """
-        Synchronize the hitbox position and dimensions with the owner.
-        Should be called once per frame, typically before collision checks.
+        Synchronize the hitbox position and size with the owner entity.
+        Called once per frame before collision checks.
         """
-        if not hasattr(self.owner, "rect"):
+        rect = getattr(self.owner, "rect", None)
+        if not rect:
+            DebugLogger.warn_once(f"[Hitbox] {type(self.owner).__name__} lost rect reference")
             return
 
-        self.rect = self._compute_rect()
+        # Recalculate only if size changed
+        scaled_w, scaled_h = int(rect.width * self.scale), int(rect.height * self.scale)
+        if (scaled_w, scaled_h) != self._size_cache:
+            self.rect.size = (scaled_w, scaled_h)
+            self._size_cache = (scaled_w, scaled_h)
+
+        self.rect.centerx = rect.centerx + self.offset.x
+        self.rect.centery = rect.centery + self.offset.y
 
         if Debug.VERBOSE_HITBOX_UPDATE:
-            DebugLogger.trace(
-                f"Hitbox updated ({type(self.owner).__name__}) → Center={self.rect.center}"
-            )
+            DebugLogger.trace(f"[Hitbox] Updated {type(self.owner).__name__} → {self.rect.center}")
 
     # ===========================================================
-    # Rendering (Debug Only)
+    # Debug Visualization
     # ===========================================================
     def draw_debug(self, surface):
         """
-        Render a visual outline of the hitbox for debugging purposes.
+        Render a visible outline of the hitbox for debugging.
 
         Args:
             surface (pygame.Surface): The rendering surface to draw onto.
         """
-        if not getattr(Debug, "ENABLE_HITBOX", False):
+        if not Debug.ENABLE_HITBOX:
             return
 
-        if hasattr(self.owner, "owner") and getattr(self.owner, "owner") == "enemy":
-            color = (255, 0, 0)  # Red for enemies
-        elif hasattr(self.owner, "owner") and getattr(self.owner, "owner") == "player":
-            color = (0, 128, 255)  # Blue for player bullets
-        else:
-            color = (0, 255, 0)  # Green default (player, enemies)
-
-        pygame.draw.rect(surface, color, self.rect, 1)
+        pygame.draw.rect(surface, self._color_cache, self.rect, 1)
 
         if Debug.VERBOSE_HITBOX_DRAW:
             DebugLogger.trace(
-                f"Drew hitbox outline for {type(self.owner).__name__} at {self.rect.center}"
+                f"[Hitbox] Drawn {type(self.owner).__name__} at {self.rect.center}"
             )
-
