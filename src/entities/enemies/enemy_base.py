@@ -1,21 +1,21 @@
 """
-enemy.py
---------
+enemy_base.py
+--------------
 Defines the shared base class for all enemy entities.
 
 Responsibilities
 ----------------
 - Maintain core enemy properties (HP, speed, alive state).
 - Handle common behaviors such as damage, destruction, and drawing.
-- Provide a base interface for all enemy subclasses (basic, zigzag, etc.).
+- Provide a base interface for all enemy subclasses (straight, zigzag, shooter, etc.).
 """
-from src.core.settings import Debug, Display, Layers
-from src.entities.base_entity import BaseEntity
+
+from src.core.settings import Debug, Layers
+from src.entities.entity_base import EntityBase
 from src.core.utils.debug_logger import DebugLogger
 
 
-
-class Enemy(BaseEntity):
+class EnemyBase(EntityBase):
     """Base class providing shared logic for all enemy entities."""
 
     # ===========================================================
@@ -65,25 +65,12 @@ class Enemy(BaseEntity):
     # Update Logic (To Be Overridden)
     # ===========================================================
     def update(self, dt: float):
-        """
-        Base update method — should be overridden by specific enemy types.
-
-        Args:
-            dt (float): Delta time (in seconds) since the last frame.
-        """
+        """To be overridden by specific enemy subclasses."""
         pass
 
     # ===========================================================
     # Rendering
     # ===========================================================
     def draw(self, draw_manager):
-        """
-        Render the enemy sprite to the screen.
-
-        Args:
-            draw_manager: DrawManager instance responsible for batching render calls.
-        """
+        """Render the enemy sprite to the screen."""
         draw_manager.draw_entity(self, layer=Layers.ENEMIES)
-        # if __debug__:  # or custom flag
-        #     DebugLogger.trace(f"Drew enemy at {self.rect.topleft}")
-

@@ -51,9 +51,13 @@ class Hitbox:
         Returns:
             pygame.Rect: The calculated hitbox rectangle.
         """
-        base_rect = self.owner.rect.copy()
-        width = base_rect.width * self.scale
-        height = base_rect.height * self.scale
+        base_rect = getattr(self.owner, "rect", None)
+        if base_rect is None:
+            DebugLogger.warn(f"[Hitbox] {type(self.owner).__name__} missing rect attribute.")
+            return pygame.Rect(0, 0, 0, 0)
+
+        width = int(base_rect.width * self.scale)
+        height = int(base_rect.height * self.scale)
 
         hitbox = pygame.Rect(0, 0, width, height)
         hitbox.center = base_rect.center + self.offset
@@ -67,6 +71,9 @@ class Hitbox:
         Synchronize the hitbox position and dimensions with the owner.
         Should be called once per frame, typically before collision checks.
         """
+        if not hasattr(self.owner, "rect"):
+            return
+
         self.rect = self._compute_rect()
 
         if Debug.VERBOSE_HITBOX_UPDATE:
@@ -87,10 +94,17 @@ class Hitbox:
         if not getattr(Debug, "ENABLE_HITBOX", False):
             return
 
-        color = (0, 255, 0)
+        if hasattr(self.owner, "owner") and getattr(self.owner, "owner") == "enemy":
+            color = (255, 0, 0)  # Red for enemies
+        elif hasattr(self.owner, "owner") and getattr(self.owner, "owner") == "player":
+            color = (0, 128, 255)  # Blue for player bullets
+        else:
+            color = (0, 255, 0)  # Green default (player, enemies)
+
         pygame.draw.rect(surface, color, self.rect, 1)
 
         if Debug.VERBOSE_HITBOX_DRAW:
             DebugLogger.trace(
                 f"Drew hitbox outline for {type(self.owner).__name__} at {self.rect.center}"
             )
+

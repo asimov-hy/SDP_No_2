@@ -128,6 +128,10 @@ class DrawManager:
             self._layers_dirty = True
         self.layers[layer].append((surface, rect))
 
+        if surface is None or rect is None:
+            DebugLogger.warn(f"[DrawManager] Skipped invalid draw call at layer {layer}")
+            return
+
     def draw_entity(self, entity, layer=0):
         """
         Queue an entity that contains an image and rect.
@@ -167,3 +171,10 @@ class DrawManager:
         if debug:
             draw_count = sum(len(items) for items in self.layers.values())
             DebugLogger.state(f"Rendered {draw_count} queued surfaces")
+
+        # -------------------------------------------------------
+        # Optional debug overlay pass (hitboxes)
+        # -------------------------------------------------------
+        if debug and hasattr(self, "debug_hitboxes"):
+            for hb in self.debug_hitboxes:
+                hb.draw_debug(target_surface)

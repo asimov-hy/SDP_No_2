@@ -13,9 +13,20 @@ Responsibilities
 from src.core.settings import Debug
 from src.core.utils.debug_logger import DebugLogger
 
-from src.entities.enemies.enemy_basic import EnemyBasic
-
 from src.systems.hitbox import Hitbox
+
+from src.entities.enemies.enemy_straight import EnemyStraight
+# Future: from src.entities.enemies.enemy_zigzag import EnemyZigzag
+# Future: from src.entities.enemies.enemy_shooter import EnemyShooter
+
+# ===========================================================
+# Enemy Type Registry
+# ===========================================================
+ENEMY_TYPES = {
+    "straight": EnemyStraight,
+    # "zigzag": EnemyZigzag,
+    # "shooter": EnemyShooter,
+}
 
 
 class SpawnManager:
@@ -49,23 +60,38 @@ class SpawnManager:
         Spawn a new enemy of the specified type.
 
         Args:
-            type_name (str): Type of enemy ('basic').
+            type_name (str): Type of enemy ('straight', 'zigzag', etc.).
             x (float): X spawn coordinate.
             y (float): Y spawn coordinate.
         """
         try:
-            if type_name == "basic":
-                img = self.draw_manager.get_image("enemy_basic")
-                enemy = EnemyBasic(x, y, img)
-            else:
+            # -------------------------------------------------------
+            # Resolve enemy class dynamically from registry
+            # -------------------------------------------------------
+            cls = ENEMY_TYPES.get(type_name)
+            if not cls:
                 DebugLogger.warn(f"Unknown enemy type: '{type_name}'")
                 return
 
+            # -------------------------------------------------------
+            # Auto-load matching image asset (enemy_straight, etc.)
+            # -------------------------------------------------------
+            image_key = f"enemy_{type_name}"
+            try:
+                img = self.draw_manager.get_image(image_key)
+            except Exception:
+                DebugLogger.warn(f"Missing image asset for '{image_key}', using fallback.")
+                img = None
+
+            # -------------------------------------------------------
+            # Instantiate enemy and register hitbox
+            # -------------------------------------------------------
+            enemy = cls(x, y, img)
             enemy.hitbox = Hitbox(enemy, scale=getattr(enemy, "hitbox_scale", 1.0))
             self.enemies.append(enemy)
+
             if Debug.VERBOSE_ENTITY_INIT:
                 DebugLogger.action(f"Spawned '{type_name}' enemy at ({x}, {y})")
-
 
         except Exception as e:
             DebugLogger.warn(f"Failed to spawn enemy '{type_name}': {e}")

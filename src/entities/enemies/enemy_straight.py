@@ -1,28 +1,29 @@
 """
-enemy_basic.py
---------------
+enemy_straight.py
+-----------------
 Defines a simple downward-moving enemy for early gameplay testing.
 
 Responsibilities
 ----------------
 - Move straight down the screen at a constant speed.
-- Reset to the top once off-screen.
-- Serve as the baseline template for all other enemy types.
+- Destroy itself when off-screen.
+- Serve as a baseline template for other enemy types.
 """
 
 from src.core.settings import Debug, Display
-from src.entities.enemies.enemy import Enemy
+from src.entities.enemies.enemy_base import EnemyBase
 from src.core.utils.debug_logger import DebugLogger
 
-class EnemyBasic(Enemy):
-    """Basic enemy that moves vertically downward and loops back to top."""
+
+class EnemyStraight(EnemyBase):
+    """Simple enemy that moves vertically downward and disappears when off-screen."""
 
     # ===========================================================
     # Initialization
     # ===========================================================
     def __init__(self, x, y, image, speed=100, hp=1):
         """
-        Initialize a basic enemy instance.
+        Initialize a straight-moving enemy.
 
         Args:
             x (float): Spawn X position.
@@ -34,14 +35,14 @@ class EnemyBasic(Enemy):
         super().__init__(x, y, image, speed=speed, hp=hp)
 
         if Debug.VERBOSE_ENTITY_INIT:
-            DebugLogger.init(f"Spawned at ({x}, {y}) | Speed={speed}")
+            DebugLogger.init(f"Spawned EnemyStraight at ({x}, {y}) | Speed={speed}")
 
     # ===========================================================
     # Update Logic
     # ===========================================================
     def update(self, dt: float):
         """
-        Move the enemy downward each frame, wrapping to the top when off-screen.
+        Move the enemy downward each frame and mark as destroyed once off-screen.
 
         Args:
             dt (float): Delta time (in seconds) since last frame.
@@ -51,7 +52,7 @@ class EnemyBasic(Enemy):
 
         self.rect.y += self.speed * dt
 
-        # Destroy if the enemy moves beyond the bottom of the screen
+        # Destroy once off-screen
         if self.rect.top > Display.HEIGHT:
             self.alive = False
             if Debug.VERBOSE_ENTITY_DEATH:

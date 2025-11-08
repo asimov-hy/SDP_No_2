@@ -76,8 +76,8 @@ class GameScene:
 
         DebugLogger.init(f"Player entity initialized at ({start_x}, {start_y})")
 
-        self.draw_manager.load_image("enemy_basic", "assets/images/enemies/enemy_basic.png", scale=1.0)
-        DebugLogger.init("EnemyBasic image loaded successfully")
+        self.draw_manager.load_image("enemy_straight", "assets/images/enemies/enemy_straight.png", scale=1.0)
+        DebugLogger.init("EnemyStraight sprite loaded successfully")
 
         # ===========================================================
         # Spawn Manager Setup (Wave-Based Enemy Spawning)
@@ -90,9 +90,9 @@ class GameScene:
         # ===========================================================
         # Example stage definition — can be replaced with data or JSON later
         STAGE_1_WAVES = [
-            {"spawn_time": 0.0, "enemy_type": "basic", "count": 3, "pattern": "line"},
-            {"spawn_time": 4.0, "enemy_type": "basic", "count": 5, "pattern": "v"},
-            {"spawn_time": 9.0, "enemy_type": "basic", "count": 8, "pattern": "line"},
+            {"spawn_time": 0.0, "enemy_type": "straight", "count": 3, "pattern": "line"},
+            {"spawn_time": 4.0, "enemy_type": "straight", "count": 5, "pattern": "v"},
+            {"spawn_time": 9.0, "enemy_type": "straight", "count": 8, "pattern": "line"},
         ]
 
         self.stage_manager = StageManager(self.spawner, STAGE_1_WAVES)
@@ -147,8 +147,9 @@ class GameScene:
         self.bullet_manager.update(dt)  # Updates all active bullets
 
         # ===========================================================
-        # Enemies and Waves
+        # Enemies and Wave Control
         # ===========================================================
+        # StageManager schedules spawns; SpawnManager updates active enemies
         self.stage_manager.update(dt)
         self.spawner.update(dt)
 
@@ -160,6 +161,7 @@ class GameScene:
         # ===========================================================
         # Collision Checks
         # ===========================================================
+        # Handles hit detection and optional hitbox debug visualization
         self.collision_manager.update(self.display.get_game_surface())
 
     # ===========================================================
@@ -172,16 +174,11 @@ class GameScene:
         Args:
             draw_manager: DrawManager responsible for batching and rendering.
         """
-        # Player rendering
-        draw_manager.draw_entity(self.player, layer=Layers.PLAYER)
-
-        # ===========================================================
-        # Bullets
-        # ===========================================================
-        self.bullet_manager.draw(draw_manager)  # NEW
-
-        # Wave-based enemies
+        # =======================================================
+        # Draw Order
+        # =======================================================
+        # Enemies → Bullets → Player → UI (maintains proper layering)
         self.spawner.draw()
-
-        # UI overlays
+        self.bullet_manager.draw(draw_manager)
+        draw_manager.draw_entity(self.player, layer=Layers.PLAYER)
         self.ui.draw(draw_manager)

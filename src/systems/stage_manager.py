@@ -73,38 +73,48 @@ class StageManager:
         """
         pattern = wave.get("pattern", "line")
         count = wave.get("count", 1)
-        enemy_type = wave.get("enemy_type", "basic")
+        enemy_type = wave.get("enemy_type", "straight")  # updated default
         y_offset = wave.get("y_offset", -100)
         speed = wave.get("speed", None)
 
         width = self.spawner.display.get_window_size()[0] if self.spawner.display else 800
 
-        DebugLogger.system(f"Triggering wave: {wave}")
+        DebugLogger.system(
+            f"[Stage] Wave {self.wave_index + 1}: {enemy_type} ×{count} | Pattern={pattern} | Time={wave['spawn_time']:.1f}s"
+        )
 
-        DebugLogger.system(f"Triggering wave {self.wave_index + 1}: {enemy_type} ×{count} ({pattern})")
+        # -------------------------------------------------------
+        # Formation patterns
+        # -------------------------------------------------------
+        positions = []
 
-        # Basic formation patterns
         if pattern == "line":
             spacing = width // (count + 1)
             for i in range(count):
                 x = spacing * (i + 1)
-                self.spawner.spawn_enemy(enemy_type, x, y_offset)
+                positions.append((x, y_offset))
 
         elif pattern == "v":
             center_x = width // 2
-            x_spacing = 120  # horizontal distance between enemies
-            y_spacing = 40  # vertical spacing per row
-            tip_depth = 120  # how deep the V goes
+            x_spacing = 120
+            y_spacing = 40
+            tip_depth = 120
 
             for i in range(count):
-                # offset index relative to center
                 rel = i - (count - 1) / 2
                 x = center_x + rel * x_spacing
-
-                # Make the center enemy lowest (the tip of the V)
                 y = y_offset + tip_depth - abs(rel) * y_spacing
-
-                self.spawner.spawn_enemy(enemy_type, x, y)
+                positions.append((x, y))
 
         else:
             DebugLogger.warn(f"Unknown pattern: {pattern}")
+            return
+
+        # -------------------------------------------------------
+        # Spawn all enemies (sorted left → right)
+        # -------------------------------------------------------
+        for x, y in sorted(positions, key=lambda p: p[0]):
+            self.spawner.spawn_enemy(enemy_type, x, y)
+            enemy = self.spawner.enemies[-1]  # access last spawned
+            if speed is not None:
+                enemy.speed = speed

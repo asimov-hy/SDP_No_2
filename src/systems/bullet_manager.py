@@ -31,9 +31,10 @@ class BulletManager:
     # ===========================================================
     # Spawning
     # ===========================================================
-    def spawn(self, pos, vel, image=None, color=(255, 255, 255), radius=3, owner="player"):
+    def spawn(self, pos, vel, image=None, color=(255, 255, 255),
+              radius=3, owner="player", damage=1, hitbox_scale=0.9):
         """
-        Create or reuse a bullets instance.
+        Create or reuse a bullet instance.
 
         Args:
             pos (tuple[float, float]): Starting position.
@@ -42,6 +43,8 @@ class BulletManager:
             color (tuple[int, int, int]): Fallback color.
             radius (int): Circle radius when using default shape.
             owner (str): Bullet origin ('player' or 'enemy').
+            damage (int): Damage dealt upon collision.
+            hitbox_scale (float): Scale factor for bullet hitbox size.
         """
         # Reuse from pool if possible
         if self.pool:
@@ -53,6 +56,7 @@ class BulletManager:
             b.image = image
             b.color = color
             b.radius = radius
+            b.damage = damage
 
             if b.image:
                 b.rect = b.image.get_rect(center=pos)
@@ -61,9 +65,21 @@ class BulletManager:
                 b.rect.height = radius * 2
                 b.rect.center = pos
         else:
-            b = StraightBullet(pos, vel, image=image, color=color, radius=radius, owner=owner)
+            b = StraightBullet(
+                pos, vel, image=image, color=color,
+                radius=radius, owner=owner, damage=damage,
+                hitbox_scale=hitbox_scale
+            )
+
+        # Update or recreate hitbox
+        if not hasattr(b, "hitbox"):
+            from src.systems.hitbox import Hitbox
+            b.hitbox = Hitbox(b, scale=hitbox_scale)
+        else:
+            b.hitbox.update()
 
         self.active.append(b)
+
 
     # ===========================================================
     # Update Cycle
@@ -89,12 +105,17 @@ class BulletManager:
         Args:
             draw_manager (DrawManager): Global DrawManager instance.
         """
+        import pygame
+        from src.core.settings import Debug
+
         for b in self.active:
             if b.image:
                 draw_manager.queue_draw(b.image, b.rect, layer=Layers.BULLETS)
             else:
-                # Small optimization: create temp surface for circles
-                import pygame
                 surf = pygame.Surface((b.radius * 2, b.radius * 2), pygame.SRCALPHA)
                 pygame.draw.circle(surf, b.color, (b.radius, b.radius), b.radius)
                 draw_manager.queue_draw(surf, b.rect, layer=Layers.BULLETS)
+
+            # Optional: render hitbox overlay
+            if getattr(Debug, "ENABLE_HITBOX", False) and hasattr(b, "hitbox"):
+                b.hitbox.draw_debug(draw_manager.surface)

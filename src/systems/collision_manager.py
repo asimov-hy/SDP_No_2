@@ -1,85 +1,83 @@
 """
 collision_manager.py
 --------------------
-Handles collision detection between player, enemies, and bullets.
+Simplified modular collision handler.
+Detects overlaps and delegates actual effects
+to entities and bullets themselves.
 
 Responsibilities
 ----------------
-- Maintain modular per-entity hitboxes.
-- Check collisions each frame.
-- Trigger damage or destruction on collision.
-- Provide optional debug visualization.
+- Detect collisions between bullets ↔ entities.
+- Delegate behavior to bullet.on_hit() or entity.on_collision().
+- Provide optional hitbox debug visualization.
 """
 
 import pygame
 from src.core.settings import Debug
 from src.core.utils.debug_logger import DebugLogger
-from src.systems.hitbox import Hitbox
+
 
 class CollisionManager:
+    """Detects collisions but lets objects decide what happens."""
+
     def __init__(self, player, bullet_manager, spawn_manager):
         self.player = player
         self.bullet_manager = bullet_manager
         self.spawn_manager = spawn_manager
 
-        # Attach hitboxes
-        self.player.hitbox = Hitbox(player, scale=getattr(player, "hitbox_scale", 1.0))
-        for e in self.spawn_manager.enemies:
-            e.hitbox = Hitbox(e, scale=getattr(e, "hitbox_scale", 1.0))
-
-    # -----------------------------------------------------------
+    # ===========================================================
     # Per-frame update
-    # -----------------------------------------------------------
+    # ===========================================================
     def update(self, surface=None):
-        # Update hitboxes
-        self.player.hitbox.update()
-        for enemy in self.spawn_manager.enemies:
-            enemy.hitbox.update()
+        """
+        Perform collision detection only — no direct damage logic.
+        """
+        # -------------------------------------------------------
+        # 1. Player ↔ Enemy
+        # -------------------------------------------------------
+        DebugLogger.trace("=== Collision Pass: Player ↔ Enemies ===")
 
-        # =======================================================
-        # Bullet collisions
-        # =======================================================
-        for bullet in list(self.bullet_manager.bullets):
+        for enemy in self.spawn_manager.enemies:
+            if not (enemy.alive and self.player.alive):
+                continue
+            if getattr(self.player, "hitbox", None) and getattr(enemy, "hitbox", None):
+                if self.player.hitbox.rect.colliderect(enemy.hitbox.rect):
+                    DebugLogger.trace(f"[Collision] Player <-> Enemy ({type(enemy).__name__})")
+                    enemy.on_collision(self.player)
+                    self.player.on_collision(enemy)
+
+        # -------------------------------------------------------
+        # 2. Bullets ↔ Entities (PlayerBullets → Enemies, EnemyBullets → Player)
+        # -------------------------------------------------------
+        DebugLogger.trace("=== Collision Pass: Bullets ↔ Entities ===")
+
+        for bullet in list(self.bullet_manager.active):
             if not bullet.alive:
                 continue
 
-            b_rect = bullet.rect
-            owner = bullet.owner
-
-            if owner == "player":
-                # Check vs enemies
+            # Player bullets hit enemies
+            if bullet.owner == "player":
                 for enemy in self.spawn_manager.enemies:
-                    if enemy.alive and b_rect.colliderect(enemy.hitbox.rect):
-                        enemy.take_damage()
-                        bullet.alive = False
+                    bullet_rect = bullet.hitbox.rect if hasattr(bullet, "hitbox") else bullet.rect
+                    if enemy.alive and bullet_rect.colliderect(enemy.hitbox.rect):
+                        DebugLogger.trace(f"[Collision] PlayerBullet -> {type(enemy).__name__}")
+                        bullet.on_hit(enemy)
                         break
-            elif owner == "enemy":
-                # Check vs player
-                if not self.player.invincible and b_rect.colliderect(self.player.hitbox.rect):
-                    self.player.health -= 1
-                    bullet.alive = False
-                    if self.player.health <= 0:
-                        self.player.alive = False
-                        DebugLogger.state("Player destroyed!")
-            else:
-                DebugLogger.warn(f"Bullet with unknown owner: {owner}")
 
-        # =======================================================
-        # Player ↔ Enemy collisions
-        # =======================================================
-        for enemy in self.spawn_manager.enemies:
-            if enemy.alive and self.player.alive:
-                if self.player.hitbox.rect.colliderect(enemy.hitbox.rect):
-                    self.player.health -= 1
-                    enemy.alive = False
-                    if self.player.health <= 0:
-                        self.player.alive = False
-                    DebugLogger.state("Player collided with enemy!")
+            # Enemy bullets hit player
+            elif bullet.owner == "enemy":
+                bullet_rect = bullet.hitbox.rect if hasattr(bullet, "hitbox") else bullet.rect
+                if self.player.alive and getattr(self.player, "hitbox", None):
+                    if bullet_rect.colliderect(self.player.hitbox.rect):
+                        DebugLogger.trace(f"[Collision] EnemyBullet -> Player")
+                        bullet.on_hit(self.player)
 
-        # =======================================================
-        # Optional debug drawing
-        # =======================================================
+        # -------------------------------------------------------
+        # 3. Optional debug visualization
+        # -------------------------------------------------------
         if Debug.ENABLE_HITBOX and surface:
-            self.player.hitbox.draw_debug(surface)
+            if getattr(self.player, "hitbox", None):
+                self.player.hitbox.draw_debug(surface)
             for enemy in self.spawn_manager.enemies:
-                enemy.hitbox.draw_debug(surface)
+                if getattr(enemy, "hitbox", None):
+                    enemy.hitbox.draw_debug(surface)

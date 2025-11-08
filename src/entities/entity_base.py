@@ -1,5 +1,5 @@
 """
-base_entity.py
+entity_base.py
 --------------
 Defines the BaseEntity class, which serves as the foundational interface
 for all active in-game entities (e.g., Player, Enemy, Bullet).
@@ -16,7 +16,7 @@ from src.core.settings import Debug, Layers
 from src.core.utils.debug_logger import DebugLogger
 
 
-class BaseEntity:
+class EntityBase:
     """Common interface for all entities within the game world."""
 
     # ===========================================================
@@ -33,10 +33,14 @@ class BaseEntity:
         """
         self.image = image
         self.rect = self.image.get_rect(center=(x, y))
+        self.pos = pygame.Vector2(x, y)
+
         self.alive = True
 
-        if Debug.VERBOSE_ENTITY_INIT:
-            DebugLogger.init(f"Entity initialized at ({x}, {y})")
+        DebugLogger.init(f"[EntityBase] {type(self).__name__} initialized at ({x:.1f}, {y:.1f})")
+
+        self.hitbox = None
+        self.has_hitbox = False
 
     # ===========================================================
     # Update Logic
