@@ -1,5 +1,5 @@
 """
-settings.py
+game_settings.py
 -----------
 Centralized configuration for all game systems.
 """

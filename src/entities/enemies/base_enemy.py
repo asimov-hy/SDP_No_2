@@ -10,7 +10,7 @@ Responsibilities
 - Provide a base interface for all enemy subclasses (straight, zigzag, shooter, etc.).
 """
 
-from src.core.settings import Debug, Layers
+from src.core.game_settings import Debug, Layers
 from src.entities.base_entity import BaseEntity
 from src.core.utils.debug_logger import DebugLogger
 

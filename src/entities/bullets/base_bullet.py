@@ -12,7 +12,7 @@ Responsibilities
 """
 
 import pygame
-from src.core import settings
+from src.core import game_settings
 from src.core.utils.debug_logger import DebugLogger
 
 from src.systems.combat.collision_hitbox import CollisionHitbox
@@ -131,5 +131,5 @@ class BulletBase:
             pygame.draw.circle(surface, self.color, self.rect.center, self.radius)
 
         # Optional debug overlay
-        if hasattr(self, "hitbox") and getattr(settings.Debug, "ENABLE_HITBOX", False):
+        if hasattr(self, "hitbox") and getattr(game_settings.Debug, "ENABLE_HITBOX", False):
             self.hitbox.draw_debug(surface)

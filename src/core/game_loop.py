@@ -14,7 +14,7 @@ Responsibilities
 
 import pygame
 
-from src.core.settings import Display, Physics, Debug, Layers
+from src.core.game_settings import Display, Physics, Debug, Layers
 
 from src.core.engine.input_manager import InputManager
 from src.core.engine.display_manager import DisplayManager
@@ -165,7 +165,7 @@ class GameLoop:
                 elif event.key == pygame.K_F3:
                     self.debug_hud.toggle()
 
-                    from src.core.settings import Debug
+                    from src.core.game_settings import Debug
                     Debug.ENABLE_HITBOX = not Debug.ENABLE_HITBOX
                     state = "ON" if Debug.ENABLE_HITBOX else "OFF"
                     DebugLogger.action(f"Hitbox rendering toggled → {state}")

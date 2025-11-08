@@ -14,8 +14,8 @@ Responsibilities
 import pygame
 
 from src.core.utils.debug_logger import DebugLogger
-from src.core.settings import Layers, Debug
-from src.core import settings
+from src.core.game_settings import Layers, Debug
+from src.core import game_settings
 
 from src.ui.ui_button import UIButton
 

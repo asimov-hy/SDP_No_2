@@ -12,7 +12,7 @@ Responsibilities
 """
 
 import pygame
-from src.core.settings import Debug, Layers
+from src.core.game_settings import Debug, Layers
 from src.core.utils.debug_logger import DebugLogger
 
 

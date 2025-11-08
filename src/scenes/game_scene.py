@@ -15,7 +15,7 @@ Responsibilities
 import pygame
 
 from src.core.utils.debug_logger import DebugLogger
-from src.core.settings import Display, Layers
+from src.core.game_settings import Display, Layers
 
 from src.entities.player import Player
 

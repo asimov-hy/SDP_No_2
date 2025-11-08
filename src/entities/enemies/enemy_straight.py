@@ -10,7 +10,7 @@ Responsibilities
 - Serve as a baseline template for other enemy types.
 """
 
-from src.core.settings import Debug, Display
+from src.core.game_settings import Debug, Display
 from src.entities.enemies.base_enemy import EnemyBaseEntity
 from src.core.utils.debug_logger import DebugLogger
 

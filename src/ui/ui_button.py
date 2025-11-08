@@ -24,10 +24,10 @@ Optional: Hover Scale (Pop Effect)
 """
 
 import pygame
-from src.ui.ui_element import BASEUI
+from src.ui.base_ui import BaseUI
 from src.core.utils.debug_logger import DebugLogger
 
-class UIButton(BASEUI):
+class UIButton(BaseUI):
     """Configurable button capable of visual feedback and user interaction."""
 
     # ===========================================================

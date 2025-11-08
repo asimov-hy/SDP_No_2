@@ -12,15 +12,12 @@ Responsibilities
 - (Optional) Integrate with DebugLogger for movement and state tracking.
 """
 
-import os
-import json
 import pygame
 
-from src.core import settings
-from src.core.settings import Display, Player as PlayerSettings, Layers
+from src.core.game_settings import Display, Player as PlayerSettings, Layers
 from src.core.utils.debug_logger import DebugLogger
+from src.core.utils.config_manager import load_json
 from src.entities.base_entity import BaseEntity
-
 
 # ===========================================================
 # Player Configuration Loader
@@ -31,26 +28,10 @@ DEFAULT_CONFIG = {
     "speed": PlayerSettings.SPEED,   # Uses 300 from settings
     "health": 3,
     "invincible": False,
-    "hitbox_scale": 0.85
+    "hitbox_scale": 0.85,
 }
 
-CONFIG_PATH = os.path.join("src", "data", "player_config.json")
-
-
-def load_player_config():
-    """Load player configuration from JSON file or fallback to defaults."""
-    try:
-        with open(CONFIG_PATH, "r") as f:
-            cfg = json.load(f)
-            DebugLogger.system(f"Loaded config from {CONFIG_PATH}")
-            return {**DEFAULT_CONFIG, **cfg}
-    except Exception as e:
-        DebugLogger.warn(f"Failed to load config: {e} — using defaults")
-        return DEFAULT_CONFIG
-
-
-PLAYER_CONFIG = load_player_config()
-
+PLAYER_CONFIG = load_json("player_config.json", DEFAULT_CONFIG)
 
 # ===========================================================
 # Player Entity Class
@@ -107,7 +88,7 @@ class Player(BaseEntity):
 
         # Layer registration
         self.layer = Layers.PLAYER
-        settings.GLOBAL_PLAYER = self
+        # settings.GLOBAL_PLAYER = self
 
         DebugLogger.init(
             f"Initialized Player at ({x}, {y}) | Speed={self.speed} | HP={self.health}"

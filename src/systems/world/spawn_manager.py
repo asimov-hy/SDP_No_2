@@ -10,7 +10,7 @@ Responsibilities
 - Handle update and render passes for all active enemies.
 """
 
-from src.core.settings import Debug
+from src.core.game_settings import Debug
 from src.core.utils.debug_logger import DebugLogger
 
 from src.systems.combat.collision_hitbox import CollisionHitbox

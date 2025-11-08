@@ -2,7 +2,7 @@
 game_state.py
 -------------
 Holds all mutable runtime state of the game.
-Separate from static configuration in settings.py.
+Separate from static configuration in game_settings.py.
 """
 
 class GameState:

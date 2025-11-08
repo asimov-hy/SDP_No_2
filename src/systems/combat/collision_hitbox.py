@@ -13,7 +13,7 @@ Responsibilities
 
 import pygame
 from src.core.utils.debug_logger import DebugLogger
-from src.core.settings import Debug
+from src.core.game_settings import Debug
 
 
 class CollisionHitbox:

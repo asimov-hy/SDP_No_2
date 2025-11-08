@@ -28,15 +28,19 @@ This project demonstrates the use of:
 ```
 202X/
 │
-├─ main.py
 ├─ README.md
+├─ main.py
+├─ .gitignore
 │
 ├─ src/
+│  │
+│  ├─ __init__.py
+│  │
 │  ├─ core/
 │  │   ├─ __init__.py
 │  │   ├─ game_loop.py
 │  │   ├─ game_state.py
-│  │   ├─ settings.py
+│  │   ├─ game_settings.py
 │  │   │
 │  │   ├─ engine/
 │  │   │   ├─ __init__.py
@@ -46,6 +50,7 @@ This project demonstrates the use of:
 │  │   │
 │  │   └─ utils/
 │  │       ├─ __init__.py
+│  │       ├─ config_manager.py
 │  │       └─ debug_logger.py
 │  │
 │  ├─ data/
@@ -53,17 +58,17 @@ This project demonstrates the use of:
 │  │
 │  ├─ entities/
 │  │   ├─ __init__.py
-│  │   ├─ player.py
 │  │   ├─ base_entity.py
+│  │   ├─ player.py
 │  │   │
 │  │   ├─ bullets/
 │  │   │  ├─ __init__.py
-│  │   │  ├─ bullet_base.py
+│  │   │  ├─ base_bullet.py
 │  │   │  └─ bullet_straight.py
 │  │   │
 │  │   └─ enemies/
 │  │      ├─ __init__.py
-│  │      ├─ enemy_base.py
+│  │      ├─ base_enemy.py
 │  │      └─ enemy_straight.py
 │  │
 │  ├─ graphics/
@@ -93,8 +98,8 @@ This project demonstrates the use of:
 │  │
 │  └─ ui/
 │      ├─ __init__.py
-│      ├─ button.py
-│      ├─ ui_element.py
+│      ├─ base_ui.py
+│      ├─ ui_button.py
 │      ├─ ui_manager.py
 │      │
 │      ├─ effects/

@@ -12,7 +12,7 @@ Responsibilities
 """
 
 from src.entities.bullets.bullet_straight import StraightBullet
-from src.core.settings import Layers
+from src.core.game_settings import Layers
 from src.core.utils.debug_logger import DebugLogger
 
 
@@ -116,7 +116,7 @@ class BulletManager:
             draw_manager (DrawManager): Global DrawManager instance.
         """
         import pygame
-        from src.core.settings import Debug
+        from src.core.game_settings import Debug
 
         for b in self.active:
             if b.image:

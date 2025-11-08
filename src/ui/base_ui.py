@@ -1,5 +1,5 @@
 """
-ui_element.py
+base_ui.py
 -------------
 Defines the abstract base class for all UI elements.
 Every element (buttons, health bars, labels, etc.) inherits from this class
@@ -14,7 +14,7 @@ Responsibilities
 import pygame
 from src.core.utils.debug_logger import DebugLogger
 
-class BASEUI:
+class BaseUI:
     """Base class for all UI components."""
 
     # ===========================================================
