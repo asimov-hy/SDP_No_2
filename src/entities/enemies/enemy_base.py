@@ -43,7 +43,7 @@ class EnemyBase(EntityBase):
     # ===========================================================
     # Damage and State Handling
     # ===========================================================
-    def take_damage(self, amount=1):
+    def take_damage(self, amount=1, source="unknown"):
         """
         Apply damage to the enemy and mark it dead when HP reaches zero.
 
@@ -55,11 +55,13 @@ class EnemyBase(EntityBase):
             return
 
         self.hp -= amount
-        DebugLogger.state(f"HP reduced by {amount} → {self.hp}")
+        DebugLogger.state(
+            f"[EnemyDamage] {type(self).__name__} took {amount} from {source} → HP={self.hp}"
+        )
 
         if self.hp <= 0:
             self.alive = False
-            DebugLogger.state(f"Destroyed at {self.rect.topleft}")
+            DebugLogger.state(f"[Death] {type(self).__name__} destroyed at {self.rect.topleft}")
 
     # ===========================================================
     # Update Logic (To Be Overridden)

@@ -137,32 +137,55 @@ class GameScene:
         Args:
             dt (float): Delta time (in seconds) since the last frame.
         """
+
+        # ===========================================================
+        # 1) Player Input & Update
+        # ===========================================================
         move = self.input.get_normalized_move()
 
-        # ===========================================================
-        # Player and Bullets
-        # ===========================================================
+        # Pass input direction to player
         self.player.move_vec = move
-        self.player.update(dt)  # Handles movement and shooting internally
-        self.bullet_manager.update(dt)  # Updates all active bullets
+
+        # Player handles movement and shooting internally
+        # (Ensures bullets are spawned early in frame)
+        self.player.update(dt)
 
         # ===========================================================
-        # Enemies and Wave Control
+        # 2) Bullet System Update
         # ===========================================================
-        # StageManager schedules spawns; SpawnManager updates active enemies
+        # Update all active bullets before collision checks
+        self.bullet_manager.update(dt)
+
+        # ===========================================================
+        # 3) Enemy Wave & Spawn Systems
+        # ===========================================================
+        # StageManager schedules wave timing; SpawnManager maintains active enemies
         self.stage_manager.update(dt)
         self.spawner.update(dt)
 
         # ===========================================================
-        # UI
+        # 4) Collision Phase
         # ===========================================================
-        self.ui.update(pygame.mouse.get_pos())
+        # Run collision detection *after* all entities are updated.
+        # Ensures newly spawned bullets and enemies are included this frame.
+        self.collision_manager.update(self.display.get_game_surface())
 
         # ===========================================================
-        # Collision Checks
+        # 5) Entity Cleanup
         # ===========================================================
-        # Handles hit detection and optional hitbox debug visualization
-        self.collision_manager.update(self.display.get_game_surface())
+        # Remove destroyed or inactive entities immediately to prevent ghost sprites.
+        if hasattr(self.spawner, "cleanup"):
+            self.spawner.cleanup()
+        if hasattr(self.bullet_manager, "cleanup"):
+            self.bullet_manager.cleanup()
+
+        # ===========================================================
+        # 6) UI Update
+        # ===========================================================
+        # Update HUD and overlays last, so they reflect the most recent state
+        # (e.g., score, health after collisions).
+        self.ui.update(pygame.mouse.get_pos())
+
 
     # ===========================================================
     # Rendering

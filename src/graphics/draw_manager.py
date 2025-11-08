@@ -28,6 +28,7 @@ class DrawManager:
         self.layers = {}  # {layer: [(surface, rect), ...]}
         self._layer_keys_cache = []
         self._layers_dirty = False
+        self.surface = None  # Expose active surface for debug/hitbox draws
         DebugLogger.init("║{:<59}║".format(f"\t[DrawManager][INIT]\t\t→ Initialized"), show_meta=False)
 
 
@@ -156,6 +157,7 @@ class DrawManager:
             target_surface (pygame.Surface): The main display or game surface.
             debug (bool): If True, logs the number of items rendered.
         """
+        self.surface = target_surface
         target_surface.fill((50, 50, 100))  # Background color
 
         # Cache sorted layer keys to avoid sorting every frame

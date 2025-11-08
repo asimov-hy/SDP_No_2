@@ -61,9 +61,13 @@ class BulletManager:
             if b.image:
                 b.rect = b.image.get_rect(center=pos)
             else:
-                b.rect.width = radius * 2
-                b.rect.height = radius * 2
-                b.rect.center = pos
+                if b.image:
+                    b.rect = b.image.get_rect(center=pos)
+                else:
+                    import pygame
+                    b.rect = pygame.Rect(0, 0, radius * 2, radius * 2)
+                    b.rect.center = pos
+
         else:
             b = StraightBullet(
                 pos, vel, image=image, color=color,
@@ -78,6 +82,8 @@ class BulletManager:
         else:
             b.hitbox.update()
 
+        b.hitbox.rect.topleft = b.rect.topleft
+
         self.active.append(b)
 
 
@@ -89,6 +95,10 @@ class BulletManager:
         alive_bullets = []
         for b in self.active:
             b.update(dt)
+
+            if hasattr(b, "hitbox"):
+                b.hitbox.rect.topleft = b.rect.topleft
+
             if b.alive:
                 alive_bullets.append(b)
             else:
@@ -118,4 +128,5 @@ class BulletManager:
 
             # Optional: render hitbox overlay
             if getattr(Debug, "ENABLE_HITBOX", False) and hasattr(b, "hitbox"):
-                b.hitbox.draw_debug(draw_manager.surface)
+                if hasattr(draw_manager, "surface") and getattr(Debug, "ENABLE_HITBOX", False):
+                    b.hitbox.draw_debug(draw_manager.surface)

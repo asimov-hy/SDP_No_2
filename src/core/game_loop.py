@@ -154,7 +154,7 @@ class GameLoop:
             if event.type == pygame.QUIT:
                 self.running = False
                 DebugLogger.action("Quit signal received")
-                return
+                break
 
             # Global keyboard shortcuts
             if event.type == pygame.KEYDOWN:
