@@ -14,7 +14,7 @@ Responsibilities
 """
 
 import pygame
-from src.core.settings import GAME_WIDTH
+from src.core.settings import Display
 from src.ui.button import Button
 from src.core.utils.debug_logger import DebugLogger
 
@@ -50,7 +50,7 @@ class UIManager:
 
         # Initialize base developer UI
         self._create_base_ui()
-        # DebugLogger.system("UIManager", "Initialized with default groups and subsystems")
+        # DebugLogger.system("Initialized with default groups and subsystems")
 
     # ===========================================================
     # Initialization Helpers
@@ -70,7 +70,7 @@ class UIManager:
         if hasattr(element, "draw_manager"):
             element.draw_manager = self.draw_manager
 
-        # DebugLogger.action("UIManager", f"Registered element in group '{group}'")
+        # DebugLogger.action(f"Registered element in group '{group}'")
 
     def remove(self, element, group=None):
         """Remove a UI element from its group or all groups."""
@@ -81,15 +81,15 @@ class UIManager:
             for g in self.groups.values():
                 if element in g:
                     g.remove(element)
-        # DebugLogger.state("UIManager", f"Removed element from '{group or 'all'}'")
+        # DebugLogger.state(f"Removed element from '{group or 'all'}'")
 
     def set_active_group(self, group_name):
         """Switch which group receives input (e.g., 'menus', 'hud')."""
         if group_name in self.groups:
             self.active_group = group_name
-            # DebugLogger.state("UIManager", f"Active group changed → {group_name}")
+            # DebugLogger.state(f"Active group changed → {group_name}")
         else:
-            DebugLogger.warn("UIManager", f"Tried to activate unknown group '{group_name}'")
+            DebugLogger.warn(f"Tried to activate unknown group '{group_name}'")
             pass
 
     # ===========================================================
@@ -110,7 +110,7 @@ class UIManager:
         if hasattr(subsystem, "draw_manager"):
             subsystem.draw_manager = self.draw_manager
 
-        # DebugLogger.system("UIManager", f"Attached subsystem '{name}'")
+        # DebugLogger.system(f"Attached subsystem '{name}'")
 
     # ===========================================================
     # Frame Updates
@@ -126,7 +126,7 @@ class UIManager:
         for subsystem in self.subsystems.values():
             subsystem.update(mouse_pos)
 
-        # DebugLogger.state("UIManager", f"Updated group '{self.active_group}' and subsystems")
+        # DebugLogger.state(f"Updated group '{self.active_group}' and subsystems")
 
     # ===========================================================
     # Input Handling
@@ -142,7 +142,7 @@ class UIManager:
         for subsystem in self.subsystems.values():
             action = subsystem.handle_event(event)
             if action:
-                # DebugLogger.action("UIManager", f"Subsystem action triggered: {action}")
+                # DebugLogger.action(f"Subsystem action triggered: {action}")
                 return action
 
         # Then route to active group
@@ -151,7 +151,7 @@ class UIManager:
                 if elem.visible and elem.enabled:
                     action = elem.handle_click(event.pos)
                     if action:
-                        # DebugLogger.action("UIManager", f"Element triggered action: {action}")
+                        # DebugLogger.action(f"Element triggered action: {action}")
                         return action
         return None
 
@@ -169,4 +169,4 @@ class UIManager:
             if elem.visible:
                 draw_manager.queue_draw(elem.render_surface(), elem.rect, elem.layer)
 
-    # DebugLogger.state("UIManager", f"Drew UI group '{self.active_group}' and subsystems")
+    # DebugLogger.state(f"Drew UI group '{self.active_group}' and subsystems")

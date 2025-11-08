@@ -14,6 +14,7 @@ Responsibilities
 import pygame
 
 from src.core.utils.debug_logger import DebugLogger
+from src.core.settings import Layers
 from src.core import settings
 
 from src.ui.button import Button
@@ -38,7 +39,7 @@ class DebugHUD:
 
         self._create_elements()
 
-        DebugLogger.init("", "║{:<59}║".format(f"\t[DEBUGHUD][INIT]\t→ Initialized"))
+        DebugLogger.init("║{:<59}║".format(f"\t[DEBUGHUD][INIT]\t→ Initialized"), show_meta=False)
 
     # ===========================================================
     # Element Creation
@@ -60,7 +61,7 @@ class DebugHUD:
             border_color=(255, 255, 255),
             border_width=2,
             icon_type="fullscreen",
-            layer=200
+            layer=Layers.UI
         )
 
         exit_btn = Button(
@@ -75,7 +76,7 @@ class DebugHUD:
             border_color=(255, 255, 255),
             border_width=2,
             icon_type="close",
-            layer=200
+            layer=Layers.UI
         )
 
         self.elements = [fullscreen_btn, exit_btn]
@@ -135,18 +136,14 @@ class DebugHUD:
         if action == "toggle_fullscreen":
             self.display_manager.toggle_fullscreen()
             state = "ON" if getattr(self.display_manager, "is_fullscreen", False) else "OFF"
-            DebugLogger.action(
-                "DebugHUD",
-                f"Fullscreen toggled → {state}"
-            )
+            DebugLogger.action(f"Fullscreen toggled → {state}")
 
         elif action == "quit":
-            DebugLogger.action(
-                "DebugHUD","Quit requested (GameLoop will terminate)")
+            DebugLogger.action("Quit requested (GameLoop will terminate)")
             pygame.event.post(pygame.event.Event(pygame.QUIT))
 
         else:
-            DebugLogger.warn("DebugHUD", f"Unrecognized button action: {action}")
+            DebugLogger.warn(f"Unrecognized button action: {action}")
 
         return action
 
@@ -186,8 +183,8 @@ class DebugHUD:
             rect_pos = surface_pos.get_rect(topleft=(70, 20))
             rect_vel = surface_vel.get_rect(topleft=(70, 40))
 
-            draw_manager.queue_draw(surface_pos, rect_pos, 999)
-            draw_manager.queue_draw(surface_vel, rect_vel, 999)
+            draw_manager.queue_draw(surface_pos, rect_pos, Layers.UI)
+            draw_manager.queue_draw(surface_vel, rect_vel, Layers.UI)
 
     # ===========================================================
     # Visibility Controls
@@ -196,4 +193,4 @@ class DebugHUD:
         """Toggle the HUD’s visibility."""
         self.visible = not self.visible
         state = "Shown" if self.visible else "Hidden"
-        DebugLogger.action("DebugHUD", f"Toggled visibility → {state}")
+        DebugLogger.action(f"Toggled visibility → {state}")

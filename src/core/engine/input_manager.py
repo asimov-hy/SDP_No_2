@@ -52,7 +52,7 @@ class InputManager:
         self.key_bindings = key_bindings or DEFAULT_KEY_BINDINGS
         self.context = "gameplay"  # active context ("gameplay" or "ui")
 
-        DebugLogger.init("", "║{:<59}║".format(f"\t[InputManager][INIT]\t→  Initialized"))
+        DebugLogger.init("║{:<59}║".format(f"\t[InputManager][INIT]\t→  Initialized"), show_meta=False)
 
         # Controller setup
         pygame.joystick.init()
@@ -60,9 +60,9 @@ class InputManager:
         if pygame.joystick.get_count() > 0:
             self.controller = pygame.joystick.Joystick(0)
             self.controller.init()
-            DebugLogger.init("", "║{:<57}║".format(f"\t\t└─ [INIT]\t→  {self.controller.get_name()}"))
+            DebugLogger.init("║{:<57}║".format(f"\t\t└─ [INIT]\t→  {self.controller.get_name()}"), show_meta=False)
 
-        DebugLogger.init("", "║{:<57}║".format(f"\t\t└─ [INIT]\t→  Keyboard"))
+        DebugLogger.init("║{:<57}║".format(f"\t\t└─ [INIT]\t→  Keyboard"), show_meta=False)
 
         # Movement and state tracking
         self.move = pygame.Vector2(0, 0)
@@ -71,6 +71,8 @@ class InputManager:
 
         # Action states (gameplay)
         self.attack_pressed = False
+        self.attack_held = False  # NEW - continuous press tracking
+
         self.bomb_pressed = False
         self.pause_pressed = False
 
@@ -90,10 +92,10 @@ class InputManager:
         Switch between contexts ("gameplay", "ui").
         """
         if name not in self.key_bindings:
-            DebugLogger.warn("InputManager", f"Unknown context: {name}")
+            DebugLogger.warn(f"Unknown context: {name}")
             return
         self.context = name
-        DebugLogger.state("InputManager", f"Context switched to [{name.upper()}]")
+        DebugLogger.state(f"Context switched to [{name.upper()}]")
 
     def get_context(self):
         return self.context
@@ -114,23 +116,28 @@ class InputManager:
     # ===========================================================
     def _update_gameplay_controls(self):
         keys = pygame.key.get_pressed()
-        self._move_keyboard.update(0, 0)
 
-        if self._is_pressed("move_left", keys):
-            self._move_keyboard.x -= 1
-        if self._is_pressed("move_right", keys):
-            self._move_keyboard.x += 1
-        if self._is_pressed("move_up", keys):
-            self._move_keyboard.y -= 1
-        if self._is_pressed("move_down", keys):
-            self._move_keyboard.y += 1
+        left = self._is_pressed("move_left", keys)
+        right = self._is_pressed("move_right", keys)
+        up = self._is_pressed("move_up", keys)
+        down = self._is_pressed("move_down", keys)
+
+        x = int(right) - int(left)
+        y = int(down) - int(up)
+
+        self._move_keyboard.update(x, y)
 
         # Actions
+        # -----------------------------------------------------------
+        # Attack input
+        # -----------------------------------------------------------
         self.attack_pressed = self._is_pressed("attack", keys)
+        self.attack_held = self.attack_pressed
+
         self.bomb_pressed = self._is_pressed("bomb", keys)
         self.pause_pressed = self._is_pressed("pause", keys)
 
-        # Merge controller and keyboard
+        # Merge controller input (unchanged)
         self._update_controller()
         self._merge_inputs()
 
@@ -230,9 +237,9 @@ class InputManager:
                 Returns (0, 0) if no movement input is active.
         """
         if self.move.length_squared() > 0:
-            v = self.move.normalize()
-            # Round tiny floating-point errors for symmetry
-            v.x = round(v.x, 3)
-            v.y = round(v.y, 3)
-            return v
+            return self.move.normalize()
         return pygame.Vector2(0, 0)
+
+    def is_attack_held(self):
+        """Return whether the attack key/button is currently held."""
+        return self.attack_held

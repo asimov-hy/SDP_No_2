@@ -6,14 +6,17 @@ Defines the Player entity and its core update logic.
 Responsibilities
 ----------------
 - Maintain player position, movement, and health state.
+- Handle shooting behavior via BulletManager.
 - Update position based on input direction and delta time.
 - Stay within screen boundaries.
 - (Optional) Integrate with DebugLogger for movement and state tracking.
 """
+
 import pygame
 import json
 import os
 
+from src.core.settings import Display, Player as PlayerSettings, Layers
 from src.core import settings
 from src.core.utils.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
@@ -24,7 +27,7 @@ from src.entities.base_entity import BaseEntity
 
 DEFAULT_CONFIG = {
     "scale": 1.0,
-    "speed": 300,
+    "speed": PlayerSettings.SPEED,  # Uses 300 from settings
     "health": 3,
     "invincible": False,
     "hitbox_scale": 0.85
@@ -37,10 +40,10 @@ def load_player_config():
     try:
         with open(CONFIG_PATH, "r") as f:
             cfg = json.load(f)
-            DebugLogger.system("Player", f"Loaded config from {CONFIG_PATH}")
+            DebugLogger.system(f"Loaded config from {CONFIG_PATH}")
             return {**DEFAULT_CONFIG, **cfg}
     except Exception as e:
-        DebugLogger.warn("Player", f"Failed to load config: {e} — using defaults")
+        DebugLogger.warn(f"Failed to load config: {e} — using defaults")
         return DEFAULT_CONFIG
 
 PLAYER_CONFIG = load_player_config()
@@ -66,7 +69,7 @@ class Player(BaseEntity):
         if cfg["scale"] != 1.0:
             w, h = image.get_size()
             image = pygame.transform.scale(image, (int(w * cfg["scale"]), int(h * cfg["scale"])))
-            DebugLogger.state("Player", f"Scaled sprite to {image.get_size()}")
+            DebugLogger.state(f"Scaled sprite to {image.get_size()}")
 
         super().__init__(x, y, image)
 
@@ -78,55 +81,121 @@ class Player(BaseEntity):
         self.invincible = cfg["invincible"]
         self.hitbox_scale = cfg["hitbox_scale"]
 
-        DebugLogger.init("Player", f"Initialized at ({x}, {y}) | Speed={self.speed} | HP={self.health}")
+        DebugLogger.init(f"Initialized at ({x}, {y}) | Speed={self.speed} | HP={self.health}")
 
         # -----------------------------------------------------------
         # Register this player globally (scene-independent)
         # -----------------------------------------------------------
         settings.GLOBAL_PLAYER = self
 
+        self.layer = Layers.PLAYER
+
+        # -----------------------------------------------------------
+        # Bullet / Shooting System
+        # -----------------------------------------------------------
+        self.bullet_manager = None  # Linked externally by GameScene
+        self.shoot_cooldown = 0.1  # Seconds between shots
+        self.shoot_timer = 0.0
+
     # ===========================================================
     # Update Logic
     # ===========================================================
-    def update(self, dt, move_vec):
+    def update(self, dt):
         """
         Update player position with velocity buildup and gradual slowdown.
 
         Args:
             dt (float): Delta time.
-            move_vec (pygame.Vector2): Normalized input direction vector.
         """
         if not self.alive:
             return
 
+        move_vec = getattr(self, "move_vec", pygame.Vector2(0, 0))
+
         # ==========================================================
         # Tunable Physics Parameters
         # ==========================================================
-        accel_rate = 3000  # How fast player accelerates toward max speed
-        friction_rate = 500  # How quickly the player slows when not pressing keys
-        max_speed = self.speed  # The maximum movement speed
+        accel_rate = 3000  # Acceleration strength
+        friction_rate = 500  # Friction strength (per-axis)
+        max_speed = self.speed
+        smooth_factor = 0.2  # How smoothly direction turns
 
         # ==========================================================
-        # Apply Acceleration (Additive Model)
+        # Apply Acceleration
         # ==========================================================
         if move_vec.length_squared() > 0:
-            # Add velocity directly based on input direction and acceleration
+            # Normalize for consistent diagonal speed
+            move_vec = move_vec.normalize()
+
+            # Smoothly blend velocity toward the desired direction
+            desired_velocity = move_vec * max_speed
+            self.velocity = self.velocity.lerp(desired_velocity, smooth_factor)
+
+            # Apply additive acceleration for gradual buildup
             self.velocity += move_vec * accel_rate * dt
 
-            # Clamp velocity to maximum speed
-            if self.velocity.length() > max_speed:
-                self.velocity.scale_to_length(max_speed)
         else:
             # ======================================================
-            # Apply Friction (when no input)
+            # Apply Unified Friction (preserves direction)
             # ======================================================
-            speed = self.velocity.length()
-            if speed > 0:
-                decel = friction_rate * dt
-                if decel >= speed:
-                    self.velocity.update(0, 0)
-                else:
-                    self.velocity.scale_to_length(speed - decel)
+            current_speed = self.velocity.length()
+            if current_speed > 0:
+                # Reduce speed while maintaining direction
+                new_speed = max(0.0, current_speed - friction_rate * dt)
 
+                if new_speed < 5:  # Stop near zero
+                    self.velocity.x = 0
+                    self.velocity.y = 0
+                else:
+                    self.velocity.scale_to_length(new_speed)
+
+        # ==========================================================
+        # Apply final movement
+        # ==========================================================
         self.pos += self.velocity * dt
-        self.rect.topleft = self.pos
+
+        # ==========================================================
+        # Clamp to screen boundaries
+        # ==========================================================
+        screen_width = Display.WIDTH
+        screen_height = Display.HEIGHT
+
+        # Clamp position
+        self.pos.x = max(0.0, min(self.pos.x, screen_width - self.rect.width))
+        self.pos.y = max(0.0, min(self.pos.y, screen_height - self.rect.height))
+
+        # Stop velocity when hitting walls (prevents "pushing" against boundaries)
+        if self.pos.x <= 0 or self.pos.x >= screen_width - self.rect.width:
+            self.velocity.x = 0
+        if self.pos.y <= 0 or self.pos.y >= screen_height - self.rect.height:
+            self.velocity.y = 0
+
+        self.rect.x = int(self.pos.x)
+        self.rect.y = int(self.pos.y)
+
+        # ===========================================================
+        # Shooting Control
+        # ===========================================================
+        keys = pygame.key.get_pressed()
+        self.shoot_timer += dt
+
+        if keys[pygame.K_SPACE] and self.shoot_timer >= self.shoot_cooldown:
+            self.shoot_timer = 0.0
+            self.shoot()
+
+    # ===========================================================
+    # Shooting Logic
+    # ===========================================================
+    def shoot(self):
+        """Spawn bullets via the global BulletManager."""
+        if not self.bullet_manager:
+            DebugLogger.warn("Player attempted to shoot without BulletManager reference")
+            return
+
+        self.bullet_manager.spawn(
+            pos=self.rect.center,
+            vel=(0, -900),
+            color=(255, 255, 100),
+            radius=4,
+            owner="player"
+        )

@@ -15,6 +15,7 @@ Responsibilities
 import pygame
 
 from src.core.utils.debug_logger import DebugLogger
+from src.core.settings import Display, Layers
 from src.core import settings
 
 from src.entities.player import Player
@@ -24,6 +25,7 @@ from src.ui.subsystems.hud_manager import HUDManager
 
 from src.systems.spawn_manager import SpawnManager
 from src.systems.stage_manager import StageManager
+from src.systems.bullet_manager import BulletManager
 
 
 
@@ -46,7 +48,7 @@ class GameScene:
         self.input = scene_manager.input
         self.draw_manager = scene_manager.draw_manager
 
-        DebugLogger.system("GameScene", "Initializing game scene")
+        DebugLogger.system("Initializing game scene")
 
         # ===========================================================
         # UI System Setup
@@ -56,9 +58,9 @@ class GameScene:
         # Base HUD (game overlay)
         try:
             self.ui.attach_subsystem("hud", HUDManager())
-            DebugLogger.init("GameScene", "HUDManager attached successfully")
+            DebugLogger.init("HUDManager attached successfully")
         except Exception as e:
-            DebugLogger.warn("GameScene", f"HUDManager unavailable: {e}")
+            DebugLogger.warn(f"HUDManager unavailable: {e}")
 
         # ===========================================================
         # Entity Setup
@@ -67,21 +69,21 @@ class GameScene:
         player_img = self.draw_manager.get_image("player")
 
         # Spawn player at bottom-center of screen
-        start_x = (settings.SCREEN_WIDTH / 2) - (player_img.get_width() / 2)
-        start_y = settings.SCREEN_HEIGHT - player_img.get_height() - 10
+        start_x = (Display.WIDTH / 2) - (player_img.get_width() / 2)
+        start_y = Display.HEIGHT - player_img.get_height() - 10
 
         self.player = Player(start_x, start_y, player_img)
 
-        DebugLogger.init("GameScene", f"Player entity initialized at ({start_x}, {start_y})")
+        DebugLogger.init(f"Player entity initialized at ({start_x}, {start_y})")
 
         self.draw_manager.load_image("enemy_basic", "assets/images/enemies/enemy_basic.png", scale=1.0)
-        DebugLogger.init("GameScene", "EnemyBasic image loaded successfully")
+        DebugLogger.init("EnemyBasic image loaded successfully")
 
         # ===========================================================
         # Spawn Manager Setup (Wave-Based Enemy Spawning)
         # ===========================================================
         self.spawner = SpawnManager(self.draw_manager, self.display)
-        DebugLogger.init("GameScene", "SpawnManager initialized successfully")
+        DebugLogger.init("SpawnManager initialized successfully")
 
         # ===========================================================
         # Stage Manager Setup (Predefined Waves)
@@ -94,7 +96,14 @@ class GameScene:
         ]
 
         self.stage_manager = StageManager(self.spawner, STAGE_1_WAVES)
-        DebugLogger.init("GameScene", "StageManager initialized with Stage 1 waves")
+        DebugLogger.init("StageManager initialized with Stage 1 waves")
+
+        # ===========================================================
+        # Bullet Manager Setup
+        # ===========================================================
+        self.bullet_manager = BulletManager()
+        self.player.bullet_manager = self.bullet_manager  # Give player access
+        DebugLogger.init("BulletManager initialized and linked to Player")
 
     # ===========================================================
     # Event Handling
@@ -118,17 +127,24 @@ class GameScene:
         Args:
             dt (float): Delta time (in seconds) since the last frame.
         """
-        self.input.update()
         move = self.input.get_normalized_move()
 
-        # Player movement
-        self.player.update(dt, move)
+        # ===========================================================
+        # Player and Bullets
+        # ===========================================================
+        self.player.move_vec = move
+        self.player.update(dt)  # Handles movement and shooting internally
+        self.bullet_manager.update(dt)  # Updates all active bullets
 
-        # Wave-based enemy spawning
+        # ===========================================================
+        # Enemies and Waves
+        # ===========================================================
         self.stage_manager.update(dt)
         self.spawner.update(dt)
 
-        # UI updates (HUD, menus)
+        # ===========================================================
+        # UI
+        # ===========================================================
         self.ui.update(pygame.mouse.get_pos())
 
     # ===========================================================
@@ -142,7 +158,12 @@ class GameScene:
             draw_manager: DrawManager responsible for batching and rendering.
         """
         # Player rendering
-        draw_manager.draw_entity(self.player, layer=1)
+        draw_manager.draw_entity(self.player, layer=Layers.PLAYER)
+
+        # ===========================================================
+        # Bullets
+        # ===========================================================
+        self.bullet_manager.draw(draw_manager)  # NEW
 
         # Wave-based enemies
         self.spawner.draw()

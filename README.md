@@ -48,7 +48,13 @@ This project demonstrates the use of:
 │  │
 │  ├─ entities/
 │  │   ├─ __init__.py
-│  │   └─ player.py
+│  │   ├─ player.py
+│  │   ├─ base_entity.py
+│  │   │
+│  │   └─ enemies/
+│  │      ├─ __init__.py
+│  │      ├─ enemy.py
+│  │      └─ enemy_basic.py
 │  │
 │  ├─ graphics/
 │  │   ├─ __init__.py
@@ -64,13 +70,14 @@ This project demonstrates the use of:
 │  │   ├─ __init__.py
 │  │   ├─ collision_manager.py
 │  │   ├─ sound_manager.py
-│  │   └─ spawn_manager.py
+│  │   ├─ spawn_manager.py
+│  │   └─ stage_manager.py
 │  │
 │  └─ ui/
 │      ├─ __init__.py
 │      │
 │      ├─ effects/
-│      │  ├─ __init__.py - null
+│      │  ├─ __init__.py
 │      │  ├─ ui_animation.py - null
 │      │  └─ ui_fade.py - null
 │      │
@@ -99,6 +106,9 @@ This project demonstrates the use of:
 │  │
 │  └─ fonts/
 │      └─ arcade.ttf
+│
+├─ assets/
+│  └─ player_config.json
 │
 └─ README.md
 ```

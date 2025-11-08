@@ -33,18 +33,18 @@ class SceneManager:
         self.display = display_manager
         self.input = input_manager
         self.draw_manager = draw_manager
-        DebugLogger.init("", "║{:<59}║".format(f"\t[SceneManager][INIT]\t→ Initialized Core Systems"))
+        DebugLogger.init("║{:<59}║".format(f"\t[SceneManager][INIT]\t→ Initialized Core Systems"), show_meta=False)
 
         # Create scene instances
         self.scenes = {
             "START": StartScene,
             "GAME": GameScene
         }
-        DebugLogger.init("", "║{:<59}║".format(f"\t[SceneManager][INIT]\t→ Setting Up Scenes"))
+        DebugLogger.init("║{:<59}║".format(f"\t[SceneManager][INIT]\t→ Setting Up Scenes"), show_meta=False)
 
         # Activate default starting scene
         self.set_scene("START", silent=True)
-        DebugLogger.init("", "║{:<57}║".format(f"\t\t└─ [StartScene][INIT]\t→ Active Scene: {self.active_scene}"))
+        DebugLogger.init("║{:<57}║".format(f"\t\t└─ [StartScene][INIT]\t→ Active Scene: {self.active_scene}"), show_meta=False)
 
     # ===========================================================
     # Scene Control
@@ -52,7 +52,7 @@ class SceneManager:
     def register_scene(self, name, scene_class):
         """Register a scene class by name."""
         self.scenes[name] = scene_class
-        DebugLogger.state("SceneManager", f"Registered scene '{name}'")
+        DebugLogger.state(f"Registered scene '{name}'")
 
     def set_scene(self, name: str, silent=False):
         """
@@ -70,26 +70,26 @@ class SceneManager:
         # Transition formatting
         if not silent:
             if prev:
-                DebugLogger.action("SceneManager", f"Begin Scene Transition [{prev.upper()}] → [{name.upper()}]")
+                DebugLogger.action(f"Begin Scene Transition [{prev.upper()}] → [{name.upper()}]")
             else:
-                DebugLogger.action("SceneManager", f"Initializing Scene: [{name.upper()}]")
+                DebugLogger.action(f"Initializing Scene: [{name.upper()}]")
 
         if name not in self.scenes:
-            DebugLogger.warn("SceneManager", f"Attempted to switch to unknown scene: '{name}'")
+            DebugLogger.warn(f"Attempted to switch to unknown scene: '{name}'")
             return
 
         if isinstance(self.scenes[name], type):
             scene_class = self.scenes[name]
             self.scenes[name] = scene_class(self)
             if not silent:
-                DebugLogger.action("SceneManager", f"Scene [{name}] instantiated")
+                DebugLogger.action(f"Scene [{name}] instantiated")
 
         # Log active scene
         width = 60
         if not silent:
-            DebugLogger.state("SceneManager", "─" * width)
-            DebugLogger.state("SceneManager", f"{'Active Scene: ' + self.active_scene:^{width}}")
-            DebugLogger.state("SceneManager", "─" * width)
+            DebugLogger.state("─" * width)
+            DebugLogger.state(f"{'Active Scene: ' + self.active_scene:^{width}}")
+            DebugLogger.state("─" * width)
 
     # ===========================================================
     # Event, Update, Draw Delegation
