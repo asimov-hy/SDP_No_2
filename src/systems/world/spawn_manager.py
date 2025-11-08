@@ -13,7 +13,7 @@ Responsibilities
 from src.core.settings import Debug
 from src.core.utils.debug_logger import DebugLogger
 
-from src.systems.hitbox import Hitbox
+from src.systems.combat.collision_hitbox import CollisionHitbox
 
 from src.entities.enemies.enemy_straight import EnemyStraight
 # Future: from src.entities.enemies.enemy_zigzag import EnemyZigzag
@@ -87,7 +87,7 @@ class SpawnManager:
             # Instantiate enemy and register hitbox
             # -------------------------------------------------------
             enemy = cls(x, y, img)
-            enemy.hitbox = Hitbox(enemy, scale=getattr(enemy, "hitbox_scale", 1.0))
+            enemy.hitbox = CollisionHitbox(enemy, scale=getattr(enemy, "hitbox_scale", 1.0))
             self.enemies.append(enemy)
 
             if Debug.VERBOSE_ENTITY_INIT:

@@ -17,7 +17,7 @@ from src.core.utils.debug_logger import DebugLogger
 from src.core.settings import Layers, Debug
 from src.core import settings
 
-from src.ui.button import Button
+from src.ui.ui_button import UIButton
 
 class DebugHUD:
     """Displays developer buttons for quick debugging actions."""
@@ -49,7 +49,7 @@ class DebugHUD:
         btn_size = 48  # consistent square size
         margin = 10
 
-        fullscreen_btn = Button(
+        fullscreen_btn = UIButton(
             x=margin,
             y=margin,
             width=btn_size,
@@ -64,7 +64,7 @@ class DebugHUD:
             layer=Layers.UI
         )
 
-        exit_btn = Button(
+        exit_btn = UIButton(
             x=margin,
             y=margin * 2 + btn_size,
             width=btn_size,

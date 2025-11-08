@@ -77,8 +77,8 @@ class BulletManager:
 
         # Update or recreate hitbox
         if not hasattr(b, "hitbox"):
-            from src.systems.hitbox import Hitbox
-            b.hitbox = Hitbox(b, scale=hitbox_scale)
+            from src.systems.combat.collision_hitbox import CollisionHitbox
+            b.hitbox = CollisionHitbox(b, scale=hitbox_scale)
         else:
             b.hitbox.update()
 

@@ -29,6 +29,7 @@ This project demonstrates the use of:
 202X/
 │
 ├─ main.py
+├─ README.md
 │
 ├─ src/
 │  ├─ core/
@@ -55,15 +56,15 @@ This project demonstrates the use of:
 │  │   ├─ player.py
 │  │   ├─ base_entity.py
 │  │   │
-│  │   ├─ enemies/
+│  │   ├─ bullets/
 │  │   │  ├─ __init__.py
-│  │   │  ├─ enemy.py
-│  │   │  └─ enemy_basic.py
+│  │   │  ├─ bullet_base.py
+│  │   │  └─ bullet_straight.py
 │  │   │
-│  │   └─ bullets/
+│  │   └─ enemies/
 │  │      ├─ __init__.py
-│  │      ├─ bullet_base.py
-│  │      └─ bullet_straight.py
+│  │      ├─ enemy_base.py
+│  │      └─ enemy_straight.py
 │  │
 │  ├─ graphics/
 │  │   ├─ __init__.py
@@ -77,47 +78,42 @@ This project demonstrates the use of:
 │  │
 │  ├─ systems/
 │  │   ├─ __init__.py
-│  │   ├─ collision_manager.py (empty)
-│  │   ├─ sound_manager.py (empty)
-│  │   ├─ spawn_manager.py
-│  │   └─ stage_manager.py
+│  │   │
+│  │   ├─ combat/
+│  │   │  ├─ __init__.py
+│  │   │  ├─ bullet_manager.py
+│  │   │  ├─ collision_hitbox.py
+│  │   │  └─ collision_manager.py
+│  │   │
+│  │   └─ enemies/
+│  │      ├─ __init__.py
+│  │      ├─ level_manager.py
+│  │      ├─ sound_manager.py (empty)
+│  │      └─ spawn_manager.py
 │  │
 │  └─ ui/
 │      ├─ __init__.py
+│      ├─ button.py
+│      ├─ ui_element.py
+│      ├─ ui_manager.py
 │      │
 │      ├─ effects/
 │      │  ├─ __init__.py
 │      │  ├─ ui_animation.py (empty)
 │      │  └─ ui_fade.py (empty)
 │      │
-│      ├─ subsystems/
-│      │  ├─ __init__.py
-│      │  ├─ debug_hud.py
-│      │  ├─ hud_manager.py
-│      │  └─ menu_manager.py (empty)
-│      │
-│      ├─ __init__.py
-│      ├─ button.py
-│      ├─ ui_element.py
-│      └─ ui_manager.py
+│      └─ subsystems/
+│         ├─ __init__.py
+│         ├─ debug_hud.py
+│         ├─ hud_manager.py
+│         └─ menu_manager.py (empty)
 │
-├─ assets/
-│  ├─ images/
-│  │   ├─ player.png
-│  │   ├─ enemies/
-│  │   ├─ bullets/
-│  │   └─ effects/
-│  │
-│  ├─ sounds/
-│  │   ├─ shoot.wav
-│  │   ├─ explosion.wav
-│  │   └─ bgm.ogg
-│  │
-│  └─ fonts/
-│      └─ arcade.ttf
-│
-├─ assets/
-│  └─ player_config.json
-│
-└─ README.md
+└─ assets/
+   ├─ images/
+   │   ├─ player.png
+   │   │
+   │   └─ icons/
+   │       └─ 202X_icon.png
+   │
+   └─ sounds/
 ```

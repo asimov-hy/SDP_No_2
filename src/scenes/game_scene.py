@@ -16,17 +16,16 @@ import pygame
 
 from src.core.utils.debug_logger import DebugLogger
 from src.core.settings import Display, Layers
-from src.core import settings
 
 from src.entities.player import Player
 
 from src.ui.ui_manager import UIManager
 from src.ui.subsystems.hud_manager import HUDManager
 
-from src.systems.spawn_manager import SpawnManager
-from src.systems.stage_manager import StageManager
-from src.systems.bullet_manager import BulletManager
-from src.systems.collision_manager import CollisionManager
+from src.systems.world.spawn_manager import SpawnManager
+from src.systems.world.level_manager import LevelManager
+from src.systems.combat.bullet_manager import BulletManager
+from src.systems.combat.collision_manager import CollisionManager
 
 
 class GameScene:
@@ -95,7 +94,7 @@ class GameScene:
             {"spawn_time": 9.0, "enemy_type": "straight", "count": 8, "pattern": "line"},
         ]
 
-        self.stage_manager = StageManager(self.spawner, STAGE_1_WAVES)
+        self.stage_manager = LevelManager(self.spawner, STAGE_1_WAVES)
         DebugLogger.init("StageManager initialized with Stage 1 waves")
 
         # ===========================================================

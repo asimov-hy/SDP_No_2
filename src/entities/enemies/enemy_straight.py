@@ -11,11 +11,11 @@ Responsibilities
 """
 
 from src.core.settings import Debug, Display
-from src.entities.enemies.enemy_base import EnemyBase
+from src.entities.enemies.base_enemy import EnemyBaseEntity
 from src.core.utils.debug_logger import DebugLogger
 
 
-class EnemyStraight(EnemyBase):
+class EnemyStraight(EnemyBaseEntity):
     """Simple enemy that moves vertically downward and disappears when off-screen."""
 
     # ===========================================================

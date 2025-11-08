@@ -19,7 +19,7 @@ import pygame
 from src.core import settings
 from src.core.settings import Display, Player as PlayerSettings, Layers
 from src.core.utils.debug_logger import DebugLogger
-from src.entities.entity_base import EntityBase
+from src.entities.base_entity import BaseEntity
 
 
 # ===========================================================
@@ -56,7 +56,7 @@ PLAYER_CONFIG = load_player_config()
 # Player Entity Class
 # ===========================================================
 
-class Player(EntityBase):
+class Player(BaseEntity):
     """Represents the controllable player entity."""
 
     # ===========================================================
@@ -225,7 +225,7 @@ class Player(EntityBase):
         Delegates bullet damage to the bullet itself via on_hit().
         Only handles direct collisions (e.g., Player <-> Enemy).
         """
-        from src.entities.enemies.enemy_base import EnemyStraight
+        from src.entities.enemies.base_enemy import EnemyStraight
 
         # -------------------------------------------------------
         # Physical collisions with enemies (body-to-body)

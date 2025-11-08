@@ -10,7 +10,7 @@ Responsibilities
 - Provide an entry point for future visual or sound effects.
 """
 
-from src.entities.bullets.bullet_base import BulletBase
+from src.entities.bullets.base_bullet import BulletBase
 
 
 class StraightBullet(BulletBase):

@@ -1,5 +1,5 @@
 """
-stage_manager.py
+level_manager.py
 ----------------
 Controls stage progression and predefined enemy waves.
 
@@ -12,7 +12,7 @@ Responsibilities
 
 from src.core.utils.debug_logger import DebugLogger
 
-class StageManager:
+class LevelManager:
     """Handles stage timing, wave scheduling, and progression."""
 
     # ===========================================================

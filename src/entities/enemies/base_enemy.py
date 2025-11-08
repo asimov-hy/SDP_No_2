@@ -1,5 +1,5 @@
 """
-enemy_base.py
+base_enemy.py
 --------------
 Defines the shared base class for all enemy entities.
 
@@ -11,11 +11,11 @@ Responsibilities
 """
 
 from src.core.settings import Debug, Layers
-from src.entities.entity_base import EntityBase
+from src.entities.base_entity import BaseEntity
 from src.core.utils.debug_logger import DebugLogger
 
 
-class EnemyBase(EntityBase):
+class EnemyBaseEntity(BaseEntity):
     """Base class providing shared logic for all enemy entities."""
 
     # ===========================================================

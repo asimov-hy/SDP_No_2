@@ -1,5 +1,5 @@
 """
-entity_base.py
+base_entity.py
 --------------
 Defines the BaseEntity class, which serves as the foundational interface
 for all active in-game entities (e.g., Player, Enemy, Bullet).
@@ -16,7 +16,7 @@ from src.core.settings import Debug, Layers
 from src.core.utils.debug_logger import DebugLogger
 
 
-class EntityBase:
+class BaseEntity:
     """Common interface for all entities within the game world."""
 
     # ===========================================================

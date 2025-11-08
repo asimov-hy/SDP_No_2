@@ -14,7 +14,7 @@ Responsibilities
 import pygame
 from src.core.utils.debug_logger import DebugLogger
 
-class UIElement:
+class BASEUI:
     """Base class for all UI components."""
 
     # ===========================================================

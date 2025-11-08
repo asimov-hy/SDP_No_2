@@ -1,5 +1,5 @@
 """
-bullet_base.py
+base_bullet.py
 --------------
 Defines the base Bullet class providing shared logic for all bullet types.
 
@@ -15,7 +15,7 @@ import pygame
 from src.core import settings
 from src.core.utils.debug_logger import DebugLogger
 
-from src.systems.hitbox import Hitbox
+from src.systems.combat.collision_hitbox import CollisionHitbox
 
 
 class BulletBase:
@@ -62,7 +62,7 @@ class BulletBase:
         # -------------------------------------------------------
         # Hitbox Setup (matches sprite or circle)
         # -------------------------------------------------------
-        self.hitbox = Hitbox(self, scale=hitbox_scale)
+        self.hitbox = CollisionHitbox(self, scale=hitbox_scale)
 
     # ===========================================================
     # Update Logic

@@ -1,5 +1,5 @@
 """
-hitbox.py
+collision_hitbox.py
 ---------
 Defines the Hitbox class used by all active entities to provide
 modular and scalable collision detection bounds.
@@ -16,7 +16,7 @@ from src.core.utils.debug_logger import DebugLogger
 from src.core.settings import Debug
 
 
-class Hitbox:
+class CollisionHitbox:
     """Represents a rectangular collision boundary tied to an entity."""
 
     # ===========================================================
