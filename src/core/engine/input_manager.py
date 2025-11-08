@@ -12,15 +12,27 @@ Responsibilities
 import pygame
 from src.core.utils.debug_logger import DebugLogger
 
-# Default key bindings (easily replaceable later)
+# ===========================================================
+# Default Key Bindings
+# ===========================================================
 DEFAULT_KEY_BINDINGS = {
-    "move_left": [pygame.K_LEFT, pygame.K_a],
-    "move_right": [pygame.K_RIGHT, pygame.K_d],
-    "move_up": [pygame.K_UP, pygame.K_w],
-    "move_down": [pygame.K_DOWN, pygame.K_s],
-    "attack": [pygame.K_SPACE],
-    "bomb": [pygame.K_LSHIFT, pygame.K_RSHIFT],
-    "pause": [pygame.K_ESCAPE],
+    "gameplay": {
+        "move_left": [pygame.K_LEFT, pygame.K_a],
+        "move_right": [pygame.K_RIGHT, pygame.K_d],
+        "move_up": [pygame.K_UP, pygame.K_w],
+        "move_down": [pygame.K_DOWN, pygame.K_s],
+        "attack": [pygame.K_SPACE],
+        "bomb": [pygame.K_LSHIFT, pygame.K_RSHIFT],
+        "pause": [pygame.K_ESCAPE],
+    },
+    "ui": {
+        "navigate_up": [pygame.K_UP, pygame.K_w],
+        "navigate_down": [pygame.K_DOWN, pygame.K_s],
+        "navigate_left": [pygame.K_LEFT, pygame.K_a],
+        "navigate_right": [pygame.K_RIGHT, pygame.K_d],
+        "confirm": [pygame.K_RETURN, pygame.K_SPACE],
+        "back": [pygame.K_ESCAPE],
+    }
 }
 
 class InputManager:
@@ -37,7 +49,10 @@ class InputManager:
             key_bindings (dict, optional): Custom key-action mapping.
                 Defaults to DEFAULT_KEY_BINDINGS if not provided.
         """
-        self.key_bindings = key_bindings or DEFAULT_KEY_BINDINGS.copy()
+        self.key_bindings = key_bindings or DEFAULT_KEY_BINDINGS
+        self.context = "gameplay"  # active context ("gameplay" or "ui")
+
+        DebugLogger.init("", "║{:<59}║".format(f"\t[InputManager][INIT]\t→  Initialized"))
 
         # Controller setup
         pygame.joystick.init()
@@ -45,38 +60,59 @@ class InputManager:
         if pygame.joystick.get_count() > 0:
             self.controller = pygame.joystick.Joystick(0)
             self.controller.init()
-            DebugLogger.init("", "║{:<62}║".format(f"\t[InputManager][INIT]\t→  Controller: {self.controller.get_name()}"))
-        else:
-            DebugLogger.init("", "║{:<59}║".format(f"\t[InputManager][INIT]\t→  Keyboard"))
+            DebugLogger.init("", "║{:<57}║".format(f"\t\t└─ [INIT]\t→  {self.controller.get_name()}"))
+
+        DebugLogger.init("", "║{:<57}║".format(f"\t\t└─ [INIT]\t→  Keyboard"))
 
         # Movement and state tracking
         self.move = pygame.Vector2(0, 0)
         self._move_keyboard = pygame.Vector2(0, 0)
         self._move_controller = pygame.Vector2(0, 0)
 
-        # Action states
+        # Action states (gameplay)
         self.attack_pressed = False
         self.bomb_pressed = False
         self.pause_pressed = False
+
+        # UI navigation states
+        self.ui_up = False
+        self.ui_down = False
+        self.ui_left = False
+        self.ui_right = False
+        self.ui_confirm = False
+        self.ui_back = False
+
+    # ===========================================================
+    # Context Management
+    # ===========================================================
+    def set_context(self, name: str):
+        """
+        Switch between contexts ("gameplay", "ui").
+        """
+        if name not in self.key_bindings:
+            DebugLogger.warn("InputManager", f"Unknown context: {name}")
+            return
+        self.context = name
+        DebugLogger.state("InputManager", f"Context switched to [{name.upper()}]")
+
+    def get_context(self):
+        return self.context
 
     # ===========================================================
     # Update Cycle
     # ===========================================================
     def update(self):
         """Poll all input sources once per frame."""
-        self._update_keyboard()
-        self._update_controller()
-        self._merge_inputs()
+        if self.context == "ui":
+            self._update_ui_navigation()
+        else:
+            self._update_gameplay_controls()
+
 
     # ===========================================================
-    # Keyboard Input
+    # Gameplay Input
     # ===========================================================
-    def _update_keyboard(self):
-        """
-        Read movement and action keys from the keyboard.
-
-        Sets movement and action states according to the active bindings.
-        """
+    def _update_gameplay_controls(self):
         keys = pygame.key.get_pressed()
         self._move_keyboard.update(0, 0)
 
@@ -93,6 +129,46 @@ class InputManager:
         self.attack_pressed = self._is_pressed("attack", keys)
         self.bomb_pressed = self._is_pressed("bomb", keys)
         self.pause_pressed = self._is_pressed("pause", keys)
+
+        # Merge controller and keyboard
+        self._update_controller()
+        self._merge_inputs()
+
+    # ===========================================================
+    # UI Navigation Input
+    # ===========================================================
+    def _update_ui_navigation(self):
+        keys = pygame.key.get_pressed()
+        self.ui_up = self._is_pressed("navigate_up", keys)
+        self.ui_down = self._is_pressed("navigate_down", keys)
+        self.ui_left = self._is_pressed("navigate_left", keys)
+        self.ui_right = self._is_pressed("navigate_right", keys)
+        self.ui_confirm = self._is_pressed("confirm", keys)
+        self.ui_back = self._is_pressed("back", keys)
+
+        # ------------------------------------------
+        # Controller support for UI
+        # ------------------------------------------
+        if self.controller:
+            hat_x, hat_y = self.controller.get_hat(0)  # D-pad
+            x_axis = self.controller.get_axis(0)  # Analog X
+            y_axis = self.controller.get_axis(1)  # Analog Y
+            threshold = 0.5
+
+            # D-pad or analog emulate arrow keys
+            if hat_y == 1 or y_axis < -threshold:
+                self.ui_up = True
+            elif hat_y == -1 or y_axis > threshold:
+                self.ui_down = True
+
+            if hat_x == -1 or x_axis < -threshold:
+                self.ui_left = True
+            elif hat_x == 1 or x_axis > threshold:
+                self.ui_right = True
+
+            # Controller buttons (customizable later)
+            self.ui_confirm = self.controller.get_button(0)  # usually A / Cross
+            self.ui_back = self.controller.get_button(1)  # usually B / Circle
 
     # ===========================================================
     # Controller Input
@@ -137,9 +213,10 @@ class InputManager:
         Returns:
             bool: True if any key bound to the action is pressed.
         """
-        if action not in self.key_bindings:
+        ctx = self.key_bindings.get(self.context, {})
+        if action not in ctx:
             return False
-        for key in self.key_bindings[action]:
+        for key in ctx[action]:
             if keys[key]:
                 return True
         return False
@@ -153,5 +230,9 @@ class InputManager:
                 Returns (0, 0) if no movement input is active.
         """
         if self.move.length_squared() > 0:
-            return self.move.normalize()
+            v = self.move.normalize()
+            # Round tiny floating-point errors for symmetry
+            v.x = round(v.x, 3)
+            v.y = round(v.y, 3)
+            return v
         return pygame.Vector2(0, 0)

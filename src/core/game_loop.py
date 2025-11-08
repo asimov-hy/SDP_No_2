@@ -33,6 +33,12 @@ class GameLoop:
         """Initialize pygame and all foundational systems."""
         DebugLogger.init("GameLoop", "Begin GameLoop Initialization")
 
+        # -------------------------------------------------------
+        # Initialize pygame systems
+        # -------------------------------------------------------
+        pygame.init()
+        pygame.font.init()
+
         DebugLogger.init("", "╔" + "═" * 64 + "╗")
         DebugLogger.init("", "║{:^64}║".format("INITIALIZING GAMELOOP"))
         DebugLogger.init("", "╠" + "═" * 64 + "╣")
@@ -93,13 +99,24 @@ class GameLoop:
         """
         DebugLogger.action("GameLoop", "Entering main loop")
 
-        while self.running:
-            dt = self.clock.tick(FPS) / 1000  # Delta time (seconds)
-            self._handle_events()
-            self._update(dt)
-            self._draw()
-        pygame.quit()
+        fixed_dt = 1 / 120.0  # Physics step (120 Hz)
+        accumulator = 0.0
 
+        while self.running:
+            frame_time = self.clock.tick(FPS) / 1000.0
+            accumulator += frame_time
+
+            self._handle_events()
+
+            while accumulator >= fixed_dt:
+                self.input.update()
+                self.scenes.update(fixed_dt)
+                self.debug_hud.update(pygame.mouse.get_pos())
+                accumulator -= fixed_dt
+
+            self._draw()
+
+        pygame.quit()
         DebugLogger.system("GameLoop", "Pygame terminated")
 
     # ===========================================================

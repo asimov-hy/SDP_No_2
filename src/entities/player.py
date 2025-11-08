@@ -14,9 +14,8 @@ import pygame
 import json
 import os
 
-from src.core.settings import PLAYER_SPEED, SCREEN_WIDTH, SCREEN_HEIGHT
+from src.core import settings
 from src.core.utils.debug_logger import DebugLogger
-
 from src.entities.base_entity import BaseEntity
 
 # ===========================================================
@@ -72,6 +71,7 @@ class Player(BaseEntity):
         super().__init__(x, y, image)
 
         # Player attributes
+        self.pos = pygame.Vector2(x, y)
         self.velocity = pygame.Vector2(0, 0)
         self.speed = cfg["speed"]
         self.health = cfg["health"]
@@ -80,26 +80,53 @@ class Player(BaseEntity):
 
         DebugLogger.init("Player", f"Initialized at ({x}, {y}) | Speed={self.speed} | HP={self.health}")
 
+        # -----------------------------------------------------------
+        # Register this player globally (scene-independent)
+        # -----------------------------------------------------------
+        settings.GLOBAL_PLAYER = self
+
     # ===========================================================
     # Update Logic
     # ===========================================================
     def update(self, dt, move_vec):
         """
-        Update player position based on input vector and time delta.
+        Update player position with velocity buildup and gradual slowdown.
 
         Args:
-            dt (float): Time elapsed since last frame.
-            move_vec (pygame.Vector2): Normalized movement direction.
+            dt (float): Delta time.
+            move_vec (pygame.Vector2): Normalized input direction vector.
         """
         if not self.alive:
             return
 
-        if move_vec.length_squared() > 0:
-            self.velocity = move_vec * self.speed * dt
-            self.rect.x += self.velocity.x
-            self.rect.y += self.velocity.y
-        else:
-            self.velocity.update(0, 0)
+        # ==========================================================
+        # Tunable Physics Parameters
+        # ==========================================================
+        accel_rate = 3000  # How fast player accelerates toward max speed
+        friction_rate = 500  # How quickly the player slows when not pressing keys
+        max_speed = self.speed  # The maximum movement speed
 
-        # Keep player inside screen bounds
-        self.rect.clamp_ip(pygame.Rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT))
+        # ==========================================================
+        # Apply Acceleration (Additive Model)
+        # ==========================================================
+        if move_vec.length_squared() > 0:
+            # Add velocity directly based on input direction and acceleration
+            self.velocity += move_vec * accel_rate * dt
+
+            # Clamp velocity to maximum speed
+            if self.velocity.length() > max_speed:
+                self.velocity.scale_to_length(max_speed)
+        else:
+            # ======================================================
+            # Apply Friction (when no input)
+            # ======================================================
+            speed = self.velocity.length()
+            if speed > 0:
+                decel = friction_rate * dt
+                if decel >= speed:
+                    self.velocity.update(0, 0)
+                else:
+                    self.velocity.scale_to_length(speed - decel)
+
+        self.pos += self.velocity * dt
+        self.rect.topleft = self.pos
