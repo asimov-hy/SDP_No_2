@@ -26,7 +26,7 @@ from src.ui.subsystems.hud_manager import HUDManager
 from src.systems.spawn_manager import SpawnManager
 from src.systems.stage_manager import StageManager
 from src.systems.bullet_manager import BulletManager
-
+from src.systems.collision_manager import CollisionManager
 
 
 class GameScene:
@@ -105,6 +105,16 @@ class GameScene:
         self.player.bullet_manager = self.bullet_manager  # Give player access
         DebugLogger.init("BulletManager initialized and linked to Player")
 
+        # ===========================================================
+        # Collision Manager Setup
+        # ===========================================================
+        self.collision_manager = CollisionManager(
+            self.player,
+            self.bullet_manager,
+            self.spawner
+        )
+        DebugLogger.init("CollisionManager initialized successfully")
+
     # ===========================================================
     # Event Handling
     # ===========================================================
@@ -146,6 +156,11 @@ class GameScene:
         # UI
         # ===========================================================
         self.ui.update(pygame.mouse.get_pos())
+
+        # ===========================================================
+        # Collision Checks
+        # ===========================================================
+        self.collision_manager.update(self.display.get_game_surface())
 
     # ===========================================================
     # Rendering

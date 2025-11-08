@@ -65,7 +65,14 @@ class Debug:
     VERBOSE_ENTITY_DEATH = False
     TRACE_UPDATES = False
     STAGE_SUMMARY = True
-    SHOW_HITBOXES = False
+    SHOW_HITBOXES = True
     SHOW_FPS = True
     SHOW_COLLISION_BOXES = False
     FRAME_TIME_WARNING = 16.67  # ms (warn if slower than 60 FPS)
+
+    # -----------------------------------------------------------
+    # Collision / Hitbox Debugging
+    # -----------------------------------------------------------
+    ENABLE_HITBOX = True              # Toggle hitbox rendering globally
+    VERBOSE_HITBOX_UPDATE = False     # Log hitbox movement each frame
+    VERBOSE_HITBOX_DRAW = False       # Log each hitbox draw call

@@ -14,7 +14,7 @@ Responsibilities
 import pygame
 
 from src.core.utils.debug_logger import DebugLogger
-from src.core.settings import Layers
+from src.core.settings import Layers, Debug
 from src.core import settings
 
 from src.ui.button import Button
@@ -185,6 +185,15 @@ class DebugHUD:
 
             draw_manager.queue_draw(surface_pos, rect_pos, Layers.UI)
             draw_manager.queue_draw(surface_vel, rect_vel, Layers.UI)
+
+        # --------------------------------------------------------
+        # Hitbox Debug Toggle Indicator
+        # --------------------------------------------------------
+        y_offset = 60
+        hitbox_state = "ON" if Debug.ENABLE_HITBOX else "OFF"
+        hitbox_color = (0, 255, 0) if Debug.ENABLE_HITBOX else (255, 80, 80)
+        surface_hitbox = font.render(f"Hitbox: {hitbox_state}", True, hitbox_color)
+        draw_manager.queue_draw(surface_hitbox, surface_hitbox.get_rect(topleft=(70, y_offset)), Layers.UI)
 
     # ===========================================================
     # Visibility Controls

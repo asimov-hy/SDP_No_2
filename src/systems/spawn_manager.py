@@ -12,7 +12,10 @@ Responsibilities
 
 from src.core.settings import Debug
 from src.core.utils.debug_logger import DebugLogger
+
 from src.entities.enemies.enemy_basic import EnemyBasic
+
+from src.systems.hitbox import Hitbox
 
 
 class SpawnManager:
@@ -58,6 +61,7 @@ class SpawnManager:
                 DebugLogger.warn(f"Unknown enemy type: '{type_name}'")
                 return
 
+            enemy.hitbox = Hitbox(enemy, scale=getattr(enemy, "hitbox_scale", 1.0))
             self.enemies.append(enemy)
             if Debug.VERBOSE_ENTITY_INIT:
                 DebugLogger.action(f"Spawned '{type_name}' enemy at ({x}, {y})")

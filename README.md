@@ -34,6 +34,7 @@ This project demonstrates the use of:
 │  ├─ core/
 │  │   ├─ __init__.py
 │  │   ├─ game_loop.py
+│  │   ├─ game_state.py
 │  │   ├─ settings.py
 │  │   │
 │  │   ├─ engine/
@@ -46,15 +47,23 @@ This project demonstrates the use of:
 │  │       ├─ __init__.py
 │  │       └─ debug_logger.py
 │  │
+│  ├─ data/
+│  │   └─ player_config.json
+│  │
 │  ├─ entities/
 │  │   ├─ __init__.py
 │  │   ├─ player.py
 │  │   ├─ base_entity.py
 │  │   │
-│  │   └─ enemies/
+│  │   ├─ enemies/
+│  │   │  ├─ __init__.py
+│  │   │  ├─ enemy.py
+│  │   │  └─ enemy_basic.py
+│  │   │
+│  │   └─ bullets/
 │  │      ├─ __init__.py
-│  │      ├─ enemy.py
-│  │      └─ enemy_basic.py
+│  │      ├─ bullet_base.py
+│  │      └─ bullet_straight.py
 │  │
 │  ├─ graphics/
 │  │   ├─ __init__.py
@@ -63,13 +72,13 @@ This project demonstrates the use of:
 │  ├─ scenes/
 │  │   ├─ __init__.py
 │  │   ├─ game_scene.py
-│  │   ├─ pause_scene.py
+│  │   ├─ pause_scene.py (empty)
 │  │   └─ start_scene.py
 │  │
 │  ├─ systems/
 │  │   ├─ __init__.py
-│  │   ├─ collision_manager.py
-│  │   ├─ sound_manager.py
+│  │   ├─ collision_manager.py (empty)
+│  │   ├─ sound_manager.py (empty)
 │  │   ├─ spawn_manager.py
 │  │   └─ stage_manager.py
 │  │
@@ -78,14 +87,14 @@ This project demonstrates the use of:
 │      │
 │      ├─ effects/
 │      │  ├─ __init__.py
-│      │  ├─ ui_animation.py - null
-│      │  └─ ui_fade.py - null
+│      │  ├─ ui_animation.py (empty)
+│      │  └─ ui_fade.py (empty)
 │      │
 │      ├─ subsystems/
-│      │  ├─ __init__.py - null
+│      │  ├─ __init__.py
 │      │  ├─ debug_hud.py
 │      │  ├─ hud_manager.py
-│      │  └─ menu_manager.py - null
+│      │  └─ menu_manager.py (empty)
 │      │
 │      ├─ __init__.py
 │      ├─ button.py

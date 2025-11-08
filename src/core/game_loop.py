@@ -26,6 +26,7 @@ from src.graphics.draw_manager import DrawManager
 
 from src.ui.subsystems.debug_hud import DebugHUD
 
+
 class GameLoop:
     """Core runtime controller that manages the game’s main loop."""
 
@@ -163,6 +164,11 @@ class GameLoop:
 
                 elif event.key == pygame.K_F3:
                     self.debug_hud.toggle()
+
+                    from src.core.settings import Debug
+                    Debug.ENABLE_HITBOX = not Debug.ENABLE_HITBOX
+                    state = "ON" if Debug.ENABLE_HITBOX else "OFF"
+                    DebugLogger.action(f"Hitbox rendering toggled → {state}")
 
             # Window resizing
             if event.type == pygame.VIDEORESIZE:

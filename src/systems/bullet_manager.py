@@ -25,6 +25,7 @@ class BulletManager:
     def __init__(self):
         self.active = []  # currently active bullets
         self.pool = []    # inactive bullets ready for reuse
+        self.bullets = self.active
         DebugLogger.init("║{:<59}║".format(f"\t[BulletManager][INIT]\t→ Pool ready"), show_meta=False)
 
     # ===========================================================
