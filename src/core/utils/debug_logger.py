@@ -13,6 +13,7 @@ Responsibilities
 import inspect
 from datetime import datetime
 import os
+from src.core.game_settings import LoggerConfig
 
 
 class DebugLogger:
@@ -90,18 +91,45 @@ class DebugLogger:
         return "Unknown"
 
     # ===========================================================
+    # Logger Filtering
+    # ===========================================================
+    @staticmethod
+    def _should_log(category: str, level: str) -> bool:
+        """Check if this log type and category should print."""
+        if not LoggerConfig.ENABLE_LOGGING:
+            return False
+
+        # Category check
+        if category not in LoggerConfig.CATEGORIES:
+            return False
+        if not LoggerConfig.CATEGORIES[category]:
+            return False
+
+        # Level check
+        order = ["NONE", "ERROR", "WARN", "INFO", "VERBOSE"]
+        if order.index(level) > order.index(LoggerConfig.LOG_LEVEL):
+            return False
+
+        return True
+
+    # ===========================================================
     # Core Logging Utility
     # ===========================================================
     @staticmethod
-    def _log(tag: str, message: str, color: str = "reset"):
+    def _log(tag: str, message: str, color: str = "reset", category: str = "system", level: str = "INFO"):
         """
-        Core log formatter.
+        Core log formatter with filtering support.
 
         Args:
             tag (str): The type of log message (e.g., SYSTEM, STATE, ACTION, WARN).
             message (str): Descriptive message to display.
-            color (str, optional): Color key for terminal output. Defaults to "reset".
+            color (str, optional): Color key for terminal output.
+            category (str, optional): Log category for filtering (system, stage, collision, etc.).
+            level (str, optional): Log level for filtering (INFO, WARN, VERBOSE, etc.).
         """
+        if not DebugLogger._should_log(category, level):
+            return
+
         source = DebugLogger._get_caller()
         timestamp = datetime.now().strftime("%H:%M:%S")
         color_code = DebugLogger.COLORS.get(color, DebugLogger.COLORS["reset"])
@@ -111,41 +139,39 @@ class DebugLogger:
     # Public Helper Methods
     # ===========================================================
     @staticmethod
-    def action(msg: str):
+    def action(msg: str, category: str = "system"):
         """Log notable player or system actions."""
-        DebugLogger._log("ACTION", msg, "action")
+        DebugLogger._log("ACTION", msg, "action", category, "INFO")
 
     @staticmethod
-    def state(msg: str):
+    def state(msg: str, category: str = "system"):
         """Log changes in state, mode, or configuration."""
-        DebugLogger._log("STATE", msg, "state")
+        DebugLogger._log("STATE", msg, "state", category, "INFO")
 
     @staticmethod
-    def system(msg: str):
+    def system(msg: str, category: str = "system"):
         """Log initialization, setup, or teardown events."""
-        DebugLogger._log("SYSTEM", msg, "system")
+        DebugLogger._log("SYSTEM", msg, "system", category, "INFO")
 
     @staticmethod
-    def warn(msg: str):
+    def warn(msg: str, category: str = "system"):
         """Log non-fatal warnings and recoverable issues."""
-        DebugLogger._log("WARN", msg, "warn")
+        DebugLogger._log("WARN", msg, "warn", category, "WARN")
 
     @staticmethod
-    def trace(msg: str):
+    def trace(msg: str, category: str = "collision"):
         """Low-level debug trace for per-frame or high-frequency events."""
-        DebugLogger._log("TRACE", msg, "trace")
+        DebugLogger._log("TRACE", msg, "trace", category, "VERBOSE")
 
     @staticmethod
-    def init(msg: str = "", color: str = "init", show_meta: bool = True):
+    def init(msg: str = "", color: str = "init", show_meta: bool = True, category: str = "system"):
         """
         Log visually-structured initialization text.
         Optionally include timestamp and source metadata.
-
-        Args:
-            msg (str): Text to print.
-            color (str): Color key (default: 'init' = bright white).
-            show_meta (bool): If True, includes timestamp and [Source][INIT] prefix.
         """
+        if not DebugLogger._should_log(category, "INFO"):
+            return
+
         color_code = DebugLogger.COLORS.get(color, DebugLogger.COLORS["init"])
         reset = DebugLogger.COLORS["reset"]
 

@@ -157,5 +157,8 @@ class BulletManager:
         self.active = [b for b in self.active if b.alive]
         removed = before - len(self.active)
 
-        if removed > 0 and Debug.VERBOSE_ENTITY_DEATH:
-            DebugLogger.state(f"[BulletManager] Cleaned up {removed} inactive bullets")
+        if removed > 0:
+            DebugLogger.state(
+                f"Cleaned up {removed} inactive bullets",
+                category="entity_cleanup"
+            )

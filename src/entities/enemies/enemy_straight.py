@@ -34,8 +34,10 @@ class EnemyStraight(BaseEnemy):
         """
         super().__init__(x, y, image, speed=speed, hp=hp)
 
-        if Debug.VERBOSE_ENTITY_INIT:
-            DebugLogger.init(f"Spawned EnemyStraight at ({x}, {y}) | Speed={speed}")
+        DebugLogger.init(
+            f"Spawned EnemyStraight at ({x}, {y}) | Speed={speed}",
+            category="effects"
+        )
 
     # ===========================================================
     # Update Logic
@@ -61,5 +63,8 @@ class EnemyStraight(BaseEnemy):
         # Destroy when off-screen
         if self.pos.y > Display.HEIGHT:
             self.alive = False
-            if Debug.VERBOSE_ENTITY_DEATH:
-                DebugLogger.state(f"{type(self).__name__} off-screen at y={self.pos.y:.1f}")
+
+            DebugLogger.state(
+                f"{type(self).__name__} off-screen at y={self.pos.y:.1f}",
+                category="effects"
+            )

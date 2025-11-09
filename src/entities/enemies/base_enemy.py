@@ -39,9 +39,6 @@ class BaseEnemy(BaseEntity):
         self.hp = hp
         self._trace_timer = 0.0
 
-        if Debug.VERBOSE_ENTITY_INIT:
-            DebugLogger.init(f"Enemy initialized at ({x}, {y})")
-
         # -------------------------------------------------------
         # Collision setup
         # -------------------------------------------------------
@@ -75,7 +72,8 @@ class BaseEnemy(BaseEntity):
         if self.hp <= 0:
             self.alive = False
             DebugLogger.state(
-                f"Took {amount} from {source} → HP=0 | Destroyed at {self.rect.topleft}"
+                f"Took {amount} damage from {source} → HP=0 | Destroyed at {self.rect.topleft}",
+                category="effects"
             )
         else:
             DebugLogger.state(

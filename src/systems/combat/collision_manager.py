@@ -182,7 +182,8 @@ class CollisionManager:
                             tag_a = getattr(a, "collision_tag", "?")
                             tag_b = getattr(b, "collision_tag", "?")
                             DebugLogger.state(
-                                f"Collision: {type(a).__name__} ({tag_a}) <-> {type(b).__name__} ({tag_b})"
+                                f"Collision: {type(a).__name__} ({tag_a}) <-> {type(b).__name__} ({tag_b})",
+                                category="collision"
                             )
 
                             # Let entities handle their reactions
@@ -192,7 +193,11 @@ class CollisionManager:
                                 if hasattr(b, "on_collision"):
                                     b.on_collision(a)
                             except Exception as e:
-                                DebugLogger.warn(f"[CollisionManager] Exception during collision: {e}")
+                                DebugLogger.warn(
+                                    f"[CollisionManager] Exception during collision between "
+                                    f"{type(a).__name__} and {type(b).__name__}: {e}",
+                                    category="collision"
+                                )
         return collisions
 
     # ===========================================================

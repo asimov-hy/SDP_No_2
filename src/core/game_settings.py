@@ -19,9 +19,9 @@ class Display:
 # Physics & Timing
 # ===========================================================
 class Physics:
-    UPDATE_RATE = 60  # Hz (matches display FPS for simplicity)
-    FIXED_DT = 1 / UPDATE_RATE  # 0.01666... seconds
-    MAX_FRAME_TIME = 0.1  # Cap at 100ms to prevent death spiral
+    UPDATE_RATE = 60  # Hz
+    FIXED_DT = 1 / UPDATE_RATE
+    MAX_FRAME_TIME = 0.1  # Prevent frame spiral
 
 
 # ===========================================================
@@ -42,46 +42,49 @@ class Layers:
 # Player Configuration
 # ===========================================================
 class Player:
-    SPEED = 300  # pixels per second
-    FOCUSED_SPEED = 150  # For bullets hell "focus mode" (hold shift)
-    HITBOX_RADIUS = 2  # Tiny hitbox for bullets hell fairness
+    SPEED = 300
+    FOCUSED_SPEED = 150
+    HITBOX_RADIUS = 2
 
 
 # ===========================================================
-# Bullet Configuration - EXAMPLE
-# ===========================================================
-# class Bullets:
-#     PLAYER_SPEED = 400
-#     ENEMY_SPEED = 200
-#     MAX_COUNT = 1000  # Performance cap
-#     POOL_SIZE = 500  # Pre-allocate this many
-
-
-# ===========================================================
-# Enemy Configuration - EXAMPLE
-# ===========================================================
-# class Enemies:
-#     MAX_COUNT = 100
-#     POOL_SIZE = 50
-
-
-# ===========================================================
-# Debug Configuration
+# Debug (Visual)
 # ===========================================================
 class Debug:
-    # Core Flags
-    VERBOSE_ENTITY_INIT = False
-    VERBOSE_ENTITY_DEATH = False
-    TRACE_UPDATES = False
-    STAGE_SUMMARY = True
+    """Visual debug and HUD toggles — not related to logging."""
+
     SHOW_FPS = True
-    FRAME_TIME_WARNING = 16.67  # ms (warn if slower than 60 FPS)
-
-    # -----------------------------------------------------------
-    # Hitbox Debugging
-    # -----------------------------------------------------------
-    HITBOX_ACTIVE = True          # Always active for collision checks
-    HITBOX_VISIBLE = False        # Visible only in debug mode
-    VERBOSE_HITBOX_UPDATE = False
-
+    FRAME_TIME_WARNING = 16.67
+    HITBOX_ACTIVE = True
+    HITBOX_VISIBLE = False
     HITBOX_LINE_WIDTH = 5
+
+
+# ===========================================================
+# Logger Configuration (Textual / Console Logging)
+# ===========================================================
+class LoggerConfig:
+    """
+    Controls which subsystems emit log messages and at what verbosity level.
+    Used by DebugLogger to decide what to print.
+    """
+
+    # Master Control
+    ENABLE_LOGGING = True
+    LOG_LEVEL = "INFO"  # NONE, ERROR, WARN, INFO, VERBOSE
+
+    # Category Filters (only current categories in use)
+    CATEGORIES = {
+        "system": True,       # Core engine and scene transitions
+        "stage": True,        # LevelManager / wave progression logs
+        "collision": False,   # CollisionManager (hit detection)
+        "effects": False,     # Destruction / VFX / bullet impacts
+        "entity_spawning": False,
+        "entity_cleanup": False,
+    }
+
+    # Output Style
+    SHOW_TIMESTAMP = True
+    SHOW_CATEGORY = True
+    SHOW_LEVEL = True
+    # Optional: SAVE_TO_FILE = False

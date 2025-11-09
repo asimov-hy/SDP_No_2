@@ -255,7 +255,7 @@ class Player(BaseEntity):
             return
 
         self.health -= amount
-        DebugLogger.state(f"Took {amount} from {source} → HP={self.health}")
+        DebugLogger.state(f"Took {amount} damage from {source} → HP={self.health}")
 
         if self.health <= 0:
             self.alive = False

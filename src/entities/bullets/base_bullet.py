@@ -94,8 +94,10 @@ class BaseBullet:
             self.pos.x < -50 or self.pos.x > game_settings.Display.WIDTH + 50
         ):
             self.alive = False
-            if game_settings.Debug.VERBOSE_ENTITY_DEATH:
-                DebugLogger.state(f"[BulletOffscreen] {self.collision_tag} removed at {self.pos}")
+            DebugLogger.state(
+                f"{self.collision_tag} removed off-screen at {self.pos}",
+                category="entity_cleanup"
+            )
 
     # ===========================================================
     # Collision Logic

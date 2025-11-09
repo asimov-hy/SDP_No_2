@@ -89,8 +89,10 @@ class SpawnManager:
 
             self.enemies.append(enemy)
 
-            if Debug.VERBOSE_ENTITY_INIT:
-                DebugLogger.action(f"Spawned enemy '{type_name}' at ({x:.0f}, {y:.0f})")
+            DebugLogger.action(
+                f"Spawned enemy '{type_name}' at ({x:.0f}, {y:.0f})",
+                category="entity_spawning"
+            )
 
         except Exception as e:
             DebugLogger.warn(f"Failed to spawn enemy '{type_name}': {e}")
@@ -123,8 +125,11 @@ class SpawnManager:
         self.enemies = [e for e in self.enemies if e.alive]
         removed = before - len(self.enemies)
 
-        if removed > 0 and Debug.VERBOSE_ENTITY_DEATH:
-            DebugLogger.state(f"Removed {removed} inactive enemies")
+        if removed > 0:
+            DebugLogger.state(
+                f"Removed {removed} inactive enemies",
+                category="entity_cleanup"
+            )
 
     # ===========================================================
     # Rendering Pass
@@ -146,5 +151,8 @@ class SpawnManager:
         self.enemies = [e for e in self.enemies if e.alive]
         removed = before - len(self.enemies)
 
-        if removed > 0 and Debug.VERBOSE_ENTITY_DEATH:
-            DebugLogger.state(f"[SpawnManager] Cleaned up {removed} destroyed enemies")
+        if removed > 0:
+            DebugLogger.state(
+                f"Cleaned up {removed} destroyed enemies",
+                category="entity_cleanup"
+            )
