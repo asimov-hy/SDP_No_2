@@ -161,10 +161,11 @@ class GameLoop:
                 elif event.key == pygame.K_F3:
                     self.debug_hud.toggle()
 
-                    from src.core.game_settings import Debug
-                    Debug.ENABLE_HITBOX = not Debug.ENABLE_HITBOX
-                    state = "ON" if Debug.ENABLE_HITBOX else "OFF"
-                    DebugLogger.action(f"Hitbox rendering toggled → {state}")
+                    # Sync hitbox rendering with HUD visibility
+                    Debug.HITBOX_VISIBLE = self.debug_hud.visible
+                    state = "Visible" if Debug.HITBOX_VISIBLE else "Hidden"
+                    DebugLogger.action(
+                        f"Hitbox rendering set → {state} (HUD={'Shown' if self.debug_hud.visible else 'Hidden'})")
 
             # Window resizing
             if event.type == pygame.VIDEORESIZE:
@@ -175,25 +176,44 @@ class GameLoop:
             self.debug_hud.handle_event(event)
 
     # ===========================================================
-    # Rendering Pipeline
+    # Rendering Pipeline (with profiling)
     # ===========================================================
     def _draw(self):
-        """Draw everything managed by the active scene."""
+        """Draw everything managed by the active scene, with per-stage profiling."""
         import time
-        start = time.perf_counter()
+        start_total = time.perf_counter()
 
         game_surface = self.display.get_game_surface()
         self.draw_manager.clear()
 
-        # Scene + UI drawing
+        # -------------------------------------------------------
+        # Profile: Scene Draw
+        # -------------------------------------------------------
+        t_scene = time.perf_counter()
         self.scenes.draw(self.draw_manager)
-        self.debug_hud.draw(self.draw_manager)
+        scene_time = (time.perf_counter() - t_scene) * 1000
 
-        # Final render pass
+        # -------------------------------------------------------
+        # Profile: Debug HUD Draw
+        # -------------------------------------------------------
+        t_hud = time.perf_counter()
+        self.debug_hud.draw(self.draw_manager)
+        hud_time = (time.perf_counter() - t_hud) * 1000
+
+        # -------------------------------------------------------
+        # Profile: Render to Display
+        # -------------------------------------------------------
+        t_render = time.perf_counter()
         self.draw_manager.render(game_surface)
         self.display.render()
+        render_time = (time.perf_counter() - t_render) * 1000
 
-        end = time.perf_counter()
-        frame_time_ms = (end - start) * 1000
-        if frame_time_ms > Debug.FRAME_TIME_WARNING:  # Slower than 60 FPS
-            print(f"⚠️ SLOW FRAME: {frame_time_ms:.2f}ms")
+        # -------------------------------------------------------
+        # Frame Summary
+        # -------------------------------------------------------
+        frame_time_ms = (time.perf_counter() - start_total) * 1000
+
+        if frame_time_ms > Debug.FRAME_TIME_WARNING:
+            DebugLogger.warn(
+                f"Perf ⚠️ SLOW FRAME: {frame_time_ms:.2f} ms (Scene={scene_time:.2f} | HUD={hud_time:.2f} | Render={render_time:.2f})"
+            )

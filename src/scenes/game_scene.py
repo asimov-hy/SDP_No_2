@@ -15,7 +15,7 @@ Responsibilities
 import pygame
 
 from src.core.utils.debug_logger import DebugLogger
-from src.core.game_settings import Display, Layers
+from src.core.game_settings import Display, Layers, Debug
 
 from src.entities.player import Player
 
@@ -176,9 +176,6 @@ class GameScene:
             if hasattr(b, "on_collision"):
                 b.on_collision(a)
 
-        # Optional debug visualization
-        self.collision_manager.draw_debug(self.display.get_game_surface())
-
         # ===========================================================
         # 5) Entity Cleanup
         # ===========================================================
@@ -213,3 +210,9 @@ class GameScene:
         self.bullet_manager.draw(draw_manager)
         draw_manager.draw_entity(self.player, layer=Layers.PLAYER)
         self.ui.draw(draw_manager)
+
+        # ===========================================================
+        # Debug: Draw hitboxes (optional)
+        # ===========================================================
+        if Debug.HITBOX_VISIBLE:
+            self.collision_manager.draw_debug(draw_manager)

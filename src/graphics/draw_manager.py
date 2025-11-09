@@ -15,6 +15,8 @@ Responsibilities
 import pygame
 import os
 from src.core.utils.debug_logger import DebugLogger
+from src.core.game_settings import Layers
+
 
 class DrawManager:
     """Centralized rendering manager that handles all draw operations."""
@@ -146,6 +148,12 @@ class DrawManager:
         else:
             DebugLogger.warn(f"Invalid entity: {entity} (missing image/rect)")
 
+    def queue_hitbox(self, rect, color=(255, 255, 0), width = 1):
+        """Queue a hitbox rectangle for rendering on the DEBUG layer."""
+        surf = pygame.Surface((rect.width, rect.height), pygame.SRCALPHA)
+        pygame.draw.rect(surf, color, surf.get_rect(), width)
+        self.queue_draw(surf, rect, layer=Layers.DEBUG)  # Layers.DEBUG
+
     # ===========================================================
     # Rendering
     # ===========================================================
@@ -180,3 +188,5 @@ class DrawManager:
         if debug and hasattr(self, "debug_hitboxes"):
             for hb in self.debug_hitboxes:
                 hb.draw_debug(target_surface)
+
+

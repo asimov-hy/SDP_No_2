@@ -13,7 +13,7 @@ Responsibilities
 
 import pygame
 from src.core.utils.debug_logger import DebugLogger
-from src.core.game_settings import Debug
+from src.core.game_settings import Debug, Layers
 
 
 class CollisionHitbox:
@@ -38,12 +38,10 @@ class CollisionHitbox:
         self.offset = pygame.Vector2(offset)
         self.rect = pygame.Rect(0, 0, 0, 0)
         self._size_cache = None
-        self._color_cache = None
+        self._color_cache = self._cache_color()
 
         if hasattr(owner, "rect"):
             self._initialize_from_owner()
-            self._cache_color()
-            # DebugLogger.init(f"[Hitbox] Created for {type(owner).__name__} | Scale={scale} | Offset={offset}")
         else:
             DebugLogger.warn(f"[Hitbox] {type(owner).__name__} missing 'rect' attribute!")
 
@@ -62,11 +60,10 @@ class CollisionHitbox:
         """Cache debug color based on entity tag for faster draw calls."""
         tag = getattr(self.owner, "collision_tag", "neutral")
         if "enemy" in tag:
-            self._color_cache = (255, 60, 60)
-        elif "player" in tag:
-            self._color_cache = (60, 160, 255)
-        else:
-            self._color_cache = (80, 255, 80)
+            return (255, 60, 60)
+        if "player" in tag:
+            return (60, 160, 255)
+        return (80, 255, 80)
 
     # ===========================================================
     # Update Cycle
@@ -77,6 +74,7 @@ class CollisionHitbox:
         Called once per frame before collision checks.
         """
         rect = getattr(self.owner, "rect", None)
+
         if not rect:
             DebugLogger.warn_once(f"[Hitbox] {type(self.owner).__name__} lost rect reference")
             return
@@ -103,12 +101,16 @@ class CollisionHitbox:
         Args:
             surface (pygame.Surface): The rendering surface to draw onto.
         """
-        if not Debug.ENABLE_HITBOX:
+        if not Debug.HITBOX_VISIBLE:
             return
 
-        pygame.draw.rect(surface, self._color_cache, self.rect, 1)
+        # Case 1: DrawManager integration (preferred)
+        if hasattr(surface, "queue_hitbox"):
+            surface.queue_hitbox(self.rect, color=self._color_cache, width=Debug.HITBOX_LINE_WIDTH)
+            return
 
-        if Debug.VERBOSE_HITBOX_DRAW:
-            DebugLogger.trace(
-                f"[Hitbox] Drawn {type(self.owner).__name__} at {self.rect.center}"
-            )
+        # Case 2: Fallback — direct draw to pygame.Surface
+        if isinstance(surface, pygame.Surface):
+            pygame.draw.rect(surface, self._color_cache, self.rect, Debug.HITBOX_LINE_WIDTH)
+        else:
+            DebugLogger.warn(f"[Hitbox] Invalid draw target: {type(surface).__name__}")

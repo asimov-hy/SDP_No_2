@@ -191,8 +191,8 @@ class DebugHUD:
         # Hitbox Debug Toggle Indicator
         # --------------------------------------------------------
         y_offset = 60
-        hitbox_state = "ON" if game_settings.Debug.ENABLE_HITBOX else "OFF"
-        hitbox_color = (0, 255, 0) if game_settings.Debug.ENABLE_HITBOX else (255, 80, 80)
+        hitbox_state = "ON" if game_settings.Debug.HITBOX_VISIBLE else "OFF"
+        hitbox_color = (0, 255, 0) if game_settings.Debug.HITBOX_VISIBLE else (255, 80, 80)
         surface_hitbox = font.render(f"Hitbox: {hitbox_state}", True, hitbox_color)
         draw_manager.queue_draw(surface_hitbox, surface_hitbox.get_rect(topleft=(70, y_offset)), game_settings.Layers.UI)
 

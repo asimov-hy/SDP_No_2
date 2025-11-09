@@ -182,7 +182,7 @@ class CollisionManager:
                                 b.on_collision(a)
 
                             # Throttled debug output
-                            if Debug.ENABLE_HITBOX and len(collisions) <= 10:
+                            if Debug.VERBOSE_HITBOX_UPDATE and len(collisions) <= 10:
                                 DebugLogger.state(
                                     f"Collision detected between {type(a).__name__} and {type(b).__name__}")
         return collisions
@@ -197,7 +197,7 @@ class CollisionManager:
         Args:
             surface (pygame.Surface): The surface used for drawing hitboxes.
         """
-        if not Debug.ENABLE_HITBOX:
+        if not Debug.HITBOX_VISIBLE:
             return
 
         if getattr(self.player, "hitbox", None):

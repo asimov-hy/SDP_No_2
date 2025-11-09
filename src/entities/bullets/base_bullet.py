@@ -139,5 +139,5 @@ class BaseBullet:
             pygame.draw.circle(surface, self.color, self.rect.center, self.radius)
 
         # Optional hitbox debug overlay
-        if game_settings.Debug.ENABLE_HITBOX:
+        if game_settings.Debug.HITBOX_VISIBLE:
             self.hitbox.draw_debug(surface)

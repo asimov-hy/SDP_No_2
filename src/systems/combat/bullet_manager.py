@@ -145,5 +145,5 @@ class BulletManager:
                 draw_manager.queue_draw(surf, b.rect, layer=Layers.BULLETS)
 
             # Debug: render hitbox overlay
-            if Debug.ENABLE_HITBOX and b.hitbox:
+            if Debug.HITBOX_VISIBLE and b.hitbox:
                 b.hitbox.draw_debug(draw_manager.surface)

@@ -130,19 +130,22 @@ class Player(BaseEntity):
             move_vec = move_vec.normalize()
             desired_velocity = move_vec * self.speed
 
-            # Blend velocity toward desired direction
-            self.velocity = self.velocity.lerp(desired_velocity, smooth_factor)
-            self.velocity += move_vec * accel_rate * dt
+            # Blend current velocity toward desired direction (snappy)
+            self.velocity = self.velocity.lerp(desired_velocity, 0.25)
 
-            # Enforce max speed limit (prevents overshoot)
-            if self.velocity.length() > self.speed:
-                self.velocity.scale_to_length(self.speed)
+            # Add acceleration for punchy feel
+            self.velocity += move_vec * 3000 * dt
+
+            # Soft cap to maintain stability
+            max_speed_limit = self.speed * 1.8
+            if self.velocity.length() > max_speed_limit:
+                self.velocity.scale_to_length(max_speed_limit)
 
         else:
-            # Apply friction when idle
+            # Friction decay when idle
             current_speed = self.velocity.length()
             if current_speed > 0:
-                new_speed = max(0.0, current_speed - friction_rate * dt)
+                new_speed = max(0.0, current_speed - 500 * dt)
                 if new_speed < 5.0:
                     self.velocity.xy = (0, 0)
                 else:
