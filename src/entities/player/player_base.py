@@ -74,19 +74,19 @@ class Player(BaseEntity):
         self.speed = core["speed"]
         self.health = core["health"]
         self.max_health = self.health
-        self.invincible = core["invincible"]
         self.layer = Layers.PLAYER
         self.alive = True
-        STATE.player_ref = self
+        self.visible = True
 
         # -------------------------------------------------------
-        # 4) Blinking / invulnerability
+        # 4) Effect state management
         # -------------------------------------------------------
-        self.blinking = False
-        self.blink_timer = 0.0
-        self.blink_duration = 1.5      # Total invulnerability time (s)
-        self.blink_interval = 0.1      # Flicker frequency (s)
-        self.visible = True
+        self.effects = {
+            "invincible": False,  # take_dmg: N | deal_dmg: Y | collide: Y
+            "tangible": True,  # take_dmg: Y | deal_dmg: Y | collide: Y
+            "clip_through": False,  # take_dmg: N | deal_dmg: N | collide: N
+            # "active": set(),  # active named effects (e.g. {"damage_invuln", "dash"})
+        }
 
         # -------------------------------------------------------
         # 5) Health-based visuals
@@ -110,6 +110,16 @@ class Player(BaseEntity):
         self.bullet_manager = None
         self.shoot_cooldown = 0.1
         self.shoot_timer = 0.0
+
+        # -------------------------------------------------------
+        # 8) Animation manager setup
+        # -------------------------------------------------------
+        from src.graphics.animation_manager import AnimationManager
+
+        self.animation_manager = AnimationManager(self)
+        DebugLogger.state("AnimationManager initialized and linked to Player", category="animation")
+
+        STATE.player_ref = self
 
         DebugLogger.init(
             f"Initialized Player at ({x:.1f}, {y:.1f}) | Speed={self.speed} | HP={self.health}"
@@ -175,17 +185,19 @@ class Player(BaseEntity):
             return
 
         from .player_movement import update_movement
-        from .player_combat import update_shooting, update_blinking
+        from .player_combat import update_shooting
 
         # Movement and combat updates
         move_vec = getattr(self, "move_vec", pygame.Vector2(0, 0))
         update_movement(self, dt, move_vec)
         update_shooting(self, dt)
-        update_blinking(self, dt)
 
         # Collision update
         if self.hitbox:
             self.hitbox.update()
+
+        if getattr(self, "animation_manager", None):
+            self.animation_manager.update(dt)
 
     def draw(self, draw_manager):
         """
@@ -214,6 +226,7 @@ class Player(BaseEntity):
     def update_visual_state(self):
         """
         Update the player’s sprite or color based on current health.
+        Triggered after taking damage or healing.
 
         Changes are determined by the thresholds defined in `player_config.py`.
         """

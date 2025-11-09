@@ -20,7 +20,6 @@ DEFAULT_CONFIG = {
         "scale": 1.0,            # Sprite scaling factor
         "speed": 300,            # Base movement speed (pixels/sec)
         "health": 3,             # Starting player health
-        "invincible": False,     # Initial invulnerability state
         "hitbox_scale": 0.85,    # Fraction of sprite size for collision box
     },
 

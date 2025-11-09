@@ -82,6 +82,7 @@ class LoggerConfig:
         "effects": False,     # Destruction / VFX / bullet impacts
         "entity_spawning": False,
         "entity_cleanup": False,
+        "animation": True,
     }
 
     # Output Style
