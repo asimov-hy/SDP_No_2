@@ -100,42 +100,45 @@ class BaseBullet:
             )
 
     # ===========================================================
-    # Collision Logic
+    # Collision Handling
     # ===========================================================
-    def on_hit(self, target):
-        """
-        Delegate damage application to the target entity.
-
-        Args:
-            target: Entity hit by this bullet (Player, Enemy, etc.)
-        """
-        if not self.alive:
-            return  # Prevent multiple hits per frame
-        if not getattr(target, "alive", True):
-            return
-
-        if not hasattr(target, "take_damage"):
-            DebugLogger.warn(f"Target {type(target).__name__} has no take_damage()")
-            return
-
-        DebugLogger.state(
-            f"{type(self).__name__} ({self.owner}) hit {type(target).__name__} "
-            f"→ Damage={self.damage}"
-        )
-
-        self.alive = False
-        target.take_damage(self.damage, source=type(self).__name__)
-
     def on_collision(self, target):
         """
-        Compatibility handler for CollisionManager.
+        Entry point for collision events from CollisionManager.
 
-        Delegates to on_hit() to maintain backward compatibility
-        with existing bullet logic.
+        Delegates to handle_collision(), which can be overridden by
+        derived bullet classes to implement custom behaviors.
+
+        Args:
+            target: The entity that this bullet collided with.
         """
+        if not self.alive:
+            return
         if target is self:
             return
-        self.on_hit(target)
+
+        self.handle_collision(target)
+
+    def handle_collision(self, target):
+        """
+        Default bullet behavior upon collision.
+
+        Responsibilities:
+            - Mark the bullet as inactive (destroyed).
+            - Optionally log the collision event.
+
+        This method can be overridden by subclasses to define
+        specialized collision behavior (e.g., piercing, explosive,
+        bouncing, or delayed destruction).
+
+        Args:
+            target: The entity that this bullet collided with.
+        """
+        self.alive = False
+        DebugLogger.state(
+            f"{type(self).__name__} collided with {type(target).__name__} → destroyed",
+            category="collision"
+        )
 
     # ===========================================================
     # Rendering

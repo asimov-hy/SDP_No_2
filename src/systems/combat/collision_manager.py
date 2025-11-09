@@ -192,6 +192,7 @@ class CollisionManager:
                                     a.on_collision(b)
                                 if hasattr(b, "on_collision"):
                                     b.on_collision(a)
+
                             except Exception as e:
                                 DebugLogger.warn(
                                     f"[CollisionManager] Exception during collision between "
