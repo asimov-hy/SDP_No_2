@@ -44,10 +44,13 @@ class Player(BaseEntity):
         # -------------------------------------------------------
         # 1) Visual setup (image or shape)
         # -------------------------------------------------------
+        sprite_cfg = cfg["sprite"]
+        size = cfg["size"]
+
         self.render_mode = cfg["render_mode"]
-        if self.render_mode == "image":
-            image = self._load_sprite(cfg, image)
-            image = self._apply_scaling(core, image)
+
+        image = self._load_sprite(cfg, image)
+        image = self._apply_scaling(size, image)
 
         # Compute spawn position
         x, y = self._compute_spawn_position(x, y, image)
@@ -61,7 +64,7 @@ class Player(BaseEntity):
             render_mode=self.render_mode,
             shape_type=default_state["shape_type"],
             color=default_state["color"],
-            size=default_state["size"],
+            size=cfg["size"],
         )
 
         # -------------------------------------------------------
@@ -120,25 +123,26 @@ class Player(BaseEntity):
         """Load player sprite from disk or create a fallback if missing."""
         if image:
             return image
-        path = cfg.get("sprite_path")
+
+        # Use nested config path
+        sprite_cfg = cfg.get("sprite", {})
+        path = sprite_cfg.get("path")
         if not path or not os.path.exists(path):
-            DebugLogger.warn(f"[Player] Missing sprite: {path}, using fallback.")
+            DebugLogger.warn(f"Missing sprite: {path}, using fallback.")
             placeholder = pygame.Surface((64, 64))
             placeholder.fill((255, 50, 50))
             return placeholder
+
         image = pygame.image.load(path).convert_alpha()
         DebugLogger.state(f"Loaded sprite from {path}")
         return image
 
     @staticmethod
-    def _apply_scaling(cfg, image):
+    def _apply_scaling(size, image):
         """Scale sprite according to configuration."""
-        if not image or cfg["scale"] == 1.0:
+        if not image:
             return image
-        w, h = image.get_size()
-        new_size = (int(w * cfg["scale"]), int(h * cfg["scale"]))
-        image = pygame.transform.scale(image, new_size)
-        DebugLogger.state(f"Sprite scaled to {new_size}")
+        image = pygame.transform.scale(image, size)
         return image
 
     @staticmethod
@@ -232,9 +236,12 @@ class Player(BaseEntity):
             visual_value = path
 
             try:
-                self.image = pygame.image.load(path).convert_alpha()
+                new_image = pygame.image.load(path).convert_alpha()
+                # Apply scaling so the image always matches configured size
+                new_image = pygame.transform.scale(new_image, PLAYER_CONFIG["size"])
+                self.image = new_image
             except Exception as e:
-                DebugLogger.warn(f"[VisualState] Failed to load sprite: {path} ({e})")
+                DebugLogger.warn(f"Failed to load sprite: {path} ({e})")
 
         # -------------------------------------------------------
         # SHAPE MODE

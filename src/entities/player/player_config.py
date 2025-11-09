@@ -28,11 +28,16 @@ DEFAULT_CONFIG = {
     # Rendering Mode & Default Visuals
     # -----------------------------------------------------------
     "render_mode": "shape",      # "image" or "shape"
+
+    "size": [32, 32],
+
+    "sprite": {
+        "path": "assets/images/player.png"
+    },
+
     "default_shape": {
         "shape_type": "rect",
-        "color": (255, 255, 255),
-        "size": (32, 32),
-        "sprite_path": None,
+        "color": [255, 255, 255]
     },
 
     # -----------------------------------------------------------

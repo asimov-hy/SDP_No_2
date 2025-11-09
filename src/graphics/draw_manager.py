@@ -202,7 +202,9 @@ class DrawManager:
                 # Handle traditional surface blit
                 if isinstance(item[0], pygame.Surface):
                     surface, rect = item
-                    target_surface.blit(surface, (round(rect.x), round(rect.y)))
+                    blit_pos = (round(rect.centerx - surface.get_width() / 2),
+                                round(rect.centery - surface.get_height() / 2))
+                    target_surface.blit(surface, blit_pos)
 
                 # Handle shape draw command
                 elif isinstance(item[0], str) and item[0] == "shape":

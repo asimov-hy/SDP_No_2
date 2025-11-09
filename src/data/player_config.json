@@ -7,12 +7,17 @@
     "hitbox_scale": 0.85
   },
 
-  "render_mode": "shape",
+  "render_mode": "image",
+
+  "size": [32, 32],
+
+  "sprite": {
+    "path": "assets/images/player.png"
+  },
+
   "default_shape": {
     "shape_type": "rect",
-    "color": [255, 255, 255],
-    "size": [32, 32],
-    "sprite_path": "assets/images/player.png"
+    "color": [255, 255, 255]
   },
 
   "health_thresholds": {

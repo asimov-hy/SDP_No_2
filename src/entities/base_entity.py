@@ -68,20 +68,13 @@ class BaseEntity:
         # -------------------------------------------------------
         # 3) Normalize image/shape size for consistent visual scale
         # -------------------------------------------------------
-        # Apply global entity scale from Display settings
-        target_w = int(self.size[0] * Display.ENTITY_SCALE)
-        target_h = int(self.size[1] * Display.ENTITY_SCALE)
-        scaled_size = (target_w, target_h)
 
         if self.image is not None:
-            image_size = self.image.get_size()
-            # Match image to scaled logical size
-            if scaled_size != image_size:
-                self.image = pygame.transform.scale(self.image, scaled_size)
-                self.rect = self.image.get_rect(center=(x, y))
+            # Ensure rect uses the same center without modifying sprite dimensions
+            self.rect = self.image.get_rect(center=(x, y))
         else:
-            # Ensure rect uses same global scaling reference
-            self.rect.width, self.rect.height = scaled_size
+            # Create rect using the entity’s logical size directly
+            self.rect = pygame.Rect(0, 0, *self.size)
             self.rect.center = (x, y)
 
         # Vector position reference
