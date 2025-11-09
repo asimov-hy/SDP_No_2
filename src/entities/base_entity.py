@@ -159,4 +159,3 @@ class BaseEntity:
             pygame.Rect | None: The hitbox rect if available.
         """
         return self.hitbox.rect if getattr(self, "hitbox", None) else None
-
