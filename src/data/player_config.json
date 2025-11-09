@@ -9,7 +9,7 @@
 
   "render_mode": "image",
 
-  "size": [32, 32],
+  "size": [64, 64],
 
   "sprite": {
     "path": "assets/images/player.png"

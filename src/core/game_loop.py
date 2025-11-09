@@ -50,13 +50,13 @@ class GameLoop:
         # -------------------------------------------------------
         self._set_icon()
         pygame.display.set_caption(Display.CAPTION)
+
         DebugLogger.init("║{:<56}║".format(f"\t[GameLoop][INIT]\t\t→  Icon Set. Caption Set."), show_meta=False)
         DebugLogger.init("║" + " " * 64 + "║", show_meta=False)
 
         # -------------------------------------------------------
         # Engine Core Systems
         # -------------------------------------------------------
-
         DebugLogger.init("╠────────────────────── ENGINE CORE SYSTEMS ─────────────────────╣", show_meta=False)
         self.display = DisplayManager(Display.WIDTH, Display.HEIGHT)
         self.input = InputManager()
@@ -68,7 +68,6 @@ class GameLoop:
         # -------------------------------------------------------
         # Scene Management
         # -------------------------------------------------------
-
         DebugLogger.init("╠─────────────────── SCENE MANAGEMENT SYSTEMS ───────────────────╣", show_meta=False)
         self.scenes = SceneManager(self.display, self.input,self.draw_manager)
         DebugLogger.init("║" + " " * 64 + "║", show_meta=False)
@@ -101,23 +100,36 @@ class GameLoop:
         frame_count = 0
 
         while self.running:
+            # ---------------------------------------------------
+            # Frame timing (with safety clamp)
+            # ---------------------------------------------------
             frame_time = self.clock.tick() / 1000.0
             frame_time = min(frame_time, Physics.MAX_FRAME_TIME)
             accumulator += frame_time
 
+            # ---------------------------------------------------
+            # Handle all pending pygame events
+            # ---------------------------------------------------
             self._handle_events()
 
+            # ---------------------------------------------------
+            # Fixed timestep update (physics, logic, input)
+            # ---------------------------------------------------
             while accumulator >= fixed_dt:
                 self.input.update()
                 self.scenes.update(fixed_dt)
-
                 accumulator -= fixed_dt
                 frame_count += 1
 
+            # ---------------------------------------------------
+            # Debug HUD and rendering pass
+            # ---------------------------------------------------
             self.debug_hud.update(pygame.mouse.get_pos())
-
             self._draw()
 
+        # -------------------------------------------------------
+        # Cleanup
+        # -------------------------------------------------------
         pygame.quit()
         DebugLogger.system("Pygame terminated")
 
@@ -142,36 +154,34 @@ class GameLoop:
 
         Responsibilities:
             - Handle quit requests and window resizing.
-            - Manage global hotkeys (F3 for debug, F11 for fullscreen).
-            - Delegate input events to SceneManager and DebugHUD.
+            - Route all keyboard input (system-level and contextual)
+              through InputManager.
+            - Delegate UI and scene-specific input events.
         """
         for event in pygame.event.get():
+            # ---------------------------------------------------
             # System-level quit event
+            # ---------------------------------------------------
             if event.type == pygame.QUIT:
                 self.running = False
                 DebugLogger.action("Quit signal received")
                 break
 
-            # Global keyboard shortcuts
-            if event.type == pygame.KEYDOWN:
-
-                if event.key == pygame.K_F11:
-                    self.display.toggle_fullscreen()
-
-                elif event.key == pygame.K_F3:
-                    self.debug_hud.toggle()
-
-                    # Sync hitbox rendering with HUD visibility
-                    Debug.HITBOX_VISIBLE = self.debug_hud.visible
-                    state = "Visible" if Debug.HITBOX_VISIBLE else "Hidden"
-                    DebugLogger.action(
-                        f"Hitbox rendering set → {state} (HUD={'Shown' if self.debug_hud.visible else 'Hidden'})")
-
+            # ---------------------------------------------------
             # Window resizing
+            # ---------------------------------------------------
             if event.type == pygame.VIDEORESIZE:
                 self.display.handle_resize(event)
 
-            # Scene-specific and global UI events
+            # ---------------------------------------------------
+            # Global / system-level input (always active)
+            # Delegates to InputManager to handle F3, F11, etc.
+            # ---------------------------------------------------
+            self.input.handle_system_input(event, self.display, self.debug_hud)
+
+            # ---------------------------------------------------
+            # Scene-specific and debug HUD events
+            # ---------------------------------------------------
             self.scenes.handle_event(event)
             self.debug_hud.handle_event(event)
 
@@ -179,7 +189,10 @@ class GameLoop:
     # Rendering Pipeline (with profiling)
     # ===========================================================
     def _draw(self):
-        """Draw everything managed by the active scene, with per-stage profiling."""
+        """
+        Draw everything managed by the active scene and debug HUD.
+        Includes basic profiling for each rendering stage.
+        """
         import time
         start_total = time.perf_counter()
 

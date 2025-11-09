@@ -32,7 +32,11 @@ DEFAULT_KEY_BINDINGS = {
         "navigate_right": [pygame.K_RIGHT, pygame.K_d],
         "confirm": [pygame.K_RETURN, pygame.K_SPACE],
         "back": [pygame.K_ESCAPE],
-    }
+    },
+    "system": {  # !!SHOULD NOT OVERLAP WITH OTHER KEYBINDING GROUPS!!
+        "toggle_debug": [pygame.K_F3],
+        "toggle_fullscreen": [pygame.K_F11],
+    },
 }
 
 
@@ -55,7 +59,14 @@ class InputManager:
 
         DebugLogger.init("║{:<59}║".format(f"\t[InputManager][INIT]\t→  Initialized"), show_meta=False)
 
+        # -------------------------------------------------------
+        # Validate that system bindings do not overlap with others
+        # -------------------------------------------------------
+        self._validate_bindings()
+
+        # -------------------------------------------------------
         # Controller setup
+        # -------------------------------------------------------
         pygame.joystick.init()
         self.controller = None
         if pygame.joystick.get_count() > 0:
@@ -65,15 +76,16 @@ class InputManager:
 
         DebugLogger.init("║{:<57}║".format(f"\t\t└─ [INIT]\t→  Keyboard"), show_meta=False)
 
-        # Movement and state tracking
+        # -------------------------------------------------------
+        # Movement and gameplay state tracking
+        # -------------------------------------------------------
         self.move = pygame.Vector2(0, 0)
         self._move_keyboard = pygame.Vector2(0, 0)
         self._move_controller = pygame.Vector2(0, 0)
 
         # Action states (gameplay)
         self.attack_pressed = False
-        self.attack_held = False  # NEW - continuous press tracking
-
+        self.attack_held = False
         self.bomb_pressed = False
         self.pause_pressed = False
 
@@ -86,11 +98,32 @@ class InputManager:
         self.ui_back = False
 
     # ===========================================================
+    # Validation
+    # ===========================================================
+    def _validate_bindings(self):
+        """
+        Ensure that system-level bindings do not overlap with gameplay or UI bindings.
+        Logs a warning if any overlap is detected.
+        """
+        system_keys = {k for keys in self.key_bindings["system"].values() for k in keys}
+        other_keys = {
+            k for ctx in ("gameplay", "ui")
+            for keys in self.key_bindings[ctx].values()
+            for k in keys
+        }
+        overlap = system_keys & other_keys
+        if overlap:
+            DebugLogger.warn(f"[InputManager] Overlapping system keys detected: {overlap}")
+
+    # ===========================================================
     # Context Management
     # ===========================================================
     def set_context(self, name: str):
         """
         Switch between contexts ("gameplay", "ui").
+
+        Args:
+            name (str): Name of the context to activate.
         """
         if name not in self.key_bindings:
             DebugLogger.warn(f"Unknown context: {name}")
@@ -99,6 +132,7 @@ class InputManager:
         DebugLogger.state(f"Context switched to [{name.upper()}]")
 
     def get_context(self):
+        """Return the currently active input context."""
         return self.context
 
     # ===========================================================
@@ -115,8 +149,10 @@ class InputManager:
     # Gameplay Input
     # ===========================================================
     def _update_gameplay_controls(self):
+        """Poll keyboard/controller input for gameplay actions."""
         keys = pygame.key.get_pressed()
 
+        # Directional input
         left = self._is_pressed("move_left", keys)
         right = self._is_pressed("move_right", keys)
         up = self._is_pressed("move_up", keys)
@@ -145,6 +181,7 @@ class InputManager:
     # UI Navigation Input
     # ===========================================================
     def _update_ui_navigation(self):
+        """Poll input for UI navigation and interaction."""
         keys = pygame.key.get_pressed()
         self.ui_up = self._is_pressed("navigate_up", keys)
         self.ui_down = self._is_pressed("navigate_down", keys)
@@ -167,7 +204,6 @@ class InputManager:
                 self.ui_up = True
             elif hat_y == -1 or y_axis > threshold:
                 self.ui_down = True
-
             if hat_x == -1 or x_axis < -threshold:
                 self.ui_left = True
             elif hat_x == 1 or x_axis > threshold:
@@ -228,6 +264,25 @@ class InputManager:
                 return True
         return False
 
+    def _is_pressed_context(self, action, keys, context_dict):
+        """
+        Check if any bound key in a specific context dictionary is pressed.
+
+        Used for system-level inputs that should always be available,
+        regardless of gameplay/UI context.
+
+        Args:
+            action (str): Input action name.
+            keys (pygame.key.ScancodeWrapper): Current keyboard state.
+            context_dict (dict): Key-binding map for a specific context.
+        """
+        if action not in context_dict:
+            return False
+        for key in context_dict[action]:
+            if keys[key]:
+                return True
+        return False
+
     def get_normalized_move(self):
         """
         Get a normalized movement vector.
@@ -243,3 +298,39 @@ class InputManager:
     def is_attack_held(self):
         """Return whether the attack key/button is currently held."""
         return self.attack_held
+
+    # ===========================================================
+    # System-Level Input (Global Hotkeys)
+    # ===========================================================
+    def handle_system_input(self, event, display, debug_hud):
+        """
+        Handle global system-level input that is always available.
+        These bindings function independently of gameplay/UI contexts.
+
+        Args:
+            event (pygame.Event): The current input event.
+            display (DisplayManager): Display manager for fullscreen toggle.
+            debug_hud (DebugHUD): Debug HUD instance for toggling visibility.
+        """
+        if event.type != pygame.KEYDOWN:
+            return
+
+        keys = pygame.key.get_pressed()
+        system_ctx = self.key_bindings.get("system", {})
+
+        # -------------------------------------------------------
+        # F11 → Toggle Fullscreen
+        # -------------------------------------------------------
+        if self._is_pressed_context("toggle_fullscreen", keys, system_ctx):
+            display.toggle_fullscreen()
+            DebugLogger.action("Toggled fullscreen via InputManager")
+
+        # -------------------------------------------------------
+        # F3 → Toggle Debug HUD (and sync hitbox visibility)
+        # -------------------------------------------------------
+        elif self._is_pressed_context("toggle_debug", keys, system_ctx):
+            debug_hud.toggle()
+            from src.core.game_settings import Debug
+            Debug.HITBOX_VISIBLE = debug_hud.visible
+            state = "Visible" if Debug.HITBOX_VISIBLE else "Hidden"
+            DebugLogger.action(f"Hitbox rendering set → {state}")
