@@ -13,7 +13,7 @@ Responsibilities
 """
 
 import pygame
-from src.core.game_settings import Layers
+from src.core.game_settings import Layers, Display
 from src.core.utils.debug_logger import DebugLogger
 
 
@@ -40,7 +40,7 @@ class BaseEntity:
             shape_kwargs (dict | None): Optional shape-specific parameters (e.g., width, points).
         """
         # -------------------------------------------------------
-        # Core spatial attributes
+        # 1) Core spatial attributes
         # -------------------------------------------------------
         self.image = image
         self.render_mode = render_mode or ("image" if image is not None else "shape")
@@ -49,13 +49,35 @@ class BaseEntity:
         self.size = size or (32, 32)
         self.shape_kwargs = shape_kwargs or {}
 
-        # Center-aligned rect for consistency
+        # -------------------------------------------------------
+        # 2) Rect setup (center-aligned)
+        # -------------------------------------------------------
         if self.render_mode == "image" and self.image is not None:
             self.rect = self.image.get_rect(center=(x, y))
         else:
             self.rect = pygame.Rect(0, 0, *self.size)
             self.rect.center = (x, y)
 
+        # -------------------------------------------------------
+        # 3) Normalize image/shape size for consistent visual scale
+        # -------------------------------------------------------
+        # Apply global entity scale from Display settings
+        target_w = int(self.size[0] * Display.ENTITY_SCALE)
+        target_h = int(self.size[1] * Display.ENTITY_SCALE)
+        scaled_size = (target_w, target_h)
+
+        if self.image is not None:
+            image_size = self.image.get_size()
+            # Match image to scaled logical size
+            if scaled_size != image_size:
+                self.image = pygame.transform.scale(self.image, scaled_size)
+                self.rect = self.image.get_rect(center=(x, y))
+        else:
+            # Ensure rect uses same global scaling reference
+            self.rect.width, self.rect.height = scaled_size
+            self.rect.center = (x, y)
+
+        # Vector position reference
         self.pos = pygame.Vector2(x, y)
 
         # -------------------------------------------------------
@@ -102,12 +124,10 @@ class BaseEntity:
         # Case 1: Image rendering (standard sprite)
         # -------------------------------------------------------
         if mode == "image":
-            img = self.image
-            if img is not None:
+            if self.image is not None:
                 draw_manager.draw_entity(self, layer)
                 return
 
-            # Fallback if image missing
             if getattr(DebugLogger, "ENABLED", True):
                 DebugLogger.warn(f"{type(self).__name__} missing image; switching to shape")
             self.render_mode = "shape"

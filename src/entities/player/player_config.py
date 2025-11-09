@@ -28,7 +28,7 @@ DEFAULT_CONFIG = {
     # Rendering Mode & Default Visuals
     # -----------------------------------------------------------
     "render_mode": "shape",      # "image" or "shape"
-    "default_state": {
+    "default_shape": {
         "shape_type": "rect",
         "color": (255, 255, 255),
         "size": (32, 32),

@@ -70,7 +70,7 @@ def update_movement(player, dt, move_vec):
     clamp_to_screen(player)
 
     # Sync render rectangle to updated position
-    player.rect.topleft = (int(player.pos.x), int(player.pos.y))
+    player.rect.center  = (int(player.pos.x), int(player.pos.y))
 
 
 def clamp_to_screen(player):

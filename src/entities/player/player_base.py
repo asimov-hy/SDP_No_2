@@ -39,7 +39,7 @@ class Player(BaseEntity):
         """
         cfg = PLAYER_CONFIG
         core = cfg["core_attributes"]
-        default_state = cfg["default_state"]
+        default_state = cfg["default_shape"]
 
         # -------------------------------------------------------
         # 1) Visual setup (image or shape)
