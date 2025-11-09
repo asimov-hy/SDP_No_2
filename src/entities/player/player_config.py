@@ -13,16 +13,47 @@ from src.core.utils.config_manager import load_json
 # Default Fallback Configuration
 # ===========================================================
 DEFAULT_CONFIG = {
-    "scale": 1.0,          # Sprite scaling factor
-    "speed": 300,          # Base movement speed (pixels/sec)
-    "health": 3,           # Starting player health
-    "invincible": False,   # Initial invulnerability state
-    "hitbox_scale": 0.85,  # Fraction of sprite size for collision box
-    "render_mode": "shape",  # "image" or "shape" rendering
-    "shape_type": "rect",    # Shape used when render_mode == "shape"
-    "color": (255, 80, 80),  # Default color for fallback rendering
-    "size": (64, 64),        # Default sprite size when no image is used
-    "sprite_path": None      # Optional file path to player sprite
+    # -----------------------------------------------------------
+    # Core Player Attributes
+    # -----------------------------------------------------------
+    "core_attributes": {
+        "scale": 1.0,            # Sprite scaling factor
+        "speed": 300,            # Base movement speed (pixels/sec)
+        "health": 3,             # Starting player health
+        "invincible": False,     # Initial invulnerability state
+        "hitbox_scale": 0.85,    # Fraction of sprite size for collision box
+    },
+
+    # -----------------------------------------------------------
+    # Rendering Mode & Default Visuals
+    # -----------------------------------------------------------
+    "render_mode": "shape",      # "image" or "shape"
+    "default_state": {
+        "shape_type": "rect",
+        "color": (255, 255, 255),
+        "size": (32, 32),
+        "sprite_path": None,
+    },
+
+    # -----------------------------------------------------------
+    # Dynamic Visual States
+    # -----------------------------------------------------------
+    "health_thresholds": {  # Health values where appearance changes
+        "moderate": 2,
+        "critical": 1,
+    },
+
+    "image_states": {            # Sprite variations by damage level
+        "normal": "assets/images/player.png",
+        "damaged_moderate": "assets/images/player_damaged1.png",
+        "damaged_critical": "assets/images/player_damaged2.png",
+    },
+
+    "color_states": {            # Color variations by damage level
+        "normal": [255, 255, 255],
+        "damaged_moderate": [255, 160, 120],
+        "damaged_critical": [180, 30, 30]
+    },
 }
 
 

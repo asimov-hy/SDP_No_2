@@ -1,10 +1,10 @@
 """
 player_combat.py
 ----------------
-Handles player combat systems:
+Handles all player combat-related systems:
 - Shooting and cooldown management.
 - Collision damage and health reduction.
-- Blinking/invulnerability and hitbox toggling after being hit.
+- Blinking and temporary invulnerability after taking damage.
 """
 
 import pygame
@@ -14,9 +14,9 @@ from src.core.utils.debug_logger import DebugLogger
 # ===========================================================
 # Shooting System
 # ===========================================================
-def update_shooting(player, dt):
+def update_shooting(player, dt: float):
     """
-    Manage shooting cooldown and trigger bullet spawns on input.
+    Manage shooting cooldowns and fire bullets when input is triggered.
 
     Args:
         player (Player): The player entity.
@@ -25,6 +25,7 @@ def update_shooting(player, dt):
     player.shoot_timer += dt
     keys = pygame.key.get_pressed()
 
+    # Fire bullet when spacebar pressed and cooldown elapsed
     if keys[pygame.K_SPACE] and player.shoot_timer >= player.shoot_cooldown:
         player.shoot_timer = 0.0
         shoot(player)
@@ -43,11 +44,12 @@ def shoot(player):
 
     player.bullet_manager.spawn(
         pos=player.rect.center,
-        vel=(0, -900),
+        vel=(0, -900),  # Upward trajectory
         color=(255, 255, 100),
         radius=4,
         owner="player",
     )
+    DebugLogger.state("Player fired bullet", category="user_action")
 
 
 # ===========================================================
@@ -88,6 +90,8 @@ def take_damage(player, amount, source="unknown"):
     player.health -= amount
     DebugLogger.state(f"Took {amount} damage from {source} → HP={player.health}")
 
+    player.update_visual_state()
+
     if player.health <= 0:
         player.alive = False
         DebugLogger.state("Player destroyed!")
@@ -116,26 +120,28 @@ def update_blinking(player, dt):
     player.blink_timer += dt
 
     # Toggle visibility periodically
-    if int(player.blink_timer / player.blink_interval) % 2 == 0:
-        player.visible = True
-    else:
-        player.visible = False
+    player.visible = (int(player.blink_timer / player.blink_interval) % 2 == 0)
 
-    # End blinking period
+    # End blinking period after duration expires
     if player.blink_timer >= player.blink_duration:
         player.blinking = False
         player.blink_timer = 0.0
         player.visible = True
         player.invincible = False
         enable_hitbox(player)
-        DebugLogger.state("Blinking ended → vulnerability restored")
+        DebugLogger.state("Blinking ended → vulnerability restored", category="effects")
 
 
 # ===========================================================
 # Hitbox Management
 # ===========================================================
 def enable_hitbox(player):
-    """Re-enable collision detection after invulnerability period ends."""
+    """
+    Re-enable player collision detection after invulnerability ends.
+
+    Args:
+        player (Player): The player entity.
+    """
     if player.hitbox:
         player.hitbox.active = True
         player.has_hitbox = True
@@ -143,7 +149,12 @@ def enable_hitbox(player):
 
 
 def disable_hitbox(player):
-    """Disable hitbox during invulnerability to prevent repeated hits."""
+    """
+    Temporarily disable collision detection during invulnerability.
+
+    Args:
+        player (Player): The player entity.
+    """
     if player.hitbox:
         player.hitbox.active = False
         player.has_hitbox = False

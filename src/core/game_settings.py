@@ -77,6 +77,7 @@ class LoggerConfig:
     CATEGORIES = {
         "system": True,       # Core engine and scene transitions
         "stage": True,        # LevelManager / wave progression logs
+        "user_action": False,
         "collision": False,   # CollisionManager (hit detection)
         "effects": False,     # Destruction / VFX / bullet impacts
         "entity_spawning": False,

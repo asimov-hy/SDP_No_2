@@ -117,6 +117,12 @@ class BaseEntity:
         # Case 2: Shape rendering (primitive)
         # -------------------------------------------------------
         if mode == "shape":
+            # Ensure the shape's visual color is always current.
+            # If the entity has an image surface (for shape mode), re-fill it.
+            if hasattr(self, "image") and self.image:
+                self.image.fill(self.color)
+
+            # Queue shape for drawing each frame with the updated color.
             draw_manager.queue_shape(
                 self.shape_type,
                 self.rect,

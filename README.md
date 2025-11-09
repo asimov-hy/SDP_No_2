@@ -39,8 +39,8 @@ This project demonstrates the use of:
 │  ├─ core/
 │  │   ├─ __init__.py
 │  │   ├─ game_loop.py
-│  │   ├─ game_state.py
 │  │   ├─ game_settings.py
+│  │   ├─ game_state.py
 │  │   │
 │  │   ├─ engine/
 │  │   │   ├─ __init__.py
@@ -59,17 +59,23 @@ This project demonstrates the use of:
 │  ├─ entities/
 │  │   ├─ __init__.py
 │  │   ├─ base_entity.py
-│  │   ├─ player.py
 │  │   │
 │  │   ├─ bullets/
 │  │   │  ├─ __init__.py
 │  │   │  ├─ base_bullet.py
 │  │   │  └─ bullet_straight.py
 │  │   │
+│  │   ├─ enemies/
+│  │   │  ├─ __init__.py
+│  │   │  ├─ base_enemy.py
+│  │   │  └─ enemy_straight.py
+│  │   │
 │  │   └─ enemies/
 │  │      ├─ __init__.py
-│  │      ├─ base_enemy.py
-│  │      └─ enemy_straight.py
+│  │      ├─ player_base.py
+│  │      ├─ player_combat.py
+│  │      ├─ player_config.py
+│  │      └─ player_movement.py
 │  │
 │  ├─ graphics/
 │  │   ├─ __init__.py

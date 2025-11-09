@@ -1,8 +1,34 @@
 {
-  "scale": 0.5,
-  "speed": 300,
-  "health": 3,
-  "invincible": false,
-  "hitbox_scale": 0.85,
-  "sprite_path": "assets/images/player.png"
+  "core_attributes": {
+    "scale": 1.0,
+    "speed": 300,
+    "health": 3,
+    "invincible": false,
+    "hitbox_scale": 0.85
+  },
+
+  "render_mode": "shape",
+  "default_state": {
+    "shape_type": "rect",
+    "color": [255, 255, 255],
+    "size": [32, 32],
+    "sprite_path": "assets/images/player.png"
+  },
+
+  "health_thresholds": {
+    "moderate": 2,
+    "critical": 1
+  },
+
+  "image_states": {
+    "normal": "assets/images/player.png",
+    "damaged_moderate": "assets/images/player_damaged1.png",
+    "damaged_critical": "assets/images/player_damaged2.png"
+  },
+
+  "color_states": {
+  "normal": [255, 255, 255],
+  "damaged_moderate": [255, 160, 120],
+  "damaged_critical": [180, 30, 30]
+  }
 }
