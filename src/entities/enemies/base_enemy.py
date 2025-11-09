@@ -89,13 +89,13 @@ class BaseEnemy(BaseEntity):
             return
 
         self.pos.y += self.speed * dt
-        self.rect.topleft = (int(self.pos.x), int(self.pos.y))
+        self.rect.center  = (int(self.pos.x), int(self.pos.y))
 
         if self.hitbox:
             self.hitbox.update()
 
         # Mark dead if off-screen
-        if self.pos.y > Display.HEIGHT:
+        if self.pos.y - (self.rect.height / 2) > Display.HEIGHT:
             self.alive = False
 
     # ===========================================================

@@ -110,7 +110,7 @@ class BulletManager:
 
             # Sync hitbox position
             if b.hitbox:
-                b.hitbox.rect.topleft = b.rect.topleft
+                b.hitbox.rect.center = b.rect.center
 
             # Keep alive or recycle
             if b.alive:

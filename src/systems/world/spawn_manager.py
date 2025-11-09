@@ -79,6 +79,11 @@ class SpawnManager:
         # Instantiate enemy and attach hitbox
         # -------------------------------------------------------
         try:
+            if img is not None:
+                w, h = img.get_size()
+                y += h / 2  # shift down so top-left spawns appear at top edge
+                x += w / 2
+
             enemy = cls(x, y, img)
             enemy.collision_tag = getattr(enemy, "collision_tag", "enemy")
 

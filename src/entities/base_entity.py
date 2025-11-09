@@ -4,6 +4,13 @@ base_entity.py
 Defines the BaseEntity class, which serves as the foundational interface
 for all active in-game entities (e.g., Player, Enemy, Bullet).
 
+Coordinate System Standard
+--------------------------
+All entities in the 202X engine use **center-based coordinates**:
+- self.pos represents the entity's visual and physical center.
+- self.rect.center is always synchronized with self.pos.
+- Movement, rotation, and collisions are performed relative to this center.
+
 Responsibilities
 ----------------
 - Provide shared attributes such as image, rect, and alive state.
@@ -95,6 +102,18 @@ class BaseEntity:
 
         # DebugLogger.init(f" {type(self).__name__} initialized at ({x:.1f}, {y:.1f})")
 
+    # ---------------------------
+    # Rect Synchronization Helper
+    # ---------------------------
+    def sync_rect(self):
+        """
+        Force the sprite rect to follow the logical position.
+
+        Ensures rect.center() always matches self.pos, used by subclasses
+        at the end of their update() loops to prevent anchor drift.
+        """
+        self.rect.center = (self.pos.x, self.pos.y)
+
     # ===========================================================
     # Update Logic
     # ===========================================================
@@ -105,7 +124,7 @@ class BaseEntity:
         Args:
             dt (float): Time elapsed since the last frame (in seconds).
         """
-        pass
+        self.sync_rect()
 
     # ===========================================================
     # Rendering Hook

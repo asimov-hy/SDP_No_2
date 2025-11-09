@@ -145,10 +145,15 @@ class Player(BaseEntity):
     def _compute_spawn_position(x, y, image):
         """Compute initial spawn position relative to screen and sprite size."""
         img_w, img_h = image.get_size() if image else (64, 64)
+
+        # Center horizontally
         if x is None:
-            x = (Display.WIDTH / 2) - (img_w / 2)
+            x = Display.WIDTH / 2
+
+        # Place player near bottom, keeping full sprite visible
         if y is None:
-            y = Display.HEIGHT - img_h - 10
+            y = Display.HEIGHT - (img_h / 2) - 10
+
         DebugLogger.state(f"Spawn position set to ({x:.1f}, {y:.1f})")
         return x, y
 
