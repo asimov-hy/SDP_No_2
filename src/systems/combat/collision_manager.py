@@ -164,6 +164,10 @@ class CollisionManager:
                             continue
                         checked_pairs.add(pair_key)
 
+                        # Skip destroyed entities mid-frame
+                        if not getattr(a, "alive", True) or not getattr(b, "alive", True):
+                            continue
+
                         # Rule-based filtering
                         tag_a = get_tag(a, "collision_tag", None)
                         tag_b = get_tag(b, "collision_tag", None)
@@ -174,16 +178,21 @@ class CollisionManager:
                         if a_hitbox.rect.colliderect(b_hitbox.rect):
                             append_collision((a, b))
 
-                            # Optional centralized collision handling
-                            if hasattr(a, "on_collision"):
-                                a.on_collision(b)
-                            if hasattr(b, "on_collision"):
-                                b.on_collision(a)
+                            # Unified, single collision header with tags
+                            tag_a = getattr(a, "collision_tag", "?")
+                            tag_b = getattr(b, "collision_tag", "?")
+                            DebugLogger.state(
+                                f"Collision: {type(a).__name__} ({tag_a}) <-> {type(b).__name__} ({tag_b})"
+                            )
 
-                            # Throttled debug output
-                            if Debug.VERBOSE_HITBOX_UPDATE and len(collisions) <= 10:
-                                DebugLogger.state(
-                                    f"Collision detected between {type(a).__name__} and {type(b).__name__}")
+                            # Let entities handle their reactions
+                            try:
+                                if hasattr(a, "on_collision"):
+                                    a.on_collision(b)
+                                if hasattr(b, "on_collision"):
+                                    b.on_collision(a)
+                            except Exception as e:
+                                DebugLogger.warn(f"[CollisionManager] Exception during collision: {e}")
         return collisions
 
     # ===========================================================

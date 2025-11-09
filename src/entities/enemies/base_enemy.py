@@ -17,7 +17,7 @@ from src.core.utils.debug_logger import DebugLogger
 from src.systems.combat.collision_hitbox import CollisionHitbox
 
 
-class EnemyBaseEntity(BaseEntity):
+class BaseEnemy(BaseEntity):
     """Base class providing shared logic for all enemy entities."""
 
     # ===========================================================
@@ -68,17 +68,19 @@ class EnemyBaseEntity(BaseEntity):
             source (str, optional): Damage source tag or entity name.
         """
         if not self.alive:
-            DebugLogger.trace("Damage ignored (already destroyed)")
+            DebugLogger.warn("Damage ignored (already destroyed)")
             return
 
         self.hp -= amount
-        DebugLogger.state(
-            f"[EnemyDamage] {type(self).__name__} took {amount} from {source} → HP={self.hp}"
-        )
-
         if self.hp <= 0:
             self.alive = False
-            DebugLogger.state(f"[Death] {type(self).__name__} destroyed at {self.rect.topleft}")
+            DebugLogger.state(
+                f"Took {amount} from {source} → HP=0 | Destroyed at {self.rect.topleft}"
+            )
+        else:
+            DebugLogger.state(
+                f"Took {amount} from {source} → HP={self.hp}"
+            )
 
     # ===========================================================
     # Update Logic
@@ -113,12 +115,11 @@ class EnemyBaseEntity(BaseEntity):
         tag = getattr(other, "collision_tag", "unknown")
 
         if tag == "player_bullet":
+            # DebugLogger.state(f"{type(self).__name__} hit by PlayerBullet")
             self.take_damage(1, source="player_bullet")
-            DebugLogger.state(f"[Collision] {type(self).__name__} hit by PlayerBullet")
 
         elif tag == "player":
             self.take_damage(1, source="player_contact")
-            DebugLogger.state(f"[Collision] {type(self).__name__} collided with Player")
 
         else:
             DebugLogger.trace(f"[CollisionIgnored] {type(self).__name__} vs {tag}")

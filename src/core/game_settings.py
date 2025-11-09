@@ -83,6 +83,5 @@ class Debug:
     HITBOX_ACTIVE = True          # Always active for collision checks
     HITBOX_VISIBLE = False        # Visible only in debug mode
     VERBOSE_HITBOX_UPDATE = False
-    VERBOSE_HITBOX_DRAW = False
 
     HITBOX_LINE_WIDTH = 5

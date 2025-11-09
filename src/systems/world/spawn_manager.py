@@ -136,3 +136,15 @@ class SpawnManager:
         for e in self.enemies:
             e.draw(self.draw_manager)
         # No per-frame logging here to avoid console spam
+
+    # ===========================================================
+    # Cleanup (External Call)
+    # ===========================================================
+    def cleanup(self):
+        """Immediately remove enemies that are no longer alive."""
+        before = len(self.enemies)
+        self.enemies = [e for e in self.enemies if e.alive]
+        removed = before - len(self.enemies)
+
+        if removed > 0 and Debug.VERBOSE_ENTITY_DEATH:
+            DebugLogger.state(f"[SpawnManager] Cleaned up {removed} destroyed enemies")

@@ -147,3 +147,15 @@ class BulletManager:
             # Debug: render hitbox overlay
             if Debug.HITBOX_VISIBLE and b.hitbox:
                 b.hitbox.draw_debug(draw_manager.surface)
+
+    # ===========================================================
+    # Cleanup (External Call)
+    # ===========================================================
+    def cleanup(self):
+        """Immediately remove or recycle inactive bullets."""
+        before = len(self.active)
+        self.active = [b for b in self.active if b.alive]
+        removed = before - len(self.active)
+
+        if removed > 0 and Debug.VERBOSE_ENTITY_DEATH:
+            DebugLogger.state(f"[BulletManager] Cleaned up {removed} inactive bullets")

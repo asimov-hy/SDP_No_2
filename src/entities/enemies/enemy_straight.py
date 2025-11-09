@@ -11,11 +11,11 @@ Responsibilities
 """
 
 from src.core.game_settings import Debug, Display
-from src.entities.enemies.base_enemy import EnemyBaseEntity
+from src.entities.enemies.base_enemy import BaseEnemy
 from src.core.utils.debug_logger import DebugLogger
 
 
-class EnemyStraight(EnemyBaseEntity):
+class EnemyStraight(BaseEnemy):
     """Simple enemy that moves vertically downward and disappears when off-screen."""
 
     # ===========================================================
@@ -62,4 +62,4 @@ class EnemyStraight(EnemyBaseEntity):
         if self.pos.y > Display.HEIGHT:
             self.alive = False
             if Debug.VERBOSE_ENTITY_DEATH:
-                DebugLogger.state(f"[Death] {type(self).__name__} off-screen at y={self.pos.y:.1f}")
+                DebugLogger.state(f"{type(self).__name__} off-screen at y={self.pos.y:.1f}")

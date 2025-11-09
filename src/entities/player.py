@@ -44,7 +44,7 @@ class Player(BaseEntity):
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(self, x, y, image):
+    def __init__(self, x=None, y=None, image=None):
         """
         Initialize the player with position, attributes, and image scaling.
 
@@ -58,13 +58,28 @@ class Player(BaseEntity):
         # -------------------------------------------------------
         # Apply scaling to sprite if specified
         # -------------------------------------------------------
-        if cfg["scale"] != 1.0:
+        if image is not None and cfg["scale"] != 1.0:
             w, h = image.get_size()
             new_size = (int(w * cfg["scale"]), int(h * cfg["scale"]))
             image = pygame.transform.scale(image, new_size)
             DebugLogger.state(f"[Player] Sprite scaled to {new_size}")
 
+        # -------------------------------------------------------
+        # Determine spawn position BEFORE base initialization
+        # -------------------------------------------------------
+        if image is not None:
+            img_w, img_h = image.get_size()
+        else:
+            img_w, img_h = 64, 64  # fallback size
+
+        if x is None:
+            x = (Display.WIDTH / 2) - (img_w / 2)
+        if y is None:
+            y = Display.HEIGHT - img_h - 10
+
+        # -------------------------------------------------------
         # Initialize base entity
+        # -------------------------------------------------------
         super().__init__(x, y, image)
 
         # -------------------------------------------------------
@@ -96,10 +111,10 @@ class Player(BaseEntity):
         self.layer = Layers.PLAYER
         STATE.player_ref = self
 
-        DebugLogger.init(
-            f"Initialized Player at ({x}, {y}) | Speed={self.speed} | HP={self.health}"
-        )
 
+        DebugLogger.init(
+            f"Initialized Player at ({x:.1f}, {y:.1f}) | Speed={self.speed} | HP={self.health}"
+        )
     # ===========================================================
     # Update Logic
     # ===========================================================
@@ -208,13 +223,11 @@ class Player(BaseEntity):
         if tag == "enemy":
             if not self.invincible:
                 self.take_damage(1, source=type(other).__name__)
-                other.alive = False
-                DebugLogger.state("[Collision] Player collided with Enemy")
 
         elif tag == "enemy_bullet":
             if not self.invincible:
-                self.take_damage(1, source="enemy_bullet")
                 DebugLogger.state("[Collision] Player hit by Enemy Bullet")
+                self.take_damage(1, source="enemy_bullet")
 
         else:
             DebugLogger.trace(f"[Collision] Player ignored {tag}")
@@ -232,15 +245,15 @@ class Player(BaseEntity):
             source (str): Cause or entity type.
         """
         if self.invincible:
-            DebugLogger.trace(f"[DamageIgnored] Player invincible vs {source}")
+            DebugLogger.trace(f"Player invincible vs {source}")
             return
 
         self.health -= amount
-        DebugLogger.state(f"[Damage] Player took {amount} from {source} → HP={self.health}")
+        DebugLogger.state(f"Took {amount} from {source} → HP={self.health}")
 
         if self.health <= 0:
             self.alive = False
-            DebugLogger.state("[Death] Player destroyed!")
+            DebugLogger.state("Player destroyed!")
 
     # ===========================================================
     # Utility: Screen Clamp

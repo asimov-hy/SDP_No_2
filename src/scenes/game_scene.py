@@ -67,13 +67,8 @@ class GameScene:
         self.draw_manager.load_image("player", "assets/images/player.png", scale=1.0)
         player_img = self.draw_manager.get_image("player")
 
-        # Spawn player at bottom-center of screen
-        start_x = (Display.WIDTH / 2) - (player_img.get_width() / 2)
-        start_y = Display.HEIGHT - player_img.get_height() - 10
-
-        self.player = Player(start_x, start_y, player_img)
-
-        DebugLogger.init(f"Player entity initialized at ({start_x}, {start_y})")
+        # spawn player
+        self.player = Player(image=player_img)
 
         self.draw_manager.load_image("enemy_straight", "assets/images/enemies/enemy_straight.png", scale=1.0)
         DebugLogger.init("EnemyStraight sprite loaded successfully")
@@ -141,42 +136,36 @@ class GameScene:
         # 1) Player Input & Update
         # ===========================================================
         move = self.input.get_normalized_move()
-
-        # Pass input direction to player
         self.player.move_vec = move
-
-        # Player handles movement and shooting internally
-        # (Ensures bullets are spawned early in frame)
         self.player.update(dt)
+        # Bullets are spawned here if player fires — so they exist this frame.
 
         # ===========================================================
-        # 2) Bullet System Update
+        # 2) Enemy Spawn & Stage Progression
         # ===========================================================
-        # Update all active bullets before collision checks
-        self.bullet_manager.update(dt)
-
-        # ===========================================================
-        # 3) Enemy Wave & Spawn Systems
-        # ===========================================================
-        # StageManager schedules wave timing; SpawnManager maintains active enemies
         self.stage_manager.update(dt)
         self.spawner.update(dt)
 
         # ===========================================================
-        # 4) Collision Phase
+        # 3) Collision Phase
         # ===========================================================
-        # Run collision detection *after* all entities are updated.
-        # Ensures newly spawned bullets and enemies are included this frame.
-        self.collision_manager.detect()
+        # Detect collisions *before* bullet update so bullets killed here
+        # are removed immediately in the next step.
+        try:
+            self.collision_manager.detect()
+        finally:
+            # 4) Bullet & Enemy Cleanup
+            # Cleanup ensures dead entities don’t persist visually.
+            if hasattr(self.bullet_manager, "cleanup"):
+                self.bullet_manager.cleanup()
+            if hasattr(self.spawner, "cleanup"):
+                self.spawner.cleanup()
 
         # ===========================================================
-        # 5) Entity Cleanup
+        # 5) Bullet Update (after collision)
         # ===========================================================
-        # Remove destroyed or inactive entities immediately to prevent ghost sprites.
-        if hasattr(self.spawner, "cleanup"):
-            self.spawner.cleanup()
-        if hasattr(self.bullet_manager, "cleanup"):
-            self.bullet_manager.cleanup()
+        # Update positions for remaining bullets that survived collisions.
+        self.bullet_manager.update(dt)
 
         # ===========================================================
         # 6) UI Update

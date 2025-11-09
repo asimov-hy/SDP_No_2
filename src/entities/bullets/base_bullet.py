@@ -109,18 +109,20 @@ class BaseBullet:
         """
         if not self.alive:
             return  # Prevent multiple hits per frame
+        if not getattr(target, "alive", True):
+            return
 
         if not hasattr(target, "take_damage"):
-            DebugLogger.warn(f"[BulletBase] Target {type(target).__name__} has no take_damage()")
+            DebugLogger.warn(f"Target {type(target).__name__} has no take_damage()")
             return
 
         DebugLogger.state(
-            f"[BulletHit] {type(self).__name__} ({self.owner}) hit {type(target).__name__} "
+            f"{type(self).__name__} ({self.owner}) hit {type(target).__name__} "
             f"→ Damage={self.damage}"
         )
 
-        target.take_damage(self.damage, source=type(self).__name__)
         self.alive = False
+        target.take_damage(self.damage, source=type(self).__name__)
 
     def on_collision(self, target):
         """
@@ -129,6 +131,8 @@ class BaseBullet:
         Delegates to on_hit() to maintain backward compatibility
         with existing bullet logic.
         """
+        if target is self:
+            return
         self.on_hit(target)
 
     # ===========================================================
