@@ -210,36 +210,46 @@ class Player(BaseEntity):
         """
         hp = self.health
         th = self.health_thresholds
+        mode = self.render_mode
+        state = "normal"  # Default threshold name
+        visual_value = None
 
-        # -------------------------------
+        # -------------------------------------------------------
         # IMAGE MODE
-        # -------------------------------
-        if self.render_mode == "image":
+        # -------------------------------------------------------
+        if mode == "image":
             if hp <= th["critical"]:
-                path = self.image_states["damaged_critical"]
+                state = "damaged_critical"
             elif hp <= th["moderate"]:
-                path = self.image_states["damaged_moderate"]
-            else:
-                path = self.image_states["normal"]
+                state = "damaged_moderate"
+
+            path = self.image_states[state]
+            visual_value = path
 
             try:
                 self.image = pygame.image.load(path).convert_alpha()
-                DebugLogger.state(f"Updated sprite to {path}")
             except Exception as e:
-                DebugLogger.warn(f"Failed to load {path}: {e}")
+                DebugLogger.warn(f"[VisualState] Failed to load sprite: {path} ({e})")
 
-        # -------------------------------
+        # -------------------------------------------------------
         # SHAPE MODE
-        # -------------------------------
-        elif self.render_mode == "shape":
+        # -------------------------------------------------------
+        elif mode == "shape":
             if hp <= th["critical"]:
-                self.color = self.color_states["damaged_critical"]
+                state = "damaged_critical"
             elif hp <= th["moderate"]:
-                self.color = self.color_states["damaged_moderate"]
-            else:
-                self.color = self.color_states["normal"]
+                state = "damaged_moderate"
 
-            DebugLogger.state(f"Updated color to {self.color}")
+            self.color = self.color_states[state]
+            visual_value = self.color
+
+        # -------------------------------------------------------
+        # Unified Debug Output
+        # -------------------------------------------------------
+        DebugLogger.state(
+            f"Mode={mode} | HP={hp} | Threshold = {state} | Visual={visual_value}",
+            category="effects"
+        )
 
     def take_damage(self, amount: int):
         """
