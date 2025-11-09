@@ -180,19 +180,18 @@ class GameScene:
         Render all entities and UI elements to the draw queue.
 
         Args:
-            draw_manager: DrawManager responsible for batching and rendering.
+            draw_manager (DrawManager): Centralized renderer responsible for batching and displaying.
         """
         # =======================================================
-        # Draw Order
+        # Rendering Order (Layer Priority)
         # =======================================================
-        # Enemies → Bullets → Player → UI (maintains proper layering)
         self.spawner.draw()
         self.bullet_manager.draw(draw_manager)
-        draw_manager.draw_entity(self.player, layer=Layers.PLAYER)
+        self.player.draw(draw_manager)
         self.ui.draw(draw_manager)
 
-        # ===========================================================
-        # Debug: Draw hitboxes (optional)
-        # ===========================================================
+        # =======================================================
+        # Optional Debug Rendering
+        # =======================================================
         if Debug.HITBOX_VISIBLE:
             self.collision_manager.draw_debug(draw_manager)

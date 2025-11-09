@@ -13,7 +13,7 @@ Responsibilities
 
 import pygame
 from src.entities.bullets.bullet_straight import StraightBullet
-from src.core.game_settings import Layers, Debug
+from src.core.game_settings import Debug
 from src.core.utils.debug_logger import DebugLogger
 from src.systems.combat.collision_hitbox import CollisionHitbox
 
@@ -27,7 +27,6 @@ class BulletManager:
     def __init__(self):
         self.active = []  # Active bullets currently in flight
         self.pool = []    # Inactive bullets available for reuse
-        self._circle_cache = {}  # Cache for colored bullet circles
 
         DebugLogger.init("║{:<59}║".format(f"\t[BulletManager][INIT]\t→ Pool ready"), show_meta=False)
 
@@ -132,17 +131,7 @@ class BulletManager:
             draw_manager (DrawManager): Global DrawManager instance.
         """
         for b in self.active:
-            if b.image:
-                draw_manager.queue_draw(b.image, b.rect, layer=Layers.BULLETS)
-            else:
-                # Cache circle surfaces to avoid recreating each frame
-                key = (b.color, b.radius)
-                surf = self._circle_cache.get(key)
-                if not surf:
-                    surf = pygame.Surface((b.radius * 2, b.radius * 2), pygame.SRCALPHA)
-                    pygame.draw.circle(surf, b.color, (b.radius, b.radius), b.radius)
-                    self._circle_cache[key] = surf
-                draw_manager.queue_draw(surf, b.rect, layer=Layers.BULLETS)
+            b.draw(draw_manager)
 
             # Debug: render hitbox overlay
             if Debug.HITBOX_VISIBLE and b.hitbox:

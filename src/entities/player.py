@@ -28,11 +28,15 @@ from src.systems.combat.collision_hitbox import CollisionHitbox
 
 DEFAULT_CONFIG = {
     "scale": 1.0,
-    "speed": 300,   # Uses 300 from settings
+    "speed": 300,
     "health": 3,
     "invincible": False,
     "hitbox_scale": 0.85,
-    "sprite_path": "assets/images/player.png",
+    "render_mode": "shape",   # "image" or "shape"
+    "shape_type": "rect",     # "rect", "circle", etc.
+    "color": (255, 80, 80),
+    "size": (64, 64),
+    "sprite_path": None
 }
 
 PLAYER_CONFIG = load_json("player_config.json", DEFAULT_CONFIG)
@@ -58,52 +62,59 @@ class Player(BaseEntity):
         """
         cfg = PLAYER_CONFIG
 
-        # ---------------------------------------------------
-        # 1) Load Sprite
-        # ---------------------------------------------------
-        image = self._load_sprite(cfg, image)
+        # -------------------------------------------------------
+        # 1) Load and prepare sprite (optional)
+        # -------------------------------------------------------
+        image = None
+        if cfg["render_mode"] == "image":
+            image = self._load_sprite(cfg, image)
+            image = self._apply_scaling(cfg, image)
 
-        # ---------------------------------------------------
-        # 2) Apply Scaling
-        # ---------------------------------------------------
-        image = self._apply_scaling(cfg, image)
+        # If no sprite path, fallback will be handled by BaseEntity automatically
 
-        # ---------------------------------------------------
-        # 3) Determine Spawn Position
-        # ---------------------------------------------------
+        # -------------------------------------------------------
+        # 2) Compute initial spawn position
+        # -------------------------------------------------------
         x, y = self._compute_spawn_position(x, y, image)
 
-        # ---------------------------------------------------
-        # 4) Initialize BaseEntity
-        # ---------------------------------------------------
-        super().__init__(x, y, image)
+        # -------------------------------------------------------
+        # 3) Initialize BaseEntity with unified rendering system
+        # -------------------------------------------------------
+        super().__init__(
+            x, y,
+            image=image,
+            render_mode=cfg.get("render_mode"),
+            shape_type=cfg.get("shape_type"),
+            color=cfg.get("color"),
+            size=cfg.get("size"),
+        )
 
-        # ---------------------------------------------------
-        # 5) Core Attributes
-        # ---------------------------------------------------
+        # -------------------------------------------------------
+        # 4) Core Attributes
+        # -------------------------------------------------------
         self.velocity = pygame.Vector2(0, 0)
         self.speed = cfg["speed"]
         self.health = cfg["health"]
         self.invincible = cfg["invincible"]
 
-        # ---------------------------------------------------
-        # 6) Collision / Hitbox Setup
-        # ---------------------------------------------------
+        # -------------------------------------------------------
+        # 5) Collision / Hitbox Setup
+        # -------------------------------------------------------
         self.collision_tag = "player"
         self.hitbox_scale = cfg["hitbox_scale"]
         self.hitbox = CollisionHitbox(self, self.hitbox_scale)
         self.has_hitbox = True
 
-        # ---------------------------------------------------
-        # 7) Combat / Shooting
-        # ---------------------------------------------------
+        # -------------------------------------------------------
+        # 6) Combat / Shooting
+        # -------------------------------------------------------
         self.bullet_manager = None
         self.shoot_cooldown = 0.1
         self.shoot_timer = 0.0
 
-        # ---------------------------------------------------
-        # 8) Layer & Global State
-        # ---------------------------------------------------
+        # -------------------------------------------------------
+        # 7) Layer & Global State
+        # -------------------------------------------------------
         self.layer = Layers.PLAYER
         STATE.player_ref = self
 
@@ -116,43 +127,70 @@ class Player(BaseEntity):
     # =======================================================
     @staticmethod
     def _load_sprite(cfg, image):
-        """Load player sprite from disk or create fallback."""
+        """
+        Load the player's sprite from disk, or create a fallback if missing.
+
+        Args:
+            cfg (dict): Player configuration dictionary.
+            image (pygame.Surface | None): Optional existing image surface.
+
+        Returns:
+            pygame.Surface: The loaded or fallback surface.
+        """
         if image:
             return image
 
-        sprite_path = cfg.get("sprite_path", "assets/images/player.png")
-
-        if not os.path.exists(sprite_path):
+        sprite_path = cfg.get("sprite_path")
+        if not sprite_path or not os.path.exists(sprite_path):
             DebugLogger.warn(f"[Player] Missing sprite: {sprite_path}, using fallback.")
             placeholder = pygame.Surface((64, 64))
             placeholder.fill((255, 50, 50))
             return placeholder
 
         image = pygame.image.load(sprite_path).convert_alpha()
-        DebugLogger.state(f"[Player] Loaded sprite from {sprite_path}")
+        DebugLogger.state(f"Loaded sprite from {sprite_path}")
         return image
 
     @staticmethod
     def _apply_scaling(cfg, image):
-        """Apply scaling to player sprite if configured."""
+        """
+        Apply sprite scaling based on configuration.
+
+        Args:
+            cfg (dict): Player configuration dictionary.
+            image (pygame.Surface): Original image surface.
+
+        Returns:
+            pygame.Surface: Scaled image surface.
+        """
         if not image or cfg["scale"] == 1.0:
             return image
 
         w, h = image.get_size()
         new_size = (int(w * cfg["scale"]), int(h * cfg["scale"]))
         image = pygame.transform.scale(image, new_size)
-        DebugLogger.state(f"[Player] Sprite scaled to {new_size}")
+        DebugLogger.state(f"Sprite scaled to {new_size}")
         return image
 
     @staticmethod
     def _compute_spawn_position(x, y, image):
-        """Compute default or given spawn position."""
+        """
+        Compute the player's starting position on screen.
+
+        Args:
+            x (float | None): Optional x position override.
+            y (float | None): Optional y position override.
+            image (pygame.Surface | None): Player sprite, used to determine size.
+
+        Returns:
+            tuple[float, float]: Final (x, y) spawn coordinates.
+        """
         img_w, img_h = image.get_size() if image else (64, 64)
         if x is None:
             x = (Display.WIDTH / 2) - (img_w / 2)
         if y is None:
             y = Display.HEIGHT - img_h - 10
-        DebugLogger.state(f"[Player] Spawn position set to ({x:.1f}, {y:.1f})")
+        DebugLogger.state(f"Spawn position set to ({x:.1f}, {y:.1f})")
         return x, y
 
     # ===========================================================
@@ -178,7 +216,13 @@ class Player(BaseEntity):
     # Movement
     # -------------------------------------------------------
     def _update_movement(self, dt, move_vec):
-        """Handle movement physics and velocity control."""
+        """
+        Update player velocity and position based on input.
+
+        Args:
+            dt (float): Delta time since last frame.
+            move_vec (pygame.Vector2): Movement vector (directional input).
+        """
         accel_rate = 3000
         friction_rate = 500
 
@@ -211,7 +255,12 @@ class Player(BaseEntity):
     # Shooting
     # -------------------------------------------------------
     def _update_shooting(self, dt):
-        """Manage shooting cooldown and bullet spawn."""
+        """
+        Manage shooting cooldown and trigger bullet spawns.
+
+        Args:
+            dt (float): Delta time since last frame.
+        """
         self.shoot_timer += dt
         keys = pygame.key.get_pressed()
 
@@ -222,7 +271,7 @@ class Player(BaseEntity):
     def shoot(self):
         """Spawn bullets via BulletManager."""
         if not self.bullet_manager:
-            DebugLogger.warn("[Player] Attempted to shoot without BulletManager")
+            DebugLogger.warn("Attempted to shoot without BulletManager")
             return
 
         self.bullet_manager.spawn(
@@ -237,19 +286,30 @@ class Player(BaseEntity):
     # Collision & Damage
     # =======================================================
     def on_collision(self, other):
-        """Handle collisions with enemies or projectiles."""
+        """
+        Handle collisions with enemies or enemy bullets.
+
+        Args:
+            other (BaseEntity): Entity that collided with the player.
+        """
         tag = getattr(other, "collision_tag", "unknown")
 
         if tag == "enemy" and not self.invincible:
             self.take_damage(1, source=type(other).__name__)
         elif tag == "enemy_bullet" and not self.invincible:
-            DebugLogger.state("[Collision] Player hit by Enemy Bullet")
+            DebugLogger.state("Player hit by Enemy Bullet")
             self.take_damage(1, source="enemy_bullet")
         else:
-            DebugLogger.trace(f"[Collision] Player ignored {tag}")
+            DebugLogger.trace(f"Player ignored {tag}")
 
     def take_damage(self, amount: int, source: str = "unknown"):
-        """Reduce health when taking damage."""
+        """
+        Reduce health when taking damage and mark death if depleted.
+
+        Args:
+            amount (int): Amount of damage taken.
+            source (str): Description of what caused the damage.
+        """
         if self.invincible:
             DebugLogger.trace(f"Player invincible vs {source}")
             return
@@ -261,9 +321,9 @@ class Player(BaseEntity):
             self.alive = False
             DebugLogger.state("Player destroyed!")
 
-    # =======================================================
+    # ===========================================================
     # Utility
-    # =======================================================
+    # ===========================================================
     def _clamp_to_screen(self):
         """Ensure the player stays within screen bounds."""
         screen_w, screen_h = Display.WIDTH, Display.HEIGHT

@@ -46,12 +46,18 @@ class StraightBullet(BaseBullet):
     # ===========================================================
     # Rendering
     # ===========================================================
-    def draw(self, surface):
+    def draw(self, draw_manager):
         """
-        Render the bullet using the base draw method.
+        Queue this bullet for rendering via the DrawManager.
+
+        Responsibilities
+        ----------------
+        - Pass rendering control to BaseEntity for consistent batching.
+        - Support both sprite and shape-based bullets through BaseEntity.
+        - Remain compatible with DrawManager’s layered rendering system.
 
         Args:
-            surface (pygame.Surface): Surface to render on.
+            draw_manager: The DrawManager responsible for batching and rendering.
         """
-        super().draw(surface)
+        super().draw(draw_manager)
         # Future: Add glow or directional effects here

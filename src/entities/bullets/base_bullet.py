@@ -14,10 +14,11 @@ Responsibilities
 import pygame
 from src.core import game_settings
 from src.core.utils.debug_logger import DebugLogger
+from src.entities.base_entity import BaseEntity
 from src.systems.combat.collision_hitbox import CollisionHitbox
 
 
-class BaseBullet:
+class BaseBullet(BaseEntity):
     """Base class for all bullet entities."""
 
     # ===========================================================
@@ -38,34 +39,46 @@ class BaseBullet:
             damage (int): Base damage value inflicted on collision.
         """
         # -------------------------------------------------------
-        # Core Properties
+        # 1) Initialize via BaseEntity (handles image/shape setup)
+        # -------------------------------------------------------
+        render_mode = "image" if image is not None else "shape"
+        shape_type = "circle" if image is None else None
+        radius = max(1, radius)
+        size = (radius * 2, radius * 2)
+
+        super().__init__(
+            x=pos[0],
+            y=pos[1],
+            image=image,
+            render_mode=render_mode,
+            shape_type=shape_type,
+            color=color,
+            size=size
+        )
+
+        # -------------------------------------------------------
+        # 2) Core Attributes
         # -------------------------------------------------------
         self.pos = pygame.Vector2(pos)
         self.vel = pygame.Vector2(vel)
         self.alive = True
         self.owner = owner
-        self.image = image
-        self.color = color
         self.radius = radius
         self.damage = damage
 
         # -------------------------------------------------------
-        # Rect Setup
-        # -------------------------------------------------------
-        if self.image:
-            self.rect = self.image.get_rect(center=pos)
-        else:
-            self.rect = pygame.Rect(0, 0, radius * 2, radius * 2)
-            self.rect.center = pos
-
-        # -------------------------------------------------------
-        # Collision Tag & Hitbox
+        # 3) Collision / Hitbox
         # -------------------------------------------------------
         self.collision_tag = f"{owner}_bullet"
         self.hitbox = CollisionHitbox(self, scale=hitbox_scale)
         self.has_hitbox = True
 
-        # DebugLogger.state(f"[BulletSpawn] {self.collision_tag} created at {pos} → Vel={vel}")
+        # -------------------------------------------------------
+        # 4) Layer Assignment
+        # -------------------------------------------------------
+        self.layer = game_settings.Layers.BULLETS
+
+        # DebugLogger.trace(f"{self.collision_tag} created at {pos} → Vel={vel}")
 
     # ===========================================================
     # Update Logic
@@ -85,19 +98,22 @@ class BaseBullet:
         self.rect.center = self.pos
 
         # Keep hitbox synced
-        if self.hitbox:
+        if self.has_hitbox:
             self.hitbox.update()
 
         # Off-screen cleanup (buffer for smooth exit)
+        display_w, display_h = game_settings.Display.WIDTH, game_settings.Display.HEIGHT
+        # Inside update()
         if (
-            self.pos.y < -50 or self.pos.y > game_settings.Display.HEIGHT + 50 or
-            self.pos.x < -50 or self.pos.x > game_settings.Display.WIDTH + 50
+                self.pos.y < -50 or self.pos.y > display_h + 50 or
+                self.pos.x < -50 or self.pos.x > display_w + 50
         ):
             self.alive = False
-            DebugLogger.state(
-                f"{self.collision_tag} removed off-screen at {self.pos}",
-                category="entity_cleanup"
-            )
+            if getattr(DebugLogger, "ENABLED", True):
+                DebugLogger.state(
+                    f"{self.collision_tag} removed off-screen at {self.pos}",
+                    category="entity_cleanup"
+                )
 
     # ===========================================================
     # Collision Handling
@@ -112,11 +128,8 @@ class BaseBullet:
         Args:
             target: The entity that this bullet collided with.
         """
-        if not self.alive:
+        if not self.alive or target is self:
             return
-        if target is self:
-            return
-
         self.handle_collision(target)
 
     def handle_collision(self, target):
@@ -135,15 +148,16 @@ class BaseBullet:
             target: The entity that this bullet collided with.
         """
         self.alive = False
-        DebugLogger.state(
-            f"{type(self).__name__} collided with {type(target).__name__} → destroyed",
-            category="collision"
-        )
+        if getattr(DebugLogger, "ENABLED", True):
+            DebugLogger.state(
+                f"{type(self).__name__} collided with {type(target).__name__} → destroyed",
+                category="collision"
+            )
 
     # ===========================================================
     # Rendering
     # ===========================================================
-    def draw(self, surface):
+    def draw(self, draw_manager):
         """
         Render the bullet to the given surface.
 
@@ -151,11 +165,8 @@ class BaseBullet:
             - Draw image if available.
             - Otherwise, render a simple circle.
         """
-        if self.image:
-            surface.blit(self.image, self.rect)
-        else:
-            pygame.draw.circle(surface, self.color, self.rect.center, self.radius)
+        super().draw(draw_manager)
 
         # Optional hitbox debug overlay
-        if game_settings.Debug.HITBOX_VISIBLE:
-            self.hitbox.draw_debug(surface)
+        if game_settings.Debug.HITBOX_VISIBLE and self.has_hitbox:
+            self.hitbox.draw_debug(draw_manager.surface)

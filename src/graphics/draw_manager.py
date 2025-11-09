@@ -33,7 +33,6 @@ class DrawManager:
         self.surface = None  # Expose active surface for debug/hitbox draws
         DebugLogger.init("║{:<59}║".format(f"\t[DrawManager][INIT]\t\t→ Initialized"), show_meta=False)
 
-
     # --------------------------------------------------------
     # Image Loading
     # --------------------------------------------------------
@@ -59,7 +58,7 @@ class DrawManager:
         if scale != 1.0:
             w, h = img.get_size()
             img = pygame.transform.scale(img, (int(w * scale), int(h * scale)))
-            print(f"[DrawManager] SCALE: '{key}' → {img.get_size()} ({scale}x)")
+            # print(f"[DrawManager] SCALE: '{key}' → {img.get_size()} ({scale}x)")
             DebugLogger.state(f"Scaled '{key}' to {img.get_size()} ({scale:.2f}x)")
 
         self.images[key] = img
@@ -132,7 +131,7 @@ class DrawManager:
         self.layers[layer].append((surface, rect))
 
         if surface is None or rect is None:
-            DebugLogger.warn(f"[DrawManager] Skipped invalid draw call at layer {layer}")
+            DebugLogger.warn(f"Skipped invalid draw call at layer {layer}")
             return
 
     def draw_entity(self, entity, layer=0):
@@ -155,6 +154,27 @@ class DrawManager:
         self.queue_draw(surf, rect, layer=Layers.DEBUG)  # Layers.DEBUG
 
     # ===========================================================
+    # Shape Queueing
+    # ===========================================================
+    def queue_shape(self, shape_type, rect, color, layer=0, **kwargs):
+        """
+        Queue a primitive shape to be drawn on the specified layer.
+
+        Args:
+            shape_type (str): Type of shape ("rect", "circle", "polygon", etc.).
+            rect (pygame.Rect): Position and dimensions of the shape.
+            color (tuple[int, int, int]): RGB color of the shape.
+            layer (int): Rendering layer (lower values draw first).
+            **kwargs: Additional shape-specific parameters (e.g., width, points).
+        """
+        if layer not in self.layers:
+            self.layers[layer] = []
+            self._layers_dirty = True
+
+        # Add tagged shape command for later rendering
+        self.layers[layer].append(("shape", shape_type, rect, color, kwargs))
+
+    # ===========================================================
     # Rendering
     # ===========================================================
     def render(self, target_surface, debug=False):
@@ -173,14 +193,25 @@ class DrawManager:
             self._layer_keys_cache = sorted(self.layers.keys())
             self._layers_dirty = False
 
-        # Render each layer
+
+        # -------------------------------------------------------
+        # Render each layer (surfaces + shapes)
+        # -------------------------------------------------------
         for layer in self._layer_keys_cache:
-            for surface, rect in self.layers[layer]:
-                target_surface.blit(surface, (round(rect.x), round(rect.y)))
+            for item in self.layers[layer]:
+                # Handle traditional surface blit
+                if isinstance(item[0], pygame.Surface):
+                    surface, rect = item
+                    target_surface.blit(surface, (round(rect.x), round(rect.y)))
+
+                # Handle shape draw command
+                elif isinstance(item[0], str) and item[0] == "shape":
+                    _, shape_type, rect, color, kwargs = item
+                    self._draw_shape(target_surface, shape_type, rect, color, **kwargs)
 
         if debug:
             draw_count = sum(len(items) for items in self.layers.values())
-            DebugLogger.state(f"Rendered {draw_count} queued surfaces")
+            DebugLogger.state(f"Rendered {draw_count} queued surfaces and shapes")
 
         # -------------------------------------------------------
         # Optional debug overlay pass (hitboxes)
@@ -189,4 +220,36 @@ class DrawManager:
             for hb in self.debug_hitboxes:
                 hb.draw_debug(target_surface)
 
+    # ===========================================================
+    # Shape Rendering Helper
+    # ===========================================================
+    def _draw_shape(self, surface, shape_type, rect, color, **kwargs):
+        """
+        Internal helper for drawing primitive shapes on a surface.
 
+        Args:
+            surface (pygame.Surface): Target surface to draw onto.
+            shape_type (str): Type of shape ("rect", "circle", "ellipse", etc.).
+            rect (pygame.Rect): Shape bounds.
+            color (tuple[int, int, int]): RGB color.
+            **kwargs: Optional keyword args (e.g., width, points, start_pos, end_pos).
+        """
+        width = kwargs.get("width", 0)
+
+        if shape_type == "rect":
+            pygame.draw.rect(surface, color, rect, width)
+        elif shape_type == "circle":
+            pygame.draw.circle(surface, color, rect.center, rect.width // 2, width)
+        elif shape_type == "ellipse":
+            pygame.draw.ellipse(surface, color, rect, width)
+        elif shape_type == "polygon":
+            points = kwargs.get("points", [])
+            if points:
+                pygame.draw.polygon(surface, color, points, width)
+        elif shape_type == "line":
+            start = kwargs.get("start_pos")
+            end = kwargs.get("end_pos")
+            if start and end:
+                pygame.draw.line(surface, color, start, end, width)
+        else:
+            DebugLogger.warn(f"Unknown shape type: {shape_type}")
