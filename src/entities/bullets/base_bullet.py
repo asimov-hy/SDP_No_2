@@ -122,6 +122,15 @@ class BaseBullet:
         target.take_damage(self.damage, source=type(self).__name__)
         self.alive = False
 
+    def on_collision(self, target):
+        """
+        Compatibility handler for CollisionManager.
+
+        Delegates to on_hit() to maintain backward compatibility
+        with existing bullet logic.
+        """
+        self.on_hit(target)
+
     # ===========================================================
     # Rendering
     # ===========================================================

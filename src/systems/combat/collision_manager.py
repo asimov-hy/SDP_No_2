@@ -167,8 +167,7 @@ class CollisionManager:
                         # Rule-based filtering
                         tag_a = get_tag(a, "collision_tag", None)
                         tag_b = get_tag(b, "collision_tag", None)
-                        pair = tuple(sorted((tag_a, tag_b)))
-                        if pair not in rules:
+                        if (tag_a, tag_b) not in rules and (tag_b, tag_a) not in rules:
                             continue
 
                         # Perform overlap check

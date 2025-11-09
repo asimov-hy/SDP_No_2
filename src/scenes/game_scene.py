@@ -167,14 +167,7 @@ class GameScene:
         # ===========================================================
         # Run collision detection *after* all entities are updated.
         # Ensures newly spawned bullets and enemies are included this frame.
-        collisions = self.collision_manager.detect()
-
-        # Let entities decide how to handle collisions
-        for a, b in collisions:
-            if hasattr(a, "on_collision"):
-                a.on_collision(b)
-            if hasattr(b, "on_collision"):
-                b.on_collision(a)
+        self.collision_manager.detect()
 
         # ===========================================================
         # 5) Entity Cleanup

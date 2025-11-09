@@ -88,8 +88,8 @@ class CollisionHitbox:
         self.rect.centerx = rect.centerx + self.offset.x
         self.rect.centery = rect.centery + self.offset.y
 
-        if Debug.VERBOSE_HITBOX_UPDATE:
-            DebugLogger.trace(f"[Hitbox] Updated {type(self.owner).__name__} → {self.rect.center}")
+        # if Debug.VERBOSE_HITBOX_UPDATE:
+        #     DebugLogger.trace(f"[Hitbox] Updated {type(self.owner).__name__} → {self.rect.center}")
 
     # ===========================================================
     # Debug Visualization
