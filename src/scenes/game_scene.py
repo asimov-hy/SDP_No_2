@@ -64,11 +64,9 @@ class GameScene:
         # ===========================================================
         # Entity Setup
         # ===========================================================
-        self.draw_manager.load_image("player", "assets/images/player.png", scale=1.0)
-        player_img = self.draw_manager.get_image("player")
 
         # spawn player
-        self.player = Player(image=player_img)
+        self.player = Player()
 
         self.draw_manager.load_image("enemy_straight", "assets/images/enemies/enemy_straight.png", scale=1.0)
         DebugLogger.init("EnemyStraight sprite loaded successfully")

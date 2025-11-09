@@ -13,7 +13,9 @@ Responsibilities
 """
 
 import pygame
-from src.core.game_settings import Display, Player as PlayerSettings, Layers
+import os
+
+from src.core.game_settings import Display, Layers
 from src.core.game_state import STATE
 from src.core.utils.debug_logger import DebugLogger
 from src.core.utils.config_manager import load_json
@@ -26,10 +28,11 @@ from src.systems.combat.collision_hitbox import CollisionHitbox
 
 DEFAULT_CONFIG = {
     "scale": 1.0,
-    "speed": PlayerSettings.SPEED,   # Uses 300 from settings
+    "speed": 300,   # Uses 300 from settings
     "health": 3,
     "invincible": False,
     "hitbox_scale": 0.85,
+    "sprite_path": "assets/images/player.png",
 }
 
 PLAYER_CONFIG = load_json("player_config.json", DEFAULT_CONFIG)
@@ -49,72 +52,109 @@ class Player(BaseEntity):
         Initialize the player with position, attributes, and image scaling.
 
         Args:
-            x (float): Initial x-coordinate.
-            y (float): Initial y-coordinate.
-            image (pygame.Surface): Sprite surface for rendering.
+            x (float | None): Optional x-coordinate.
+            y (float | None): Optional y-coordinate.
+            image (pygame.Surface | None): Optional preloaded image; loaded internally if None.
         """
         cfg = PLAYER_CONFIG
 
-        # -------------------------------------------------------
-        # Apply scaling to sprite if specified
-        # -------------------------------------------------------
-        if image is not None and cfg["scale"] != 1.0:
-            w, h = image.get_size()
-            new_size = (int(w * cfg["scale"]), int(h * cfg["scale"]))
-            image = pygame.transform.scale(image, new_size)
-            DebugLogger.state(f"[Player] Sprite scaled to {new_size}")
+        # ---------------------------------------------------
+        # 1) Load Sprite
+        # ---------------------------------------------------
+        image = self._load_sprite(cfg, image)
 
-        # -------------------------------------------------------
-        # Determine spawn position BEFORE base initialization
-        # -------------------------------------------------------
-        if image is not None:
-            img_w, img_h = image.get_size()
-        else:
-            img_w, img_h = 64, 64  # fallback size
+        # ---------------------------------------------------
+        # 2) Apply Scaling
+        # ---------------------------------------------------
+        image = self._apply_scaling(cfg, image)
 
-        if x is None:
-            x = (Display.WIDTH / 2) - (img_w / 2)
-        if y is None:
-            y = Display.HEIGHT - img_h - 10
+        # ---------------------------------------------------
+        # 3) Determine Spawn Position
+        # ---------------------------------------------------
+        x, y = self._compute_spawn_position(x, y, image)
 
-        # -------------------------------------------------------
-        # Initialize base entity
-        # -------------------------------------------------------
+        # ---------------------------------------------------
+        # 4) Initialize BaseEntity
+        # ---------------------------------------------------
         super().__init__(x, y, image)
 
-        # -------------------------------------------------------
-        # Core attributes
-        # -------------------------------------------------------
+        # ---------------------------------------------------
+        # 5) Core Attributes
+        # ---------------------------------------------------
         self.velocity = pygame.Vector2(0, 0)
         self.speed = cfg["speed"]
         self.health = cfg["health"]
         self.invincible = cfg["invincible"]
 
-        # -------------------------------------------------------
-        # Collision setup
-        # -------------------------------------------------------
+        # ---------------------------------------------------
+        # 6) Collision / Hitbox Setup
+        # ---------------------------------------------------
         self.collision_tag = "player"
         self.hitbox_scale = cfg["hitbox_scale"]
         self.hitbox = CollisionHitbox(self, self.hitbox_scale)
         self.has_hitbox = True
 
-        # -------------------------------------------------------
-        # Combat / Shooting
-        # -------------------------------------------------------
-        self.bullet_manager = None       # Linked externally by GameScene
-        self.shoot_cooldown = 0.1        # Seconds between shots
+        # ---------------------------------------------------
+        # 7) Combat / Shooting
+        # ---------------------------------------------------
+        self.bullet_manager = None
+        self.shoot_cooldown = 0.1
         self.shoot_timer = 0.0
 
-        # -------------------------------------------------------
-        # Layer & Global State
-        # -------------------------------------------------------
+        # ---------------------------------------------------
+        # 8) Layer & Global State
+        # ---------------------------------------------------
         self.layer = Layers.PLAYER
         STATE.player_ref = self
-
 
         DebugLogger.init(
             f"Initialized Player at ({x:.1f}, {y:.1f}) | Speed={self.speed} | HP={self.health}"
         )
+
+    # =======================================================
+    # Initialization Helpers
+    # =======================================================
+    @staticmethod
+    def _load_sprite(cfg, image):
+        """Load player sprite from disk or create fallback."""
+        if image:
+            return image
+
+        sprite_path = cfg.get("sprite_path", "assets/images/player.png")
+
+        if not os.path.exists(sprite_path):
+            DebugLogger.warn(f"[Player] Missing sprite: {sprite_path}, using fallback.")
+            placeholder = pygame.Surface((64, 64))
+            placeholder.fill((255, 50, 50))
+            return placeholder
+
+        image = pygame.image.load(sprite_path).convert_alpha()
+        DebugLogger.state(f"[Player] Loaded sprite from {sprite_path}")
+        return image
+
+    @staticmethod
+    def _apply_scaling(cfg, image):
+        """Apply scaling to player sprite if configured."""
+        if not image or cfg["scale"] == 1.0:
+            return image
+
+        w, h = image.get_size()
+        new_size = (int(w * cfg["scale"]), int(h * cfg["scale"]))
+        image = pygame.transform.scale(image, new_size)
+        DebugLogger.state(f"[Player] Sprite scaled to {new_size}")
+        return image
+
+    @staticmethod
+    def _compute_spawn_position(x, y, image):
+        """Compute default or given spawn position."""
+        img_w, img_h = image.get_size() if image else (64, 64)
+        if x is None:
+            x = (Display.WIDTH / 2) - (img_w / 2)
+        if y is None:
+            y = Display.HEIGHT - img_h - 10
+        DebugLogger.state(f"[Player] Spawn position set to ({x:.1f}, {y:.1f})")
+        return x, y
+
     # ===========================================================
     # Update Logic
     # ===========================================================
@@ -129,55 +169,49 @@ class Player(BaseEntity):
             return
 
         move_vec = getattr(self, "move_vec", pygame.Vector2(0, 0))
+        self._update_movement(dt, move_vec)
+        self._update_shooting(dt)
+        if self.hitbox:
+            self.hitbox.update()
 
-        # -------------------------------------------------------
-        # Tunable Physics Parameters
-        # -------------------------------------------------------
-        accel_rate = 3000     # Acceleration strength
-        friction_rate = 500   # Friction strength (per-axis)
-        # max_speed = self.speed
-        smooth_factor = 0.2   # Direction blending strength
+    # -------------------------------------------------------
+    # Movement
+    # -------------------------------------------------------
+    def _update_movement(self, dt, move_vec):
+        """Handle movement physics and velocity control."""
+        accel_rate = 3000
+        friction_rate = 500
 
-        # -------------------------------------------------------
-        # Movement & acceleration
-        # -------------------------------------------------------
         if move_vec.length_squared() > 0:
             move_vec = move_vec.normalize()
             desired_velocity = move_vec * self.speed
-
-            # Blend current velocity toward desired direction (snappy)
             self.velocity = self.velocity.lerp(desired_velocity, 0.25)
+            self.velocity += move_vec * accel_rate * dt
 
-            # Add acceleration for punchy feel
-            self.velocity += move_vec * 3000 * dt
-
-            # Soft cap to maintain stability
-            max_speed_limit = self.speed * 1.8
-            if self.velocity.length() > max_speed_limit:
-                self.velocity.scale_to_length(max_speed_limit)
-
+            # Limit maximum speed
+            max_speed = self.speed * 1.8
+            if self.velocity.length() > max_speed:
+                self.velocity.scale_to_length(max_speed)
         else:
-            # Friction decay when idle
+            # Friction when idle
             current_speed = self.velocity.length()
             if current_speed > 0:
-                new_speed = max(0.0, current_speed - 500 * dt)
+                new_speed = max(0.0, current_speed - friction_rate * dt)
                 if new_speed < 5.0:
                     self.velocity.xy = (0, 0)
                 else:
                     self.velocity.scale_to_length(new_speed)
 
-        # -------------------------------------------------------
-        # Position Update
-        # -------------------------------------------------------
+        # Apply velocity to position
         self.pos += self.velocity * dt
         self._clamp_to_screen()
-
-        # Update render rect
         self.rect.topleft = (int(self.pos.x), int(self.pos.y))
 
-        # -------------------------------------------------------
-        # Shooting Control
-        # -------------------------------------------------------
+    # -------------------------------------------------------
+    # Shooting
+    # -------------------------------------------------------
+    def _update_shooting(self, dt):
+        """Manage shooting cooldown and bullet spawn."""
         self.shoot_timer += dt
         keys = pygame.key.get_pressed()
 
@@ -185,19 +219,10 @@ class Player(BaseEntity):
             self.shoot_timer = 0.0
             self.shoot()
 
-        # -------------------------------------------------------
-        # Hitbox Update
-        # -------------------------------------------------------
-        if self.hitbox:
-            self.hitbox.update()
-
-    # ===========================================================
-    # Shooting Logic
-    # ===========================================================
     def shoot(self):
-        """Spawn bullets via the global BulletManager."""
+        """Spawn bullets via BulletManager."""
         if not self.bullet_manager:
-            DebugLogger.warn("Player attempted to shoot without BulletManager reference")
+            DebugLogger.warn("[Player] Attempted to shoot without BulletManager")
             return
 
         self.bullet_manager.spawn(
@@ -205,45 +230,26 @@ class Player(BaseEntity):
             vel=(0, -900),
             color=(255, 255, 100),
             radius=4,
-            owner="player"
+            owner="player",
         )
 
-    # ===========================================================
-    # Collision Handling
-    # ===========================================================
+    # =======================================================
+    # Collision & Damage
+    # =======================================================
     def on_collision(self, other):
-        """
-        Handle collision interactions with other entities.
-
-        Args:
-            other (BaseEntity): The other entity involved in the collision.
-        """
+        """Handle collisions with enemies or projectiles."""
         tag = getattr(other, "collision_tag", "unknown")
 
-        if tag == "enemy":
-            if not self.invincible:
-                self.take_damage(1, source=type(other).__name__)
-
-        elif tag == "enemy_bullet":
-            if not self.invincible:
-                DebugLogger.state("[Collision] Player hit by Enemy Bullet")
-                self.take_damage(1, source="enemy_bullet")
-
+        if tag == "enemy" and not self.invincible:
+            self.take_damage(1, source=type(other).__name__)
+        elif tag == "enemy_bullet" and not self.invincible:
+            DebugLogger.state("[Collision] Player hit by Enemy Bullet")
+            self.take_damage(1, source="enemy_bullet")
         else:
             DebugLogger.trace(f"[Collision] Player ignored {tag}")
 
-    # ===========================================================
-    # Damage Handling
-    # ===========================================================
     def take_damage(self, amount: int, source: str = "unknown"):
-        """
-        Reduce player health when damaged.
-        Handles death, logging, and invincibility checks.
-
-        Args:
-            amount (int): Damage value.
-            source (str): Cause or entity type.
-        """
+        """Reduce health when taking damage."""
         if self.invincible:
             DebugLogger.trace(f"Player invincible vs {source}")
             return
@@ -255,16 +261,16 @@ class Player(BaseEntity):
             self.alive = False
             DebugLogger.state("Player destroyed!")
 
-    # ===========================================================
-    # Utility: Screen Clamp
-    # ===========================================================
+    # =======================================================
+    # Utility
+    # =======================================================
     def _clamp_to_screen(self):
         """Ensure the player stays within screen bounds."""
         screen_w, screen_h = Display.WIDTH, Display.HEIGHT
         self.pos.x = max(0.0, min(self.pos.x, screen_w - self.rect.width))
         self.pos.y = max(0.0, min(self.pos.y, screen_h - self.rect.height))
 
-        # Stop movement at edges
+        # Stop velocity at edges
         if self.pos.x in (0, screen_w - self.rect.width):
             self.velocity.x = 0
         if self.pos.y in (0, screen_h - self.rect.height):
