@@ -97,6 +97,13 @@ class Player(BaseEntity):
         self.health = cfg["health"]
         self.invincible = cfg["invincible"]
 
+        # Damage feedback (blinking + invulnerability)
+        self.blinking = False
+        self.blink_timer = 0.0
+        self.blink_duration = 1.5  # total invulnerability time (sec)
+        self.blink_interval = 0.1  # flash speed (sec)
+        self.visible = True
+
         # -------------------------------------------------------
         # 5) Collision / Hitbox Setup
         # -------------------------------------------------------
@@ -209,6 +216,8 @@ class Player(BaseEntity):
         move_vec = getattr(self, "move_vec", pygame.Vector2(0, 0))
         self._update_movement(dt, move_vec)
         self._update_shooting(dt)
+        self._update_blinking(dt)
+
         if self.hitbox:
             self.hitbox.update()
 
@@ -250,6 +259,18 @@ class Player(BaseEntity):
         self.pos += self.velocity * dt
         self._clamp_to_screen()
         self.rect.topleft = (int(self.pos.x), int(self.pos.y))
+
+    def _clamp_to_screen(self):
+        """Ensure the player stays within screen bounds."""
+        screen_w, screen_h = Display.WIDTH, Display.HEIGHT
+        self.pos.x = max(0.0, min(self.pos.x, screen_w - self.rect.width))
+        self.pos.y = max(0.0, min(self.pos.y, screen_h - self.rect.height))
+
+        # Stop velocity at edges
+        if self.pos.x in (0, screen_w - self.rect.width):
+            self.velocity.x = 0
+        if self.pos.y in (0, screen_h - self.rect.height):
+            self.velocity.y = 0
 
     # -------------------------------------------------------
     # Shooting
@@ -320,18 +341,68 @@ class Player(BaseEntity):
         if self.health <= 0:
             self.alive = False
             DebugLogger.state("Player destroyed!")
+        else:
+            # Start blinking and invulnerability period
+            self.blinking = True
+            self.blink_timer = 0.0
+            self.invincible = True
+            self.disable_hitbox()  # Disable hitbox during invulnerability
+            DebugLogger.state("Player blinking → temporary invulnerability", category="effects")
+
+    # -------------------------------------------------------
+    # Blinking Effect / Temporary Invulnerability
+    # -------------------------------------------------------
+    def _update_blinking(self, dt):
+        """
+        Handle blinking and temporary invulnerability timer.
+
+        Args:
+            dt (float): Delta time (seconds since last frame).
+        """
+        if not self.blinking:
+            return
+
+        self.blink_timer += dt
+
+        # Toggle visibility every interval
+        if int(self.blink_timer / self.blink_interval) % 2 == 0:
+            self.visible = True
+        else:
+            self.visible = False
+
+        # End blinking after duration
+        if self.blink_timer >= self.blink_duration:
+            self.blinking = False
+            self.blink_timer = 0.0
+            self.visible = True
+            self.invincible = False
+            self.enable_hitbox()
+            DebugLogger.state("Blinking ended → vulnerability restored")
 
     # ===========================================================
-    # Utility
+    # Rendering
     # ===========================================================
-    def _clamp_to_screen(self):
-        """Ensure the player stays within screen bounds."""
-        screen_w, screen_h = Display.WIDTH, Display.HEIGHT
-        self.pos.x = max(0.0, min(self.pos.x, screen_w - self.rect.width))
-        self.pos.y = max(0.0, min(self.pos.y, screen_h - self.rect.height))
+    def draw(self, draw_manager):
+        """
+        Render the player using BaseEntity draw system.
+        Skips rendering when blinking visibility is off.
+        """
+        if not self.visible:
+            return  # invisible frame during blink
+        super().draw(draw_manager)
 
-        # Stop velocity at edges
-        if self.pos.x in (0, screen_w - self.rect.width):
-            self.velocity.x = 0
-        if self.pos.y in (0, screen_h - self.rect.height):
-            self.velocity.y = 0
+    # ===========================================================
+    # Hitbox Control (for invulnerability)
+    # ===========================================================
+    def disable_hitbox(self):
+        if self.hitbox:
+            self.hitbox.active = False
+            self.has_hitbox = False
+            DebugLogger.state("Player hitbox disabled (invincibility active)", category="effects")
+
+    def enable_hitbox(self):
+        if self.hitbox:
+            self.hitbox.active = True
+            self.has_hitbox = True
+            DebugLogger.state("Player hitbox re-enabled (vulnerability restored)", category="effects")
+

@@ -19,7 +19,7 @@ from src.core.game_settings import Debug, Layers
 class CollisionHitbox:
     """Represents a rectangular collision boundary tied to an entity."""
 
-    __slots__ = ("owner", "scale", "offset", "rect", "_size_cache", "_color_cache")
+    __slots__ = ("owner", "scale", "offset", "rect", "_size_cache", "_color_cache", "active")
 
     # ===========================================================
     # Initialization
@@ -39,6 +39,7 @@ class CollisionHitbox:
         self.rect = pygame.Rect(0, 0, 0, 0)
         self._size_cache = None
         self._color_cache = self._cache_color()
+        self.active = True
 
         if hasattr(owner, "rect"):
             self._initialize_from_owner()
@@ -114,3 +115,18 @@ class CollisionHitbox:
             pygame.draw.rect(surface, self._color_cache, self.rect, Debug.HITBOX_LINE_WIDTH)
         else:
             DebugLogger.warn(f"[Hitbox] Invalid draw target: {type(surface).__name__}")
+
+    # ===========================================================
+    # Activation Control
+    # ===========================================================
+    def set_active(self, active: bool):
+        """
+        Enable or disable collision participation for this hitbox.
+
+        Args:
+            active (bool): True to activate collision, False to disable.
+        """
+        self.active = active
+        state = "enabled" if active else "disabled"
+        DebugLogger.state(f"Hitbox {state} for {type(self.owner).__name__}", category="effects")
+

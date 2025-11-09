@@ -148,14 +148,14 @@ class CollisionManager:
 
                 for a in cell_objects:
                     a_hitbox = get_hitbox(a, "hitbox", None)
-                    if not a_hitbox:
+                    if not a_hitbox or not getattr(a_hitbox, "active", True):
                         continue
 
                     for b in neighbor_objs:
                         if a is b:
                             continue
                         b_hitbox = get_hitbox(b, "hitbox", None)
-                        if not b_hitbox:
+                        if not b_hitbox or not getattr(b_hitbox, "active", True):
                             continue
 
                         # Avoid redundant duplicate checks
