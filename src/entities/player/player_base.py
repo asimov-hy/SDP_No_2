@@ -241,8 +241,29 @@ class Player(BaseEntity):
         self.update_visual_state()
 
         if self.health <= 0:
-            self.alive = False
             DebugLogger.state("Player destroyed!")
+            self.on_death()
+
+    def on_death(self):
+        """Handle cleanup and deactivation when the player dies."""
+        if not self.alive:
+            return  # Prevent double calls
+
+        self.alive = False
+        # self.visible = False
+
+        if self.hitbox:
+            self.hitbox.active = False
+            self.hitbox = None
+
+        if getattr(self, "animation_manager", None):
+            self.animation_manager.stop()
+            self.animation_manager.enabled = False
+
+        from src.core.game_state import STATE
+        STATE.player_ref = None
+
+        DebugLogger.state("Player on_death() cleanup complete")
 
     # ===========================================================
     # Visual Update Logic

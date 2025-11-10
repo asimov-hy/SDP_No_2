@@ -82,7 +82,3 @@ def damage_collision(player, other):
 
     # 3) Apply damage
     player.take_damage(damage)
-
-    # 4) Handle player death
-    if not player.alive:
-        DebugLogger.state("Player death triggered by collision", category="combat")

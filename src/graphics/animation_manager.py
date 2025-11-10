@@ -84,8 +84,12 @@ class AnimationManager:
             anim_type (str): Name of the animation to play (e.g., "damage_blink", "death").
             duration (float): Total time the animation should last in seconds.
         """
-        if not self.enabled or not self.animations:
+        if not self.enabled:
             return
+
+        # Lazy resolve only when needed
+        if not self.animations:
+            self.animations = self._resolve_animation_class(self.entity)
 
         self.active_type = anim_type
         self.timer = 0.0
@@ -110,6 +114,7 @@ class AnimationManager:
         self.timer = 0.0
         self.duration = 0.0
         self.finished = True
+        self.on_complete = None
 
     # ===========================================================
     # Update Loop
@@ -121,6 +126,8 @@ class AnimationManager:
         Args:
             dt (float): Delta time (seconds) since the last frame.
         """
+        if not self.enabled or not getattr(self.entity, "alive", True):
+            return
         if not self.active_type or not self.animations:
             return
 
