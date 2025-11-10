@@ -43,7 +43,6 @@ class BaseEnemy(BaseEntity):
         # Collision setup
         # -------------------------------------------------------
         self.collision_tag = "enemy"
-        self.has_hitbox = False
 
         self.hitbox = CollisionHitbox(self, scale=0.85)  # Default scale, customizable per subclass
         self.has_hitbox = True
@@ -71,6 +70,7 @@ class BaseEnemy(BaseEntity):
         self.hp -= amount
         if self.hp <= 0:
             self.alive = False
+            self.on_death(source)
             DebugLogger.state(
                 f"Took {amount} damage from {source} → HP=0 | Destroyed at {self.rect.topleft}",
                 category="effects"
@@ -89,13 +89,13 @@ class BaseEnemy(BaseEntity):
             return
 
         self.pos.y += self.speed * dt
-        self.rect.center  = (int(self.pos.x), int(self.pos.y))
+        self.sync_rect()
 
         if self.hitbox:
             self.hitbox.update()
 
         # Mark dead if off-screen
-        if self.pos.y - (self.rect.height / 2) > Display.HEIGHT:
+        if self.rect.top > Display.HEIGHT:
             self.alive = False
 
     # ===========================================================
@@ -121,3 +121,6 @@ class BaseEnemy(BaseEntity):
 
         else:
             DebugLogger.trace(f"[CollisionIgnored] {type(self).__name__} vs {tag}")
+
+    def on_death(self, source):
+        pass  # Overridden by subclasses

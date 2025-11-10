@@ -104,21 +104,19 @@ class BulletManager:
     # ===========================================================
     def update(self, dt):
         """Update bullets positions and recycle any that are inactive."""
-        alive_bullets = []
+        i = 0
         for b in self.active:
             b.update(dt)
-
-            # Sync hitbox position
             if b.hitbox:
                 b.hitbox.rect.center = b.rect.center
 
-            # Keep alive or recycle
             if b.alive:
-                alive_bullets.append(b)
+                self.active[i] = b
+                i += 1
             else:
                 self.pool.append(b)
 
-        self.active = alive_bullets
+        del self.active[i:]
 
     # ===========================================================
     # Rendering
@@ -135,7 +133,7 @@ class BulletManager:
 
             # Debug: render hitbox overlay
             if Debug.HITBOX_VISIBLE and b.hitbox:
-                b.hitbox.draw_debug(draw_manager.surface)
+                draw_manager.queue_hitbox(b.hitbox.rect, b.hitbox._color_cache)
 
     # ===========================================================
     # Cleanup (External Call)

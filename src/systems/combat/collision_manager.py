@@ -24,6 +24,10 @@ class CollisionManager:
     # Configuration
     # ===========================================================
     BASE_CELL_SIZE = 64
+    NEIGHBOR_OFFSETS = [
+        (0, 0), (1, 0), (-1, 0), (0, 1), (0, -1),
+        (1, 1), (-1, 1), (1, -1), (-1, -1)
+    ]
 
     # ===========================================================
     # Initialization
@@ -90,13 +94,15 @@ class CollisionManager:
         """
 
         collisions = []
+        get_hitbox = lambda o: getattr(o, "hitbox", None)
+        get_tag = lambda o: getattr(o, "collision_tag", None)
 
         # -------------------------------------------------------
-        # Pre-filter active objects
+        # Pre-filter active objects (reuse existing lists)
         # -------------------------------------------------------
-        active_bullets = [b for b in self.bullet_manager.active if b.alive]
-        active_enemies = [e for e in self.spawn_manager.enemies if e.alive]
-        player = self.player if self.player.alive else None
+        active_bullets = self.bullet_manager.active
+        active_enemies = self.spawn_manager.enemies
+        player = self.player if getattr(self.player, "alive", True) else None
 
         total_entities = len(active_bullets) + len(active_enemies) + (1 if player else 0)
         if total_entities == 0:
@@ -128,38 +134,31 @@ class CollisionManager:
         # -------------------------------------------------------
         # 4) Localized Collision Checks (per cell + neighbors)
         # -------------------------------------------------------
-        neighbor_offsets = [
-            (0, 0), (1, 0), (-1, 0), (0, 1), (0, -1),
-            (1, 1), (-1, 1), (1, -1), (-1, -1)
-        ]
-
         checked_pairs = set()
         append_collision = collisions.append
         rules = self.rules
-        get_hitbox = getattr
-        get_tag = getattr
 
         for cell_key, cell_objects in grid.items():
-            for dx, dy in neighbor_offsets:
+            for dx, dy in self.NEIGHBOR_OFFSETS:
                 neighbor_key = (cell_key[0] + dx, cell_key[1] + dy)
                 neighbor_objs = grid.get(neighbor_key)
                 if not neighbor_objs:
                     continue
 
                 for a in cell_objects:
-                    a_hitbox = get_hitbox(a, "hitbox", None)
+                    a_hitbox = get_hitbox(a)
                     if not a_hitbox or not getattr(a_hitbox, "active", True):
                         continue
 
                     for b in neighbor_objs:
                         if a is b:
                             continue
-                        b_hitbox = get_hitbox(b, "hitbox", None)
+                        b_hitbox = get_hitbox(b)
                         if not b_hitbox or not getattr(b_hitbox, "active", True):
                             continue
 
                         # Avoid redundant duplicate checks
-                        pair_key = tuple(sorted((id(a), id(b))))
+                        pair_key = (id(a), id(b)) if id(a) < id(b) else (id(b), id(a))
                         if pair_key in checked_pairs:
                             continue
                         checked_pairs.add(pair_key)
@@ -169,8 +168,8 @@ class CollisionManager:
                             continue
 
                         # Rule-based filtering
-                        tag_a = get_tag(a, "collision_tag", None)
-                        tag_b = get_tag(b, "collision_tag", None)
+                        tag_a = get_tag(a)
+                        tag_b = get_tag(b)
                         if (tag_a, tag_b) not in rules and (tag_b, tag_a) not in rules:
                             continue
 
@@ -187,19 +186,10 @@ class CollisionManager:
                             )
 
                             # Let entities handle their reactions
-                            try:
-                                if hasattr(a, "on_collision"):
-                                    a.on_collision(b)
-
-                                if hasattr(b, "on_collision"):
-                                    b.on_collision(a)
-
-                            except Exception as e:
-                                DebugLogger.warn(
-                                    f"[CollisionManager] Exception during collision between "
-                                    f"{type(a).__name__} and {type(b).__name__}: {e}",
-                                    category="collision"
-                                )
+                            if hasattr(a, "on_collision"):
+                                a.on_collision(b)
+                            if hasattr(b, "on_collision"):
+                                b.on_collision(a)
         return collisions
 
     # ===========================================================

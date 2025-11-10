@@ -147,23 +147,19 @@ class GameScene:
         # ===========================================================
         # 3) Collision Phase
         # ===========================================================
-        # Detect collisions *before* bullet update so bullets killed here
-        # are removed immediately in the next step.
-        try:
-            self.collision_manager.detect()
-        finally:
-            # 4) Bullet & Enemy Cleanup
-            # Cleanup ensures dead entities don’t persist visually.
-            if hasattr(self.bullet_manager, "cleanup"):
-                self.bullet_manager.cleanup()
-            if hasattr(self.spawner, "cleanup"):
-                self.spawner.cleanup()
+        self.collision_manager.detect()
+        self.bullet_manager.cleanup()
+        self.spawner.cleanup()
 
         # ===========================================================
         # 5) Bullet Update (after collision)
         # ===========================================================
         # Update positions for remaining bullets that survived collisions.
         self.bullet_manager.update(dt)
+
+        for bullet in self.bullet_manager.active:
+            if bullet.hitbox:
+                bullet.hitbox.update()
 
         # ===========================================================
         # 6) UI Update

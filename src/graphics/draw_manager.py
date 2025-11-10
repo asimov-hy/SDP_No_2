@@ -31,6 +31,8 @@ class DrawManager:
         self._layer_keys_cache = []
         self._layers_dirty = False
         self.surface = None  # Expose active surface for debug/hitbox draws
+        self.background = None  # Cached background surface (optional)
+        self.debug_hitboxes = []  # Persistent list for queued hitboxes
         DebugLogger.init("║{:<59}║".format(f"\t[DrawManager][INIT]\t\t→ Initialized"), show_meta=False)
 
     # --------------------------------------------------------
@@ -112,8 +114,21 @@ class DrawManager:
     # Draw Queue Management
     # ===========================================================
     def clear(self):
-        """Clear the draw queue before a new frame."""
-        self.layers.clear()
+        """
+        Clear the draw queue before a new frame.
+
+        Optimization:
+        -------------
+        Avoids recreating the dictionary every frame.
+        Simply clears existing layer lists to reduce
+        Python-level allocations and GC churn.
+        """
+        for layer_items in self.layers.values():
+            layer_items.clear()
+
+        if hasattr(self, "debug_hitboxes"):
+            self.debug_hitboxes.clear()
+
         self._layers_dirty = True
 
     def queue_draw(self, surface, rect, layer=0):
@@ -147,11 +162,21 @@ class DrawManager:
         else:
             DebugLogger.warn(f"Invalid entity: {entity} (missing image/rect)")
 
-    def queue_hitbox(self, rect, color=(255, 255, 0), width = 1):
-        """Queue a hitbox rectangle for rendering on the DEBUG layer."""
-        surf = pygame.Surface((rect.width, rect.height), pygame.SRCALPHA)
-        pygame.draw.rect(surf, color, surf.get_rect(), width)
-        self.queue_draw(surf, rect, layer=Layers.DEBUG)  # Layers.DEBUG
+    def queue_hitbox(self, rect, color=(255, 255, 0), width=1):
+        """
+        Queue a hitbox rectangle for rendering on the DEBUG layer.
+
+        Optimization:
+        -------------
+        Avoids creating new Surfaces every frame by storing raw draw
+        parameters instead of allocating `pygame.Surface` objects.
+        These are drawn directly during render() for near-zero overhead.
+        """
+        if not hasattr(self, "debug_hitboxes"):
+            self.debug_hitboxes = []
+
+        # Store draw command for later rendering (no surface creation)
+        self.debug_hitboxes.append((rect, color, width))
 
     # ===========================================================
     # Shape Queueing
@@ -186,7 +211,13 @@ class DrawManager:
             debug (bool): If True, logs the number of items rendered.
         """
         self.surface = target_surface
-        target_surface.fill((50, 50, 100))  # Background color
+        # -------------------------------------------------------
+        # Background rendering (cached surface to avoid fill cost)
+        # -------------------------------------------------------
+        if hasattr(self, "background") and self.background is not None:
+            target_surface.blit(self.background, (0, 0))
+        else:
+            target_surface.fill((50, 50, 100))  # fallback solid color
 
         # Cache sorted layer keys to avoid sorting every frame
         if self._layers_dirty:
@@ -198,18 +229,22 @@ class DrawManager:
         # Render each layer (surfaces + shapes)
         # -------------------------------------------------------
         for layer in self._layer_keys_cache:
-            for item in self.layers[layer]:
-                # Handle traditional surface blit
-                if isinstance(item[0], pygame.Surface):
-                    surface, rect = item
-                    blit_pos = (round(rect.centerx - surface.get_width() / 2),
-                                round(rect.centery - surface.get_height() / 2))
-                    target_surface.blit(surface, blit_pos)
+            items = self.layers[layer]
+            if not items:
+                continue
 
-                # Handle shape draw command
-                elif isinstance(item[0], str) and item[0] == "shape":
-                    _, shape_type, rect, color, kwargs = item
-                    self._draw_shape(target_surface, shape_type, rect, color, **kwargs)
+            # Detect if layer contains shape commands
+            shape_items = [i for i in items if isinstance(i[0], str)]
+            surface_items = [i for i in items if isinstance(i[0], pygame.Surface)]
+
+            # Batch blit all standard surfaces in one call
+            if surface_items:
+                target_surface.blits(surface_items)
+
+            # Draw primitive shapes (rects, circles, etc.)
+            for item in shape_items:
+                _, shape_type, rect, color, kwargs = item
+                self._draw_shape(target_surface, shape_type, rect, color, **kwargs)
 
         if debug:
             draw_count = sum(len(items) for items in self.layers.values())
@@ -218,9 +253,13 @@ class DrawManager:
         # -------------------------------------------------------
         # Optional debug overlay pass (hitboxes)
         # -------------------------------------------------------
-        if debug and hasattr(self, "debug_hitboxes"):
-            for hb in self.debug_hitboxes:
-                hb.draw_debug(target_surface)
+        if debug and hasattr(self, "debug_hitboxes") and self.debug_hitboxes:
+            """
+            Directly draw debug hitboxes to avoid temporary surface allocation.
+            Each tuple: (rect, color, width)
+            """
+            for rect, color, width in self.debug_hitboxes:
+                pygame.draw.rect(target_surface, color, rect, width)
 
     # ===========================================================
     # Shape Rendering Helper

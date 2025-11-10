@@ -50,7 +50,11 @@ class BaseEntity:
         # 1) Core spatial attributes
         # -------------------------------------------------------
         self.image = image
-        self.render_mode = render_mode or ("image" if image is not None else "shape")
+        if render_mode:
+            self.render_mode = render_mode
+        else:
+            self.render_mode = "image" if image is not None else "shape"
+
         self.shape_type = shape_type or "rect"
         self.color = color or (255, 255, 255)
         self.size = size or (32, 32)
@@ -62,18 +66,6 @@ class BaseEntity:
         if self.render_mode == "image" and self.image is not None:
             self.rect = self.image.get_rect(center=(x, y))
         else:
-            self.rect = pygame.Rect(0, 0, *self.size)
-            self.rect.center = (x, y)
-
-        # -------------------------------------------------------
-        # 3) Normalize image/shape size for consistent visual scale
-        # -------------------------------------------------------
-
-        if self.image is not None:
-            # Ensure rect uses the same center without modifying sprite dimensions
-            self.rect = self.image.get_rect(center=(x, y))
-        else:
-            # Create rect using the entity’s logical size directly
             self.rect = pygame.Rect(0, 0, *self.size)
             self.rect.center = (x, y)
 
@@ -151,7 +143,7 @@ class BaseEntity:
         if mode == "shape":
             # Ensure the shape's visual color is always current.
             # If the entity has an image surface (for shape mode), re-fill it.
-            if hasattr(self, "image") and self.image:
+            if self.render_mode == "shape" and self.image is not None:
                 self.image.fill(self.color)
 
             # Queue shape for drawing each frame with the updated color.

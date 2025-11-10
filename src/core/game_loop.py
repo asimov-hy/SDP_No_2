@@ -13,6 +13,7 @@ Responsibilities
 """
 
 import pygame
+import time
 
 from src.core.game_settings import Display, Physics, Debug
 
@@ -158,7 +159,8 @@ class GameLoop:
               through InputManager.
             - Delegate UI and scene-specific input events.
         """
-        for event in pygame.event.get():
+        events = pygame.event.get()
+        for event in events:
             # ---------------------------------------------------
             # System-level quit event
             # ---------------------------------------------------
@@ -193,7 +195,6 @@ class GameLoop:
         Draw everything managed by the active scene and debug HUD.
         Includes basic profiling for each rendering stage.
         """
-        import time
         start_total = time.perf_counter()
 
         game_surface = self.display.get_game_surface()
