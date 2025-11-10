@@ -11,6 +11,14 @@ All entities in the 202X engine use **center-based coordinates**:
 - self.rect.center is always synchronized with self.pos.
 - Movement, rotation, and collisions are performed relative to this center.
 
+Update Pattern
+--------------
+Subclasses should follow this pattern in their update() method:
+    1. Check if alive: if not self.alive: return
+    2. Apply movement/logic: self.pos += velocity * dt
+    3. Synchronize rect: self.sync_rect()
+    4. Update hitbox: if self.hitbox: self.hitbox.update()
+
 Responsibilities
 ----------------
 - Provide shared attributes such as image, rect, and alive state.
@@ -20,48 +28,91 @@ Responsibilities
 """
 
 import pygame
-from src.core.game_settings import Layers, Display
+from typing import Optional, Tuple
+from src.core.game_settings import Layers
 from src.core.utils.debug_logger import DebugLogger
 
 
 class BaseEntity:
-    """Common interface for all entities within the game world."""
+    """
+    Common interface for all entities within the game world.
+
+    This class should be subclassed by all game entities (Player, Enemy, Bullet, etc.).
+
+    Subclass Requirements:
+    ---------------------
+    - Must override update(dt) to implement entity-specific behavior
+    - Should call sync_rect() after modifying self.pos
+    - Should check self.alive at the start of update()
+    - May override on_collision(other) for collision responses
+    - Should set appropriate layer in __init__ (e.g., Layers.PLAYER)
+    """
+
+    # ===========================================================
+    # Class-level defaults (can be overridden by subclasses)
+    # ===========================================================
+    DEFAULT_SIZE = (32, 32)
+    DEFAULT_COLOR = (255, 255, 255)
+    DEFAULT_SHAPE_TYPE = "rect"
 
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(self, x, y, image=None,
-                 *, render_mode=None, shape_type=None,
-                 color=None, size=None, shape_kwargs=None):
+    def __init__(
+        self,
+        x: float,
+        y: float,
+        image: Optional[pygame.Surface] = None,
+        *,
+        render_mode: Optional[str] = None,
+        shape_type: Optional[str] = None,
+        color: Optional[Tuple[int, int, int]] = None,
+        size: Optional[Tuple[int, int]] = None,
+        shape_kwargs: Optional[dict] = None
+    ):
         """
         Initialize a base entity with its position and visual attributes.
 
         Args:
-            x (float): Initial x-coordinate.
-            y (float): Initial y-coordinate.
-            image (pygame.Surface | None): Optional surface image used for rendering.
-            render_mode (str): "image" for sprite rendering, "shape" for primitive drawing.
-            shape_type (str): Shape type when using shape rendering ("rect" or "circle").
-            color (tuple[int, int, int]): RGB color for shape rendering.
-            size (tuple[int, int]): Size of the shape when not using an image.
-            shape_kwargs (dict | None): Optional shape-specific parameters (e.g., width, points).
+            x: Initial x-coordinate (center).
+            y: Initial y-coordinate (center).
+            image: Optional surface image for sprite rendering.
+            render_mode: "image" or "shape". Auto-detected if None.
+            shape_type: Shape type for shape rendering ("rect" or "circle").
+            color: RGB color tuple for shape rendering.
+            size: (width, height) for shape rendering.
+            shape_kwargs: Additional shape parameters (e.g., width for outline).
+
+        Notes:
+            - If image is provided, render_mode defaults to "image"
+            - If image is None, render_mode defaults to "shape"
+            - Position (x, y) represents the CENTER of the entity
+            - Subclasses should set self.layer appropriately after super().__init__()
         """
         # -------------------------------------------------------
-        # 1) Core spatial attributes
+        # Core Spatial Attributes
+        # -------------------------------------------------------
+        self.pos = pygame.Vector2(x, y)
+
+        # -------------------------------------------------------
+        # Rendering Setup
         # -------------------------------------------------------
         self.image = image
-        if render_mode:
+
+        # Auto-detect render mode if not specified
+        if render_mode is not None:
             self.render_mode = render_mode
         else:
             self.render_mode = "image" if image is not None else "shape"
 
-        self.shape_type = shape_type or "rect"
-        self.color = color or (255, 255, 255)
-        self.size = size or (32, 32)
+        # Shape rendering attributes
+        self.shape_type = shape_type or self.DEFAULT_SHAPE_TYPE
+        self.color = color or self.DEFAULT_COLOR
+        self.size = size or self.DEFAULT_SIZE
         self.shape_kwargs = shape_kwargs or {}
 
         # -------------------------------------------------------
-        # 2) Rect setup (center-aligned)
+        # Rect Setup (center-aligned)
         # -------------------------------------------------------
         if self.render_mode == "image" and self.image is not None:
             self.rect = self.image.get_rect(center=(x, y))
@@ -69,84 +120,130 @@ class BaseEntity:
             self.rect = pygame.Rect(0, 0, *self.size)
             self.rect.center = (x, y)
 
-        # Vector position reference
-        self.pos = pygame.Vector2(x, y)
-
         # -------------------------------------------------------
-        # Entity state
+        # Entity State
         # -------------------------------------------------------
         self.alive = True
+
+        # Default layer - subclasses SHOULD override this
+        # (Using ENEMIES as default since most entities in bullet hell are enemies/bullets)
         self.layer = Layers.ENEMIES
 
         # -------------------------------------------------------
-        # Collision attributes
+        # Collision Attributes
         # -------------------------------------------------------
-        self.hitbox = None
-        self.has_hitbox = False
         self.collision_tag = "neutral"
-
-        # DebugLogger.init(f" {type(self).__name__} initialized at ({x:.1f}, {y:.1f})")
-
-    # ---------------------------
-    # Rect Synchronization Helper
-    # ---------------------------
-    def sync_rect(self):
-        """
-        Force the sprite rect to follow the logical position.
-
-        Ensures rect.center() always matches self.pos, used by subclasses
-        at the end of their update() loops to prevent anchor drift.
-        """
-        self.rect.center = (self.pos.x, self.pos.y)
+        self._hitbox = None
+        self.has_hitbox = False  # Legacy flag - kept for compatibility
 
     # ===========================================================
-    # Update Logic
+    # Hitbox Property (cleaner access pattern)
+    # ===========================================================
+    @property
+    def hitbox(self):
+        """Get the collision hitbox (may be None if not initialized)."""
+        return self._hitbox
+
+    @hitbox.setter
+    def hitbox(self, value):
+        """
+        Set the collision hitbox.
+
+        Typically called by the collision system or in entity __init__.
+        Automatically updates has_hitbox flag for compatibility.
+        """
+        self._hitbox = value
+        self.has_hitbox = value is not None
+
+    # ===========================================================
+    # Spatial Synchronization
+    # ===========================================================
+    def sync_rect(self):
+        """
+        Synchronize rect.center with self.pos.
+
+        IMPORTANT: Subclasses MUST call this after modifying self.pos
+        to ensure rendering and collision use the updated position.
+
+        Pattern:
+            self.pos += self.velocity * dt  # Move entity
+            self.sync_rect()                 # Update rect to match
+
+        Note: This is NOT called automatically in base update() to avoid
+        syncing before movement is complete.
+        """
+        self.rect.center = self.pos
+
+    # ===========================================================
+    # Core Update Loop
     # ===========================================================
     def update(self, dt: float):
         """
-        Update the entity's state. Should be overridden by subclasses.
+        Update the entity's state for this frame.
+
+        Base implementation does NOTHING. Subclasses MUST override this
+        to implement entity-specific behavior (movement, animation, etc.).
+
+        Recommended pattern for subclasses:
+            def update(self, dt):
+                if not self.alive:
+                    return
+
+                # Apply movement
+                self.pos += self.velocity * dt
+                self.sync_rect()
+
+                # Update collision
+                if self.hitbox:
+                    self.hitbox.update()
 
         Args:
-            dt (float): Time elapsed since the last frame (in seconds).
+            dt: Time elapsed since last frame (in seconds).
         """
-        self.sync_rect()
+        pass  # Subclasses override this
 
     # ===========================================================
-    # Rendering Hook
+    # Rendering
     # ===========================================================
     def draw(self, draw_manager):
         """
-        Render or queue this entity for rendering via the DrawManager.
+        Queue this entity for rendering via the DrawManager.
+
+        Handles automatic fallback chain:
+            image → shape → debug rect
+
+        If image rendering fails (missing image), automatically falls back
+        to shape rendering. If that also fails, draws a debug rect.
 
         Args:
-            draw_manager: The DrawManager instance responsible for batching and ordering.
+            draw_manager: The DrawManager instance responsible for rendering.
         """
-        layer = getattr(self, "layer", Layers.ENEMIES)
+        layer = self.layer
         mode = self.render_mode
 
         # -------------------------------------------------------
-        # Case 1: Image rendering (standard sprite)
+        # Image Rendering (standard sprite)
         # -------------------------------------------------------
         if mode == "image":
             if self.image is not None:
                 draw_manager.draw_entity(self, layer)
                 return
 
-            if getattr(DebugLogger, "ENABLED", True):
-                DebugLogger.warn(f"{type(self).__name__} missing image; switching to shape")
+            # Fallback: missing image
+            DebugLogger.warn(
+                f"{type(self).__name__} missing image; switching to shape"
+            )
             self.render_mode = "shape"
             mode = "shape"
 
         # -------------------------------------------------------
-        # Case 2: Shape rendering (primitive)
+        # Shape Rendering (primitive shapes)
         # -------------------------------------------------------
         if mode == "shape":
-            # Ensure the shape's visual color is always current.
-            # If the entity has an image surface (for shape mode), re-fill it.
-            if self.render_mode == "shape" and self.image is not None:
-                self.image.fill(self.color)
+            # Note: We don't need to fill self.image here!
+            # queue_shape() takes self.color directly and uses it each frame.
+            # The old self.image.fill() was redundant overhead.
 
-            # Queue shape for drawing each frame with the updated color.
             draw_manager.queue_shape(
                 self.shape_type,
                 self.rect,
@@ -157,35 +254,71 @@ class BaseEntity:
             return
 
         # -------------------------------------------------------
-        # Case 3: Fallback (no valid data → draw rectangle)
+        # Emergency Fallback (should never reach here)
         # -------------------------------------------------------
-        if getattr(DebugLogger, "ENABLED", True):
-            DebugLogger.warn(f"{type(self).__name__} had no render data; drawing fallback rect")
-        draw_manager.queue_shape("rect", self.rect, (255, 255, 255), layer)
+        DebugLogger.error(
+            f"{type(self).__name__} has invalid render_mode='{mode}'; "
+            f"drawing debug rect"
+        )
+        draw_manager.queue_shape("rect", self.rect, (255, 0, 255), layer)
 
     # ===========================================================
-    # Collision Handling
+    # Collision Interface
     # ===========================================================
-    def on_collision(self, other):
+    def on_collision(self, other: "BaseEntity"):
         """
         Handle collision with another entity.
-        Should be overridden by subclasses to define specific behavior.
+
+        Base implementation just logs the collision. Subclasses should
+        override to implement specific collision responses.
+
+        Called by the collision system when this entity collides with another.
+
+        Common patterns:
+            - Check other.collision_tag to determine response
+            - Apply damage, destroy bullet, bounce, etc.
 
         Args:
-            other (BaseEntity): The other entity involved in the collision.
+            other: The entity this one collided with.
         """
         DebugLogger.trace(
-            f"{type(self).__name__} collided with {type(other).__name__} (no override)"
+            f"{type(self).__name__}[{self.collision_tag}] collided with "
+            f"{type(other).__name__}[{other.collision_tag}]"
         )
 
-    # ===========================================================
-    # Hitbox Accessor
-    # ===========================================================
-    def get_hitbox_rect(self):
+    def get_hitbox_rect(self) -> Optional[pygame.Rect]:
         """
-        Safely return the current hitbox rect for this entity.
+        Get the collision hitbox rectangle.
+
+        Safe accessor that returns None if hitbox doesn't exist.
 
         Returns:
-            pygame.Rect | None: The hitbox rect if available.
+            The hitbox rect if available, None otherwise.
         """
-        return self.hitbox.rect if getattr(self, "hitbox", None) else None
+        return self._hitbox.rect if self._hitbox else None
+
+    # ===========================================================
+    # Utility Methods
+    # ===========================================================
+    def distance_to(self, other: "BaseEntity") -> float:
+        """
+        Calculate distance to another entity's center.
+
+        Useful for proximity checks, targeting, etc.
+
+        Args:
+            other: The entity to measure distance to.
+
+        Returns:
+            Distance in pixels.
+        """
+        return self.pos.distance_to(other.pos)
+
+    def __repr__(self) -> str:
+        """Debug string representation of entity."""
+        return (
+            f"<{type(self).__name__} "
+            f"pos=({self.pos.x:.1f}, {self.pos.y:.1f}) "
+            f"tag={self.collision_tag} "
+            f"alive={self.alive}>"
+        )

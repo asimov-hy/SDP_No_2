@@ -9,6 +9,7 @@ Responsibilities
 - Dynamically resolve animation handlers using a shared registry system.
 - Provide a consistent interface for starting, updating, and stopping animations.
 - Guarantee fail-safety — animation errors never crash the main game loop.
+- Support in-animation effect triggers (e.g., particles, sounds, flashes).
 """
 
 from src.core.utils.debug_logger import DebugLogger
@@ -44,6 +45,7 @@ class AnimationManager:
         # -------------------------------------------------------
         self.enabled = True         # Allows disabling animations globally per entity
         self.on_complete = None     # Optional completion callback (e.g., re-enable hitbox)
+        self._effect_queue = []     # Holds effects scheduled to trigger during playback
 
         DebugLogger.init(
             f"AnimationManager initialized for {type(entity).__name__}",
@@ -95,6 +97,7 @@ class AnimationManager:
         self.timer = 0.0
         self.duration = duration
         self.finished = False
+        self._effect_queue.clear()
 
         DebugLogger.state(
             f"{type(self.entity).__name__}: Animation '{anim_type}' started ({duration:.2f}s)",
@@ -102,19 +105,66 @@ class AnimationManager:
         )
 
     def stop(self):
-        """
-        Immediately stop the current animation and reset playback state.
-        """
+        """Immediately stop the current animation and reset playback state."""
         if self.active_type:
             DebugLogger.state(
                 f"{type(self.entity).__name__}: Animation '{self.active_type}' stopped",
                 category="animation"
             )
+
         self.active_type = None
         self.timer = 0.0
         self.duration = 0.0
         self.finished = True
         self.on_complete = None
+        self._effect_queue.clear()
+
+    # ===========================================================
+    # Effect Integration
+    # ===========================================================
+    def bind_effect(self, trigger_time: float, effect):
+        """
+        Schedule an effect to fire once during the active animation.
+
+        Args:
+            trigger_time (float): Normalized time (0.0–1.0) when effect should occur.
+            effect (Callable | str): Function or named effect to trigger.
+                                     If str, it will call entity.effect_manager.trigger(name).
+        """
+        trigger_time = max(0.0, min(trigger_time, 1.0))
+        self._effect_queue.append({
+            "trigger": trigger_time,
+            "effect": effect,
+            "fired": False,
+        })
+        DebugLogger.state(
+            f"[BindEffect] {type(self.entity).__name__}: '{effect}' @ t={trigger_time}",
+            category="animation"
+        )
+
+    def _check_effect_triggers(self, t: float):
+        """Execute any effects whose trigger times have been reached."""
+        for fx in list(self._effect_queue):
+            if not fx["fired"] and t >= fx["trigger"]:
+                fx["fired"] = True
+                eff = fx["effect"]
+
+                try:
+                    if callable(eff):
+                        eff(self.entity)
+                    elif isinstance(eff, str):
+                        if hasattr(self.entity, "effect_manager"):
+                            self.entity.effect_manager.trigger(eff)
+                        else:
+                            DebugLogger.warn(
+                                f"[EffectSkip] {self.entity.collision_tag} has no effect_manager for '{eff}'",
+                                category="effects"
+                            )
+                except Exception as e:
+                    DebugLogger.warn(
+                        f"[EffectFail] {eff} on {self.entity.collision_tag} → {e}",
+                        category="effects"
+                    )
 
     # ===========================================================
     # Update Loop
@@ -144,6 +194,8 @@ class AnimationManager:
             method = getattr(self.animations, self.active_type, None)
             if callable(method):
                 method(t)
+                # Fire queued effects when appropriate
+                self._check_effect_triggers(t)
             else:
                 DebugLogger.warn(
                     f"{type(self.entity).__name__}: Unknown animation '{self.active_type}'",
@@ -182,5 +234,3 @@ class AnimationManager:
     def has(self, anim_type: str) -> bool:
         """Return True if the entity supports the given animation."""
         return callable(getattr(self.animations, anim_type, None))
-
-

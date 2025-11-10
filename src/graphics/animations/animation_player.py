@@ -58,18 +58,7 @@ class AnimationPlayer:
         Args:
             t (float): Normalized time (0.0 → 1.0)
         """
-        try:
-            # Ease-in-out curve for rotation speed
-            eased_t = 0.5 - 0.5 * math.cos(math.pi * t)
-
-            # Smooth spin based on eased progress
-            spin_visual(self.entity, eased_t, total_angle=360)
-
-            # Optional: small tilt to emphasize direction
-            tilt(self.entity, eased_t, max_angle=10)
-
-        except Exception as e:
-            DebugLogger.warn(f"[AnimationPlayer.dodge] Failed: {e}", category="animation")
+        print("dodge animation")
 
     # ===========================================================
     # Dash Animation (placeholder)
@@ -87,33 +76,11 @@ class AnimationPlayer:
     # ===========================================================
     # Take Damage Animation (reference only)
     # ===========================================================
-    def damage(self, t: float):
+    def intangible(self, t: float):
         """
-        Placeholder: Handled by PlayerCombat blinking logic.
-        Included here for structural completeness.
+        when player is intangible - either taken damage or possible item
         """
-        try:
-            entity = self.entity
-
-            # 1) Blink frequency (controls how often player flickers)
-            blink_interval = 0.15  # seconds between visibility toggles
-            blink_phase = int((t * entity.invuln_duration) / blink_interval) % 2
-
-            # 2) Flash white at impact
-            if t < 0.1:
-                entity.image.fill((255, 255, 255))
-                entity.visible = True
-
-            # 3) Blink during invulnerability
-            else:
-                entity.visible = blink_phase == 0
-
-            # 4) Ensure fade-out of flicker near the end
-            if t > 0.9:
-                entity.visible = True
-
-        except Exception as e:
-            DebugLogger.warn(f"[AnimationPlayer.damage] Failed: {e}", category="animation")
+        print("damage animation")
 
     # ===========================================================
     # Death Animation
@@ -128,15 +95,4 @@ class AnimationPlayer:
         Args:
             t (float): Normalized time (0.0 → 1.0)
         """
-        pass
-        # try:
-        #     # Combine smooth fade and scale
-        #     fade_out(self.entity, t)
-        #     scale_down(self.entity, t, factor=0.2)
-        #
-        #     # Add subtle shake near the beginning
-        #     if t < 0.5:
-        #         shake_position(self.entity, t, intensity=4)
-        #
-        # except Exception as e:
-        #     DebugLogger.warn(f"[AnimationPlayer.die] Failed: {e}", category="animation")
+        print("death animation")

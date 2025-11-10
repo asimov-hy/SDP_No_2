@@ -1,15 +1,15 @@
 """
 player_combat.py
 ----------------
-Handles all player combat-related systems:
+Handles player combat-related systems:
 - Shooting and cooldown management.
-- Collision damage and invulnerability logic.
+- Collision damage routing through entity_logic.
 """
 
 import pygame
 from src.core.utils.debug_logger import DebugLogger
-from .player_logic import take_damage
-from .player_state import InteractionState
+from src.entities.entity_logic import apply_damage
+from src.entities.entity_state import InteractionState
 
 
 # ===========================================================
@@ -35,12 +35,9 @@ def update_shooting(player, dt: float):
 def shoot(player):
     """
     Fire a bullet upward from the player's position via BulletManager.
-
-    Args:
-        player (Player): The player entity.
     """
     if not player.bullet_manager:
-        DebugLogger.warn("Attempted to shoot without BulletManager")
+        DebugLogger.warn("Attempted to shoot without BulletManager", category="combat")
         return
 
     player.bullet_manager.spawn(
@@ -50,7 +47,7 @@ def shoot(player):
         radius=4,
         owner="player",
     )
-    DebugLogger.state("Player fired bullet", category="user_action")
+    DebugLogger.state("[PlayerFire] Bullet fired", category="combat")
 
 
 # ===========================================================
@@ -60,26 +57,32 @@ def damage_collision(player, other):
     """
     Handle collision responses with enemies or projectiles.
 
-    Behavior:
-        - Check player state (invincible/intangible, etc.)
-        - Retrieve damage value from the collided entity
-        - Apply damage if valid
+    Flow:
+        - Check interaction state (invincible, intangible, etc.)
+        - Retrieve damage value from collided entity
+        - Route through entity_logic.apply_damage()
 
     Args:
         player (Player): The player entity.
         other (BaseEntity): The entity collided with.
     """
 
-    # 1) Validate state before taking damage
+    # 1) Skip if player is invincible or intangible
     if player.state is not InteractionState.DEFAULT:
-        DebugLogger.state(f"Ignored damage due to state: {player.state.name}", category="combat")
+        DebugLogger.state(
+            f"[DamageIgnored] State={player.state.name}",
+            category="combat"
+        )
         return
 
     # 2) Retrieve damage value
     damage = getattr(other, "damage", 1)
     if not isinstance(damage, (int, float)) or damage <= 0:
-        DebugLogger.warn(f"Invalid or missing damage value from {getattr(other, 'collision_tag', 'unknown')}")
+        DebugLogger.warn(
+            f"[InvalidDamage] From={getattr(other, 'collision_tag', 'unknown')} value={damage}",
+            category="combat"
+        )
         return
 
-    # 3) Apply damageds
-    take_damage(player, damage)
+    # 3) Apply shared damage logic
+    apply_damage(player, damage)

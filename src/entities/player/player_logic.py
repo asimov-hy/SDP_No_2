@@ -1,165 +1,149 @@
 """
 player_logic.py
 ---------------
-Implements non-core player behavior and state transitions.
+Player-specific behavior hooks and effect management.
 
-Responsibilities
-----------------
-- Manage health, damage, and death cleanup.
-- Control invulnerability (i-frames) and interaction state logic.
-- Update player visuals (sprite or color) based on current health.
-- Remain independent of initialization and core setup.
+These functions are called by entity_logic.py or directly by player systems.
+They handle player-exclusive logic like i-frames, death cleanup, and visuals.
 """
 
-import pygame
 from src.core.utils.debug_logger import DebugLogger
-from .player_config import PLAYER_CONFIG
-from .player_state import InteractionState
+from src.entities import entity_logic
+from src.entities.entity_state import InteractionState
+from .player_state import (
+    PlayerEffectState,
+    EFFECT_RULES,
+    get_effect_duration,
+    get_effect_interaction_state,
+    get_effect_animation
+)
+
 
 # ===========================================================
-# Combat & Damage Handling
+# Entity Hook: Damage Response
 # ===========================================================
-def take_damage(self, amount: int):
+def on_damaged(player, amount: int):
     """
-    Apply incoming damage to the player and refresh visuals.
-
-    Args:
-        amount (int): Amount of health to reduce.
+    Called automatically by entity_logic.apply_damage() after player takes damage.
+    Triggers invulnerability frames and visual feedback.
     """
-    self.health = max(0, self.health - amount)
-    update_visual_state(self)
-
-    if self.health <= 0:
-        # Death handling
-        DebugLogger.state(f"Player took {amount} damage → Player destroyed!", category="damage")
-        on_death(self)
-    else:
-        # Trigger i-frame logic (intangible + visual feedback)
-        DebugLogger.state(f"Player took {amount} damage → HP={self.health}", category="damage")
-        if hasattr(self, "start_iframes"):
-            self.start_iframes()
+    apply_effect(player, PlayerEffectState.DAMAGE_IFRAME)
+    DebugLogger.state(f"[PlayerDamaged] HP={player.health}", category="damage")
 
 
-def on_death(self):
-    """Handle cleanup and deactivation when the player dies."""
-    if not self.alive:
-        return  # Prevent double calls
-
-    self.alive = False
-    # self.visible = False
-
-    if self.hitbox:
-        self.hitbox.active = False
-        self.hitbox = None
-
-    if getattr(self, "animation_manager", None):
-        self.animation_manager.stop()
-        self.animation_manager.enabled = False
-
+# ===========================================================
+# Entity Hook: Death Cleanup
+# ===========================================================
+def on_death(player):
+    """
+    Called automatically by entity_logic.handle_death() when player HP reaches zero.
+    Clears the global player reference for game-over detection.
+    """
     from src.core.game_state import STATE
     STATE.player_ref = None
-
-    DebugLogger.state("Player on_death() cleanup complete", category="state")
+    DebugLogger.state("[PlayerDeath] Player cleanup complete", category="state")
 
 
 # ===========================================================
-# Visual Update Logic
+# Effect Management
 # ===========================================================
-def update_visual_state(self):
+def apply_effect(player, effect: PlayerEffectState):
     """
-    Update the player’s sprite or color based on current health.
-    Triggered after taking damage or healing.
+    Apply a temporary effect to the player.
 
-    Changes are determined by the thresholds defined in `player_config.py`.
+    Sets the interaction state, triggers animation, and starts effect timer.
     """
-    hp = self.health
-    th = self.health_thresholds
-    mode = self.render_mode
-    state = "normal"  # Default threshold name
-    visual_value = None
+    if effect == PlayerEffectState.NONE:
+        return
 
-    # -------------------------------------------------------
-    # IMAGE MODE
-    # -------------------------------------------------------
-    if mode == "image":
-        state = (
-            "damaged_critical" if hp <= th["critical"]
-            else "damaged_moderate" if hp <= th["moderate"]
-            else "normal"
-        )
+    rules = EFFECT_RULES.get(effect)
+    if not rules:
+        DebugLogger.warn(f"[EffectError] No rules defined for {effect}")
+        return
 
-        path = self.image_states[state]
-        visual_value = path
+    # Store active effect and timer
+    player.active_effect = effect
+    player.effect_timer = rules["duration"]
 
-        try:
-            new_image = pygame.image.load(path).convert_alpha()
-            new_image = pygame.transform.scale(new_image, PLAYER_CONFIG["size"])
-            self.image = new_image
-        except Exception as e:
-            DebugLogger.warn(f"Failed to load sprite: {path} ({e})")
+    # Update interaction state (for collision behavior)
+    entity_logic.set_interaction_state(player, rules["interaction"])
 
-    # -------------------------------------------------------
-    # SHAPE MODE
-    # -------------------------------------------------------
-    elif mode == "shape":
-        if hp <= th["critical"]:
-            state = "damaged_critical"
-        elif hp <= th["moderate"]:
-            state = "damaged_moderate"
+    # Trigger animation
+    animation_key = rules.get("animation")
+    if animation_key and hasattr(player, "animation_manager"):
+        player.animation_manager.play(animation_key)
 
-        self.color = self.color_states[state]
-        visual_value = self.color
-
-    # -------------------------------------------------------
-    # Unified Debug Output
-    # -------------------------------------------------------
     DebugLogger.state(
-        f"Mode={mode} | HP={hp} | Threshold={state} | Visual={visual_value}",
-        category="effects"
+        f"[EffectApplied] {effect.name} → {rules['interaction'].name} "
+        f"(duration={rules['duration']}s)",
+        category="state"
     )
 
 
-# ===========================================================
-# Interaction State Management
-# ===========================================================
-def set_interaction_state(self, state: InteractionState | int):
+def update_effects(player, dt: float):
     """
-    Set the player's current interaction state using a numeric hierarchy.
+    Update active player effects each frame.
 
-    State Levels:
-      0 -> DEFAULT      damage: O   enemy collision: O   environment: O
-      1 -> INVINCIBLE   damage: X   enemy collision: O   environment: O
-      2 -> INTANGIBLE   damage: X   enemy collision: X   environment: O
-      3 -> CLIP_THROUGH damage: X   enemy collision: X   environment: X
-
-    Behavior Rules:
-        - Hitbox active if state < 3
-        - Collides with environment if state < 3
-        - Collides with enemies if state < 2
-
-    Args:
-        state (InteractionState | int): The desired interaction state,
-            either as an InteractionState enum member or an integer value (0–3).
+    Decrements effect timer and clears effect when expired.
+    Should be called in Player.update().
     """
-    # -------------------------------------------------------
-    # Normalize input to InteractionState enum
-    # -------------------------------------------------------
-    if isinstance(state, int):
-        try:
-            state = InteractionState(state)
-        except ValueError:
-            DebugLogger.warn(f"Invalid interaction state value: {state}")
-            state = InteractionState.DEFAULT
+    effect = getattr(player, "active_effect", PlayerEffectState.NONE)
+    if effect == PlayerEffectState.NONE:
+        return
 
-    self.state = state
-    level = state.value
+    # Decrement timer
+    player.effect_timer = getattr(player, "effect_timer", 0) - dt
 
-    # -------------------------------------------------------
-    # Apply collision rules
-    # -------------------------------------------------------
-    if self.hitbox:
-        self.hitbox.active = level < 3
-        self.hitbox.collides_with_environment = level < 3
-        self.hitbox.collides_with_enemies = level < 2
+    # Check if effect expired
+    if player.effect_timer <= 0:
+        clear_effect(player)
 
-    DebugLogger.state(f"InteractionState → {state.name} ({level})", category="state")
+
+def clear_effect(player):
+    """
+    Remove the active effect and return player to normal state.
+    """
+    effect = getattr(player, "active_effect", PlayerEffectState.NONE)
+    if effect == PlayerEffectState.NONE:
+        return
+
+    # Reset to default state
+    player.active_effect = PlayerEffectState.NONE
+    player.effect_timer = 0
+    entity_logic.set_interaction_state(player, InteractionState.DEFAULT)
+
+    # Optional: trigger end animation
+    # if hasattr(player, "animation_manager"):
+    #     player.animation_manager.play("idle")
+
+    DebugLogger.state(f"[EffectCleared] {effect.name} expired", category="state")
+
+
+# ===========================================================
+# Visual Update Hook
+# ===========================================================
+def update_visual_state(player):
+    """
+    Player-specific visual feedback based on health and state.
+
+    Called by entity_logic after damage/death events.
+    """
+    if player.render_mode == "shape":
+        # Critical health: red tint
+        if player.health <= 1:
+            player.color = (255, 80, 80)
+        # Normal health: white
+        else:
+            player.color = (255, 255, 255)
+
+        DebugLogger.state(
+            f"[PlayerVisual] HP={player.health} color={player.color}",
+            category="effects"
+        )
+
+    # Image mode: could swap sprites here
+    # elif player.render_mode == "image":
+    #     if player.health <= 1:
+    #         player.image = player.image_states["damaged"]
+    #     else:
+    #         player.image = player.image_states["normal"]
