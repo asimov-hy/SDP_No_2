@@ -8,14 +8,14 @@ Handles player combat-related systems:
 
 import pygame
 from src.core.utils.debug_logger import DebugLogger
-from src.entities.entity_logic import apply_damage
-from src.entities.entity_state import InteractionState
+from src.entities.bullets.bullet_straight import StraightBullet
+from src.entities.player.player_state import InteractionState
 
 
 # ===========================================================
 # Shooting System
 # ===========================================================
-def update_shooting(player, dt: float):
+def update_shooting(player, dt: float, attack_held: bool):
     """
     Manage shooting cooldowns and fire bullets when input is triggered.
 
@@ -23,31 +23,34 @@ def update_shooting(player, dt: float):
         player (Player): The player entity.
         dt (float): Delta time since the last frame (seconds).
     """
-    player.shoot_timer += dt
-    keys = pygame.key.get_pressed()
+    # Accumulate time toward next allowed shot
+    player.shoot_timer = min(player.shoot_timer + dt, player.shoot_cooldown)
 
-    # Fire bullet when spacebar pressed and cooldown elapsed
-    if keys[pygame.K_SPACE] and player.shoot_timer >= player.shoot_cooldown:
-        player.shoot_timer = 0.0
-        shoot(player)
+    if attack_held and player.shoot_timer >= player.shoot_cooldown:
+        player.shoot_timer = max(0, player.shoot_timer - player.shoot_cooldown)
+        _fire_bullet(player)
 
 
-def shoot(player):
+def _fire_bullet(player):
     """
-    Fire a bullet upward from the player's position via BulletManager.
+    Spawn a StraightBullet via the BulletManager.
+    Uses spawn_custom() for future flexibility (spread, homing, etc.).
     """
     if not player.bullet_manager:
-        DebugLogger.warn("Attempted to shoot without BulletManager", category="combat")
+        DebugLogger.warn("[PlayerCombat] Attempted to fire without BulletManager", category="combat")
         return
 
-    player.bullet_manager.spawn(
+    # Fire a straight bullet upward
+    player.bullet_manager.spawn_custom(
+        StraightBullet,
         pos=player.rect.center,
         vel=(0, -900),  # Upward trajectory
         color=(255, 255, 100),
         radius=4,
         owner="player",
     )
-    DebugLogger.state("[PlayerFire] Bullet fired", category="combat")
+
+    DebugLogger.state("[PlayerFire] StraightBullet fired", category="combat")
 
 
 # ===========================================================
@@ -67,22 +70,22 @@ def damage_collision(player, other):
         other (BaseEntity): The entity collided with.
     """
 
-    # 1) Skip if player is invincible or intangible
     if player.state is not InteractionState.DEFAULT:
-        DebugLogger.state(
-            f"[DamageIgnored] State={player.state.name}",
-            category="combat"
-        )
         return
 
-    # 2) Retrieve damage value
+    if player.health <= 0:
+        return
+
     damage = getattr(other, "damage", 1)
-    if not isinstance(damage, (int, float)) or damage <= 0:
-        DebugLogger.warn(
-            f"[InvalidDamage] From={getattr(other, 'collision_tag', 'unknown')} value={damage}",
-            category="combat"
-        )
+    if damage <= 0:
         return
 
-    # 3) Apply shared damage logic
-    apply_damage(player, damage)
+    player.health -= damage
+
+    # Trigger animations/visuals
+    from .player_logic import on_damage
+    on_damage(player, damage)  # Handles hit animation
+
+    if player.health <= 0:
+        from .player_logic import on_death
+        on_death(player)

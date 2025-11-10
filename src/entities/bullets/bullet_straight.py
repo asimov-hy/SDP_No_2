@@ -1,13 +1,13 @@
 """
 bullet_straight.py
 ------------------
-Defines a simple straight-line bullet derived from BulletBase.
+Defines a basic straight-line bullet derived from BaseBullet.
 
 Responsibilities
 ----------------
-- Move in a fixed linear path without rotation or targeting.
-- Update and render through inherited BulletBase behavior.
-- Provide an entry point for future visual or sound effects.
+- Moves in a fixed linear path.
+- Relies entirely on BaseBullet for motion, rendering, and collision.
+- Provides a clean subclass entry point for visual or behavioral extensions.
 """
 
 from src.entities.bullets.base_bullet import BaseBullet
@@ -15,49 +15,47 @@ from src.core.utils.debug_logger import DebugLogger
 
 
 class StraightBullet(BaseBullet):
-    """Basic straight-line bullet using default BulletBase movement."""
+    """Simple bullet that travels in a straight line."""
 
     # ===========================================================
     # Initialization
     # ===========================================================
     def __init__(self, *args, **kwargs):
-        """Initialize and register a simple linear bullet."""
+        """Initialize a straight-line bullet instance."""
         super().__init__(*args, **kwargs)
 
-        # Safety: Ensure consistent tag setup
+        # Ensure consistent collision tag
         self.collision_tag = f"{self.owner}_bullet"
 
-        # Optional trace log for debug builds
-        # DebugLogger.trace(f"[BulletInit] {type(self).__name__} ({self.owner}) initialized")
+        # Optional debug trace
+        # DebugLogger.trace(f"[BulletInit] StraightBullet ({self.owner}) created")
 
     # ===========================================================
     # Update Logic
     # ===========================================================
-    def update(self, dt):
+    def update(self, dt: float):
         """
-        Update bullet movement and state each frame.
-
-        Args:
-            dt (float): Delta time (in seconds).
+        Move linearly according to BaseBullet velocity.
+        Override if extended behaviors (e.g., trails, acceleration) are added.
         """
         super().update(dt)
-        # Future: Add trail effects or rotation if desired
+
+        # Future extensions:
+        # - Add sprite rotation based on velocity vector.
+        # - Add glow/trail or hit effect emitters.
 
     # ===========================================================
     # Rendering
     # ===========================================================
     def draw(self, draw_manager):
         """
-        Queue this bullet for rendering via the DrawManager.
+        Queue this bullet for rendering via DrawManager.
 
-        Responsibilities
-        ----------------
-        - Pass rendering control to BaseEntity for consistent batching.
-        - Support both sprite and shape-based bullets through BaseEntity.
-        - Remain compatible with DrawManager’s layered rendering system.
-
-        Args:
-            draw_manager: The DrawManager responsible for batching and rendering.
+        Uses BaseBullet's drawing behavior to ensure consistent layering.
         """
         super().draw(draw_manager)
-        # Future: Add glow or directional effects here
+        # Future: Add glow, flicker, or material effects here.
+
+
+from src.entities.entity_registry import EntityRegistry
+EntityRegistry.register("bullet", "straight", StraightBullet)

@@ -83,6 +83,7 @@ class LoggerConfig:
         "entity_spawning": False,
         "entity_cleanup": False,
         "animation": True,
+        "base_entity_logic": True,
     }
 
     # Output Style

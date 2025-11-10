@@ -3,7 +3,11 @@
     "scale": 1.0,
     "speed": 300,
     "health": 3,
-    "hitbox_scale": 0.85
+    "hitbox_scale": 0.85,
+
+    "accel_rate": 3000,
+    "friction_rate": 500,
+    "max_speed_mult": 1.8
   },
 
   "render_mode": "shape",

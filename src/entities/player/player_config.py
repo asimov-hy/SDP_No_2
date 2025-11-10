@@ -21,6 +21,13 @@ DEFAULT_CONFIG = {
         "speed": 300,            # Base movement speed (pixels/sec)
         "health": 3,             # Starting player health
         "hitbox_scale": 0.85,    # Fraction of sprite size for collision box
+
+        # -------------------------------------------------------
+        # Movement Dynamics
+        # -------------------------------------------------------
+        "accel_rate": 3000,  # Acceleration factor (higher = more responsive)
+        "friction_rate": 500,  # Deceleration factor when no input
+        "max_speed_mult": 1.8,  # Cap multiplier relative to base speed
     },
 
     # -----------------------------------------------------------
@@ -28,7 +35,7 @@ DEFAULT_CONFIG = {
     # -----------------------------------------------------------
     "render_mode": "shape",      # "image" or "shape"
 
-    "size": [32, 32],
+    "size": (32, 32),
 
     "sprite": {
         "path": "assets/images/player.png"
@@ -36,7 +43,7 @@ DEFAULT_CONFIG = {
 
     "default_shape": {
         "shape_type": "rect",
-        "color": [255, 255, 255]
+        "color": (255, 255, 255)
     },
 
     # -----------------------------------------------------------
@@ -54,9 +61,9 @@ DEFAULT_CONFIG = {
     },
 
     "color_states": {            # Color variations by damage level
-        "normal": [255, 255, 255],
-        "damaged_moderate": [255, 160, 120],
-        "damaged_critical": [180, 30, 30]
+        "normal": (255, 255, 255),
+        "damaged_moderate": (255, 160, 120),
+        "damaged_critical": (180, 30, 30)
     },
 }
 

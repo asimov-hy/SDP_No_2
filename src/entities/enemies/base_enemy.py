@@ -11,9 +11,10 @@ Responsibilities
 """
 
 import pygame
-from src.core.game_settings import Display, Debug, Layers
-from src.entities.base_entity import BaseEntity
+from src.core.game_settings import Display, Layers
 from src.core.utils.debug_logger import DebugLogger
+from src.entities.base_entity import BaseEntity
+from src.entities.entity_state import CollisionTags
 
 
 class BaseEnemy(BaseEntity):
@@ -22,7 +23,7 @@ class BaseEnemy(BaseEntity):
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(self, x, y, image, speed=100, hp=1):
+    def __init__(self, x, y, image, speed=100, health=None):
         """
         Initialize a base enemy entity.
 
@@ -30,55 +31,37 @@ class BaseEnemy(BaseEntity):
             x (float): Spawn X position.
             y (float): Spawn Y position.
             image (pygame.Surface): Enemy sprite image.
-            speed (float, optional): Movement speed in pixels per second.
-            hp (int, optional): Hit points before destruction.
+            speed (float, optional): Movement speed (pixels per second).
+            health (int, optional): HP before destruction. Defaults to HealthPresets.ENEMY_NORMAL.
         """
         super().__init__(x, y, image)
         self.speed = speed
-        self.hp = hp
-        self._trace_timer = 0.0
+        self.health = health if health is not None else 1
+        self.max_health = self.health
 
-        # -------------------------------------------------------
+        self._base_image = image
+        self.rotation_angle = 0  # Degrees, 0 = pointing right
+
         # Collision setup
-        # -------------------------------------------------------
-        self.collision_tag = "enemy"
+        self.collision_tag = CollisionTags.ENEMY
+        self.layer = Layers.ENEMIES
 
+        # Deferred hitbox (lazy init)
         self.hitbox = None
-        self.has_hitbox = False
-        self._hitbox_scale = 0.85  # Default scale, customizable per subclass
+        self._hitbox_scale = 0.85
 
-        # -------------------------------------------------------
-        # Movement & State
-        # -------------------------------------------------------
-        self.velocity = pygame.Vector2(0, self.speed)
+        # Default movement vector (downward)
+        self.velocity = pygame.Vector2(0, 0)
 
     # ===========================================================
     # Damage and State Handling
     # ===========================================================
-    def take_damage(self, amount=1, source="unknown"):
+    def on_damage(self, amount: int):
         """
-        Apply damage to the enemy and mark it dead when HP reaches zero.
-
-        Args:
-            amount (int, optional): Amount of HP to subtract. Defaults to 1.
-            source (str, optional): Damage source tag or entity name.
+        Optional visual or behavioral response when the enemy takes damage.
+        Override in subclasses for hit flash, particles, etc.
         """
-        if not self.alive:
-            DebugLogger.warn("Damage ignored (already destroyed)")
-            return
-
-        self.hp -= amount
-        if self.hp <= 0:
-            self.alive = False
-            self.on_death(source)
-            DebugLogger.state(
-                f"Took {amount} damage from {source} → HP=0 | Destroyed at {self.rect.topleft}",
-                category="effects"
-            )
-        else:
-            DebugLogger.state(
-                f"Took {amount} from {source} → HP={self.hp}"
-            )
+        pass
 
     # ===========================================================
     # Update Logic
@@ -88,27 +71,66 @@ class BaseEnemy(BaseEntity):
         if not self.alive:
             return
 
-        self.pos.y += self.speed * dt
+        self.pos += self.velocity * dt
         self.sync_rect()
+        self.update_rotation()
 
-        if not self.has_hitbox:
+        # Lazy hitbox init - cleaner check
+        if self.hitbox is None:
             from src.systems.combat.collision_hitbox import CollisionHitbox
             self.hitbox = CollisionHitbox(self, scale=self._hitbox_scale)
-            self.has_hitbox = True
 
-        if self.hitbox:
-            self.hitbox.update()
+        self.hitbox.update()
 
         # Mark dead if off-screen
         if self.rect.top > Display.HEIGHT:
             self.alive = False
+
+    def take_damage(self, amount: int, source: str = "unknown"):
+        """
+        Reduce health by the given amount and handle death.
+        Calls on_damage() and on_death() hooks as needed.
+        """
+        if not self.alive:
+            return
+
+        self.health = max(0, self.health - amount)
+
+        # Trigger optional reaction (e.g., flash, stagger)
+        self.on_damage(amount)
+
+        if self.health <= 0:
+            self.alive = False
+            self.on_death(source)
+
+    def on_death(self, source):
+        pass  # Overridden by subclasses
 
     # ===========================================================
     # Rendering
     # ===========================================================
     def draw(self, draw_manager):
         """Render the enemy sprite to the screen."""
-        draw_manager.draw_entity(self, layer=Layers.ENEMIES)
+        draw_manager.draw_entity(self, layer=self.layer)
+
+    def update_rotation(self):
+        """
+        Rotate image to match velocity direction.
+        Only rotates if velocity changed (optimization).
+        """
+        if self._base_image is None or self.velocity.length_squared() == 0:
+            return
+
+        # Calculate angle from velocity (-90 because base triangle points up)
+        target_angle = -self.velocity.as_polar()[1] - 90
+
+        # Only rotate if angle changed (avoid unnecessary rotations)
+        if abs(target_angle - self.rotation_angle) > 0.1:
+            self.rotation_angle = target_angle
+            self.image = pygame.transform.rotate(self._base_image, self.rotation_angle)
+            # Update rect to match new rotated size
+            old_center = self.rect.center
+            self.rect = self.image.get_rect(center=old_center)
 
     # ===========================================================
     # Collision Handling
@@ -126,6 +148,3 @@ class BaseEnemy(BaseEntity):
 
         else:
             DebugLogger.trace(f"[CollisionIgnored] {type(self).__name__} vs {tag}")
-
-    def on_death(self, source):
-        pass  # Overridden by subclasses

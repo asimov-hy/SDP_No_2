@@ -10,7 +10,7 @@ Responsibilities
 - Serve as a baseline template for other enemy types.
 """
 
-from src.core.game_settings import Debug, Display
+import pygame
 from src.entities.enemies.base_enemy import BaseEnemy
 from src.core.utils.debug_logger import DebugLogger
 
@@ -21,18 +21,29 @@ class EnemyStraight(BaseEnemy):
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(self, x, y, image, speed=100, hp=1):
+    def __init__(self, x, y, direction=(0, 1), speed=200, health=1,
+                 size=50, color=(255, 0, 0), draw_manager=None):
         """
-        Initialize a straight-moving enemy.
-
         Args:
-            x (float): Spawn X position.
-            y (float): Spawn Y position.
-            image (pygame.Surface): Enemy sprite image.
-            speed (float, optional): Movement speed in pixels/second.
-            hp (int, optional): Enemy hit points.
+            x, y: Spawn position
+            direction: Tuple (dx, dy) for movement direction
+            speed: Pixels per second
+            health: HP before death
+            size: Triangle size (equilateral if int, else (w, h))
+            color: RGB tuple
+            draw_manager: Required for triangle creation
         """
-        super().__init__(x, y, image, speed=speed, hp=hp)
+        # Create triangle sprite
+        if draw_manager is None:
+            raise ValueError("EnemyStraight requires draw_manager for triangle creation")
+
+        triangle_image = draw_manager.create_triangle(size, color, pointing="up")
+
+        # Initialize base enemy
+        super().__init__(x, y, triangle_image, speed, health)
+
+        # Set velocity from direction
+        self.velocity = pygame.Vector2(direction).normalize() * self.speed
 
         DebugLogger.init(
             f"Spawned EnemyStraight at ({x}, {y}) | Speed={speed}",
@@ -49,22 +60,8 @@ class EnemyStraight(BaseEnemy):
         Args:
             dt (float): Delta time (in seconds) since last frame.
         """
-        if not self.alive:
-            return
+        super().update(dt)
 
-        # Move downward
-        self.pos.y += self.speed * dt
-        self.sync_rect()
 
-        # Update hitbox
-        if self.hitbox:
-            self.hitbox.update()
-
-        # Destroy when off-screen
-        if self.rect.top > Display.HEIGHT:
-            self.alive = False
-
-            DebugLogger.state(
-                f"{type(self).__name__} off-screen at y={self.pos.y:.1f}",
-                category="effects"
-            )
+from src.entities.entity_registry import EntityRegistry
+EntityRegistry.register("enemy", "straight", EnemyStraight)

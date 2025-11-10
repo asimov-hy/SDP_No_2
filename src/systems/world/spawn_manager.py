@@ -12,13 +12,14 @@ Responsibilities
 
 from src.core.utils.debug_logger import DebugLogger
 from src.entities.enemies.enemy_straight import EnemyStraight
-from src.systems.combat.collision_hitbox import CollisionHitbox
+from src.entities.entity_registry import EntityRegistry
 
 # ===========================================================
 # Enemy Type Registry
 # ===========================================================
 ENEMY_TYPES = {
     "straight": EnemyStraight,
+    # future types:
     # "zigzag": EnemyZigzag,
     # "shooter": EnemyShooter,
 }
@@ -47,54 +48,13 @@ class SpawnManager:
     # ===========================================================
     # Enemy Spawning
     # ===========================================================
-    def spawn_enemy(self, type_name: str, x: float, y: float):
-        """
-        Spawn a new enemy of the specified type.
-
-        Args:
-            type_name (str): Type of enemy ('straight', 'zigzag', etc.).
-            x (float): X spawn coordinate.
-            y (float): Y spawn coordinate.
-        """
-        cls = ENEMY_TYPES.get(type_name)
-        if not cls:
-            DebugLogger.warn(f"Unknown enemy type: '{type_name}'")
+    def spawn_enemy(self, type_name: str, x: float, y: float, **kwargs):
+        kwargs.setdefault("draw_manager", self.draw_manager)
+        enemy = EntityRegistry.create("enemy", type_name, x, y, **kwargs)
+        if not enemy:
+            DebugLogger.warn(f"Failed to spawn enemy '{type_name}' via registry")
             return
-
-        # -------------------------------------------------------
-        # Load enemy sprite (fallback to None if not found)
-        # -------------------------------------------------------
-        image_key = f"enemy_{type_name}"
-        try:
-            img = self.draw_manager.get_image(image_key)
-        except Exception:
-            DebugLogger.warn(f"Missing image asset for '{image_key}', using fallback")
-            img = None
-
-        # -------------------------------------------------------
-        # Instantiate enemy and attach hitbox
-        # -------------------------------------------------------
-        try:
-            if img is not None:
-                w, h = img.get_size()
-                y += h / 2  # shift down so top-left spawns appear at top edge
-                x += w / 2
-
-            enemy = cls(x, y, img)
-
-            self.enemies.append(enemy)
-
-            if not enemy.hitbox:
-                enemy.hitbox = CollisionHitbox(enemy, scale=getattr(enemy, "_hitbox_scale", 0.85))
-                enemy.has_hitbox = True
-
-            DebugLogger.action(
-                f"Spawned enemy '{type_name}' at ({x:.0f}, {y:.0f})",
-                category="entity_spawning"
-            )
-
-        except Exception as e:
-            DebugLogger.warn(f"Failed to spawn enemy '{type_name}': {e}")
+        self.enemies.append(enemy)
 
     # ===========================================================
     # Update Loop

@@ -59,7 +59,6 @@ This project demonstrates the use of:
 │  ├─ entities/
 │  │   ├─ __init__.py
 │  │   ├─ base_entity.py
-│  │   ├─ entity_logic.py
 │  │   ├─ entity_state.py
 │  │   │
 │  │   ├─ bullets/

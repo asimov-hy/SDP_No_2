@@ -13,6 +13,7 @@ Responsibilities
 """
 
 import pygame
+import math
 import os
 from src.core.utils.debug_logger import DebugLogger
 from src.core.game_settings import Layers
@@ -250,6 +251,52 @@ class DrawManager:
 
         return surface
 
+    def create_triangle(self, size: int | tuple[int, int], color: tuple[int, int, int],
+                        pointing: str = "up") -> pygame.Surface:
+        """
+        Create a reusable triangle sprite (supports perfect equilateral geometry).
+
+        Args:
+            size (int|tuple): If int, creates equilateral triangle with 60° angles.
+                              If tuple (w,h), creates custom isosceles triangle.
+            color (tuple): RGB color.
+            pointing (str): "up", "down", "left", "right" (base orientation).
+
+        Returns:
+            pygame.Surface: Cached triangle image.
+        """
+        if isinstance(size, int):
+            w = size
+            h = int((math.sqrt(3) / 2) * w)  # 60° equilateral triangle height
+        else:
+            w, h = size
+
+        cache_key = f"triangle_{w}x{h}_{color}_{pointing}"
+        if cache_key in self.images:
+            return self.images[cache_key]
+
+        # Define points based on direction
+        if pointing == "up":
+            points = [(w // 2, 0), (0, h), (w, h)]
+        elif pointing == "down":
+            points = [(w // 2, h), (0, 0), (w, 0)]
+        elif pointing == "left":
+            points = [(0, h // 2), (w, 0), (w, h)]
+        elif pointing == "right":
+            points = [(w, h // 2), (0, 0), (0, h)]
+        else:
+            DebugLogger.warn(f"Invalid triangle direction '{pointing}', defaulting to 'up'")
+            points = [(w // 2, 0), (0, h), (w, h)]
+
+        surface = self.prebake_shape(
+            type="polygon",  # Changed from shape_type
+            size=(w, h),
+            color=color,
+            points=points
+        )
+        self.images[cache_key] = surface
+        return surface
+
     # ===========================================================
     # Rendering
     # ===========================================================
@@ -274,7 +321,6 @@ class DrawManager:
         if self._layers_dirty:
             self._layer_keys_cache = sorted(self.layers.keys())
             self._layers_dirty = False
-
 
         # -------------------------------------------------------
         # Render each layer (surfaces + shapes)
@@ -320,7 +366,8 @@ class DrawManager:
     # ===========================================================
     # Shape Rendering Helper
     # ===========================================================
-    def _draw_shape(self, surface, shape_type, rect, color, **kwargs):
+    def _draw_shape(self, surface: pygame.Surface, shape_type: str,
+                    rect: pygame.Rect, color: tuple[int, int, int], **kwargs) -> None:
         """
         Internal helper for drawing primitive shapes on a surface.
 

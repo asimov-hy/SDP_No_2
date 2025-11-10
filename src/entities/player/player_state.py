@@ -13,38 +13,42 @@ Responsibilities
 - Provide player-exclusive constants
 """
 
-from enum import Enum, auto
-from src.entities.entity_state import InteractionState, CollisionTags
+from enum import IntEnum, auto
 
-# ===========================================================
-# Player Constants
-# ===========================================================
-PLAYER_TAG = CollisionTags.PLAYER  # Use the centralized constant
+
+class InteractionState(IntEnum):
+    """
+    Defines how the entity collider interacts with others.
+
+    Determines how collisions affect the entity and its surroundings.
+
+    Collision Meaning:
+      self        → entity receives damage
+      opponent    → collision opponent interacts with entity
+      hazard      → entity takes damage from environmental hazards
+      environment → interacts physically with walls or terrain
+
+    State Levels:
+      0 -> DEFAULT       self: O   opponent: O   hazard: O   environment: O
+      1 -> INVINCIBLE    self: X   opponent: O   hazard: O   environment: O
+      2 -> INTANGIBLE    self: X   opponent: X   hazard: X   environment: O
+      3 -> CLIP_THROUGH  self: X   opponent: X   hazard: X   environment: X
+    """
+    DEFAULT = 0
+    INVINCIBLE = 1
+    INTANGIBLE = 2
+    CLIP_THROUGH = 3
 
 
 # ===========================================================
 # Player Effect States
 # ===========================================================
-class PlayerEffectState(Enum):
-    """
-    Temporary effects applied to the player.
-
-    These are time-limited buffs/debuffs that change how the player
-    interacts with the game world. Each effect maps to an InteractionState,
-    animation, and duration.
-
-    Effects:
-        NONE: No active effect (normal gameplay)
-        DAMAGE_IFRAME: Post-damage invulnerability frames
-        DODGE: Dash/dodge ability (future)
-        PHASE: Phase through walls (future)
-    """
-    NONE = auto()
+class PlayerEffectState(IntEnum):
+    """Defines player-exclusive temporary effects."""
+    NONE = 0
     DAMAGE_IFRAME = auto()
-    # Future expansion:
-    # DODGE = auto()
-    # PHASE = auto()
-    # POWERUP = auto()
+    DASH = auto()
+    POWERUP = auto()
 
 
 # ===========================================================
@@ -55,23 +59,7 @@ EFFECT_RULES = {
         "interaction": InteractionState.INTANGIBLE,  # Passes through enemies/bullets
         "duration": 1.5,                             # seconds
         "animation": "damage_flash",                 # Animation key to trigger
-        "cancel_on_action": False,                   # Don't cancel if player shoots
     },
-
-    # Example future effects:
-    # PlayerEffectState.DODGE: {
-    #     "interaction": InteractionState.INTANGIBLE,
-    #     "duration": 0.3,
-    #     "animation": "dash",
-    #     "cancel_on_action": False,
-    # },
-    #
-    # PlayerEffectState.PHASE: {
-    #     "interaction": InteractionState.CLIP_THROUGH,
-    #     "duration": 2.0,
-    #     "animation": "ghost",
-    #     "cancel_on_action": True,
-    # },
 }
 
 

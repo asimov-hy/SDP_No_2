@@ -66,7 +66,7 @@ class GameScene:
         # ===========================================================
 
         # spawn player
-        self.player = Player()
+        self.player = Player(draw_manager=self.draw_manager)
 
         # Use a global preloaded image to avoid disk access per scene init
         self.enemy_sprite = self.draw_manager.get_image("enemy_straight")
