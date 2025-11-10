@@ -8,6 +8,7 @@ Handles all player combat-related systems:
 
 import pygame
 from src.core.utils.debug_logger import DebugLogger
+from .player_logic import take_damage
 from .player_state import InteractionState
 
 
@@ -80,5 +81,5 @@ def damage_collision(player, other):
         DebugLogger.warn(f"Invalid or missing damage value from {getattr(other, 'collision_tag', 'unknown')}")
         return
 
-    # 3) Apply damage
-    player.take_damage(damage)
+    # 3) Apply damageds
+    take_damage(player, damage)

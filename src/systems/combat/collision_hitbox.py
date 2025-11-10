@@ -13,13 +13,23 @@ Responsibilities
 
 import pygame
 from src.core.utils.debug_logger import DebugLogger
-from src.core.game_settings import Debug, Layers
+from src.core.game_settings import Debug
 
 
 class CollisionHitbox:
     """Represents a rectangular collision boundary tied to an entity."""
 
-    __slots__ = ("owner", "scale", "offset", "rect", "_size_cache", "_color_cache", "active")
+    __slots__ = (
+        "owner",
+        "scale",
+        "offset",
+        "rect",
+        "_size_cache",
+        "_color_cache",
+        "active",
+        "collides_with_environment",
+        "collides_with_enemies",
+    )
 
     # ===========================================================
     # Initialization
@@ -35,11 +45,14 @@ class CollisionHitbox:
         """
         self.owner = owner
         self.scale = scale
+        self.active = True
+        self.collides_with_environment = True
+        self.collides_with_enemies = True
+
         self.offset = pygame.Vector2(offset)
         self.rect = pygame.Rect(0, 0, 0, 0)
         self._size_cache = None
         self._color_cache = self._cache_color()
-        self.active = True
 
         if hasattr(owner, "rect"):
             self._initialize_from_owner()
@@ -61,10 +74,10 @@ class CollisionHitbox:
         """Cache debug color based on entity tag for faster draw calls."""
         tag = getattr(self.owner, "collision_tag", "neutral")
         if "enemy" in tag:
-            return (255, 60, 60)
+            return 255, 60, 60
         if "player" in tag:
-            return (60, 160, 255)
-        return (80, 255, 80)
+            return 60, 160, 255
+        return 80, 255, 80
 
     # ===========================================================
     # Update Cycle
@@ -77,7 +90,7 @@ class CollisionHitbox:
         rect = getattr(self.owner, "rect", None)
 
         if not rect:
-            DebugLogger.warn_once(f"[Hitbox] {type(self.owner).__name__} lost rect reference")
+            DebugLogger.warn(f"[Hitbox] {type(self.owner).__name__} lost rect reference")
             return
 
         # Recalculate only if size changed
@@ -126,7 +139,11 @@ class CollisionHitbox:
         Args:
             active (bool): True to activate collision, False to disable.
         """
+        if self.active == active:
+            return
         self.active = active
-        state = "enabled" if active else "disabled"
-        DebugLogger.state(f"Hitbox {state} for {type(self.owner).__name__}", category="effects")
+        DebugLogger.state(
+            f"Hitbox {'enabled' if active else 'disabled'} for {type(self.owner).__name__}",
+            category="effects"
+        )
 
