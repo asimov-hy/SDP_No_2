@@ -1,16 +1,17 @@
 """
 collision_manager.py
 --------------------
-Optimized modular collision handler.
+Optimized modular collision handler with centralized hitbox management.
 Uses spatial hashing to reduce redundant collision checks
 and delegates actual responses to entities and bullets.
 
 Responsibilities
 ----------------
-- Detect collisions between bullets ↔ entities.
-- Delegate behavior to bullet.on_hit() or entity.on_collision().
+- Manage hitbox lifecycle for all entities (registration, updates, cleanup).
+- Detect collisions between bullets ↔ entities using spatial hashing.
+- Delegate collision responses to entity.on_collision() methods.
 - Support collision rules for flexible filtering.
-- Provide optional hitbox debug visualization and profiling.
+- Provide optional hitbox debug visualization.
 """
 
 from src.core.game_settings import Debug
@@ -24,6 +25,10 @@ class CollisionManager:
     # Configuration
     # ===========================================================
     BASE_CELL_SIZE = 64
+    NEIGHBOR_OFFSETS = [
+        (0, 0), (1, 0), (-1, 0), (0, 1), (0, -1),
+        (1, 1), (-1, 1), (1, -1), (-1, -1)
+    ]
 
     # ===========================================================
     # Initialization
@@ -42,26 +47,100 @@ class CollisionManager:
         self.spawn_manager = spawn_manager
         self.CELL_SIZE = self.BASE_CELL_SIZE
 
+        # Collision rules
         self.rules = {
             ("player", "enemy"),
             ("player_bullet", "enemy"),
             ("enemy_bullet", "player"),
         }
 
+        # Centralized hitbox registry
+        self.hitboxes = {}  # {entity_id: CollisionHitbox}
+
         DebugLogger.init("Collision system initialized")
+
+    # ===========================================================
+    # Hitbox Lifecycle Management
+    # ===========================================================
+    def register_hitbox(self, entity, scale=1.0, size=None, offset=(0, 0)):
+        """
+        Create and register a hitbox for an entity.
+
+        Args:
+            entity: The entity to create a hitbox for.
+            scale: Scale factor relative to entity.rect (default: 1.0).
+            size: Explicit (width, height) tuple, overrides scale if provided.
+            offset: (x, y) offset from entity center in pixels.
+
+        Returns:
+            CollisionHitbox: The created hitbox instance.
+        """
+        from src.systems.combat.collision_hitbox import CollisionHitbox
+
+        # Create hitbox with scale
+        hitbox = CollisionHitbox(entity, scale=scale, offset=offset)
+
+        # Override with explicit size if provided (switches to manual mode)
+        if size:
+            hitbox.set_size(*size)
+
+        # Register in centralized registry
+        self.hitboxes[id(entity)] = hitbox
+
+        DebugLogger.trace(f"Registered hitbox for {type(entity).__name__}")
+        return hitbox
+
+    def unregister_hitbox(self, entity):
+        """
+        Remove hitbox when entity is destroyed.
+
+        Args:
+            entity: The entity whose hitbox to remove.
+        """
+        entity_id = id(entity)
+        if entity_id in self.hitboxes:
+            del self.hitboxes[entity_id]
+            DebugLogger.trace(f"Unregistered hitbox for {type(entity).__name__}")
+
+    def get_hitbox(self, entity):
+        """
+        Get the hitbox for an entity.
+
+        Args:
+            entity: The entity to get hitbox for.
+
+        Returns:
+            CollisionHitbox or None if not registered.
+        """
+        return self.hitboxes.get(id(entity))
+
+    def update(self):
+        """
+        Update all registered hitboxes to match entity positions.
+        Automatically cleans up hitboxes for dead entities.
+        """
+        for entity_id, hitbox in list(self.hitboxes.items()):
+            # Clean up hitboxes for dead entities
+            entity = hitbox.owner
+            if not getattr(entity, "alive", True):
+                del self.hitboxes[entity_id]
+                continue
+
+            # Update hitbox position/size
+            hitbox.update()
 
     # ===========================================================
     # Utility: Grid Assignment
     # ===========================================================
     def _add_to_grid(self, grid, obj):
         """
-        Assign an entity to a grid cell based on its hitbox center.
+        Assign an entity to a grid cell based on its hitbox.
 
         Args:
-            grid (dict): Spatial hash table mapping cell → list of entities.
-            obj: Any entity with a valid hitbox attribute.
+            grid: Spatial hash table mapping cell → list of entities.
+            obj: Any entity with a registered hitbox.
         """
-        hitbox = getattr(obj, "hitbox", None)
+        hitbox = self.hitboxes.get(id(obj))
         if not hitbox:
             return
 
@@ -83,7 +162,7 @@ class CollisionManager:
         Optimized collision detection using spatial hashing.
 
         Groups entities by screen regions to minimize redundant checks.
-        Delegates all responses to each entity’s `on_collision()` or `on_hit()`.
+        Delegates all responses to each entity's on_collision() method.
 
         Returns:
             list[tuple]: List of (object_a, object_b) pairs that have collided.
@@ -91,9 +170,7 @@ class CollisionManager:
 
         collisions = []
 
-        # -------------------------------------------------------
         # Pre-filter active objects
-        # -------------------------------------------------------
         active_bullets = [b for b in self.bullet_manager.active if b.alive]
         active_enemies = [e for e in self.spawn_manager.enemies if e.alive]
         player = self.player if self.player.alive else None
@@ -102,21 +179,17 @@ class CollisionManager:
         if total_entities == 0:
             return collisions
 
-        # -------------------------------------------------------
-        # 2) Dynamic grid size adjustment
-        # -------------------------------------------------------
+        # Dynamic grid size adjustment
         if total_entities > 800:
-            self.CELL_SIZE = 48  # tighter grid for dense scenes
+            self.CELL_SIZE = 48
         elif total_entities < 100:
-            self.CELL_SIZE = 96  # looser grid for sparse scenes
+            self.CELL_SIZE = 96
         else:
             self.CELL_SIZE = self.BASE_CELL_SIZE
 
-        # -------------------------------------------------------
-        # 3) Build Spatial Grid
-        # -------------------------------------------------------
+        # Build Spatial Grid
         grid = {}
-        add_to_grid = self._add_to_grid  # micro-optimization (local ref)
+        add_to_grid = self._add_to_grid
 
         if player:
             add_to_grid(grid, player)
@@ -125,36 +198,28 @@ class CollisionManager:
         for bullet in active_bullets:
             add_to_grid(grid, bullet)
 
-        # -------------------------------------------------------
-        # 4) Localized Collision Checks (per cell + neighbors)
-        # -------------------------------------------------------
-        neighbor_offsets = [
-            (0, 0), (1, 0), (-1, 0), (0, 1), (0, -1),
-            (1, 1), (-1, 1), (1, -1), (-1, -1)
-        ]
-
+        # Localized Collision Checks (per cell + neighbors)
         checked_pairs = set()
         append_collision = collisions.append
         rules = self.rules
-        get_hitbox = getattr
-        get_tag = getattr
+        get_hitbox = self.hitboxes.get
 
         for cell_key, cell_objects in grid.items():
-            for dx, dy in neighbor_offsets:
+            for dx, dy in self.NEIGHBOR_OFFSETS:
                 neighbor_key = (cell_key[0] + dx, cell_key[1] + dy)
                 neighbor_objs = grid.get(neighbor_key)
                 if not neighbor_objs:
                     continue
 
                 for a in cell_objects:
-                    a_hitbox = get_hitbox(a, "hitbox", None)
+                    a_hitbox = get_hitbox(id(a))
                     if not a_hitbox or not getattr(a_hitbox, "active", True):
                         continue
 
                     for b in neighbor_objs:
                         if a is b:
                             continue
-                        b_hitbox = get_hitbox(b, "hitbox", None)
+                        b_hitbox = get_hitbox(id(b))
                         if not b_hitbox or not getattr(b_hitbox, "active", True):
                             continue
 
@@ -169,8 +234,8 @@ class CollisionManager:
                             continue
 
                         # Rule-based filtering
-                        tag_a = get_tag(a, "collision_tag", None)
-                        tag_b = get_tag(b, "collision_tag", None)
+                        tag_a = getattr(a, "collision_tag", None)
+                        tag_b = getattr(b, "collision_tag", None)
                         if (tag_a, tag_b) not in rules and (tag_b, tag_a) not in rules:
                             continue
 
@@ -178,9 +243,6 @@ class CollisionManager:
                         if a_hitbox.rect.colliderect(b_hitbox.rect):
                             append_collision((a, b))
 
-                            # Unified, single collision header with tags
-                            tag_a = getattr(a, "collision_tag", "?")
-                            tag_b = getattr(b, "collision_tag", "?")
                             DebugLogger.state(
                                 f"Collision: {type(a).__name__} ({tag_a}) <-> {type(b).__name__} ({tag_b})",
                                 category="collision"
@@ -206,21 +268,15 @@ class CollisionManager:
     # ===========================================================
     def draw_debug(self, surface):
         """
-        Draw hitboxes for all entities if debug mode is enabled.
+        Draw hitboxes for all registered entities if debug mode is enabled.
 
         Args:
-            surface (pygame.Surface): The surface used for drawing hitboxes.
+            surface: The rendering surface to draw onto.
         """
         if not Debug.HITBOX_VISIBLE:
             return
 
-        if getattr(self.player, "hitbox", None):
-            self.player.hitbox.draw_debug(surface)
-
-        for enemy in self.spawn_manager.enemies:
-            if getattr(enemy, "hitbox", None):
-                enemy.hitbox.draw_debug(surface)
-
-        for bullet in self.bullet_manager.active:
-            if getattr(bullet, "hitbox", None):
-                bullet.hitbox.draw_debug(surface)
+        # Draw all registered hitboxes
+        for hitbox in self.hitboxes.values():
+            if getattr(hitbox, "active", True):
+                hitbox.draw_debug(surface)
