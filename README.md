@@ -70,12 +70,13 @@ This project demonstrates the use of:
 │  │   │  ├─ base_enemy.py
 │  │   │  └─ enemy_straight.py
 │  │   │
-│  │   └─ enemies/
+│  │   └─ player/
 │  │      ├─ __init__.py
 │  │      ├─ player_base.py
 │  │      ├─ player_combat.py
 │  │      ├─ player_config.py
-│  │      └─ player_movement.py
+│  │      ├─ player_movement.py
+│  │      └─ player_state.py
 │  │
 │  ├─ graphics/
 │  │   ├─ __init__.py

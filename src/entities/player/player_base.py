@@ -14,12 +14,14 @@ Responsibilities
 
 import pygame
 import os
+
 from src.core.game_settings import Display, Layers
 from src.core.game_state import STATE
 from src.core.utils.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
 from src.systems.combat.collision_hitbox import CollisionHitbox
 from .player_config import PLAYER_CONFIG
+from .player_state import InteractionState
 
 
 class Player(BaseEntity):
@@ -79,14 +81,9 @@ class Player(BaseEntity):
         self.visible = True
 
         # -------------------------------------------------------
-        # 4) Effect state management
+        # 4) Interaction state management (Enum-based)
         # -------------------------------------------------------
-        self.effects = {
-            "invincible": False,  # take_dmg: N | deal_dmg: Y | collide: Y
-            "tangible": True,  # take_dmg: Y | deal_dmg: Y | collide: Y
-            "clip_through": False,  # take_dmg: N | deal_dmg: N | collide: N
-            # "active": set(),  # active named effects (e.g. {"damage_invuln", "dash"})
-        }
+        self.state = InteractionState.DEFAULT
 
         # -------------------------------------------------------
         # 5) Health-based visuals
@@ -217,8 +214,35 @@ class Player(BaseEntity):
         Args:
             other (BaseEntity): The entity collided with.
         """
-        from .player_combat import on_collision
-        on_collision(self, other)
+        tag = getattr(other, "collision_tag", None)
+
+        if tag is None:
+            DebugLogger.warn("Collision occurred with untagged entity.")
+            return
+
+        # Combat-related collisions
+        if tag in ("enemy", "enemy_bullet"):
+            from .player_combat import damage_collision
+            damage_collision(self, other)
+            return
+
+    # ===========================================================
+    # Combat & Damage Handling
+    # ===========================================================
+    def take_damage(self, amount: int):
+        """
+        Apply incoming damage to the player and refresh visuals.
+
+        Args:
+            amount (int): Amount of health to reduce.
+        """
+        self.health = max(0, self.health - amount)
+        DebugLogger.state(f"Player took {amount} damage → HP={self.health}")
+        self.update_visual_state()
+
+        if self.health <= 0:
+            self.alive = False
+            DebugLogger.state("Player destroyed!")
 
     # ===========================================================
     # Visual Update Logic
@@ -276,17 +300,46 @@ class Player(BaseEntity):
             category="effects"
         )
 
-    def take_damage(self, amount: int):
+    # ===========================================================
+    # Interaction State Management
+    # ===========================================================
+    def set_interaction_state(self, state: InteractionState | int):
         """
-        Apply incoming damage to the player and refresh visuals.
+        Set the player's current interaction state using a numeric hierarchy.
+
+        State Levels:
+          0 -> DEFAULT      damage: O   enemy collision: O   environment: O
+          1 -> INVINCIBLE   damage: X   enemy collision: O   environment: O
+          2 -> INTANGIBLE   damage: X   enemy collision: X   environment: O
+          3 -> CLIP_THROUGH damage: X   enemy collision: X   environment: X
+
+        Behavior Rules:
+            - Hitbox active if state < 3
+            - Collides with environment if state < 3
+            - Collides with enemies if state < 2
 
         Args:
-            amount (int): Amount of health to reduce.
+            level (int): Integer value from 0–3 representing desired interaction state.
         """
-        self.health = max(0, self.health - amount)
-        DebugLogger.state(f"Player took {amount} damage → HP={self.health}")
-        self.update_visual_state()
+        # -------------------------------------------------------
+        # Normalize input to InteractionState enum
+        # -------------------------------------------------------
+        if isinstance(state, int):
+            try:
+                state = InteractionState(state)
+            except ValueError:
+                DebugLogger.warn(f"Invalid interaction state value: {state}")
+                state = InteractionState.DEFAULT
 
-        if self.health <= 0:
-            self.alive = False
-            DebugLogger.state("Player destroyed!")
+        self.state = state
+        level = state.value
+
+        # -------------------------------------------------------
+        # Apply collision rules
+        # -------------------------------------------------------
+        if self.hitbox:
+            self.hitbox.active = level < 3
+            self.hitbox.collides_with_environment = level < 3
+            self.hitbox.collides_with_enemies = level < 2
+
+        DebugLogger.state(f"InteractionState → {state.name} ({level})", category="effects")
