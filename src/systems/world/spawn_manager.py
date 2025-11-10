@@ -12,6 +12,7 @@ Responsibilities
 
 from src.core.utils.debug_logger import DebugLogger
 from src.entities.enemies.enemy_straight import EnemyStraight
+from src.systems.combat.collision_hitbox import CollisionHitbox
 
 # ===========================================================
 # Enemy Type Registry
@@ -82,6 +83,10 @@ class SpawnManager:
             enemy = cls(x, y, img)
 
             self.enemies.append(enemy)
+
+            if not enemy.hitbox:
+                enemy.hitbox = CollisionHitbox(enemy, scale=getattr(enemy, "_hitbox_scale", 0.85))
+                enemy.has_hitbox = True
 
             DebugLogger.action(
                 f"Spawned enemy '{type_name}' at ({x:.0f}, {y:.0f})",

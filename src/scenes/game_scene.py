@@ -68,8 +68,12 @@ class GameScene:
         # spawn player
         self.player = Player()
 
-        self.draw_manager.load_image("enemy_straight", "assets/images/enemies/enemy_straight.png", scale=1.0)
-        DebugLogger.init("EnemyStraight sprite loaded successfully")
+        # Use a global preloaded image to avoid disk access per scene init
+        self.enemy_sprite = self.draw_manager.get_image("enemy_straight")
+        if not self.enemy_sprite:
+            self.draw_manager.load_image("enemy_straight", "assets/images/enemies/enemy_straight.png", scale=1.0)
+            self.enemy_sprite = self.draw_manager.get_image("enemy_straight")
+        DebugLogger.init("EnemyStraight sprite cached or loaded successfully")
 
         # ===========================================================
         # Spawn Manager Setup (Wave-Based Enemy Spawning)
@@ -148,7 +152,6 @@ class GameScene:
         # 3) Collision Phase
         # ===========================================================
         self.collision_manager.detect()
-        self.bullet_manager.cleanup()
         self.spawner.cleanup()
 
         # ===========================================================
@@ -156,10 +159,6 @@ class GameScene:
         # ===========================================================
         # Update positions for remaining bullets that survived collisions.
         self.bullet_manager.update(dt)
-
-        for bullet in self.bullet_manager.active:
-            if bullet.hitbox:
-                bullet.hitbox.update()
 
         # ===========================================================
         # 6) UI Update

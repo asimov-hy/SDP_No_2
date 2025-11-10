@@ -14,7 +14,6 @@ import pygame
 from src.core.game_settings import Display, Debug, Layers
 from src.entities.base_entity import BaseEntity
 from src.core.utils.debug_logger import DebugLogger
-from src.systems.combat.collision_hitbox import CollisionHitbox
 
 
 class BaseEnemy(BaseEntity):
@@ -44,8 +43,9 @@ class BaseEnemy(BaseEntity):
         # -------------------------------------------------------
         self.collision_tag = "enemy"
 
-        self.hitbox = CollisionHitbox(self, scale=0.85)  # Default scale, customizable per subclass
-        self.has_hitbox = True
+        self.hitbox = None
+        self.has_hitbox = False
+        self._hitbox_scale = 0.85  # Default scale, customizable per subclass
 
         # -------------------------------------------------------
         # Movement & State
@@ -90,6 +90,11 @@ class BaseEnemy(BaseEntity):
 
         self.pos.y += self.speed * dt
         self.sync_rect()
+
+        if not self.has_hitbox:
+            from src.systems.combat.collision_hitbox import CollisionHitbox
+            self.hitbox = CollisionHitbox(self, scale=self._hitbox_scale)
+            self.has_hitbox = True
 
         if self.hitbox:
             self.hitbox.update()

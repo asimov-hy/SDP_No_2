@@ -107,6 +107,7 @@ class BulletManager:
         i = 0
         for b in self.active:
             b.update(dt)
+
             if b.hitbox:
                 b.hitbox.rect.center = b.rect.center
 
