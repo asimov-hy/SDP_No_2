@@ -59,6 +59,8 @@ This project demonstrates the use of:
 │  ├─ entities/
 │  │   ├─ __init__.py
 │  │   ├─ base_entity.py
+│  │   ├─ entity_logic.py
+│  │   ├─ entity_state.py
 │  │   │
 │  │   ├─ bullets/
 │  │   │  ├─ __init__.py
@@ -72,15 +74,26 @@ This project demonstrates the use of:
 │  │   │
 │  │   └─ player/
 │  │      ├─ __init__.py
-│  │      ├─ player_base.py
 │  │      ├─ player_combat.py
 │  │      ├─ player_config.py
+│  │      ├─ player_core.py
+│  │      ├─ player_logic.py
 │  │      ├─ player_movement.py
 │  │      └─ player_state.py
 │  │
 │  ├─ graphics/
 │  │   ├─ __init__.py
-│  │   └─ draw_manager.py
+│  │   ├─ animation_manager.py
+│  │   ├─ animation_registry.py
+│  │   ├─ draw_manager.py
+│  │   │
+│  │   └─ player/
+│  │      ├─ __init__.py
+│  │      ├─ animation_player.py
+│  │      │
+│  │      └─ animation_utils/
+│  │         ├─ anim_motion.py
+│  │         └─ anim_visual.py
 │  │
 │  ├─ scenes/
 │  │   ├─ __init__.py

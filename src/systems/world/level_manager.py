@@ -77,7 +77,9 @@ class LevelManager:
         y_offset = wave.get("y_offset", -100)
         speed = wave.get("speed", None)
 
-        width = self.spawner.display.get_window_size()[0] if self.spawner.display else 800
+        width = getattr(self.spawner.display, "width", 800)
+        if width <= 0:  # ← defensive guard
+            width = 800
 
         DebugLogger.system(
             f"[Stage] Wave {self.wave_index + 1}: {enemy_type} ×{count} | Pattern={pattern} | Time={wave['spawn_time']:.1f}s"
@@ -91,15 +93,11 @@ class LevelManager:
         if pattern == "line":
             spacing = width // (count + 1)
             for i in range(count):
-                x = spacing * (i + 1)
-                positions.append((x, y_offset))
+                positions.append((spacing * (i + 1), y_offset))
 
         elif pattern == "v":
             center_x = width // 2
-            x_spacing = 120
-            y_spacing = 40
-            tip_depth = 120
-
+            x_spacing, y_spacing, tip_depth = 120, 40, 120
             for i in range(count):
                 rel = i - (count - 1) / 2
                 x = center_x + rel * x_spacing
@@ -113,8 +111,13 @@ class LevelManager:
         # -------------------------------------------------------
         # Spawn all enemies (sorted left → right)
         # -------------------------------------------------------
-        for x, y in sorted(positions, key=lambda p: p[0]):
+        if count > 1:
+            positions.sort(key=lambda p: p[0])
+
+        for x, y in positions:
             self.spawner.spawn_enemy(enemy_type, x, y)
-            enemy = self.spawner.enemies[-1]  # access last spawned
-            if speed is not None:
-                enemy.speed = speed
+
+            if self.spawner.enemies:
+                enemy = self.spawner.enemies[-1]
+                if enemy and speed is not None:
+                    enemy.speed = speed

@@ -1,15 +1,16 @@
 """
-player_base.py
+player_core.py
 --------------
-Defines the Player entity and coordinates its movement, combat, and visual state.
+Defines the minimal Player entity core used to coordinate all subsystems.
 
 Responsibilities
 ----------------
-- Initialize the player sprite, hitbox, and configuration.
-- Delegate per-frame logic to modular subsystems:
+- Initialize player sprite, hitbox, and configuration
+- Manage base attributes (position, speed, health placeholder)
+- Delegate updates to:
     - Movement → player_movement.py
     - Combat   → player_combat.py
-- Maintain player-specific attributes such as health, invulnerability, and visibility.
+    - Logic    → player_logic.py (state, effects, visuals)
 """
 
 import pygame
@@ -22,7 +23,6 @@ from src.entities.base_entity import BaseEntity
 from src.systems.combat.collision_hitbox import CollisionHitbox
 from .player_config import PLAYER_CONFIG
 from .player_state import InteractionState
-
 
 class Player(BaseEntity):
     """Represents the controllable player entity."""
@@ -91,14 +91,20 @@ class Player(BaseEntity):
         self.image_states = cfg["image_states"]
         self.color_states = cfg["color_states"]
         self.health_thresholds = cfg["health_thresholds"]
-        self.update_visual_state()
+
+        # Defer visual update to logic layer
+        try:
+            from .player_logic import update_visual_state
+            update_visual_state(self)
+        except ImportError:
+            DebugLogger.warn("player_logic not loaded yet — skipping visual update")
 
         # -------------------------------------------------------
         # 6) Collision setup
         # -------------------------------------------------------
         self.collision_tag = "player"
         self.hitbox_scale = core["hitbox_scale"]
-        self.hitbox = CollisionHitbox(self, self.hitbox_scale)
+        self.hitbox: CollisionHitbox | None = CollisionHitbox(self, self.hitbox_scale)
         self.has_hitbox = True
 
         # -------------------------------------------------------
@@ -225,121 +231,3 @@ class Player(BaseEntity):
             from .player_combat import damage_collision
             damage_collision(self, other)
             return
-
-    # ===========================================================
-    # Combat & Damage Handling
-    # ===========================================================
-    def take_damage(self, amount: int):
-        """
-        Apply incoming damage to the player and refresh visuals.
-
-        Args:
-            amount (int): Amount of health to reduce.
-        """
-        self.health = max(0, self.health - amount)
-        DebugLogger.state(f"Player took {amount} damage → HP={self.health}")
-        self.update_visual_state()
-
-        if self.health <= 0:
-            self.alive = False
-            DebugLogger.state("Player destroyed!")
-
-    # ===========================================================
-    # Visual Update Logic
-    # ===========================================================
-    def update_visual_state(self):
-        """
-        Update the player’s sprite or color based on current health.
-        Triggered after taking damage or healing.
-
-        Changes are determined by the thresholds defined in `player_config.py`.
-        """
-        hp = self.health
-        th = self.health_thresholds
-        mode = self.render_mode
-        state = "normal"  # Default threshold name
-        visual_value = None
-
-        # -------------------------------------------------------
-        # IMAGE MODE
-        # -------------------------------------------------------
-        if mode == "image":
-            if hp <= th["critical"]:
-                state = "damaged_critical"
-            elif hp <= th["moderate"]:
-                state = "damaged_moderate"
-
-            path = self.image_states[state]
-            visual_value = path
-
-            try:
-                new_image = pygame.image.load(path).convert_alpha()
-                # Apply scaling so the image always matches configured size
-                new_image = pygame.transform.scale(new_image, PLAYER_CONFIG["size"])
-                self.image = new_image
-            except Exception as e:
-                DebugLogger.warn(f"Failed to load sprite: {path} ({e})")
-
-        # -------------------------------------------------------
-        # SHAPE MODE
-        # -------------------------------------------------------
-        elif mode == "shape":
-            if hp <= th["critical"]:
-                state = "damaged_critical"
-            elif hp <= th["moderate"]:
-                state = "damaged_moderate"
-
-            self.color = self.color_states[state]
-            visual_value = self.color
-
-        # -------------------------------------------------------
-        # Unified Debug Output
-        # -------------------------------------------------------
-        DebugLogger.state(
-            f"Mode={mode} | HP={hp} | Threshold = {state} | Visual={visual_value}",
-            category="effects"
-        )
-
-    # ===========================================================
-    # Interaction State Management
-    # ===========================================================
-    def set_interaction_state(self, state: InteractionState | int):
-        """
-        Set the player's current interaction state using a numeric hierarchy.
-
-        State Levels:
-          0 -> DEFAULT      damage: O   enemy collision: O   environment: O
-          1 -> INVINCIBLE   damage: X   enemy collision: O   environment: O
-          2 -> INTANGIBLE   damage: X   enemy collision: X   environment: O
-          3 -> CLIP_THROUGH damage: X   enemy collision: X   environment: X
-
-        Behavior Rules:
-            - Hitbox active if state < 3
-            - Collides with environment if state < 3
-            - Collides with enemies if state < 2
-
-        Args:
-            level (int): Integer value from 0–3 representing desired interaction state.
-        """
-        # -------------------------------------------------------
-        # Normalize input to InteractionState enum
-        # -------------------------------------------------------
-        if isinstance(state, int):
-            try:
-                state = InteractionState(state)
-            except ValueError:
-                DebugLogger.warn(f"Invalid interaction state value: {state}")
-                state = InteractionState.DEFAULT
-
-        self.state = state
-        level = state.value
-
-        # -------------------------------------------------------
-        # Apply collision rules
-        # -------------------------------------------------------
-        if self.hitbox:
-            self.hitbox.active = level < 3
-            self.hitbox.collides_with_environment = level < 3
-            self.hitbox.collides_with_enemies = level < 2
-
-        DebugLogger.state(f"InteractionState → {state.name} ({level})", category="effects")

@@ -54,14 +54,14 @@ class EnemyStraight(BaseEnemy):
 
         # Move downward
         self.pos.y += self.speed * dt
-        self.rect.topleft = (int(self.pos.x), int(self.pos.y))
+        self.sync_rect()
 
         # Update hitbox
         if self.hitbox:
             self.hitbox.update()
 
         # Destroy when off-screen
-        if self.pos.y > Display.HEIGHT:
+        if self.rect.top > Display.HEIGHT:
             self.alive = False
 
             DebugLogger.state(

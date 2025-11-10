@@ -10,10 +10,9 @@ Responsibilities
 - Handle update and render passes for all active enemies.
 """
 
-from src.core.game_settings import Debug
 from src.core.utils.debug_logger import DebugLogger
-from src.systems.combat.collision_hitbox import CollisionHitbox
 from src.entities.enemies.enemy_straight import EnemyStraight
+from src.systems.combat.collision_hitbox import CollisionHitbox
 
 # ===========================================================
 # Enemy Type Registry
@@ -42,9 +41,6 @@ class SpawnManager:
         self.draw_manager = draw_manager
         self.display = display
         self.enemies = []  # Active enemy entities
-
-        # Internal cache used to sync with collision manager
-        self._trace_timer = 0.0
 
         DebugLogger.init("Enemy spawn system initialized")
 
@@ -85,14 +81,12 @@ class SpawnManager:
                 x += w / 2
 
             enemy = cls(x, y, img)
-            enemy.collision_tag = getattr(enemy, "collision_tag", "enemy")
-
-            # Attach scaled hitbox for spatial hashing
-            hitbox_scale = getattr(enemy, "hitbox_scale", 1.0)
-            enemy.hitbox = CollisionHitbox(enemy, scale=hitbox_scale)
-            enemy.has_hitbox = True
 
             self.enemies.append(enemy)
+
+            if not enemy.hitbox:
+                enemy.hitbox = CollisionHitbox(enemy, scale=getattr(enemy, "_hitbox_scale", 0.85))
+                enemy.has_hitbox = True
 
             DebugLogger.action(
                 f"Spawned enemy '{type_name}' at ({x:.0f}, {y:.0f})",
@@ -120,16 +114,19 @@ class SpawnManager:
             if not enemy.alive:
                 continue
             enemy.update(dt)
-            if enemy.has_hitbox:
-                enemy.hitbox.update()
 
         # -------------------------------------------------------
         # Cleanup inactive enemies efficiently
         # -------------------------------------------------------
-        before = len(self.enemies)
-        self.enemies = [e for e in self.enemies if e.alive]
-        removed = before - len(self.enemies)
+        i = 0
+        total_before = len(self.enemies)
+        for e in self.enemies:
+            if e.alive:
+                self.enemies[i] = e
+                i += 1
+        del self.enemies[i:]
 
+        removed = total_before - i
         if removed > 0:
             DebugLogger.state(
                 f"Removed {removed} inactive enemies",
@@ -152,10 +149,15 @@ class SpawnManager:
     # ===========================================================
     def cleanup(self):
         """Immediately remove enemies that are no longer alive."""
-        before = len(self.enemies)
-        self.enemies = [e for e in self.enemies if e.alive]
-        removed = before - len(self.enemies)
+        total_before = len(self.enemies)
+        i = 0
+        for e in self.enemies:
+            if e.alive:
+                self.enemies[i] = e
+                i += 1
+        del self.enemies[i:]
 
+        removed = total_before - i
         if removed > 0:
             DebugLogger.state(
                 f"Cleaned up {removed} destroyed enemies",
