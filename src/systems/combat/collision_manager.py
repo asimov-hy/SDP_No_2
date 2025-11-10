@@ -190,6 +190,7 @@ class CollisionManager:
                             try:
                                 if hasattr(a, "on_collision"):
                                     a.on_collision(b)
+
                                 if hasattr(b, "on_collision"):
                                     b.on_collision(a)
 

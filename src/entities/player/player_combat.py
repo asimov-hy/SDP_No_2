@@ -8,6 +8,7 @@ Handles all player combat-related systems:
 
 import pygame
 from src.core.utils.debug_logger import DebugLogger
+from .player_state import InteractionState
 
 
 # ===========================================================
@@ -54,140 +55,34 @@ def shoot(player):
 # ===========================================================
 # Collision & Damage
 # ===========================================================
-def on_collision(player, other):
+def damage_collision(player, other):
     """
     Handle collision responses with enemies or projectiles.
+
+    Behavior:
+        - Check player state (invincible/intangible, etc.)
+        - Retrieve damage value from the collided entity
+        - Apply damage if valid
 
     Args:
         player (Player): The player entity.
         other (BaseEntity): The entity collided with.
     """
-    tag = getattr(other, "collision_tag", "unknown")
-    damage_value = getattr(other, "damage", 1)  # Default damage is 1 if undefined
 
-    # Skip if player cannot take damage
-    if player.effects["invincible"]:
-        DebugLogger.trace(f"Collision ignored — player invincible vs {tag}")
+    # 1) Validate state before taking damage
+    if player.state is not InteractionState.DEFAULT:
+        DebugLogger.state(f"Ignored damage due to state: {player.state.name}", category="combat")
         return
 
-    # Skip if player is non-collidable (e.g. phasing, clip state)
-    if not player.effects["collidable"]:
-        DebugLogger.trace(f"Collision ignored — player non-collidable vs {tag}")
+    # 2) Retrieve damage value
+    damage = getattr(other, "damage", 1)
+    if not isinstance(damage, (int, float)) or damage <= 0:
+        DebugLogger.warn(f"Invalid or missing damage value from {getattr(other, 'collision_tag', 'unknown')}")
         return
 
-    # Handle damage based on source type
-    if tag == "enemy":
-        DebugLogger.state(f"Player collided with {type(other).__name__} → damage {damage_value}", category="combat")
-        take_damage(player, damage_value, source=type(other).__name__)
+    # 3) Apply damage
+    player.take_damage(damage)
 
-    elif tag == "enemy_bullet":
-        DebugLogger.state(f"Player hit by enemy bullet → damage {damage_value}", category="combat")
-        take_damage(player, damage_value, source="enemy_bullet")
-
-    else:
-        DebugLogger.trace(f"Player ignored collision with {tag}")
-
-
-def take_damage(player, amount, source="unknown"):
-    """
-    Apply incoming damage, trigger blinking and invulnerability.
-
-    Args:
-        player (Player): The player entity.
-        amount (int): Amount of health lost.
-        source (str): Source of damage (enemy, bullet, etc.)
-    """
-    if player.effects["invincible"]:
-        DebugLogger.trace(f"Player invincible vs {source}")
-        return
-
-    player.health -= amount
-    DebugLogger.state(f"Took {amount} damage from {source} → HP={player.health}")
-
-    player.update_visual_state()
-
-    if player.health <= 0:
-        player.alive = False
-        DebugLogger.state("Player destroyed!")
-    else:
-        # -------------------------------------------------------
-        # Activate invulnerability & disable combat collision
-        # -------------------------------------------------------
-        player.set_effect("invincible", True)
-        player.set_effect("collidable", False)
-
-        if player.hitbox:
-            player.hitbox.active = False
-
-        DebugLogger.state("Took Damage -> Temp Invulnerability", category="effects")
-
-        # -------------------------------------------------------
-        # Trigger damage animation and restore state after completion
-        # -------------------------------------------------------
-        if hasattr(player, "animation_manager") and player.animation_manager:
-            try:
-                player.animation_manager.on_complete = lambda e, a: player.clear_effects()
-                player.animation_manager.play("damage", duration=player.invuln_duration)
-            except Exception as e:
-                DebugLogger.warn(f"Failed to play damage animation: {e}", category="animation")
-
-
-# ===========================================================
-# Effect Management
-# ===========================================================
-def set_effect(self, name: str, state: bool = True):
-    """
-    Enable or disable a named player effect safely.
-
-    Args:
-        name (str): Effect key from self.effects (e.g. "invincible", "collidable").
-        state (bool): True to enable, False to disable.
-    """
-    if name not in self.effects:
-        DebugLogger.warn(f"Attempted to set unknown effect '{name}'", category="effects")
-        return
-
-    self.effects[name] = state
-
-    # Sync hitbox and visibility for key states
-    if name == "collidable" and self.hitbox:
-        self.hitbox.active = state
-    if name == "clip_through" and state:
-        self.set_effect("collidable", False)  # automatically disable collidable
-
-    DebugLogger.state(f"Effect '{name}' set to {state}", category="effects")
-
-
-def clear_effects(self, name: str | None = None):
-    """
-    Clear a specific effect or all effects back to default state.
-
-    Args:
-        name (str | None): If provided, only clears that effect. If None, resets all.
-    """
-    if name:
-        # Clear single effect
-        if name in self.effects and isinstance(self.effects[name], bool):
-            default_state = (name != "invincible" and name != "clip_through")
-            self.effects[name] = default_state
-            DebugLogger.state(f"Effect '{name}' cleared → {default_state}", category="effects")
-        else:
-            DebugLogger.warn(f"Tried to clear unknown or non-boolean effect '{name}'", category="effects")
-    else:
-        # Reset all boolean effects to default
-        defaults = {
-            "invincible": False,
-            "collidable": True,
-            "clip_through": False,
-        }
-        for key, value in defaults.items():
-            if key in self.effects:
-                self.effects[key] = value
-
-        # Clear all temporary or named active effects
-        self.effects["active"].clear()
-
-        if self.hitbox:
-            self.hitbox.active = True
-
-        DebugLogger.state("All effects reset to default state", category="effects")
+    # 4) Handle player death
+    if not player.alive:
+        DebugLogger.state("Player death triggered by collision", category="combat")
