@@ -22,7 +22,6 @@ from src.core.game_state import STATE
 from src.core.utils.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import CollisionTags
-from src.systems.combat.collision_hitbox import CollisionHitbox
 from .player_config import PLAYER_CONFIG
 from .player_state import InteractionState
 
@@ -46,18 +45,15 @@ class Player(BaseEntity):
         self.cfg = cfg
         core = cfg["core_attributes"]
         default_state = cfg["default_shape"]
-
-        self.render_mode = cfg["render_mode"]
         size = tuple(cfg["size"])
+        self.render_mode = cfg["render_mode"]
 
-        # -------------------------------------------------------
-        # 1) Load/prepare visual asset
-        # -------------------------------------------------------
+        # --- Visual setup ---
         if self.render_mode == "image":
             image = self._load_sprite(cfg, image)
             image = self._apply_scaling(size, image)
             shape_data = None
-        else:  # shape mode
+        else:
             image = None
             shape_data = {
                 "type": default_state["shape_type"],
@@ -66,57 +62,41 @@ class Player(BaseEntity):
                 "kwargs": {}
             }
 
-        # -------------------------------------------------------
-        # 2) Compute spawn position
-        # -------------------------------------------------------
+        # --- Spawn position ---
         x, y = self._compute_spawn_position(x, y, size, image)
 
-        # -------------------------------------------------------
-        # 3) BaseEntity initialization (FIXED API)
-        # -------------------------------------------------------
-        super().__init__(
-            x, y,
-            image=image,
-            shape_data=shape_data,
-            draw_manager=draw_manager  # Pass through for prebaking
-        )
+        # --- Base entity init ---
+        super().__init__(x, y, image=image, shape_data=shape_data, draw_manager=draw_manager)
 
-        # -------------------------------------------------------
-        # 4) Core attributes
-        # -------------------------------------------------------
+        if self.render_mode == "shape":
+            self.shape_data = shape_data
+
+        # --- Core stats ---
         self.velocity = pygame.Vector2(0, 0)
         self.speed = core["speed"]
         self.health = core["health"]
         self.max_health = self.health
-        self.layer = Layers.PLAYER
-        self.collision_tag = CollisionTags.PLAYER
         self.alive = True
         self.visible = True
+        self.layer = Layers.PLAYER
+        self.collision_tag = CollisionTags.PLAYER
 
-        # -------------------------------------------------------
-        # 5) Interaction state
-        # -------------------------------------------------------
+        # --- Interaction state ---
         self.state = InteractionState.DEFAULT
 
-        # -------------------------------------------------------
-        # 6) Visual state config (for dynamic damage visuals)
-        # -------------------------------------------------------
+        # --- Visual states ---
         self.image_states = cfg["image_states"]
         self.color_states = cfg["color_states"]
         self.health_thresholds = cfg["health_thresholds"]
-
-        # Cache thresholds as attributes (avoid dict lookup)
         self._threshold_moderate = self.health_thresholds["moderate"]
         self._threshold_critical = self.health_thresholds["critical"]
+        self._color_cache = self.color_states
 
-        # Cache visual states
-        self._color_cache = self.color_states  # Already a dict
         if self.render_mode == "image":
-            # Preload ALL image states at init
             self._image_cache = {
-                "normal": self._load_and_scale(self.image_states["normal"]),
-                "damaged_moderate": self._load_and_scale(self.image_states["damaged_moderate"]),
-                "damaged_critical": self._load_and_scale(self.image_states["damaged_critical"])
+                "normal": self._load_and_scale(self.image_states["normal"], size),
+                "damaged_moderate": self._load_and_scale(self.image_states["damaged_moderate"], size),
+                "damaged_critical": self._load_and_scale(self.image_states["damaged_critical"], size)
             }
         else:
             self._image_cache = {}
@@ -124,32 +104,20 @@ class Player(BaseEntity):
         # Track health for dirty checking
         self._cached_health = self.health
 
-        # Defer visual update to logic layer
-        try:
-            from .player_logic import update_visual_state
-            update_visual_state(self)
-        except ImportError:
-            DebugLogger.warn("player_logic not loaded yet — skipping visual update")
-
-        # -------------------------------------------------------
-        # 7) Collision setup
-        # -------------------------------------------------------
+        # --- Collision setup ---
         self.hitbox_scale = core["hitbox_scale"]
 
-        # -------------------------------------------------------
-        # 8) Combat setup
-        # -------------------------------------------------------
+        # --- Combat setup ---
         self.input_manager = InputManager()
         self.bullet_manager = None
         self.shoot_cooldown = 0.1
         self.shoot_timer = 0.0
 
-        # -------------------------------------------------------
-        # 9) Animation manager
-        # -------------------------------------------------------
+        # --- Animation manager ---
         from src.graphics.animation_manager import AnimationManager
         self.animation_manager = AnimationManager(self)
 
+        # --- Global reference ---
         STATE.player_ref = self
 
         DebugLogger.init(
@@ -202,10 +170,10 @@ class Player(BaseEntity):
         return x, y
 
     @staticmethod
-    def _load_and_scale(self, path):
+    def _load_and_scale(path, size):
         """Load and scale a single image state."""
         img = pygame.image.load(path).convert_alpha()
-        return pygame.transform.scale(img, tuple(self.size))
+        return pygame.transform.scale(img, size)
 
     # ===========================================================
     # Frame Cycle

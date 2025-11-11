@@ -6,7 +6,6 @@ Handles player combat-related systems:
 - Collision damage routing through entity_logic.
 """
 
-import pygame
 from src.core.utils.debug_logger import DebugLogger
 from src.entities.bullets.bullet_straight import StraightBullet
 from src.entities.player.player_state import InteractionState
@@ -17,11 +16,12 @@ from src.entities.player.player_state import InteractionState
 # ===========================================================
 def update_shooting(player, dt: float, attack_held: bool):
     """
-    Manage shooting cooldowns and fire bullets when input is triggered.
+    Handle the player's shooting behavior and cooldown timing.
 
     Args:
-        player (Player): The player entity.
-        dt (float): Delta time since the last frame (seconds).
+        player (Player): The player instance controlling the shot.
+        dt (float): Delta time since the last frame (in seconds).
+        attack_held (bool): Whether the attack input is currently held.
     """
     # Accumulate time toward next allowed shot
     player.shoot_timer = min(player.shoot_timer + dt, player.shoot_cooldown)
@@ -81,6 +81,8 @@ def damage_collision(player, other):
         return
 
     player.health -= damage
+    from .player_logic import update_visual_state
+    update_visual_state(player)
 
     # Trigger animations/visuals
     from .player_logic import on_damage

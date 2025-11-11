@@ -39,14 +39,13 @@ def update_visual_state(player):
     """
     Update player visuals based on health thresholds from config.
     """
-    # Skip if already at correct state
     health = player.health
     if health == player._cached_health:
         return
 
     player._cached_health = health
 
-    # Determine state (precomputed thresholds)
+    # Determine state
     if health <= player._threshold_critical:
         state_key = "damaged_critical"
     elif health <= player._threshold_moderate:
@@ -54,8 +53,7 @@ def update_visual_state(player):
     else:
         state_key = "normal"
 
-    # Apply cached visuals
     if player.render_mode == "shape":
-        player.color = player._color_cache[state_key]
+        player.refresh_visual(new_color=player._color_cache[state_key])
     else:
-        player.image = player._image_cache[state_key]
+        player.refresh_visual(new_image=player._image_cache[state_key])

@@ -136,6 +136,8 @@ class BaseEntity:
             # Store shape data for manual rendering (fallback path)
             self.shape_data = shape_data
 
+        self.draw_manager = draw_manager
+
         # -------------------------------------------------------
         # Entity State
         # -------------------------------------------------------
@@ -274,3 +276,36 @@ class BaseEntity:
             f"tag={self.collision_tag} "
             f"alive={self.alive}>"
         )
+
+    def refresh_visual(self, new_image=None, new_color=None, shape_type=None, size=None):
+        """
+        Rebuild entity visuals when appearance changes at runtime.
+
+        Args:
+            new_image: Pre-loaded image to use (image mode)
+            new_color: RGB tuple to rebake shape with (shape mode)
+            shape_type: Shape type if different from current
+            size: Size tuple if different from current
+        """
+        if new_image:
+            # Image mode - just swap
+            self.image = new_image
+        elif new_color and hasattr(self, 'shape_data'):
+            if not (hasattr(self, 'draw_manager') and self.draw_manager):
+                DebugLogger.warn(f"{type(self).__name__} can't rebake - no draw_manager")
+                return
+
+            # Shape mode - rebake
+            shape_type = shape_type or self.shape_data.get("type", "rect")
+            size = size or self.shape_data.get("size", (10, 10))
+
+            if hasattr(self, 'draw_manager') and self.draw_manager:
+                self.image = self.draw_manager.prebake_shape(
+                    type=shape_type,
+                    size=size,
+                    color=new_color
+                )
+
+        # Sync rect to new image size while preserving position
+        if self.image:
+            self.rect = self.image.get_rect(center=self.pos)
