@@ -42,16 +42,14 @@ class GameScene:
             scene_manager: Reference to SceneManager for access to display,
                            input, and draw subsystems.
         """
+        DebugLogger.init("Initializing game scene")
+
         self.scene_manager = scene_manager
         self.display = scene_manager.display
         self.input = scene_manager.input
         self.draw_manager = scene_manager.draw_manager
 
-        DebugLogger.system("Initializing game scene")
-
-        # ===========================================================
         # UI System Setup
-        # ===========================================================
         self.ui = UIManager(self.display, self.draw_manager)
 
         # Base HUD (game overlay)
@@ -61,51 +59,52 @@ class GameScene:
         except Exception as e:
             DebugLogger.warn(f"HUDManager unavailable: {e}")
 
-        # ===========================================================
         # Entity Setup
-        # ===========================================================
 
         # spawn player
         self.player = Player(draw_manager=self.draw_manager)
+        DebugLogger.init("Initialized Player")
 
         # Use a global preloaded image to avoid disk access per scene init
         self.enemy_sprite = self.draw_manager.get_image("enemy_straight")
         if not self.enemy_sprite:
             self.draw_manager.load_image("enemy_straight", "assets/images/enemies/enemy_straight.png", scale=1.0)
             self.enemy_sprite = self.draw_manager.get_image("enemy_straight")
-        DebugLogger.init("EnemyStraight sprite cached or loaded successfully")
+        DebugLogger.init("Loaded Enemy")
 
-        # ===========================================================
         # Bullet Manager Setup
-        # ===========================================================
         self.bullet_manager = BulletManager()
-        self.player.bullet_manager = self.bullet_manager  # Give player access
-        DebugLogger.init("BulletManager initialized and linked to Player")
+        DebugLogger.init("Initialized BulletManager")
 
-        # ===========================================================
+        self.player.bullet_manager = self.bullet_manager
+        DebugLogger.init("Linked Bullet Manager to Player")
+
         # Collision Manager Setup
-        # ===========================================================
         self.collision_manager = CollisionManager(
             self.player,
             self.bullet_manager,
             None
         )
-        DebugLogger.init("CollisionManager initialized successfully")
+        DebugLogger.init("Initialized CollisionManager")
+
+        self.bullet_manager.collision_manager = self.collision_manager
+        DebugLogger.init("Linked Collision Manager to Bullet Manager")
 
         # Register player's hitbox through the CollisionManager
         self.player.hitbox = self.collision_manager.register_hitbox(
             self.player,
             scale=self.player.hitbox_scale
         )
-        DebugLogger.state("Player hitbox registered with CollisionManager", category="collision")
+        DebugLogger.init("Registered Player Hitbox", category="collision")
 
         # ===========================================================
         # Spawn Manager Setup
         # ===========================================================
         self.spawner = SpawnManager(self.draw_manager, self.display, self.collision_manager)
-        DebugLogger.init("SpawnManager initialized successfully")
+        DebugLogger.init("Initialized SpawnManager")
 
         self.collision_manager.spawn_manager = self.spawner
+
 
         # ===========================================================
         # Stage Manager Setup (Predefined Waves)

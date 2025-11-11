@@ -108,6 +108,10 @@ class BulletManager:
 
         DebugLogger.state(f"Prewarmed {count} bullets for [{owner}] pool", category="combat")
 
+    def link_collision_manager(self, cm):
+        self.collision_manager = cm
+        DebugLogger.system("CollisionManager linked to BulletManager", category="combat")
+
     # ===========================================================
     # Spawning
     # ===========================================================
@@ -182,6 +186,7 @@ class BulletManager:
                     category="combat"
                 )
                 bullet.death_state = LifecycleState.DEAD
+                self._unregister_hitbox(bullet)
                 self.pool.append(bullet)
                 continue
 
@@ -190,6 +195,7 @@ class BulletManager:
                 next_active.append(bullet)
             else:
                 bullet.death_state = LifecycleState.DEAD
+                self._unregister_hitbox(bullet)
                 self.pool.append(bullet)
 
         self.active = next_active
@@ -222,19 +228,32 @@ class BulletManager:
     # ===========================================================
     def _register_hitbox(self, bullet):
         """Register bullet hitbox if collision manager is available."""
+
         if self.collision_manager:
             self.collision_manager.register_hitbox(
                 bullet,
                 scale=getattr(bullet, "hitbox_scale", 1.0)
             )
 
+    def _unregister_hitbox(self, bullet):
+        """Remove bullet from collision tracking."""
+        if self.collision_manager:
+            self.collision_manager.unregister_hitbox(bullet)
     # ===========================================================
-    # Cleanup (External Call)
+    # Cleanup
     # ===========================================================
     def cleanup(self):
         """Immediately remove or recycle inactive bullets."""
         before = len(self.active)
-        self.active = [b for b in self.active if b.death_state < LifecycleState.DEAD]
+        cleaned = []
+        for b in self.active:
+            if b.death_state < LifecycleState.DEAD:
+                cleaned.append(b)
+            else:
+                self._unregister_hitbox(b)
+                self.pool.append(b)
+
+        self.active = cleaned
         removed = before - len(self.active)
 
         if removed > 0:
