@@ -1,0 +1,102 @@
+{
+  "dummy_item": {
+    "name": "Dummy Item",
+    "asset_path": "assets/images/items/dummy.png",
+    "conditions": [
+      { "type": "COLLECTIBLE", "value": true }
+    ],
+    "effects": [
+      {
+        "type": "ADD_SCORE",
+        "amount": 10
+      }
+    ]
+  },
+  "health_potion_small": {
+    "name": "Small Health Potion",
+    "asset_path": "assets/images/items/health_potion_small.png",
+    "conditions": [
+      { "type": "COLLECTIBLE", "value": true },
+      { "type": "PLAYER_HEALTH_BELOW_PERCENT", "value": 100 }
+    ],
+    "effects": [
+      {
+        "type": "HEAL",
+        "amount": 20
+      }
+    ]
+  },
+  "emergency_health_potion": {
+    "name": "Emergency Health Potion",
+    "asset_path": "assets/images/items/emergency_potion.png",
+    "conditions": [
+      { "type": "COLLECTIBLE", "value": true },
+      { "type": "PLAYER_HEALTH_BELOW_PERCENT", "value": 50 }
+    ],
+    "effects": [
+      {
+        "type": "HEAL",
+        "amount": 75
+      }
+    ]
+  },
+  "speed_boost_item": {
+    "name": "Speed Boost",
+    "asset_path": "assets/images/items/speed_boost.png",
+    "conditions": [
+      { "type": "COLLECTIBLE", "value": true }
+    ],
+    "effects": [
+      {
+        "type": "INCREASE_SPEED",
+        "duration": 5.0,
+        "multiplier": 1.2
+      }
+    ]
+  },
+  "synergy_coin": {
+    "name": "Synergy Coin",
+    "asset_path": "assets/images/items/synergy_coin.png",
+    "conditions": [
+      { "type": "COLLECTIBLE", "value": true },
+      { "type": "PLAYER_HAS_EFFECT", "effect_type": "INCREASE_SPEED" }
+    ],
+    "effects": [
+      {
+        "type": "ADD_SCORE",
+        "amount": 500
+      }
+    ]
+  },
+  "coin_gold": {
+    "name": "Gold Coin",
+    "asset_path": "assets/images/items/coin_gold.png",
+    "conditions": [
+      { "type": "COLLECTIBLE", "value": true }
+    ],
+    "effects": [
+      {
+        "type": "ADD_SCORE",
+        "amount": 100
+      }
+    ]
+  },
+  "healing_totem": {
+    "name": "Healing Totem",
+    "asset_path": "assets/images/items/totem.png",
+    "conditions": [
+      { "type": "COLLECTIBLE", "value": false }
+    ],
+    "update_triggers": [
+      {
+        "conditions": [
+          { "type": "PLAYER_IN_RANGE", "radius": 150 },
+          { "type": "ON_TIMER", "interval": 1.0 }
+        ],
+        "effects": [
+          { "type": "HEAL", "amount": 5, "target": "PLAYER" }
+        ]
+      }
+    ]
+  }
+}
