@@ -16,7 +16,6 @@ Responsibilities
 import pygame
 import os
 
-from src.core.engine.input_manager import InputManager
 from src.core.game_settings import Display, Layers
 from src.core.game_state import STATE
 from src.core.utils.debug_logger import DebugLogger
@@ -31,7 +30,8 @@ class Player(BaseEntity):
     """Represents the controllable player entity."""
 
     def __init__(self, x: float | None = None, y: float | None = None,
-                 image: pygame.Surface | None = None, draw_manager=None):
+                 image: pygame.Surface | None = None, draw_manager=None,
+                 input_manager=None):
         """
         Initialize the player entity.
 
@@ -107,20 +107,21 @@ class Player(BaseEntity):
         self.hitbox_scale = core["hitbox_scale"]
 
         # --- Combat setup ---
-        self.input_manager = InputManager()
+        if input_manager is not None:
+            self.input_manager = input_manager
         self.bullet_manager = None
         self.shoot_cooldown = 0.1
         self.shoot_timer = 0.0
 
-        # --- Animation manager ---
-        from src.graphics.animation_manager import AnimationManager
-        self.animation_manager = AnimationManager(self)
+        # --- Animation manager --- WIP
+        # from src.graphics.animation_manager import AnimationManager
+        # self.animation_manager = AnimationManager(self)
 
         # --- Global reference ---
         STATE.player_ref = self
 
         DebugLogger.init(
-            f"Player @ ({x:.1f}, {y:.1f}) | Mode={self.render_mode} | "
+            f"Initialized Player @ ({x:.1f}, {y:.1f}) | Mode={self.render_mode} | "
             f"Speed={self.speed} | HP={self.health}"
         )
 
@@ -192,8 +193,8 @@ class Player(BaseEntity):
         attack_held = self.input_manager.is_attack_held()
         update_shooting(self, dt, attack_held)
 
-        if self.animation_manager:
-            self.animation_manager.update(dt)
+        # if self.animation_manager:
+        #     self.animation_manager.update(dt)
 
     def draw(self, draw_manager):
         """Render player if visible."""

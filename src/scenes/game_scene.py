@@ -62,22 +62,15 @@ class GameScene:
         # Entity Setup
 
         # spawn player
-        self.player = Player(draw_manager=self.draw_manager)
+        self.player = Player(draw_manager=self.draw_manager, input_manager=self.input)
         DebugLogger.init("Initialized Player")
-
-        # Use a global preloaded image to avoid disk access per scene init
-        self.enemy_sprite = self.draw_manager.get_image("enemy_straight")
-        if not self.enemy_sprite:
-            self.draw_manager.load_image("enemy_straight", "assets/images/enemies/enemy_straight.png", scale=1.0)
-            self.enemy_sprite = self.draw_manager.get_image("enemy_straight")
-        DebugLogger.init("Loaded Enemy")
 
         # Bullet Manager Setup
         self.bullet_manager = BulletManager()
         DebugLogger.init("Initialized BulletManager")
 
         self.player.bullet_manager = self.bullet_manager
-        DebugLogger.init("Linked Bullet Manager to Player")
+        DebugLogger.init("	└─ Linked Bullet Manager to Player")
 
         # Collision Manager Setup
         self.collision_manager = CollisionManager(
@@ -85,17 +78,16 @@ class GameScene:
             self.bullet_manager,
             None
         )
-        DebugLogger.init("Initialized CollisionManager")
 
         self.bullet_manager.collision_manager = self.collision_manager
-        DebugLogger.init("Linked Collision Manager to Bullet Manager")
+        DebugLogger.init("	└─ Linked Collision Manager to Bullet Manager")
 
         # Register player's hitbox through the CollisionManager
         self.player.hitbox = self.collision_manager.register_hitbox(
             self.player,
             scale=self.player.hitbox_scale
         )
-        DebugLogger.init("Registered Player Hitbox", category="collision")
+        DebugLogger.init("	└─ Registered Player Hitbox", category="collision")
 
         # ===========================================================
         # Spawn Manager Setup
@@ -142,36 +134,25 @@ class GameScene:
             dt (float): Delta time (in seconds) since the last frame.
         """
 
-        # ===========================================================
         # 1) Player Input & Update
-        # ===========================================================
         move = self.input.get_normalized_move()
         self.player.move_vec = move
         self.player.update(dt)
-        # Bullets are spawned here if player fires — so they exist this frame.
 
-        # ===========================================================
         # 2) Enemy Spawn & Stage Progression
-        # ===========================================================
         self.stage_manager.update(dt)
         self.spawner.update(dt)
 
-        # ===========================================================
         # 3) Collision Phase
-        # ===========================================================
         self.collision_manager.update()
         self.collision_manager.detect()
         self.spawner.cleanup()
 
-        # ===========================================================
         # 5) Bullet Update (after collision)
-        # ===========================================================
         # Update positions for remaining bullets that survived collisions.
         self.bullet_manager.update(dt)
 
-        # ===========================================================
         # 6) UI Update
-        # ===========================================================
         # Update HUD and overlays last, so they reflect the most recent state
         # (e.g., score, health after collisions).
         self.ui.update(pygame.mouse.get_pos())
@@ -186,16 +167,12 @@ class GameScene:
         Args:
             draw_manager (DrawManager): Centralized renderer responsible for batching and displaying.
         """
-        # =======================================================
         # Rendering Order (Layer Priority)
-        # =======================================================
         self.spawner.draw()
         self.bullet_manager.draw(draw_manager)
         self.player.draw(draw_manager)
         self.ui.draw(draw_manager)
 
-        # =======================================================
         # Optional Debug Rendering
-        # =======================================================
         if Debug.HITBOX_VISIBLE:
             self.collision_manager.draw_debug(draw_manager)
