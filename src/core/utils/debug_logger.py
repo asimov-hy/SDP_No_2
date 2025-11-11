@@ -116,59 +116,74 @@ class DebugLogger:
     # Core Logging Utility
     # ===========================================================
     @staticmethod
-    def _log(tag: str, message: str, color: str = "reset", category: str = "system", level: str = "INFO"):
+    def _log(tag: str, message: str, color: str = "reset",
+             category: str = "system", level: str = "INFO",
+             meta_mode: str = "full", sub: int = 0):
         """
-        Core log formatter with filtering support.
+        Core log formatter with filtering, indentation, and metadata display.
 
         Args:
-            tag (str): The type of log message (e.g., SYSTEM, STATE, ACTION, WARN).
-            message (str): Descriptive message to display.
-            color (str, optional): Color key for terminal output.
-            category (str, optional): Log category for filtering (system, stage, collision, etc.).
-            level (str, optional): Log level for filtering (INFO, WARN, VERBOSE, etc.).
+            tag (str): Log tag (e.g., SYSTEM, STATE).
+            message (str): Message text.
+            color (str): Terminal color key.
+            category (str): Log category for filtering.
+            level (str): Log level (INFO, WARN, etc.).
+            meta_mode (str): Metadata mode ("full", "time", "simple", "none").
+            sub (int): Indentation level for hierarchical logs.
         """
         if not DebugLogger._should_log(category, level):
             return
 
-        source = DebugLogger._get_caller()
-        timestamp = datetime.now().strftime("%H:%M:%S")
         color_code = DebugLogger.COLORS.get(color, DebugLogger.COLORS["reset"])
-        print(f"{color_code}[{timestamp}] [{source}][{tag}] {message}{DebugLogger.COLORS['reset']}")
+        reset = DebugLogger.COLORS["reset"]
+
+        # Indentation and branch marker
+        indent = ""
+        if sub > 0:
+            indent = " " * (4 * sub) + "└─ "
+
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        source = DebugLogger._get_caller()
+
+        # Select metadata prefix
+        if meta_mode == "full":
+            prefix = f"[{timestamp}] [{source}][{tag}] "
+        elif meta_mode == "time":
+            prefix = f"[{timestamp}] "
+        elif meta_mode == "file":
+            prefix = f"[{tag}] "
+        else:  # "none"
+            prefix = ""
+
+        print(f"{color_code}{indent}{prefix}{message}{reset}")
 
     # ===========================================================
     # Public Helper Methods
     # ===========================================================
     @staticmethod
-    def action(msg: str, category: str = "system"):
-        """Log notable player or system actions."""
-        DebugLogger._log("ACTION", msg, "action", category, "INFO")
+    def action(msg: str, category: str = "system", meta_mode: str = "full", sub: int = 0):
+        DebugLogger._log("ACTION", msg, "action", category, "INFO", meta_mode, sub)
 
     @staticmethod
-    def state(msg: str, category: str = "system"):
-        """Log changes in state, mode, or configuration."""
-        DebugLogger._log("STATE", msg, "state", category, "INFO")
+    def state(msg: str, category: str = "system", meta_mode: str = "full", sub: int = 0):
+        DebugLogger._log("STATE", msg, "state", category, "INFO", meta_mode, sub)
 
     @staticmethod
-    def system(msg: str, category: str = "system"):
-        """Log initialization, setup, or teardown events."""
-        DebugLogger._log("SYSTEM", msg, "system", category, "INFO")
+    def system(msg: str, category: str = "system", meta_mode: str = "full", sub: int = 0):
+        DebugLogger._log("SYSTEM", msg, "system", category, "INFO", meta_mode, sub)
 
     @staticmethod
-    def warn(msg: str, category: str = "system"):
-        """Log non-fatal warnings and recoverable issues."""
-        DebugLogger._log("WARN", msg, "warn", category, "WARN")
+    def warn(msg: str, category: str = "system", meta_mode: str = "full", sub: int = 0):
+        DebugLogger._log("WARN", msg, "warn", category, "WARN", meta_mode, sub)
 
     @staticmethod
-    def trace(msg: str, category: str = "collision"):
-        """Low-level debug trace for per-frame or high-frequency events."""
-        DebugLogger._log("TRACE", msg, "trace", category, "VERBOSE")
+    def trace(msg: str, category: str = "collision", meta_mode: str = "full", sub: int = 0):
+        DebugLogger._log("TRACE", msg, "trace", category, "VERBOSE", meta_mode, sub)
 
     @staticmethod
-    def init(msg: str = "", color: str = "init", show_meta: bool = True, category: str = "system"):
-        """
-        Log visually-structured initialization text.
-        Optionally include timestamp and source metadata.
-        """
+    def init(msg: str = "", color: str = "init",
+             meta_mode: str = "full", category: str = "system", sub: int = 0):
+        """Initialization log with sub-level and metadata control."""
         if not DebugLogger._should_log(category, "INFO"):
             return
 
@@ -179,9 +194,21 @@ class DebugLogger:
             print()
             return
 
-        if show_meta:
-            source = DebugLogger._get_caller_for_init()
-            timestamp = datetime.now().strftime("%H:%M:%S")
-            print(f"{color_code}[{timestamp}] [{source}][INIT] {msg}{reset}")
+        indent = ""
+        if sub > 0:
+            indent = " " * (4 * sub) + "└─ "
+
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        source = DebugLogger._get_caller_for_init()
+
+        # Select metadata prefix
+        if meta_mode == "full":
+            prefix = f"[{timestamp}] [{source}][INIT] "
+        elif meta_mode == "time":
+            prefix = f"[{timestamp}] "
+        elif meta_mode == "simple":
+            prefix = "[INIT] "
         else:
-            print(f"{color_code}{msg}{reset}")
+            prefix = ""
+
+        print(f"{color_code}{indent}{prefix}{msg}{reset}")
