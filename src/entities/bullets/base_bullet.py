@@ -70,8 +70,7 @@ class BaseBullet(BaseEntity):
 
         # Collision setup
         self.collision_tag = f"{owner}_bullet"
-        self.hitbox = CollisionHitbox(self, scale=hitbox_scale)
-        self.has_hitbox = True
+        self.hitbox_scale = hitbox_scale
 
         # Layer assignment
         from src.core import game_settings
@@ -95,10 +94,6 @@ class BaseBullet(BaseEntity):
         # Motion update
         self.pos += self.vel * dt
         self.rect.center = self.pos
-
-        # Hitbox sync
-        if self.has_hitbox:
-            self.hitbox.update()
 
     # ===========================================================
     # Collision Handling
@@ -141,6 +136,3 @@ class BaseBullet(BaseEntity):
         Draws either an image or fallback circle based on render mode.
         """
         super().draw(draw_manager)
-
-        if game_settings.Debug.HITBOX_VISIBLE and self.has_hitbox:
-            self.hitbox.draw_debug(draw_manager.surface)

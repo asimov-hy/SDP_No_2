@@ -24,7 +24,8 @@ class BulletManager:
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(self):
+    def __init__(self, collision_manager=None):
+        self.collision_manager = collision_manager
         self.active = []  # Active bullets currently in flight
         self.pool = []    # Inactive bullets available for reuse
 
@@ -73,13 +74,6 @@ class BulletManager:
             b.rect = pygame.Rect(0, 0, radius * 2, radius * 2)
             b.rect.center = pos
 
-        # Ensure hitbox consistency
-        if not getattr(b, "hitbox", None):
-            b.hitbox = CollisionHitbox(b, scale=hitbox_scale)
-        else:
-            b.hitbox.scale = hitbox_scale
-            b.hitbox.update()
-
     # ===========================================================
     # Pool Prewarming
     # ===========================================================
@@ -115,7 +109,7 @@ class BulletManager:
     # ===========================================================
     # Spawning
     # ===========================================================
-    def spawn(self, pos, vel, image=None, color=(255, 255, 255),
+    def spawn(self, pos, vel, image=None, color=(255,255,255),
               radius=3, owner="player", damage=1, hitbox_scale=0.9):
         """
         Create or reuse a StraightBullet instance (default bullet type).
@@ -132,6 +126,11 @@ class BulletManager:
         """
         bullet = self._get_bullet(pos, vel, image, color, radius, owner, damage, hitbox_scale)
         self.active.append(bullet)
+
+        # Register hitbox with CollisionManager
+        if self.collision_manager:
+            self.collision_manager.register_hitbox(bullet)
+
         # DebugLogger.trace(f"[BulletSpawn] {bullet.collision_tag} at {pos} → Vel={vel}")
 
     def spawn_custom(self, bullet_class, pos, vel, image=None, color=(255, 255, 255),
@@ -187,10 +186,6 @@ class BulletManager:
                 self.pool.append(bullet)
                 continue
 
-            # Sync hitbox
-            if bullet.hitbox:
-                bullet.hitbox.rect.center = bullet.rect.center
-
             # Lifecycle
             if bullet.alive and not self._is_offscreen(bullet):
                 next_active.append(bullet)
@@ -222,8 +217,6 @@ class BulletManager:
         """
         for b in self.active:
             b.draw(draw_manager)
-            if Debug.HITBOX_VISIBLE and b.hitbox:
-                draw_manager.queue_hitbox(b.hitbox.rect, b.hitbox._color_cache)
 
     # ===========================================================
     # Cleanup (External Call)

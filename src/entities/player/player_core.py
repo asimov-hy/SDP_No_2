@@ -135,8 +135,6 @@ class Player(BaseEntity):
         # 7) Collision setup
         # -------------------------------------------------------
         self.hitbox_scale = core["hitbox_scale"]
-        self.hitbox: CollisionHitbox | None = CollisionHitbox(self, self.hitbox_scale)
-        self.has_hitbox = True
 
         # -------------------------------------------------------
         # 8) Combat setup
@@ -226,9 +224,6 @@ class Player(BaseEntity):
         update_movement(self, dt, move_vec)
         attack_held = self.input_manager.is_attack_held()
         update_shooting(self, dt, attack_held)
-
-        if self.hitbox:
-            self.hitbox.update()
 
         if self.animation_manager:
             self.animation_manager.update(dt)

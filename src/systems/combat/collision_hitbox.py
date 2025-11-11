@@ -211,11 +211,11 @@ class CollisionHitbox:
 
     def get_size(self) -> tuple[int, int]:
         """Get current hitbox dimensions as (width, height)."""
-        return (self.rect.width, self.rect.height)
+        return self.rect.width, self.rect.height
 
     def get_offset(self) -> tuple[float, float]:
         """Get current hitbox offset as (x, y)."""
-        return (self.offset.x, self.offset.y)
+        return self.offset.x, self.offset.y
 
     # ===========================================================
     # Activation Control

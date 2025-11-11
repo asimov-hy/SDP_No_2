@@ -31,7 +31,7 @@ class SpawnManager:
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(self, draw_manager, display=None):
+    def __init__(self, draw_manager, display=None, collision_manager=None):
         """
         Initialize the spawn manager and enemy registry.
 
@@ -41,6 +41,7 @@ class SpawnManager:
         """
         self.draw_manager = draw_manager
         self.display = display
+        self.collision_manager = collision_manager
         self.enemies = []  # Active enemy entities
 
         DebugLogger.init("Enemy spawn system initialized")
@@ -55,6 +56,10 @@ class SpawnManager:
             DebugLogger.warn(f"Failed to spawn enemy '{type_name}' via registry")
             return
         self.enemies.append(enemy)
+
+        # Register the enemy’s hitbox
+        if self.collision_manager:
+            self.collision_manager.register_hitbox(enemy, scale=enemy._hitbox_scale)
 
     # ===========================================================
     # Update Loop

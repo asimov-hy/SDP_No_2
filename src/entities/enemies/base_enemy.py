@@ -46,9 +46,8 @@ class BaseEnemy(BaseEntity):
         self.collision_tag = CollisionTags.ENEMY
         self.layer = Layers.ENEMIES
 
-        # Deferred hitbox (lazy init)
-        self.hitbox = None
-        self._hitbox_scale = 0.85
+        # hitbox scale
+        self._hitbox_scale = 0.9
 
         # Default movement vector (downward)
         self.velocity = pygame.Vector2(0, 0)
@@ -74,13 +73,6 @@ class BaseEnemy(BaseEntity):
         self.pos += self.velocity * dt
         self.sync_rect()
         self.update_rotation()
-
-        # Lazy hitbox init - cleaner check
-        if self.hitbox is None:
-            from src.systems.combat.collision_hitbox import CollisionHitbox
-            self.hitbox = CollisionHitbox(self, scale=self._hitbox_scale)
-
-        self.hitbox.update()
 
         # Mark dead if off-screen
         if self.rect.top > Display.HEIGHT:

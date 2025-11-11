@@ -76,10 +76,36 @@ class GameScene:
         DebugLogger.init("EnemyStraight sprite cached or loaded successfully")
 
         # ===========================================================
-        # Spawn Manager Setup (Wave-Based Enemy Spawning)
+        # Bullet Manager Setup
         # ===========================================================
-        self.spawner = SpawnManager(self.draw_manager, self.display)
+        self.bullet_manager = BulletManager()
+        self.player.bullet_manager = self.bullet_manager  # Give player access
+        DebugLogger.init("BulletManager initialized and linked to Player")
+
+        # ===========================================================
+        # Collision Manager Setup
+        # ===========================================================
+        self.collision_manager = CollisionManager(
+            self.player,
+            self.bullet_manager,
+            None
+        )
+        DebugLogger.init("CollisionManager initialized successfully")
+
+        # Register player's hitbox through the CollisionManager
+        self.player.hitbox = self.collision_manager.register_hitbox(
+            self.player,
+            scale=self.player.hitbox_scale
+        )
+        DebugLogger.state("Player hitbox registered with CollisionManager", category="collision")
+
+        # ===========================================================
+        # Spawn Manager Setup
+        # ===========================================================
+        self.spawner = SpawnManager(self.draw_manager, self.display, self.collision_manager)
         DebugLogger.init("SpawnManager initialized successfully")
+
+        self.collision_manager.spawn_manager = self.spawner
 
         # ===========================================================
         # Stage Manager Setup (Predefined Waves)
@@ -93,23 +119,6 @@ class GameScene:
 
         self.stage_manager = LevelManager(self.spawner, STAGE_1_WAVES)
         DebugLogger.init("StageManager initialized with Stage 1 waves")
-
-        # ===========================================================
-        # Bullet Manager Setup
-        # ===========================================================
-        self.bullet_manager = BulletManager()
-        self.player.bullet_manager = self.bullet_manager  # Give player access
-        DebugLogger.init("BulletManager initialized and linked to Player")
-
-        # ===========================================================
-        # Collision Manager Setup
-        # ===========================================================
-        self.collision_manager = CollisionManager(
-            self.player,
-            self.bullet_manager,
-            self.spawner
-        )
-        DebugLogger.init("CollisionManager initialized successfully")
 
     # ===========================================================
     # Event Handling
@@ -151,6 +160,7 @@ class GameScene:
         # ===========================================================
         # 3) Collision Phase
         # ===========================================================
+        self.collision_manager.update()
         self.collision_manager.detect()
         self.spawner.cleanup()
 
