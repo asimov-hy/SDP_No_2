@@ -11,6 +11,7 @@ Responsibilities
 """
 
 from src.core.utils.debug_logger import DebugLogger
+from src.entities.entity_state import EntityCategory
 
 class LevelManager:
     """Handles stage timing, wave scheduling, and progression."""
@@ -51,13 +52,20 @@ class LevelManager:
 
         # Process scheduled waves
         while (self.wave_index < len(self.stage_data) and
-               self.stage_timer >= self.stage_data[self.wave_index]["spawn_time"]):
+               self.stage_timer >= self.stage_data[self.wave_index]["spawn_time"]
+        ):
             wave = self.stage_data[self.wave_index]
             self._trigger_wave(wave)
             self.wave_index += 1
 
+        # End condition: all waves spawned and all ENEMY entities cleared
+        enemies_remaining = any(
+            getattr(e, "category", None) == EntityCategory.ENEMY
+            for e in self.spawner.entities
+        )
+
         # End condition: all waves spawned and all enemies cleared
-        if self.wave_index >= len(self.stage_data) and not self.spawner.enemies:
+        if self.wave_index >= len(self.stage_data) and not enemies_remaining:
             self.stage_active = False
             DebugLogger.state("Stage complete — all waves cleared")
 
@@ -82,12 +90,10 @@ class LevelManager:
             width = 800
 
         DebugLogger.system(
-            f"[Stage] Wave {self.wave_index + 1}: {enemy_type} ×{count} | Pattern={pattern} | Time={wave['spawn_time']:.1f}s"
+            f"Wave {self.wave_index + 1}: {enemy_type} ×{count} | Pattern={pattern} | Time={wave['spawn_time']:.1f}s"
         )
 
-        # -------------------------------------------------------
         # Formation patterns
-        # -------------------------------------------------------
         positions = []
 
         if pattern == "line":
@@ -108,16 +114,11 @@ class LevelManager:
             DebugLogger.warn(f"Unknown pattern: {pattern}")
             return
 
-        # -------------------------------------------------------
         # Spawn all enemies (sorted left → right)
-        # -------------------------------------------------------
         if count > 1:
             positions.sort(key=lambda p: p[0])
 
         for x, y in positions:
-            self.spawner.spawn_enemy(enemy_type, x, y)
-
-            if self.spawner.enemies:
-                enemy = self.spawner.enemies[-1]
-                if enemy and speed is not None:
-                    enemy.speed = speed
+            enemy = self.spawner.spawn("enemy", enemy_type, x, y)
+            if enemy and speed is not None:
+                enemy.speed = speed

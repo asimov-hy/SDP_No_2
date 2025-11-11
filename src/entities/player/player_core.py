@@ -20,7 +20,7 @@ from src.core.game_settings import Display, Layers
 from src.core.game_state import STATE
 from src.core.utils.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
-from src.entities.entity_state import CollisionTags, LifecycleState
+from src.entities.entity_state import CollisionTags, LifecycleState, EntityCategory
 from .player_config import PLAYER_CONFIG
 from .player_state import InteractionState
 
@@ -79,6 +79,7 @@ class Player(BaseEntity):
         self.visible = True
         self.layer = Layers.PLAYER
         self.collision_tag = CollisionTags.PLAYER
+        self.category = EntityCategory.PLAYER
 
         # --- Interaction state ---
         self.state = InteractionState.DEFAULT

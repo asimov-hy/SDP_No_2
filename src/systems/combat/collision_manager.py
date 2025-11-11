@@ -16,7 +16,8 @@ Responsibilities
 
 from src.core.game_settings import Debug
 from src.core.utils.debug_logger import DebugLogger
-from src.entities.entity_state import LifecycleState
+from src.entities.entity_state import LifecycleState, EntityCategory
+from src.systems.combat.collision_hitbox import CollisionHitbox
 
 
 class CollisionManager:
@@ -77,7 +78,6 @@ class CollisionManager:
         Returns:
             CollisionHitbox: The created hitbox instance.
         """
-        from src.systems.combat.collision_hitbox import CollisionHitbox
 
         # Create hitbox with scale
         hitbox = CollisionHitbox(entity, scale=scale, offset=offset)
@@ -173,11 +173,17 @@ class CollisionManager:
         collisions = []
 
         # Pre-filter active objects
-        active_bullets = [b for b in self.bullet_manager.active if getattr(b, "death_state", 0) < LifecycleState.DEAD]
-        active_enemies = [e for e in self.spawn_manager.enemies if getattr(e, "death_state", 0) < LifecycleState.DEAD]
+        active_bullets = [
+            b for b in getattr(self.bullet_manager, "active", [])
+            if getattr(b, "death_state", 0) < LifecycleState.DEAD
+        ]
+        active_entities = [
+            e for e in getattr(self.spawn_manager, "entities", [])
+            if getattr(e, "death_state", 0) < LifecycleState.DEAD
+        ]
         player = self.player if getattr(self.player, "death_state", 0) < LifecycleState.DEAD else None
 
-        total_entities = len(active_bullets) + len(active_enemies) + (1 if player else 0)
+        total_entities = len(active_bullets) + len(active_entities) + (1 if player else 0)
         if total_entities == 0:
             return collisions
 
@@ -195,15 +201,14 @@ class CollisionManager:
 
         if player:
             add_to_grid(grid, player)
-        for enemy in active_enemies:
-            add_to_grid(grid, enemy)
+        for entity in active_entities:
+            add_to_grid(grid, entity)
         for bullet in active_bullets:
             add_to_grid(grid, bullet)
 
         # Localized Collision Checks (per cell + neighbors)
         checked_pairs = set()
         append_collision = collisions.append
-        rules = self.rules
         get_hitbox = self.hitboxes.get
 
         for cell_key, cell_objects in grid.items():
@@ -221,6 +226,7 @@ class CollisionManager:
                     for b in neighbor_objs:
                         if a is b:
                             continue
+
                         b_hitbox = get_hitbox(id(b))
                         if not b_hitbox or not getattr(b_hitbox, "active", True):
                             continue
@@ -235,19 +241,18 @@ class CollisionManager:
                         if a.death_state >= LifecycleState.DEAD or b.death_state >= LifecycleState.DEAD:
                             continue
 
-                        # Rule-based filtering
+                        # Tag-based collision filtering
                         tag_a = getattr(a, "collision_tag", None)
                         tag_b = getattr(b, "collision_tag", None)
-                        if (tag_a, tag_b) not in rules and (tag_b, tag_a) not in rules:
+                        if (tag_a, tag_b) not in self.rules and (tag_b, tag_a) not in self.rules:
                             continue
 
-                        # Perform overlap check
+                        # Overlap test
                         if a_hitbox.rect.colliderect(b_hitbox.rect):
                             append_collision((a, b))
-
                             DebugLogger.state(
                                 f"Collision: {type(a).__name__} ({tag_a}) <-> {type(b).__name__} ({tag_b})",
-                                category="collision"
+                                category="collision",
                             )
 
                             # Let entities handle their reactions

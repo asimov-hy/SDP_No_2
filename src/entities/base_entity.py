@@ -35,7 +35,7 @@ import pygame
 from typing import Optional
 from src.core.game_settings import Layers
 from src.core.utils.debug_logger import DebugLogger
-from src.entities.entity_state import LifecycleState
+from src.entities.entity_state import LifecycleState, EntityCategory
 
 
 class BaseEntity:
@@ -141,8 +141,9 @@ class BaseEntity:
         self.layer = Layers.ENEMIES
 
         # -------------------------------------------------------
-        # Collision Attributes
+        # Attributes
         # -------------------------------------------------------
+        self.category = EntityCategory.EFFECT
         self.collision_tag = "neutral"
 
     # ===========================================================
@@ -324,4 +325,5 @@ class BaseEntity:
             f"<{type(self).__name__} "
             f"pos=({self.pos.x:.1f}, {self.pos.y:.1f}) "
             f"tag={self.collision_tag} "
+            f"category={getattr(self, 'category', '?')}>"
         )

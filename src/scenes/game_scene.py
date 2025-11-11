@@ -42,7 +42,7 @@ class GameScene:
             scene_manager: Reference to SceneManager for access to display,
                            input, and draw subsystems.
         """
-        DebugLogger.init("Initializing game scene")
+        DebugLogger.init("Initializing GameScene")
 
         self.scene_manager = scene_manager
         self.display = scene_manager.display
@@ -67,7 +67,6 @@ class GameScene:
 
         # Bullet Manager Setup
         self.bullet_manager = BulletManager()
-        DebugLogger.init("Initialized BulletManager")
 
         self.player.bullet_manager = self.bullet_manager
         DebugLogger.init("	└─ Linked Bullet Manager to Player")
@@ -93,7 +92,6 @@ class GameScene:
         # Spawn Manager Setup
         # ===========================================================
         self.spawner = SpawnManager(self.draw_manager, self.display, self.collision_manager)
-        DebugLogger.init("Initialized SpawnManager")
 
         self.collision_manager.spawn_manager = self.spawner
 

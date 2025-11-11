@@ -1,13 +1,15 @@
 """
 spawn_manager.py
 ----------------
-Manages the creation, updating, and rendering of enemy entities.
+Generic manager responsible for dynamically spawning, updating, and rendering
+in-game entities during a scene (enemies, environment objects, pickups, etc.).
 
 Responsibilities
 ----------------
-- Spawn and organize all active enemy entities.
-- Support scalable spawning and cleanup for multiple enemies.
-- Handle update and render passes for all active enemies.
+- Spawn and organize all active entities registered in the EntityRegistry.
+- Support scalable updates and cleanup for large numbers of dynamic objects.
+- Automatically link new entities to collision systems (if provided).
+- Handle per-frame update and render passes for all active entities.
 """
 
 from src.core.utils.debug_logger import DebugLogger
@@ -28,76 +30,92 @@ ENEMY_TYPES = {
 
 
 class SpawnManager:
-    """Central manager responsible for enemy spawning, updates, and rendering."""
+    """
+    Centralized spawner for dynamic scene entities.
+
+    This system manages objects that are created and destroyed during gameplay,
+    including enemies, environment props, projectiles, or special effects.
+    It handles initialization, updates, rendering, and lifecycle cleanup.
+    """
 
     # ===========================================================
     # Initialization
     # ===========================================================
     def __init__(self, draw_manager, display=None, collision_manager=None):
         """
-        Initialize the spawn manager and enemy registry.
+        Initialize the spawn manager and its dependencies.
 
         Args:
-            draw_manager: Global DrawManager for rendering.
-            display (optional): DisplayManager for screen info (future use).
+            draw_manager: Global DrawManager used for rendering.
+            display (optional): DisplayManager providing viewport info.
+            collision_manager (optional): Collision system for hitbox registration.
         """
         self.draw_manager = draw_manager
         self.display = display
         self.collision_manager = collision_manager
-        self.enemies = []  # Active enemy entities
+        self.entities = []  # Active enemy entities
 
-        DebugLogger.init("Enemy spawn system initialized")
+        DebugLogger.init("Initialized SpawnManager")
 
     # ===========================================================
-    # Enemy Spawning
+    # Entity Spawning
     # ===========================================================
-    def spawn_enemy(self, type_name: str, x: float, y: float, **kwargs):
+    def spawn(self, category: str, type_name: str, x: float, y: float, **kwargs):
+        """
+        Spawn a new entity and register it with the scene.
+
+        Args:
+            category (str): Entity group in the registry (e.g., "enemy", "environment").
+            type_name (str): Entity type key (e.g., "straight", "asteroid").
+            x (float): Spawn x-coordinate.
+            y (float): Spawn y-coordinate.
+            **kwargs: Additional initialization parameters for the entity.
+        """
         kwargs.setdefault("draw_manager", self.draw_manager)
-        enemy = EntityRegistry.create("enemy", type_name, x, y, **kwargs)
-        if not enemy:
-            DebugLogger.warn(f"Failed to spawn enemy '{type_name}' via registry")
+
+        entity = EntityRegistry.create(category, type_name, x, y, **kwargs)
+        if not entity:
+            DebugLogger.warn(f"Failed to spawn {category}: '{type_name}'")
             return
-        self.enemies.append(enemy)
+        self.entities.append(entity)
 
         # Register the enemy’s hitbox
-        if self.collision_manager:
-            self.collision_manager.register_hitbox(enemy, scale=enemy._hitbox_scale)
+        if self.collision_manager and hasattr(entity, "_hitbox_scale"):
+            self.collision_manager.register_hitbox(entity, scale=entity._hitbox_scale)
 
     # ===========================================================
     # Update Loop
     # ===========================================================
     def update(self, dt: float):
         """
-        Update all active enemies and remove inactive ones.
+        Update all active entities and remove inactive ones.
 
         Args:
             dt (float): Delta time since last frame (in seconds).
         """
-        if not self.enemies:
+        if not self.entities:
             return
 
         # Update positions and hitboxes before collision checks
-        for enemy in self.enemies:
-            if enemy.death_state >= LifecycleState.DEAD:
+        for entity in self.entities:
+            if entity.death_state >= LifecycleState.DEAD:
                 continue
-            enemy.update(dt)
+            entity.update(dt)
 
-        # -------------------------------------------------------
-        # Cleanup inactive enemies efficiently
-        # -------------------------------------------------------
+        # Efficient cleanup of inactive or destroyed entities
         i = 0
-        total_before = len(self.enemies)
-        for e in self.enemies:
+        total_before = len(self.entities)
+        for e in self.entities:
             if e.death_state < LifecycleState.DEAD:
-                self.enemies[i] = e
+                self.entities[i] = e
                 i += 1
-        del self.enemies[i:]
+        del self.entities[i:]
 
         removed = total_before - i
         if removed > 0:
             DebugLogger.state(
-                f"Removed {removed} inactive enemies",
-                category="entity_cleanup"
+                f"Removed {removed} inactive entities",
+                category="entity"
             )
 
     # ===========================================================
@@ -107,26 +125,42 @@ class SpawnManager:
         """
         Render all active enemies using the global DrawManager.
         """
-        for e in self.enemies:
+        for e in self.entities:
             e.draw(self.draw_manager)
-        # No per-frame logging here to avoid console spam
 
     # ===========================================================
-    # Cleanup (External Call)
+    # Cleanup
     # ===========================================================
     def cleanup(self):
-        """Immediately remove enemies that are no longer alive."""
-        total_before = len(self.enemies)
+        """
+        Immediately remove all entities that are no longer alive.
+
+        This is typically called after a major game event (e.g., scene reset
+        or stage transition) to clear destroyed or expired objects.
+        """
+        total_before = len(self.entities)
         i = 0
-        for e in self.enemies:
+        for e in self.entities:
             if e.death_state < LifecycleState.DEAD:
-                self.enemies[i] = e
+                self.entities[i] = e
                 i += 1
-        del self.enemies[i:]
+        del self.entities[i:]
 
         removed = total_before - i
         if removed > 0:
             DebugLogger.state(
-                f"Cleaned up {removed} destroyed enemies",
+                f"Cleaned up {removed} destroyed entities",
                 category="entity_cleanup"
             )
+
+    # ===========================================================
+    # Helpers
+    # ===========================================================
+
+    def get_entities_by_category(self, category):
+        return [e for e in self.entities if getattr(e, "category", None) == category]
+
+    def cleanup_by_category(self, category):
+        self.entities = [e for e in self.entities if getattr(e, "category", None) != category]
+
+

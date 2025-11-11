@@ -15,9 +15,7 @@ import pygame
 from src.core import game_settings
 from src.core.utils.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
-from src.systems.combat.collision_hitbox import CollisionHitbox
-from src.entities.entity_state import LifecycleState
-
+from src.entities.entity_state import LifecycleState, EntityCategory
 
 
 class BaseBullet(BaseEntity):
@@ -72,10 +70,8 @@ class BaseBullet(BaseEntity):
 
         # Collision setup
         self.collision_tag = f"{owner}_bullet"
+        self.category = EntityCategory.PROJECTILE
         self.hitbox_scale = hitbox_scale
-
-        # Layer assignment
-        from src.core import game_settings
         self.layer = game_settings.Layers.BULLETS
 
     # ===========================================================

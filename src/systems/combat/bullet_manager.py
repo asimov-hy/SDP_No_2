@@ -13,9 +13,7 @@ Responsibilities
 
 import pygame
 from src.entities.bullets.bullet_straight import StraightBullet
-from src.core.game_settings import Debug
 from src.core.utils.debug_logger import DebugLogger
-from src.systems.combat.collision_hitbox import CollisionHitbox
 from src.entities.entity_state import LifecycleState
 
 
@@ -32,10 +30,7 @@ class BulletManager:
 
         self.prewarm_pool(owner="player", count=50)
 
-        DebugLogger.init(
-            "║{:<59}║".format(f"\t[BulletManager][INIT]\t→ Pool ready"),
-            show_meta=False
-        )
+        DebugLogger.init("Initialized BulletManager")
 
     # ===========================================================
     # Bullet Creation / Reuse

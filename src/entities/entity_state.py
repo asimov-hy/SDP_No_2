@@ -6,6 +6,18 @@ Defines universal constants and enumerations for all entity types.
 
 from enum import IntEnum
 
+class EntityCategory:
+    """
+    High-level logical grouping for entities.
+    """
+
+    PLAYER = "player"
+    ENEMY = "enemy"
+    PROJECTILE = "projectile"
+    ENVIRONMENT = "environment"
+    PICKUP = "pickup"
+    EFFECT = "effect"
+
 # ===========================================================
 # Collision Tag Constants
 # ===========================================================

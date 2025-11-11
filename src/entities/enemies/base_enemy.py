@@ -14,7 +14,7 @@ import pygame
 from src.core.game_settings import Display, Layers
 from src.core.utils.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
-from src.entities.entity_state import CollisionTags, LifecycleState
+from src.entities.entity_state import CollisionTags, LifecycleState, EntityCategory
 
 
 class BaseEnemy(BaseEntity):
@@ -44,6 +44,7 @@ class BaseEnemy(BaseEntity):
 
         # Collision setup
         self.collision_tag = CollisionTags.ENEMY
+        self.category = EntityCategory.ENEMY
         self.layer = Layers.ENEMIES
 
         # hitbox scale
