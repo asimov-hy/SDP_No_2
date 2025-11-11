@@ -44,6 +44,20 @@ class ItemManager:
         Returns:
             dict: A dictionary of item definitions, keyed by item_id.
         """
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                definitions = json.load(f)
+                if not definitions:
+                    DebugLogger.warn(f"Item data file at '{path}' is empty.")
+                else:
+                    DebugLogger.system(f"Loaded {len(definitions)} item definitions from '{path}'.")
+                return definitions
+        except FileNotFoundError:
+            DebugLogger.error(f"Item data file not found at '{path}'.")
+            return {}
+        except json.JSONDecodeError:
+            DebugLogger.error(f"Could not decode JSON from '{path}'. Check file format.")
+            return {}
 
     # ===========================================================
     # Public Methods for Item Lifecycle

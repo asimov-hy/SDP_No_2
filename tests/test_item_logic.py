@@ -81,6 +81,7 @@ def test_item_manager_initialization(item_manager, mock_item_data_file, mock_deb
     """Test the initialization of the ItemManager."""
     assert item_manager._item_definitions is not None
     assert "test_potion" in item_manager._item_definitions
+    assert item_manager._item_definitions == MOCK_ITEM_DEFINITIONS # New assertion
     assert len(item_manager.active_items) == 0
     mock_debug_logger.system.assert_called_once_with(
         f"Loaded {len(MOCK_ITEM_DEFINITIONS)} item definitions from '{mock_item_data_file}'."
