@@ -75,15 +75,21 @@ class LoggerConfig:
 
     # Category Filters (only current categories in use)
     CATEGORIES = {
-        "system": True,       # Core engine and scene transitions
-        "stage": True,        # LevelManager / wave progression logs
-        "user_action": False,
-        "collision": False,   # CollisionManager (hit detection)
-        "effects": False,     # Destruction / VFX / bullet impacts
-        "entity_spawning": False,
-        "entity_cleanup": False,
-        "animation": True,
-        "base_entity_logic": True,
+        # Core Systems
+        "system": True,  # Engine boot, config, and lifecycle events
+        "stage": True,  # StageManager / wave progression
+        "animation": True,  # Animation initialization and updates
+        "base_entity_logic": True,  # Entity base behavior and shared logic
+
+        # Gameplay Systems
+        "collision": False,  # CollisionManager (hit detection, tracing)
+        "effects": False,  # Destruction, particle, and impact effects
+        "entity_spawning": False,  # Entity creation events
+        "entity_cleanup": False,  # Entity removal / recycling logs
+        "drawing": False,  # DrawManager / render operations
+
+        # Input & User Actions
+        "user_action": False  # Player input, controls, and UI actions
     }
 
     # Output Style

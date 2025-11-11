@@ -350,12 +350,12 @@ class DrawManager:
 
         if debug:
             draw_count = sum(len(items) for items in self.layers.values())
-            DebugLogger.state(f"Rendered {draw_count} queued surfaces and shapes")
+            DebugLogger.state(f"Rendered {draw_count} queued surfaces and shapes", category = "drawing")
 
         # -------------------------------------------------------
         # Optional debug overlay pass (hitboxes)
         # -------------------------------------------------------
-        if debug and hasattr(self, "debug_hitboxes") and self.debug_hitboxes:
+        if hasattr(self, "debug_hitboxes") and self.debug_hitboxes:
             """
             Directly draw debug hitboxes to avoid temporary surface allocation.
             Each tuple: (rect, color, width)

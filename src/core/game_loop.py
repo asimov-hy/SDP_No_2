@@ -218,7 +218,7 @@ class GameLoop:
         # Profile: Render to Display
         # -------------------------------------------------------
         t_render = time.perf_counter()
-        self.draw_manager.render(game_surface)
+        self.draw_manager.render(game_surface, debug=Debug.HITBOX_VISIBLE)
         self.display.render()
         render_time = (time.perf_counter() - t_render) * 1000
 
