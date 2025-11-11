@@ -16,6 +16,7 @@ Responsibilities
 
 from src.core.game_settings import Debug
 from src.core.utils.debug_logger import DebugLogger
+from src.entities.entity_state import LifecycleState
 
 
 class CollisionManager:
@@ -122,7 +123,7 @@ class CollisionManager:
         for entity_id, hitbox in list(self.hitboxes.items()):
             # Clean up hitboxes for dead entities
             entity = hitbox.owner
-            if not getattr(entity, "alive", True):
+            if getattr(entity, "death_state", 0) >= LifecycleState.DEAD:
                 del self.hitboxes[entity_id]
                 continue
 
@@ -171,9 +172,9 @@ class CollisionManager:
         collisions = []
 
         # Pre-filter active objects
-        active_bullets = [b for b in self.bullet_manager.active if b.alive]
-        active_enemies = [e for e in self.spawn_manager.enemies if e.alive]
-        player = self.player if self.player.alive else None
+        active_bullets = [b for b in self.bullet_manager.active if getattr(b, "death_state", 0) < LifecycleState.DEAD]
+        active_enemies = [e for e in self.spawn_manager.enemies if getattr(e, "death_state", 0) < LifecycleState.DEAD]
+        player = self.player if getattr(self.player, "death_state", 0) < LifecycleState.DEAD else None
 
         total_entities = len(active_bullets) + len(active_enemies) + (1 if player else 0)
         if total_entities == 0:
@@ -230,7 +231,7 @@ class CollisionManager:
                         checked_pairs.add(pair_key)
 
                         # Skip destroyed entities mid-frame
-                        if not getattr(a, "alive", True) or not getattr(b, "alive", True):
+                        if a.death_state >= LifecycleState.DEAD or b.death_state >= LifecycleState.DEAD:
                             continue
 
                         # Rule-based filtering

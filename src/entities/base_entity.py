@@ -11,13 +11,6 @@ All entities in the 202X engine use **center-based coordinates**:
 - self.rect.center is always synchronized with self.pos.
 - Movement, rotation, and collisions are performed relative to this center.
 
-Update Pattern
---------------
-Subclasses should follow this pattern in their update() method:
-    1. Check if alive: if not self.alive: return
-    2. Apply movement/logic: self.pos += velocity * dt
-    3. Synchronize rect: self.sync_rect()
-
 Rendering
 ---------
 Image mode (fastest):
@@ -42,6 +35,7 @@ import pygame
 from typing import Optional
 from src.core.game_settings import Layers
 from src.core.utils.debug_logger import DebugLogger
+from src.entities.entity_state import LifecycleState
 
 
 class BaseEntity:
@@ -141,7 +135,7 @@ class BaseEntity:
         # -------------------------------------------------------
         # Entity State
         # -------------------------------------------------------
-        self.alive = True
+        self.death_state = LifecycleState.ALIVE
 
         # Default layer - subclasses SHOULD override this
         self.layer = Layers.ENEMIES
@@ -184,6 +178,29 @@ class BaseEntity:
             dt: Time elapsed since last frame (in seconds).
         """
         pass  # Subclasses override this
+
+    def mark_dead(self, immediate=False):
+        """
+        Mark entity as no longer alive.
+
+        Args:
+            immediate: If True, skip DYING phase and go directly to DEAD.
+        """
+        # Ignore if already fully dead
+        if self.death_state == LifecycleState.DEAD:
+            return
+
+        if immediate or self.death_state == LifecycleState.DYING:
+            # Finalize death immediately
+            self.death_state = LifecycleState.DEAD
+        else:
+            # Begin death sequence (animation, effects, etc.)
+            self.death_state = LifecycleState.DYING
+
+        DebugLogger.state(
+            f"[{type(self).__name__}] → {self.death_state.name}",
+            category="entity"
+        )
 
     # ===========================================================
     # Rendering
@@ -230,6 +247,39 @@ class BaseEntity:
                 width=1
             )
 
+    def refresh_visual(self, new_image=None, new_color=None, shape_type=None, size=None):
+        """
+        Rebuild entity visuals when appearance changes at runtime.
+
+        Args:
+            new_image: Pre-loaded image to use (image mode)
+            new_color: RGB tuple to rebake shape with (shape mode)
+            shape_type: Shape type if different from current
+            size: Size tuple if different from current
+        """
+        if new_image:
+            # Image mode - just swap
+            self.image = new_image
+        elif new_color and hasattr(self, 'shape_data'):
+            if not (hasattr(self, 'draw_manager') and self.draw_manager):
+                DebugLogger.warn(f"{type(self).__name__} can't rebake - no draw_manager")
+                return
+
+            # Shape mode - rebake
+            shape_type = shape_type or self.shape_data.get("type", "rect")
+            size = size or self.shape_data.get("size", (10, 10))
+
+            if hasattr(self, 'draw_manager') and self.draw_manager:
+                self.image = self.draw_manager.prebake_shape(
+                    type=shape_type,
+                    size=size,
+                    color=new_color
+                )
+
+        # Sync rect to new image size while preserving position
+        if self.image:
+            self.rect = self.image.get_rect(center=self.pos)
+
     # ===========================================================
     # Collision Interface
     # ===========================================================
@@ -274,38 +324,4 @@ class BaseEntity:
             f"<{type(self).__name__} "
             f"pos=({self.pos.x:.1f}, {self.pos.y:.1f}) "
             f"tag={self.collision_tag} "
-            f"alive={self.alive}>"
         )
-
-    def refresh_visual(self, new_image=None, new_color=None, shape_type=None, size=None):
-        """
-        Rebuild entity visuals when appearance changes at runtime.
-
-        Args:
-            new_image: Pre-loaded image to use (image mode)
-            new_color: RGB tuple to rebake shape with (shape mode)
-            shape_type: Shape type if different from current
-            size: Size tuple if different from current
-        """
-        if new_image:
-            # Image mode - just swap
-            self.image = new_image
-        elif new_color and hasattr(self, 'shape_data'):
-            if not (hasattr(self, 'draw_manager') and self.draw_manager):
-                DebugLogger.warn(f"{type(self).__name__} can't rebake - no draw_manager")
-                return
-
-            # Shape mode - rebake
-            shape_type = shape_type or self.shape_data.get("type", "rect")
-            size = size or self.shape_data.get("size", (10, 10))
-
-            if hasattr(self, 'draw_manager') and self.draw_manager:
-                self.image = self.draw_manager.prebake_shape(
-                    type=shape_type,
-                    size=size,
-                    color=new_color
-                )
-
-        # Sync rect to new image size while preserving position
-        if self.image:
-            self.rect = self.image.get_rect(center=self.pos)

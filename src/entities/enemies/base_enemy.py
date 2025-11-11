@@ -14,7 +14,7 @@ import pygame
 from src.core.game_settings import Display, Layers
 from src.core.utils.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
-from src.entities.entity_state import CollisionTags
+from src.entities.entity_state import CollisionTags, LifecycleState
 
 
 class BaseEnemy(BaseEntity):
@@ -67,7 +67,7 @@ class BaseEnemy(BaseEntity):
     # ===========================================================
     def update(self, dt: float):
         """Default downward movement for enemies."""
-        if not self.alive:
+        if self.death_state != LifecycleState.ALIVE:
             return
 
         self.pos += self.velocity * dt
@@ -76,14 +76,14 @@ class BaseEnemy(BaseEntity):
 
         # Mark dead if off-screen
         if self.rect.top > Display.HEIGHT:
-            self.alive = False
+            self.mark_dead(immediate=True)
 
     def take_damage(self, amount: int, source: str = "unknown"):
         """
         Reduce health by the given amount and handle death.
         Calls on_damage() and on_death() hooks as needed.
         """
-        if not self.alive:
+        if self.death_state >= LifecycleState.DEAD:
             return
 
         self.health = max(0, self.health - amount)
@@ -92,7 +92,7 @@ class BaseEnemy(BaseEntity):
         self.on_damage(amount)
 
         if self.health <= 0:
-            self.alive = False
+            self.mark_dead(immediate=True) # currently no death effects so skip
             self.on_death(source)
 
     def on_death(self, source):

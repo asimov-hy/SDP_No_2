@@ -4,6 +4,7 @@ entity_state.py
 Defines universal constants and enumerations for all entity types.
 """
 
+from enum import IntEnum
 
 # ===========================================================
 # Collision Tag Constants
@@ -23,3 +24,12 @@ class CollisionTags:
 
     PICKUP = "pickup"
     HAZARD = "hazard"
+
+class LifecycleState(IntEnum):
+    """
+    Tracks the life/death progression of an entity.
+    Used for death animation control and cleanup timing.
+    """
+    ALIVE = 0
+    DYING = 1      # Playing death animation/effect
+    DEAD = 2       # Ready for cleanup

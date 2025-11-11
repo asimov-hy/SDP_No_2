@@ -16,6 +16,8 @@ from src.core import game_settings
 from src.core.utils.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
 from src.systems.combat.collision_hitbox import CollisionHitbox
+from src.entities.entity_state import LifecycleState
+
 
 
 class BaseBullet(BaseEntity):
@@ -63,7 +65,7 @@ class BaseBullet(BaseEntity):
         # Core attributes
         self.pos = pygame.Vector2(pos)
         self.vel = pygame.Vector2(vel)
-        self.alive = True
+        self.death_state = LifecycleState.ALIVE
         self.owner = owner
         self.radius = radius
         self.damage = damage
@@ -88,7 +90,7 @@ class BaseBullet(BaseEntity):
             - Sync its rect and hitbox.
             - (Offscreen cleanup handled by BulletManager.)
         """
-        if not self.alive:
+        if self.death_state >= LifecycleState.DEAD:
             return
 
         # Motion update
@@ -105,7 +107,7 @@ class BaseBullet(BaseEntity):
         Args:
             target (BaseEntity): The entity that this bullet collided with.
         """
-        if not self.alive or target is self:
+        if self.death_state >= LifecycleState.DEAD or target is self:
             return
         self.handle_collision(target)
 
@@ -120,7 +122,7 @@ class BaseBullet(BaseEntity):
         Subclasses can override to add piercing, explosion, or
         special effects upon impact.
         """
-        self.alive = False
+        self.death_state = LifecycleState.DEAD
         DebugLogger.state(
             f"{type(self).__name__} hit {type(target).__name__} → destroyed",
             category="collision"

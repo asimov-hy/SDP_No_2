@@ -13,6 +13,8 @@ Responsibilities
 from src.core.utils.debug_logger import DebugLogger
 from src.entities.enemies.enemy_straight import EnemyStraight
 from src.entities.entity_registry import EntityRegistry
+from src.entities.entity_state import LifecycleState
+
 
 # ===========================================================
 # Enemy Type Registry
@@ -76,7 +78,7 @@ class SpawnManager:
 
         # Update positions and hitboxes before collision checks
         for enemy in self.enemies:
-            if not enemy.alive:
+            if enemy.death_state >= LifecycleState.DEAD:
                 continue
             enemy.update(dt)
 
@@ -86,7 +88,7 @@ class SpawnManager:
         i = 0
         total_before = len(self.enemies)
         for e in self.enemies:
-            if e.alive:
+            if e.death_state < LifecycleState.DEAD:
                 self.enemies[i] = e
                 i += 1
         del self.enemies[i:]
@@ -117,7 +119,7 @@ class SpawnManager:
         total_before = len(self.enemies)
         i = 0
         for e in self.enemies:
-            if e.alive:
+            if e.death_state < LifecycleState.DEAD:
                 self.enemies[i] = e
                 i += 1
         del self.enemies[i:]

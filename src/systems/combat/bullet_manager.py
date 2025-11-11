@@ -16,6 +16,7 @@ from src.entities.bullets.bullet_straight import StraightBullet
 from src.core.game_settings import Debug
 from src.core.utils.debug_logger import DebugLogger
 from src.systems.combat.collision_hitbox import CollisionHitbox
+from src.entities.entity_state import LifecycleState
 
 
 class BulletManager:
@@ -64,7 +65,7 @@ class BulletManager:
         b.radius = radius
         b.owner = owner
         b.damage = damage
-        b.alive = True
+        b.death_state = LifecycleState.ALIVE
         b.collision_tag = f"{owner}_bullet"
 
         # Recreate or sync rect
@@ -100,7 +101,7 @@ class BulletManager:
                 radius=radius, owner=owner,
                 damage=damage, hitbox_scale=hitbox_scale
             )
-            bullet.alive = False
+            bullet.death_state = LifecycleState.DEAD
             bullet.collision_tag = f"{owner}_bullet"
             self.pool.append(bullet)
 
@@ -182,15 +183,15 @@ class BulletManager:
                     f"[BulletUpdateError] {type(bullet).__name__}: {e}",
                     category="combat"
                 )
-                bullet.alive = False
+                bullet.death_state = LifecycleState.DEAD
                 self.pool.append(bullet)
                 continue
 
             # Lifecycle
-            if bullet.alive and not self._is_offscreen(bullet):
+            if bullet.death_state < LifecycleState.DEAD and not self._is_offscreen(bullet):
                 next_active.append(bullet)
             else:
-                bullet.alive = False
+                bullet.death_state = LifecycleState.DEAD
                 self.pool.append(bullet)
 
         self.active = next_active
@@ -224,7 +225,7 @@ class BulletManager:
     def cleanup(self):
         """Immediately remove or recycle inactive bullets."""
         before = len(self.active)
-        self.active = [b for b in self.active if b.alive]
+        self.active = [b for b in self.active if b.death_state < LifecycleState.DEAD]
         removed = before - len(self.active)
 
         if removed > 0:

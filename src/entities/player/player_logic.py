@@ -29,7 +29,7 @@ def on_death(player):
     Called automatically by entity_logic.handle_death() when player HP reaches zero.
     Clears the global player reference for game-over detection.
     """
-    pass
+    player.mark_dead()
 
 
 # ===========================================================

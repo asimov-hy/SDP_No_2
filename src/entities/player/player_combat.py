@@ -9,6 +9,7 @@ Handles player combat-related systems:
 from src.core.utils.debug_logger import DebugLogger
 from src.entities.bullets.bullet_straight import StraightBullet
 from src.entities.player.player_state import InteractionState
+from src.entities.entity_state import LifecycleState
 
 
 # ===========================================================
@@ -73,7 +74,7 @@ def damage_collision(player, other):
     if player.state is not InteractionState.DEFAULT:
         return
 
-    if player.health <= 0:
+    if player.death_state != LifecycleState.ALIVE:
         return
 
     damage = getattr(other, "damage", 1)
@@ -90,4 +91,5 @@ def damage_collision(player, other):
 
     if player.health <= 0:
         from .player_logic import on_death
+        player.mark_dead()
         on_death(player)
