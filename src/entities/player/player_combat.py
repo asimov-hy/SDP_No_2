@@ -38,7 +38,7 @@ def _fire_bullet(player):
     Uses spawn_custom() for future flexibility (spread, homing, etc.).
     """
     if not player.bullet_manager:
-        DebugLogger.warn("[PlayerCombat] Attempted to fire without BulletManager", category="combat")
+        DebugLogger.warn("Attempted to fire without BulletManager", category="combat")
         return
 
     # Fire a straight bullet upward
@@ -51,7 +51,7 @@ def _fire_bullet(player):
         owner="player",
     )
 
-    DebugLogger.state("[PlayerFire] StraightBullet fired", category="combat")
+    DebugLogger.state("StraightBullet fired", category="combat")
 
 
 # ===========================================================

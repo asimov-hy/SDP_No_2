@@ -53,6 +53,7 @@ class CollisionManager:
             ("player", "enemy"),
             ("player_bullet", "enemy"),
             ("enemy_bullet", "player"),
+            ("player_bullet", "enemy_bullet"),
         }
 
         # Centralized hitbox registry

@@ -54,6 +54,7 @@ class BulletManager:
             )
 
         bullet.collision_tag = f"{owner}_bullet"
+        self._register_hitbox(bullet)
         return bullet
 
     def _reset_bullet(self, b, pos, vel, image, color, radius, owner, damage, hitbox_scale):
@@ -128,10 +129,6 @@ class BulletManager:
         bullet = self._get_bullet(pos, vel, image, color, radius, owner, damage, hitbox_scale)
         self.active.append(bullet)
 
-        # Register hitbox with CollisionManager
-        if self.collision_manager:
-            self.collision_manager.register_hitbox(bullet)
-
         # DebugLogger.trace(f"[BulletSpawn] {bullet.collision_tag} at {pos} → Vel={vel}")
 
     def spawn_custom(self, bullet_class, pos, vel, image=None, color=(255, 255, 255),
@@ -161,6 +158,7 @@ class BulletManager:
 
         bullet.collision_tag = f"{owner}_bullet"
         self.active.append(bullet)
+        self._register_hitbox(bullet)
         return bullet
 
     # ===========================================================
@@ -218,6 +216,17 @@ class BulletManager:
         """
         for b in self.active:
             b.draw(draw_manager)
+
+    # ===========================================================
+    # Internal Helpers
+    # ===========================================================
+    def _register_hitbox(self, bullet):
+        """Register bullet hitbox if collision manager is available."""
+        if self.collision_manager:
+            self.collision_manager.register_hitbox(
+                bullet,
+                scale=getattr(bullet, "hitbox_scale", 1.0)
+            )
 
     # ===========================================================
     # Cleanup (External Call)
