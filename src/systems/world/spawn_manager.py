@@ -55,7 +55,10 @@ class SpawnManager:
         self.collision_manager = collision_manager
         self.entities = []  # Active enemy entities
 
-        DebugLogger.init("Initialized SpawnManager")
+        DebugLogger.init("SpawnManager Initialized", sub=1, meta_mode="no_time")
+
+        self.pools = {}  # {(category, type_name): [inactive_entities]}
+        self.pool_enabled = {}  # {(category, type_name): bool}
 
     # ===========================================================
     # Entity Spawning
@@ -73,15 +76,108 @@ class SpawnManager:
         """
         kwargs.setdefault("draw_manager", self.draw_manager)
 
-        entity = EntityRegistry.create(category, type_name, x, y, **kwargs)
-        if not entity:
-            DebugLogger.warn(f"Failed to spawn {category}: '{type_name}'")
-            return
+        key = (category, type_name)
+        entity = None
+
+        # Try pool first if enabled
+        if key in self.pool_enabled and self.pool_enabled[key]:
+            entity = self._get_from_pool(category, type_name)
+
+            if entity:
+                # Reset pooled entity
+                if hasattr(entity, "reset"):
+                    entity.reset(x, y, **kwargs)
+                else:
+                    DebugLogger.warn(f"{type(entity).__name__} missing reset() method")
+                    entity = None  # Fallback to creation
+
+        # Create new if pool miss
+        if entity is None:
+            entity = EntityRegistry.create(category, type_name, x, y, **kwargs)
+
+            if not entity:
+                DebugLogger.warn(f"Failed to spawn {category}: '{type_name}'")
+                return
+
         self.entities.append(entity)
 
-        # Register the enemy’s hitbox
+        # Register hitbox
         if self.collision_manager and hasattr(entity, "_hitbox_scale"):
             self.collision_manager.register_hitbox(entity, scale=entity._hitbox_scale)
+
+    # ===========================================================
+    # Pooling Managers
+    # ===========================================================
+
+    def enable_pooling(self, category: str, type_name: str, prewarm_count: int = 20):
+        """
+        Enable pooling for a specific entity type and optionally prewarm.
+
+        Args:
+            category: Entity category (e.g., "enemy")
+            type_name: Entity type (e.g., "straight")
+            prewarm_count: Number of instances to precreate
+        """
+        key = (category, type_name)
+        self.pool_enabled[key] = True
+
+        if key not in self.pools:
+            self.pools[key] = []
+
+        # Prewarm pool
+        if prewarm_count > 0:
+            self._prewarm_pool(category, type_name, prewarm_count)
+
+        DebugLogger.init(f"Enabled pooling for [{category}:{type_name}] with {prewarm_count} instances",
+                          sub=2, meta_mode="none", is_last=True)
+
+    def _prewarm_pool(self, category: str, type_name: str, count: int):
+        """Create instances ahead of time."""
+        key = (category, type_name)
+
+        for _ in range(count):
+            # Create at offscreen position
+            entity = EntityRegistry.create(category, type_name, -1000, -1000,
+                                           draw_manager=self.draw_manager)
+            if entity:
+                entity.death_state = LifecycleState.DEAD  # Mark as inactive
+                self.pools[key].append(entity)
+
+    def _get_from_pool(self, category: str, type_name: str):
+        """Try to get entity from pool, returns None if pool empty."""
+        key = (category, type_name)
+
+        if key not in self.pools or not self.pools[key]:
+            return None
+
+        return self.pools[key].pop()
+
+    def _return_to_pool(self, entity):
+        """Return entity to its pool."""
+        category = getattr(entity, "category", None)
+        type_name = self._get_entity_type_name(entity)
+
+        if not category or not type_name:
+            return False
+
+        key = (category, type_name)
+
+        if key in self.pool_enabled and self.pool_enabled[key]:
+            entity.death_state = LifecycleState.DEAD
+            self.pools[key].append(entity)
+            return True
+
+        return False
+
+    def _get_entity_type_name(self, entity) -> str:
+        """Extract type name from entity class (e.g., EnemyStraight -> straight)."""
+        class_name = type(entity).__name__
+
+        # Convention: EnemyStraight -> straight, EnemyZigzag -> zigzag
+        if class_name.startswith("Enemy"):
+            return class_name[5:].lower()  # Remove "Enemy" prefix
+
+        return class_name.lower()
 
     # ===========================================================
     # Update Loop
@@ -140,16 +236,23 @@ class SpawnManager:
         """
         total_before = len(self.entities)
         i = 0
+        returned_to_pool = 0
+
         for e in self.entities:
             if e.death_state < LifecycleState.DEAD:
                 self.entities[i] = e
                 i += 1
-        del self.entities[i:]
+            else:
+                # Try to return to pool
+                if self._return_to_pool(e):
+                    returned_to_pool += 1
 
+        del self.entities[i:]
         removed = total_before - i
+
         if removed > 0:
             DebugLogger.state(
-                f"Cleaned up {removed} destroyed entities",
+                f"Cleaned up {removed} entities ({returned_to_pool} pooled)",
                 category="entity_cleanup"
             )
 

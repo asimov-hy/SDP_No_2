@@ -69,11 +69,12 @@ class CollisionHitbox:
         self._size_cache = None
         self._color_cache = self._cache_color()
 
-        # Initialize if owner has a rect
         if hasattr(owner, "rect"):
             self._initialize_from_owner()
         else:
             DebugLogger.warn(f"{type(owner).__name__} missing 'rect' attribute!")
+
+        DebugLogger.init("CollisionHitbox Initialized", sub=1, meta_mode="no_time")
 
     # ===========================================================
     # Internal Setup

@@ -33,7 +33,8 @@ class GameLoop:
 
     def __init__(self):
         """Initialize pygame and all foundational systems."""
-        DebugLogger.init("Begin GameLoop Initialization")
+        DebugLogger.init("─"*50, meta_mode="none")
+        DebugLogger.init("Begin GameLoop Initialization", meta_mode="no_time")
 
         # -------------------------------------------------------
         # Initialize pygame systems
@@ -41,46 +42,34 @@ class GameLoop:
         pygame.init()
         pygame.font.init()
 
-        DebugLogger.init("╔" + "═" * 64 + "╗", show_meta=False)
-        DebugLogger.init("║{:^64}║".format("INITIALIZING GAMELOOP"), show_meta=False)
-        DebugLogger.init("╠" + "═" * 64 + "╣", show_meta=False)
-        # DebugLogger.init"║{:^64}║".format())
-
         # -------------------------------------------------------
         # Window Setup
         # -------------------------------------------------------
         self._set_icon()
         pygame.display.set_caption(Display.CAPTION)
-
-        DebugLogger.init("║{:<56}║".format(f"\t[GameLoop][INIT]\t\t→  Icon Set. Caption Set."), show_meta=False)
-        DebugLogger.init("║" + " " * 64 + "║", show_meta=False)
+        DebugLogger.init("[Pygame] Set Icon and Window Caption", meta_mode="none", sub=1)
 
         # -------------------------------------------------------
-        # Engine Core Systems
+        # Core Systems
         # -------------------------------------------------------
-        DebugLogger.init("╠────────────────────── ENGINE CORE SYSTEMS ─────────────────────╣", show_meta=False)
         self.display = DisplayManager(Display.WIDTH, Display.HEIGHT)
         self.input = InputManager()
         self.draw_manager = DrawManager()
         self.clock = pygame.time.Clock()
         self.running = True
-        DebugLogger.init("║" + " " * 64 + "║", show_meta=False)
 
         # -------------------------------------------------------
         # Scene Management
         # -------------------------------------------------------
-        DebugLogger.init("╠─────────────────── SCENE MANAGEMENT SYSTEMS ───────────────────╣", show_meta=False)
         self.scenes = SceneManager(self.display, self.input,self.draw_manager)
-        DebugLogger.init("║" + " " * 64 + "║", show_meta=False)
 
         # -------------------------------------------------------
         # Global Debug HUD (independent of scenes)
         # -------------------------------------------------------
-        DebugLogger.init("╠─────────────────────────── DEBUG HUD ──────────────────────────╣", show_meta=False)
         self.debug_hud = DebugHUD(self.display)
         self.debug_hud.draw_manager = self.draw_manager
-        DebugLogger.init("║" + " " * 64 + "║", show_meta=False)
-        DebugLogger.init("╚" + "═" * 64 + "╝", show_meta=False)
+
+        DebugLogger.init("─" * 50, meta_mode="none")
 
     # ===========================================================
     # Core Runtime Loop
@@ -94,7 +83,7 @@ class GameLoop:
             - Update active scene and debug systems.
             - Render all visual elements each frame.
         """
-        DebugLogger.action("Entering main loop")
+        DebugLogger.action("Beginning main loop")
 
         fixed_dt = Physics.FIXED_DT
         accumulator = 0.0
@@ -229,5 +218,6 @@ class GameLoop:
 
         if frame_time_ms > Debug.FRAME_TIME_WARNING:
             DebugLogger.warn(
-                f"Perf ⚠️ SLOW FRAME: {frame_time_ms:.2f} ms (Scene={scene_time:.2f} | HUD={hud_time:.2f} | Render={render_time:.2f})"
+                f"Perf ⚠️ SLOW FRAME: {frame_time_ms:.2f} ms "
+                f"(Scene={scene_time:.2f} | HUD={hud_time:.2f} | Render={render_time:.2f})"
             )

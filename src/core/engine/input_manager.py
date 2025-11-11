@@ -57,7 +57,18 @@ class InputManager:
         self.key_bindings = key_bindings or DEFAULT_KEY_BINDINGS
         self.context = "gameplay"  # active context ("gameplay" or "ui")
 
-        DebugLogger.init("║{:<59}║".format(f"\t[InputManager][INIT]\t→  Initialized"), show_meta=False)
+        # Build flat lookup tables at init
+        self._key_to_action_cache = {}  # {context: {pygame_key: action_name}}
+        self._active_lookup = None      # Points to current context's lookup
+        self._build_key_caches()
+
+        self._context_keys = {}        # {context: [pygame_keys]}
+        self._active_keys = []         # Current context's keys only
+        self._build_key_lists()
+
+        self._switch_active_cache("gameplay")
+
+        DebugLogger.init("InputManager Initialized", meta_mode="no_time", sub=1)
 
         # -------------------------------------------------------
         # Validate that system bindings do not overlap with others
@@ -72,9 +83,14 @@ class InputManager:
         if pygame.joystick.get_count() > 0:
             self.controller = pygame.joystick.Joystick(0)
             self.controller.init()
-            DebugLogger.init("║{:<57}║".format(f"\t\t└─ [INIT]\t→  {self.controller.get_name()}"), show_meta=False)
+            DebugLogger.init(f"Controller input active",
+                             meta_mode="none", sub=2,)
+            DebugLogger.init(f"Detected: {self.controller.get_name()}",
+                             meta_mode="none", sub=2, )
 
-        DebugLogger.init("║{:<57}║".format(f"\t\t└─ [INIT]\t→  Keyboard"), show_meta=False)
+        self._has_controller = self.controller is not None
+
+        DebugLogger.init("Keyboard input active", meta_mode="no_time", sub=2, is_last=True)
 
         # -------------------------------------------------------
         # Movement and gameplay state tracking
@@ -82,6 +98,10 @@ class InputManager:
         self.move = pygame.Vector2(0, 0)
         self._move_keyboard = pygame.Vector2(0, 0)
         self._move_controller = pygame.Vector2(0, 0)
+
+        self._normalized_move = pygame.Vector2(0, 0)
+        self._last_raw_move = pygame.Vector2(0, 0)
+        self._normalized_dirty = True
 
         # Action states (gameplay)
         self.attack_pressed = False
@@ -129,6 +149,7 @@ class InputManager:
             DebugLogger.warn(f"Unknown context: {name}")
             return
         self.context = name
+        self._switch_active_cache(name)  # Just swap pointer
         DebugLogger.state(f"Context switched to [{name.upper()}]")
 
     def get_context(self):
@@ -174,8 +195,17 @@ class InputManager:
         self.pause_pressed = self._is_pressed("pause", keys)
 
         # Merge controller input (unchanged)
-        self._update_controller()
-        self._merge_inputs()
+        # self._update_controller()
+        # self._merge_inputs()
+
+        if self._has_controller:
+            self._update_with_controller()
+        else:
+            self._update_keyboard_only()
+
+        if self.move != self._last_raw_move:
+            self._normalized_dirty = True
+            self._last_raw_move.update(self.move)
 
     # ===========================================================
     # UI Navigation Input
@@ -194,40 +224,51 @@ class InputManager:
         # Controller support for UI
         # ------------------------------------------
         if self.controller:
-            hat_x, hat_y = self.controller.get_hat(0)  # D-pad
-            x_axis = self.controller.get_axis(0)  # Analog X
-            y_axis = self.controller.get_axis(1)  # Analog Y
-            threshold = 0.5
-
-            # D-pad or analog emulate arrow keys
-            if hat_y == 1 or y_axis < -threshold:
-                self.ui_up = True
-            elif hat_y == -1 or y_axis > threshold:
-                self.ui_down = True
-            if hat_x == -1 or x_axis < -threshold:
-                self.ui_left = True
-            elif hat_x == 1 or x_axis > threshold:
-                self.ui_right = True
-
-            # Controller buttons (customizable later)
-            self.ui_confirm = self.controller.get_button(0)  # usually A / Cross
-            self.ui_back = self.controller.get_button(1)  # usually B / Circle
+            self._update_ui_controller()
+            # hat_x, hat_y = self.controller.get_hat(0)  # D-pad
+            # x_axis = self.controller.get_axis(0)  # Analog X
+            # y_axis = self.controller.get_axis(1)  # Analog Y
+            # threshold = 0.5
+            #
+            # # D-pad or analog emulate arrow keys
+            # if hat_y == 1 or y_axis < -threshold:
+            #     self.ui_up = True
+            # elif hat_y == -1 or y_axis > threshold:
+            #     self.ui_down = True
+            # if hat_x == -1 or x_axis < -threshold:
+            #     self.ui_left = True
+            # elif hat_x == 1 or x_axis > threshold:
+            #     self.ui_right = True
+            #
+            # # Controller buttons (customizable later)
+            # self.ui_confirm = self.controller.get_button(0)  # usually A / Cross
+            # self.ui_back = self.controller.get_button(1)  # usually B / Circle
 
     # ===========================================================
     # Controller Input
     # ===========================================================
-    def _update_controller(self):
-        """
-        Poll analog stick axes and controller buttons.
+    # def _update_controller(self):
+    #     """
+    #     Poll analog stick axes and controller buttons.
+    #
+    #     Notes:
+    #         - Applies a deadzone to prevent drift.
+    #         - Currently only supports primary analog movement.
+    #     """
+    #     if not self.controller:
+    #         self._move_controller.update(0, 0)
+    #         return
+    #
+    #     x_axis = self.controller.get_axis(0)
+    #     y_axis = self.controller.get_axis(1)
+    #     deadzone = 0.2
+    #
+    #     self._move_controller.x = x_axis if abs(x_axis) > deadzone else 0
+    #     self._move_controller.y = y_axis if abs(y_axis) > deadzone else 0
 
-        Notes:
-            - Applies a deadzone to prevent drift.
-            - Currently only supports primary analog movement.
-        """
-        if not self.controller:
-            self._move_controller.update(0, 0)
-            return
-
+    def _update_with_controller(self):
+        """Hot path: keyboard + controller merging."""
+        # Read controller axes
         x_axis = self.controller.get_axis(0)
         y_axis = self.controller.get_axis(1)
         deadzone = 0.2
@@ -235,15 +276,25 @@ class InputManager:
         self._move_controller.x = x_axis if abs(x_axis) > deadzone else 0
         self._move_controller.y = y_axis if abs(y_axis) > deadzone else 0
 
+        # Merge: controller overrides keyboard
+        if self._move_controller.length_squared() > 0:
+            self.move.update(self._move_controller)
+        else:
+            self.move.update(self._move_keyboard)
+
+    def _update_keyboard_only(self):
+        """Hot path: keyboard-only (no controller checks)."""
+        self.move.update(self._move_keyboard)
+
     # ===========================================================
     # Input Merging and Query
     # ===========================================================
-    def _merge_inputs(self):
-        """Combine keyboard and controller input cleanly."""
-        if self._move_controller.length_squared() > 0:
-            self.move = self._move_controller
-        else:
-            self.move = self._move_keyboard
+    # def _merge_inputs(self):
+    #     """Combine keyboard and controller input cleanly."""
+    #     if self._move_controller.length_squared() > 0:
+    #         self.move = self._move_controller
+    #     else:
+    #         self.move = self._move_keyboard
 
     def _is_pressed(self, action, keys):
         """
@@ -256,11 +307,8 @@ class InputManager:
         Returns:
             bool: True if any key bound to the action is pressed.
         """
-        ctx = self.key_bindings.get(self.context, {})
-        if action not in ctx:
-            return False
-        for key in ctx[action]:
-            if keys[key]:
+        for key in self._active_keys:
+            if keys[key] and self._active_lookup.get(key) == action:
                 return True
         return False
 
@@ -291,9 +339,18 @@ class InputManager:
             pygame.Vector2: Normalized direction vector.
                 Returns (0, 0) if no movement input is active.
         """
+        # Return cached value if input unchanged
+        if not self._normalized_dirty:
+            return self._normalized_move
+
+        # Recompute only when dirty
         if self.move.length_squared() > 0:
-            return self.move.normalize()
-        return pygame.Vector2(0, 0)
+            self._normalized_move.update(self.move.normalize())
+        else:
+            self._normalized_move.update(0, 0)
+
+        self._normalized_dirty = False
+        return self._normalized_move
 
     def is_attack_held(self):
         """Return whether the attack key/button is currently held."""
@@ -334,3 +391,49 @@ class InputManager:
             Debug.HITBOX_VISIBLE = debug_hud.visible
             state = "Visible" if Debug.HITBOX_VISIBLE else "Hidden"
             DebugLogger.action(f"Hitbox rendering set → {state}")
+
+    # ===========================================================
+    # helper
+    # ===========================================================
+
+    def _build_key_caches(self):
+        """Build flat {key: action} lookup for each context."""
+        for context_name, actions in self.key_bindings.items():
+            lookup = {}
+            for action_name, keys in actions.items():
+                for key in keys:
+                    # Store action name for this key
+                    lookup[key] = action_name
+            self._key_to_action_cache[context_name] = lookup
+
+    def _switch_active_cache(self, context_name):
+        """Swap pointer to active lookup table + key list (zero-cost)."""
+        self._active_lookup = self._key_to_action_cache.get(context_name, {})
+        self._active_keys = self._context_keys.get(context_name, [])
+
+    def _build_key_lists(self):
+        """Pre-compute list of keys for each context (Phase 2)."""
+        for context_name, actions in self.key_bindings.items():
+            key_set = set()
+            for keys in actions.values():
+                key_set.update(keys)
+            self._context_keys[context_name] = list(key_set)
+
+    def _update_ui_controller(self):
+        """Controller support for UI (only called if controller exists)."""
+        hat_x, hat_y = self.controller.get_hat(0)
+        x_axis = self.controller.get_axis(0)
+        y_axis = self.controller.get_axis(1)
+        threshold = 0.5
+
+        if hat_y == 1 or y_axis < -threshold:
+            self.ui_up = True
+        elif hat_y == -1 or y_axis > threshold:
+            self.ui_down = True
+        if hat_x == -1 or x_axis < -threshold:
+            self.ui_left = True
+        elif hat_x == 1 or x_axis > threshold:
+            self.ui_right = True
+
+        self.ui_confirm = self.controller.get_button(0)
+        self.ui_back = self.controller.get_button(1)

@@ -27,7 +27,7 @@ class EntityRegistry:
         if category not in cls._registry:
             cls._registry[category] = {}
         cls._registry[category][name] = entity_class
-        DebugLogger.state(f"[Registry] Registered entity [{category}:{name}]")
+        DebugLogger.state(f"[Registry] Registered entity [{category}:{name}]", category="loading")
 
     @classmethod
     def get(cls, category: str, name: str):

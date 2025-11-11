@@ -50,7 +50,8 @@ class UIManager:
 
         # Initialize base developer UI
         self._create_base_ui()
-        # DebugLogger.system("Initialized with default groups and subsystems")
+
+        DebugLogger.init("UIManager Initialized", meta_mode="no_time", sub=1)
 
     # ===========================================================
     # Initialization Helpers

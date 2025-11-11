@@ -25,7 +25,7 @@ class StartScene:
     def __init__(self, scene_manager):
         self.scene_manager = scene_manager
         self.timer = 0.0
-        DebugLogger.init("║{:<57}║".format(f"\t\t└─ [StartScene][INIT]\t→ Initialized Starting Scene"), show_meta=False)
+        DebugLogger.init("StartScene Initialized", meta_mode="no_time", sub=3, is_last=True)
 
     # ===========================================================
     # Event Handling

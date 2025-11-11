@@ -13,7 +13,6 @@ Responsibilities
 """
 
 import pygame
-from src.core.game_settings import Display
 from src.core.utils.debug_logger import DebugLogger
 
 
@@ -32,24 +31,32 @@ class DisplayManager:
             game_width (int): Logical game resolution width.
             game_height (int): Logical game resolution height.
         """
+        # Core Setup
         self.game_width = game_width
         self.game_height = game_height
         self.game_surface = pygame.Surface((game_width, game_height))
 
-        # Current window and fullscreen state
+        # Initial state flags
         self.is_fullscreen = False
         self.window = None
-        self._create_window(silent=True)
-        DebugLogger.init("║{:<61}║".format(f"\t[DisplayManager][INIT]\t→ Windowed Mode ({game_width}x{game_height})"), show_meta=False)
 
-        # Calculated values for scaling/letterboxing
+        # Window Creation
+        self._create_window(silent=True)
+        DebugLogger.init("DisplayManager Initialized", meta_mode="no_time", sub=1)
+        DebugLogger.init(
+            f"Initialized Windowed Mode ({game_width}x{game_height})",
+            meta_mode="none", sub=2,)
+
+        # Scaling & Letterboxing
         self.scale = 1.0
         self.offset_x = 0
         self.offset_y = 0
         self._calculate_scale()
+        DebugLogger.init("Calculated initial scaling and offsets", meta_mode="none", sub=2, is_last=True)
 
-        self.scaled_surface_cache = None
+        # Render Caches
         self.last_scaled_size = None
+        self.letterbox_bars = None
 
     # ===========================================================
     # Window Creation and Scaling
@@ -60,6 +67,7 @@ class DisplayManager:
 
         Args:
             fullscreen (bool): If True, enter borderless fullscreen mode.
+            silent (bool): Suppress debug output during initialization.
         """
         if fullscreen:
             # True fullscreen - fills entire screen
@@ -69,7 +77,7 @@ class DisplayManager:
             )
             self.is_fullscreen = True
             if not silent:
-                DebugLogger.state("Switched to fullscreen mode")
+                DebugLogger.state("Switched to FULLSCREEN mode", category="display")
         else:
             # Default windowed size
             self.window = pygame.display.set_mode(
@@ -78,7 +86,8 @@ class DisplayManager:
             )
             self.is_fullscreen = False
             if not silent:
-                DebugLogger.state("Switched to windowed mode")
+                DebugLogger.state(f"Switched to WINDOWED mode ({self.game_width}x{self.game_height})",
+                                  category="display")
 
         self._calculate_scale()
 
@@ -105,7 +114,10 @@ class DisplayManager:
         self.offset_x = (window_width - scaled_width) // 2
         self.offset_y = (window_height - scaled_height) // 2
 
+        self._create_letterbox_bars()
+
         self.scaled_size = (scaled_width, scaled_height)
+        DebugLogger.trace(f"Scale={self.scale:.3f}, Offset=({self.offset_x},{self.offset_y})", category="display")
 
     # ===========================================================
     # Window Actions
@@ -114,6 +126,7 @@ class DisplayManager:
         """Toggle between windowed and fullscreen modes."""
         self._create_window(not self.is_fullscreen)
         state = "ON" if self.is_fullscreen else "OFF"
+        DebugLogger.state(f"Toggled fullscreen → {state}", category="display")
 
     def handle_resize(self, event):
         """
@@ -128,7 +141,7 @@ class DisplayManager:
                 pygame.RESIZABLE | pygame.DOUBLEBUF | pygame.HWSURFACE  # Add flags
             )
             self._calculate_scale()
-            DebugLogger.state(f"Window resized → {event.w}x{event.h}")
+            DebugLogger.state(f"Window resized → {event.w}x{event.h}", category="display")
 
     # ===========================================================
     # Rendering Pipeline
@@ -145,16 +158,19 @@ class DisplayManager:
     def render(self):
         """Scale and render the game surface to the actual window with letterboxing."""
         # Clear window with black bars
-        self.window.fill((0, 0, 0))
+        if self.letterbox_bars:
+            for surf, pos in self.letterbox_bars:
+                self.window.blit(surf, pos)
+        else:
+            self.window.fill((0, 0, 0))
 
-        # Only rescale if window size changed
-        if self.scaled_size != self.last_scaled_size:
-            self.scaled_surface_cache = pygame.Surface(self.scaled_size)
-            self.last_scaled_size = self.scaled_size
+        # Define target rect on window
+        target_rect = pygame.Rect(self.offset_x, self.offset_y,
+                                  self.scaled_size[0], self.scaled_size[1])
 
-        # Fast blit to cached surface, then to window
-        pygame.transform.scale(self.game_surface, self.scaled_size, self.scaled_surface_cache)
-        self.window.blit(self.scaled_surface_cache, (self.offset_x, self.offset_y))
+        # Scale directly to window (no intermediate surface)
+        pygame.transform.scale(self.game_surface, self.scaled_size,
+                               dest_surface=self.window.subsurface(target_rect))
 
         pygame.display.flip()
 
@@ -198,3 +214,27 @@ class DisplayManager:
             tuple[int, int]: (width, height) of the actual pygame window.
         """
         return self.window.get_size()
+
+    def _create_letterbox_bars(self):
+        """Pre-create black bar surfaces for letterboxing."""
+        window_width, window_height = self.window.get_size()
+
+        # Only create bars if there's actual letterboxing
+        if self.offset_x > 0:  # Vertical bars (sides)
+            self.letterbox_bars = [
+                (pygame.Surface((self.offset_x, window_height)), (0, 0)),  # Left
+                (pygame.Surface((self.offset_x, window_height)),
+                 (window_width - self.offset_x, 0))  # Right
+            ]
+            for surf, _ in self.letterbox_bars:
+                surf.fill((0, 0, 0))
+        elif self.offset_y > 0:  # Horizontal bars (top/bottom)
+            self.letterbox_bars = [
+                (pygame.Surface((window_width, self.offset_y)), (0, 0)),  # Top
+                (pygame.Surface((window_width, self.offset_y)),
+                 (0, window_height - self.offset_y))  # Bottom
+            ]
+            for surf, _ in self.letterbox_bars:
+                surf.fill((0, 0, 0))
+        else:
+            self.letterbox_bars = None

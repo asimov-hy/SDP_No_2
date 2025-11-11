@@ -42,7 +42,8 @@ class GameScene:
             scene_manager: Reference to SceneManager for access to display,
                            input, and draw subsystems.
         """
-        DebugLogger.init("Initializing GameScene")
+        DebugLogger.init("─" * 50, meta_mode="none")
+        DebugLogger.init("Initializing GameScene", meta_mode="no_time")
 
         self.scene_manager = scene_manager
         self.display = scene_manager.display
@@ -55,7 +56,6 @@ class GameScene:
         # Base HUD (game overlay)
         try:
             self.ui.attach_subsystem("hud", HUDManager())
-            DebugLogger.init("HUDManager attached successfully")
         except Exception as e:
             DebugLogger.warn(f"HUDManager unavailable: {e}")
 
@@ -63,13 +63,12 @@ class GameScene:
 
         # spawn player
         self.player = Player(draw_manager=self.draw_manager, input_manager=self.input)
-        DebugLogger.init("Initialized Player")
 
         # Bullet Manager Setup
         self.bullet_manager = BulletManager()
 
         self.player.bullet_manager = self.bullet_manager
-        DebugLogger.init("	└─ Linked Bullet Manager to Player")
+        DebugLogger.init("Linked [BulletManager] to [Player]", sub=2, meta_mode="none", is_last=True)
 
         # Collision Manager Setup
         self.collision_manager = CollisionManager(
@@ -79,22 +78,23 @@ class GameScene:
         )
 
         self.bullet_manager.collision_manager = self.collision_manager
-        DebugLogger.init("	└─ Linked Collision Manager to Bullet Manager")
+        DebugLogger.init("Linked [CollisionManager] to [BulletManager]", sub=2, meta_mode="none", is_last=True)
 
         # Register player's hitbox through the CollisionManager
         self.player.hitbox = self.collision_manager.register_hitbox(
             self.player,
             scale=self.player.hitbox_scale
         )
-        DebugLogger.init("	└─ Registered Player Hitbox", category="collision")
+        DebugLogger.init("Linked [Player] to [CollisionHitbox]", meta_mode="none", sub=2, is_last=True)
 
         # ===========================================================
         # Spawn Manager Setup
         # ===========================================================
-        self.spawner = SpawnManager(self.draw_manager, self.display, self.collision_manager)
+        self.spawn_manager = SpawnManager(self.draw_manager, self.display, self.collision_manager)
 
-        self.collision_manager.spawn_manager = self.spawner
+        self.collision_manager.spawn_manager = self.spawn_manager
 
+        self.spawn_manager.enable_pooling("enemy", "straight", prewarm_count=10)
 
         # ===========================================================
         # Stage Manager Setup (Predefined Waves)
@@ -106,8 +106,10 @@ class GameScene:
             {"spawn_time": 9.0, "enemy_type": "straight", "count": 8, "pattern": "line"},
         ]
 
-        self.stage_manager = LevelManager(self.spawner, STAGE_1_WAVES)
-        DebugLogger.init("StageManager initialized with Stage 1 waves")
+        self.level_manager = LevelManager(self.spawn_manager, STAGE_1_WAVES)
+        DebugLogger.init("LevelManager loaded: Stage 1 waves", sub=2, meta_mode="none", is_last=True)
+
+        DebugLogger.init("─" * 50, meta_mode="none")
 
     # ===========================================================
     # Event Handling
@@ -138,13 +140,13 @@ class GameScene:
         self.player.update(dt)
 
         # 2) Enemy Spawn & Stage Progression
-        self.stage_manager.update(dt)
-        self.spawner.update(dt)
+        self.level_manager.update(dt)
+        self.spawn_manager.update(dt)
 
         # 3) Collision Phase
         self.collision_manager.update()
         self.collision_manager.detect()
-        self.spawner.cleanup()
+        self.spawn_manager.cleanup()
 
         # 5) Bullet Update (after collision)
         # Update positions for remaining bullets that survived collisions.
@@ -166,7 +168,7 @@ class GameScene:
             draw_manager (DrawManager): Centralized renderer responsible for batching and displaying.
         """
         # Rendering Order (Layer Priority)
-        self.spawner.draw()
+        self.spawn_manager.draw()
         self.bullet_manager.draw(draw_manager)
         self.player.draw(draw_manager)
         self.ui.draw(draw_manager)
@@ -174,3 +176,17 @@ class GameScene:
         # Optional Debug Rendering
         if Debug.HITBOX_VISIBLE:
             self.collision_manager.draw_debug(draw_manager)
+
+    # ===========================================================
+    # Utilities
+    # ===========================================================
+    def get_pool_stats(self) -> dict:
+        """Return current pool usage statistics."""
+        stats = {}
+        for key, pool in self.pools.items():
+            category, type_name = key
+            stats[f"{category}:{type_name}"] = {
+                "available": len(pool),
+                "enabled": self.pool_enabled.get(key, False)
+            }
+        return stats

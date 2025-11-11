@@ -62,6 +62,9 @@ class EnemyStraight(BaseEnemy):
         """
         super().update(dt)
 
+    def reset(self, x, y, direction=(0,1), speed=200, health=1, **kwargs):
+        """Reset straight enemy with new parameters."""
+        super().reset(x, y, speed=speed, health=health, direction=direction, **kwargs)
 
 from src.entities.entity_registry import EntityRegistry
 EntityRegistry.register("enemy", "straight", EnemyStraight)

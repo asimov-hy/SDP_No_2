@@ -30,7 +30,7 @@ class BulletManager:
 
         self.prewarm_pool(owner="player", count=50)
 
-        DebugLogger.init("Initialized BulletManager")
+        DebugLogger.init("BulletManager Initialized", sub=1, meta_mode="no_time")
 
     # ===========================================================
     # Bullet Creation / Reuse

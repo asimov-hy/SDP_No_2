@@ -14,6 +14,7 @@ from src.core.utils.debug_logger import DebugLogger
 from src.scenes.start_scene import StartScene
 from src.scenes.game_scene import GameScene
 
+
 class SceneManager:
     """Coordinates scene transitions and delegates update/draw logic."""
 
@@ -33,18 +34,18 @@ class SceneManager:
         self.display = display_manager
         self.input = input_manager
         self.draw_manager = draw_manager
-        DebugLogger.init("║{:<59}║".format(f"\t[SceneManager][INIT]\t→ Initialized Core Systems"), show_meta=False)
+        DebugLogger.init("SceneManager Initialized", meta_mode="no_time", sub=1)
 
         # Create scene instances
         self.scenes = {
             "START": StartScene,
             "GAME": GameScene
         }
-        DebugLogger.init("║{:<59}║".format(f"\t[SceneManager][INIT]\t→ Setting Up Scenes"), show_meta=False)
+        DebugLogger.init("Setting up scenes", meta_mode="none", sub=2)
 
         # Activate default starting scene
         self.set_scene("START", silent=True)
-        DebugLogger.init("║{:<57}║".format(f"\t\t└─ [StartScene][INIT]\t→ Active Scene: {self.active_scene}"), show_meta=False)
+        DebugLogger.init(f"Active Scene: {self.active_scene}", meta_mode="none", sub=2, is_last=True)
 
     # ===========================================================
     # Scene Control
@@ -60,6 +61,7 @@ class SceneManager:
 
         Args:
             name (str): Identifier of the target scene.
+            silent: announce scene setting
 
         Notes:
             Logs scene transitions and ignores invalid scene requests.

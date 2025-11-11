@@ -16,7 +16,6 @@ import pygame
 import math
 import os
 from src.core.utils.debug_logger import DebugLogger
-from src.core.game_settings import Layers
 
 
 class DrawManager:
@@ -34,7 +33,7 @@ class DrawManager:
         self.surface = None  # Expose active surface for debug/hitbox draws
         self.background = None  # Cached background surface (optional)
         self.debug_hitboxes = []  # Persistent list for queued hitboxes
-        DebugLogger.init("║{:<59}║".format(f"\t[DrawManager][INIT]\t\t→ Initialized"), show_meta=False)
+        DebugLogger.init("DrawManager Initialized", meta_mode="no_time", sub=1)
 
     # --------------------------------------------------------
     # Image Loading
@@ -350,7 +349,7 @@ class DrawManager:
 
         if debug:
             draw_count = sum(len(items) for items in self.layers.values())
-            DebugLogger.state(f"Rendered {draw_count} queued surfaces and shapes", category = "drawing")
+            DebugLogger.state(f"Rendered {draw_count} queued surfaces and shapes", category="drawing")
 
         # -------------------------------------------------------
         # Optional debug overlay pass (hitboxes)

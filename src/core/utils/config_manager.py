@@ -17,7 +17,7 @@ def load_json(filename, default_dict):
     try:
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
-            DebugLogger.system(f"Loaded {filename}")
+            DebugLogger.system(f"Loaded {filename}", category="loading")
             return {**default_dict, **data}
     except Exception as e:
         DebugLogger.warn(f"Failed to load {filename}: {e} — using defaults")

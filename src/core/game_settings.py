@@ -75,21 +75,52 @@ class LoggerConfig:
 
     # Category Filters (only current categories in use)
     CATEGORIES = {
-        # Core Systems
-        "system": True,  # Engine boot, config, and lifecycle events
-        "stage": True,  # StageManager / wave progression
-        "animation": True,  # Animation initialization and updates
-        "base_entity_logic": True,  # Entity base behavior and shared logic
+        # ---------------------------------------------------
+        # Core Engine Systems
+        # ---------------------------------------------------
+        "loading": False,
+        "system": True,              # General engine lifecycle and initialization
+        "display": True,             # DisplayManager, window creation, scaling
+        "scene": True,               # SceneManager, transitions, and active scene info
+        "input": True,               # InputManager events and key handling
+        "debug_hud": True,           # DebugHUD and HUD rendering
 
-        # Gameplay Systems
-        "collision": False,  # CollisionManager (hit detection, tracing)
-        "effects": False,  # Destruction, particle, and impact effects
-        "entity_spawning": False,  # Entity creation events
-        "entity_cleanup": False,  # Entity removal / recycling logs
-        "drawing": False,  # DrawManager / render operations
+        # ---------------------------------------------------
+        # Game Loop / State
+        # ---------------------------------------------------
+        "stage": True,               # StageManager, wave control, scene flow
+        "game_state": True,          # GameState transitions and mode tracking
+        "timing": False,             # Delta time, fixed step timing, frame stats
 
-        # Input & User Actions
-        "user_action": False  # Player input, controls, and UI actions
+        # ---------------------------------------------------
+        # Entity & Gameplay Systems
+        # ---------------------------------------------------
+        "entity_core": True,         # BaseEntity initialization, IDs, and registration
+        "entity_logic": True,        # Common entity behavior and updates
+        "entity_spawn": False,       # SpawnManager activity and enemy waves
+        "entity_cleanup": False,     # Entity removal or offscreen cleanup
+        "collision": False,          # CollisionManager, hit detection traces
+        "bullet": True,              # BulletManager creation and pooling
+        "effects": False,            # Visual/particle effect creation and cleanup
+        "animation": True,           # AnimationManager initialization and updates
+
+        # ---------------------------------------------------
+        # Rendering & Drawing
+        # ---------------------------------------------------
+        "drawing": True,             # DrawManager operations and layer sorting
+        "render": True,              # Display render pipeline and scaling logs
+
+        # ---------------------------------------------------
+        # User / Interaction
+        # ---------------------------------------------------
+        "user_action": False,        # Player input, UI interactions
+        "ui": True,                  # UIManager, button states, and transitions
+
+        # ---------------------------------------------------
+        # Optional / Experimental
+        # ---------------------------------------------------
+        "performance": False,        # FPS / frame time diagnostics
+        "audio": False               # SoundManager (placeholder)
     }
 
     # Output Style

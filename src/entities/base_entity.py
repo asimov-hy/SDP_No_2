@@ -203,6 +203,15 @@ class BaseEntity:
             category="entity"
         )
 
+    def reset(self, x, y, **kwargs):
+        """
+        Reset entity to reusable state (for pooling).
+        Subclasses override to reset specific attributes.
+        """
+        self.pos.update(x, y)
+        self.death_state = LifecycleState.ALIVE
+        self.sync_rect()
+
     # ===========================================================
     # Rendering
     # ===========================================================
