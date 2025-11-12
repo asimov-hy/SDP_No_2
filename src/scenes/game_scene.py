@@ -99,6 +99,14 @@ class GameScene:
         # Level Manager Setup
         # ===========================================================
         self.level_manager = LevelManager(self.spawn_manager)
+        self.level_manager.on_stage_complete = self._on_stage_complete
+
+        self.stage_queue = [
+            "src/data/Stage 1.json",
+            "src/data/Stage 2.json",
+            "src/data/Stage 3.json"
+        ]
+        self.current_stage_idx = 0
 
         DebugLogger.section("- Finished Initialization", only_title=True)
         DebugLogger.section("─" * 59 + "\n", only_title=True)
@@ -134,17 +142,22 @@ class GameScene:
         # 1) Player Input & Update
         move = self.input_manager.get_normalized_move()
         self.player.move_vec = move
+
+        # 2. Single entity pass (combines spawn + level logic)
+        self.spawn_manager.update(dt)  # Updates entities
+        self.level_manager.update(dt)  # Only checks timers/waves
+
+        # 3. Physics
         self.player.update(dt)
 
-        # 2) Enemy Spawn & Stage Progression
-        self.level_manager.update(dt)
-        self.spawn_manager.update(dt)
-
-        # 3) Collision Phase
+        # 4. Collision
         self.collision_manager.update()
         self.collision_manager.detect()
+
+        # 5. Cleanup (now happens once)
         self.spawn_manager.cleanup()
 
+<<<<<<< Updated upstream
         # 5) Bullet Update (after collision)
         # Update positions for remaining bullets that survived collisions.
         self.bullet_manager.update(dt)
@@ -154,6 +167,38 @@ class GameScene:
         # (e.g., score, health after collisions).
         self.ui.update(pygame.mouse.get_pos())
 
+=======
+        # 6. Projectiles
+        self.bullet_manager.update(dt)
+
+        # 7. UI
+        self.ui.update(pygame.mouse.get_pos())
+
+        # if not self.level_manager.active:  # when current stage finishes
+        #     next_stage = self._get_next_stage()
+        #     if next_stage:
+        #         DebugLogger.state(f"Loading next stage: {next_stage}")
+        #         self.level_manager.load(next_stage)
+        #     else:
+        #         DebugLogger.system("All stages complete — GameScene finished")
+
+    def _on_stage_complete(self):
+        """Callback fired by LevelManager when stage ends."""
+        DebugLogger.system(f"Stage {self.current_stage_idx + 1} complete")
+
+        self.spawn_manager.reset()
+
+        # self.spawn_manager.cleanup()  # Clear all entities
+        self.current_stage_idx += 1
+
+        if self.current_stage_idx < len(self.stage_queue):
+            next_stage = self.stage_queue[self.current_stage_idx]
+            DebugLogger.state(f"Loading: {next_stage}")
+            self.level_manager.load(next_stage)
+        else:
+            DebugLogger.system("All stages complete")
+
+>>>>>>> Stashed changes
     # ===========================================================
     # Rendering
     # ===========================================================
@@ -180,13 +225,7 @@ class GameScene:
     def get_pool_stats(self) -> dict:
         """Return current pool usage statistics."""
         stats = {}
-        for key, pool in self.pools.items():
-            category, type_name = key
-            stats[f"{category}:{type_name}"] = {
-                "available": len(pool),
-                "enabled": self.pool_enabled.get(key, False)
-            }
-        return stats
+        return self.spawn_manager.get_pool_stats()
 
     # ===========================================================
     # Lifecycle Hooks
@@ -200,7 +239,7 @@ class GameScene:
 
     def on_pause(self):
         self.paused = True
-        self.level_manager.stage_active = False
+        self.level_manager.active = False
         DebugLogger.state("on_pause()")
 
     def on_resume(self):

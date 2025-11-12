@@ -58,12 +58,19 @@ class LevelManager:
         DebugLogger.init_entry("LevelManager Initialized")
 
         self.spawner = spawn_manager
+        self.spawner.on_entity_destroyed = self._on_entity_destroyed
 
+        # State
         self.data = None
         self.phases = []
         self.current_phase_idx = 0
         self.phase_timer = 0.0
+        self._waiting_for_clear = False
+        self._remaining_enemies = 0
         self.active = False
+
+        # Callback
+        self.on_stage_complete = None
 
     # ===========================================================
     # Data Loading
@@ -76,13 +83,18 @@ class LevelManager:
 
         self.data = self._load_level_data(level_path)
         self.phases = self.data.get("phases", [])
-        if not self.phases:
-            DebugLogger.warn("No phases found in level data")
-            return
 
+        # Full reset
         self.current_phase_idx = 0
         self.phase_timer = 0.0
+        self._waiting_for_clear = False
+        self._remaining_enemies = 0
         self.active = True
+
+        if not self.phases:
+            DebugLogger.warn("No phases in level")
+            return
+
         self._load_phase(0)
 
     def _load_level_data(self, level_data):
@@ -160,6 +172,35 @@ class LevelManager:
         DebugLogger.init_sub(f"Timer Reset → {self.phase_timer:.2f}s")
         DebugLogger.section("─" * 59 + "\n", only_title=True)
 
+        self._trigger_func = self._compile_trigger(self.exit_trigger)
+
+    def _compile_trigger(self, trigger):
+        """Return callable that checks completion"""
+
+        # Time-based
+        if trigger == "duration":
+            duration = self.phases[self.current_phase_idx].get("duration", float('inf'))
+            return lambda: self.phase_timer >= duration
+
+        # Event-driven wave clear
+        if trigger == "all_waves_cleared":
+            self._waiting_for_clear = True
+            self._remaining_enemies = 0  # Will be counted on spawn
+            return lambda: (self.wave_idx >= len(self.waves) and
+                            self._remaining_enemies <= 0)
+
+        # Polling-based (legacy fallback)
+        if trigger == "enemy_cleared":
+            return lambda: not self._has_enemies_alive()
+
+        # Complex triggers
+        if isinstance(trigger, dict):
+            return lambda: self._evaluate_complex_trigger(trigger)
+
+        # Fallback
+        DebugLogger.warn(f"Unknown trigger type: {trigger}")
+        return lambda: False
+
     def _next_phase(self):
         """Advance to the next phase."""
         self.current_phase_idx += 1
@@ -167,8 +208,12 @@ class LevelManager:
         if self.current_phase_idx < len(self.phases):
             self._load_phase(self.current_phase_idx)
         else:
+            # Stage fully complete
             self.active = False
-            DebugLogger.system("Level complete")
+            DebugLogger.system("Stage complete")
+
+            if self.on_stage_complete:
+                self.on_stage_complete()
 
     # ===========================================================
     # Update Loop (Hot Path)
@@ -188,15 +233,18 @@ class LevelManager:
 
         self.phase_timer += dt
 
-        # 1. Spawn waves (O(1) with index pointer)
-        self._update_waves()
+        # Only check waves if any remain
+        if self.wave_idx < len(self.waves):
+            self._update_waves()
 
-        # 2. Trigger events (O(1) with index pointer)
-        self._update_events()
+        # Only check events if any remain
+        if self.event_idx < len(self.events):
+            self._update_events()
 
-        # 3. Check phase completion (O(1) or lazy evaluation)
-        if self._check_phase_complete():
-            self._next_phase()
+        # Only check trigger if conditions met
+        if self._should_check_trigger():
+            if self._trigger_func():
+                self._next_phase()
 
     def _update_waves(self):
         """Spawn waves when their time arrives."""
@@ -246,17 +294,34 @@ class LevelManager:
         # Spawn enemies at each position
         enemy_params = wave.get("enemy_params", {})
 
+        spawned = 0
         for x, y in positions:
             enemy = self.spawner.spawn("enemy", enemy_type, x, y, **enemy_params)
+            if enemy:
+                spawned += 1
+                # Apply per-wave speed override if specified
+                if "speed" in enemy_params:
+                    enemy.speed = enemy_params["speed"]
 
-            # Apply per-wave speed override if specified
-            if enemy and "speed" in enemy_params:
-                enemy.speed = enemy_params["speed"]
+        if self._waiting_for_clear:
+            self._remaining_enemies += spawned
 
         DebugLogger.state(
             f"Wave: {enemy_type} x{count} | Pattern: {pattern}",
             category="stage"
         )
+
+    def _on_entity_destroyed(self, entity):
+        """Called by SpawnManager when entity dies"""
+        if not self._waiting_for_clear or not self.active:
+            return
+
+        if entity.category == EntityCategory.ENEMY:
+            self._remaining_enemies -= 1
+
+            if self._remaining_enemies == 0 and self.wave_idx >= len(self.waves):
+                self._waiting_for_clear = False
+                self._next_phase()
 
     # ===========================================================
     # Event System (Dummy Handlers)
@@ -315,54 +380,6 @@ class LevelManager:
     # Trigger Evaluation (Phase Completion)
     # ===========================================================
 
-    def _check_phase_complete(self):
-        """
-        Check if current phase is complete.
-
-        Performance: O(1) for time-based, O(n) for enemy checks (lazy)
-
-        Returns:
-            bool: True if phase should end
-        """
-        trigger = self.exit_trigger
-
-        # Simple string triggers (fast path)
-        if isinstance(trigger, str):
-            return self._evaluate_simple_trigger(trigger)
-
-        # Complex dict triggers (condition-based)
-        if isinstance(trigger, dict):
-            return self._evaluate_complex_trigger(trigger)
-
-        DebugLogger.warn(f"Unknown trigger type: {type(trigger)}")
-        return False
-
-    def _evaluate_simple_trigger(self, trigger):
-        """
-        Evaluate simple string-based triggers.
-
-        Args:
-            trigger (str): Trigger identifier
-                - "duration": Fixed time limit (requires "duration" in phase)
-                - "all_waves_cleared": All waves spawned + enemies dead
-                - "enemy_cleared": All enemies dead (ignores wave count)
-        """
-        if trigger == "duration":
-            phase = self.phases[self.current_phase_idx]
-            duration = phase.get("duration", float('inf'))
-            return self.phase_timer >= duration
-
-        if trigger == "all_waves_cleared":
-            waves_done = self.wave_idx >= len(self.waves)
-            enemies_alive = self._has_enemies_alive()
-            return waves_done and not enemies_alive
-
-        if trigger == "enemy_cleared":
-            return not self._has_enemies_alive()
-
-        DebugLogger.warn(f"Unknown simple trigger: {trigger}")
-        return False
-
     def _evaluate_complex_trigger(self, trigger):
         """
         Evaluate complex condition-based triggers.
@@ -417,4 +434,25 @@ class LevelManager:
         return any(
             getattr(e, "boss_id", None) == boss_id
             for e in self.spawner.entities
+<<<<<<< Updated upstream:src/systems/world/level_manager.py
         )
+=======
+        )
+
+
+    def _should_check_trigger(self):
+        """Only check trigger when waves are done or time-based."""
+        trigger = self.exit_trigger
+
+        if trigger == "duration":
+            return True
+
+        if trigger in ("all_waves_cleared", "enemy_cleared"):
+            return self.wave_idx >= len(self.waves)
+
+        # Complex triggers always check (they handle their own conditions)
+        if isinstance(trigger, dict):
+            return True
+
+        return False
+>>>>>>> Stashed changes:src/systems/level/level_manager.py

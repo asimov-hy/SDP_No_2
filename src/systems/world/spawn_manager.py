@@ -54,6 +54,7 @@ class SpawnManager:
         self.display = display
         self.collision_manager = collision_manager
         self.entities = []  # Active enemy entities
+        self.on_entity_destroyed = None
 
         DebugLogger.init_entry("SpawnManager Initialized")
 
@@ -97,13 +98,15 @@ class SpawnManager:
 
             if not entity:
                 DebugLogger.warn(f"Failed to spawn {category}: '{type_name}'")
-                return
+                return None
 
         self.entities.append(entity)
 
         # Register hitbox
         if self.collision_manager and hasattr(entity, "_hitbox_scale"):
             self.collision_manager.register_hitbox(entity, scale=entity._hitbox_scale)
+
+        return entity
 
     # ===========================================================
     # Pooling Managers
@@ -193,25 +196,8 @@ class SpawnManager:
 
         # Update positions and hitboxes before collision checks
         for entity in self.entities:
-            if entity.death_state >= LifecycleState.DEAD:
-                continue
-            entity.update(dt)
-
-        # Efficient cleanup of inactive or destroyed entities
-        i = 0
-        total_before = len(self.entities)
-        for e in self.entities:
-            if e.death_state < LifecycleState.DEAD:
-                self.entities[i] = e
-                i += 1
-        del self.entities[i:]
-
-        removed = total_before - i
-        if removed > 0:
-            DebugLogger.state(
-                f"Removed {removed} inactive entities",
-                category="entity"
-            )
+            if entity.death_state < LifecycleState.DEAD:
+                entity.update(dt)
 
     # ===========================================================
     # Rendering Pass
@@ -233,6 +219,9 @@ class SpawnManager:
         This is typically called after a major game event (e.g., scene reset
         or stage transition) to clear destroyed or expired objects.
         """
+        if not self.entities:  # Early exit
+            return
+
         total_before = len(self.entities)
         i = 0
         returned_to_pool = 0
@@ -243,6 +232,9 @@ class SpawnManager:
                 i += 1
             else:
                 # Try to return to pool
+                if self.on_entity_destroyed:
+                    self.on_entity_destroyed(e)
+
                 if self._return_to_pool(e):
                     returned_to_pool += 1
 
@@ -265,4 +257,24 @@ class SpawnManager:
     def cleanup_by_category(self, category):
         self.entities = [e for e in self.entities if getattr(e, "category", None) != category]
 
+    def get_pool_stats(self) -> dict:
+        """Return simple debug info about current entity pools."""
+        stats = {}
+        for (category, type_name), pool in self.pools.items():
+            stats[f"{category}:{type_name}"] = {
+                "available": len(pool),
+                "enabled": self.pool_enabled.get((category, type_name), False)
+            }
+        return stats
 
+    def reset(self):
+        """
+        Completely reset SpawnManager for a new stage.
+        Clears all active entities and pool data.
+        """
+        for e in self.entities:
+            e.death_state = LifecycleState.DEAD
+            self._return_to_pool(e)
+
+        self.entities.clear()
+        DebugLogger.system("SpawnManager reset (pools preserved)")
