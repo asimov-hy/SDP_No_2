@@ -39,13 +39,12 @@ class SceneManager:
         # Create scene instances
         DebugLogger.init_sub("Setting up initial scene")
         self.scenes = {
-            "START": StartScene,
-            "GAME": GameScene
+            "StartScene": StartScene,
+            "GameScene": GameScene
         }
 
         # Activate default starting scene
-        self.set_scene("START", silent=True)
-        DebugLogger.init_sub(f"Active Scene: {self.active_scene}", level=2)
+        self.set_scene("StartScene", silent=True)
 
     # ===========================================================
     # Scene Control
@@ -60,33 +59,33 @@ class SceneManager:
         Switch to another scene by name.
 
         Args:
-            name (str): Identifier of the target scene.
-            silent: announce scene setting
+            name (str): Name of the target scene (e.g., "StartScene").
+            silent (bool): If True, suppress transition log output.
 
         Notes:
             Logs scene transitions and ignores invalid scene requests.
         """
+
         prev = getattr(self, "active_scene", None)
         self.active_scene = name
 
-        # Transition formatting
-        # if not silent:
-        if prev:
-            DebugLogger.action(f"Scene Transition [{prev.upper()}] → [{name.upper()}]")
-            # else:
-            #     DebugLogger.action(f"Initializing Scene: [{name.upper()}]")
-
         if name not in self.scenes:
-            DebugLogger.warn(f"Attempted to switch to unknown scene: '{name}'")
+            DebugLogger.warn(f"Unknown scene: '{name}'")
             return
 
         if isinstance(self.scenes[name], type):
             scene_class = self.scenes[name]
             self.scenes[name] = scene_class(self)
 
-        # Log active scene
-        if not silent:
-            DebugLogger.section(f"Active Scene: {self.active_scene}")
+        # Transition formatting
+        new_class = self._get_scene_name(name)
+        prev_class = self._get_scene_name(prev)
+
+        if prev_class and not silent:
+            DebugLogger.system(f"Scene Transition [{prev_class}] → [{new_class}]")
+
+        # Log the current active scene
+        DebugLogger.section(f"Set Scene: {new_class}")
 
     # ===========================================================
     # Event, Update, Draw Delegation
@@ -117,3 +116,10 @@ class SceneManager:
             draw_manager: The DrawManager instance responsible for queuing draw calls.
         """
         self.scenes[self.active_scene].draw(draw_manager)
+
+    def _get_scene_name(self, scene_key):
+        """Return a readable scene name from the registry."""
+        if scene_key not in self.scenes:
+            return None
+        scene_obj = self.scenes[scene_key]
+        return scene_obj.__name__ if isinstance(scene_obj, type) else scene_obj.__class__.__name__

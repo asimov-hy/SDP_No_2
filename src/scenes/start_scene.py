@@ -23,9 +23,10 @@ class StartScene:
     # Initialization
     # ===========================================================
     def __init__(self, scene_manager):
+        DebugLogger.section("Initializing Scene: StartScene")
         self.scene_manager = scene_manager
         self.timer = 0.0
-        DebugLogger.init_sub("StartScene Initialized", level=2)
+        DebugLogger.section("- Finished Initialization", only_title=True)
 
     # ===========================================================
     # Event Handling
@@ -38,8 +39,8 @@ class StartScene:
             event (pygame.event.Event): The current Pygame event.
         """
         if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
-            DebugLogger.action("Input detected → switching to GameScene")
-            self.scene_manager.set_scene("GAME")
+            DebugLogger.action("Input detected. Ending StartScene")
+            self.scene_manager.set_scene("GameScene")
 
     # ===========================================================
     # Update Logic
@@ -52,10 +53,11 @@ class StartScene:
         Args:
             dt (float): Delta time (in seconds) since the last frame.
         """
+        # DebugLogger.init_entry("Starting StartScene")
         self.timer += dt
         if self.timer > 1.0:  # 1 second delay
-            DebugLogger.action("Auto-transition → GameScene")
-            self.scene_manager.set_scene("GAME")
+            DebugLogger.system("Ending StartScene")
+            self.scene_manager.set_scene("GameScene")
 
     # ===========================================================
     # Rendering

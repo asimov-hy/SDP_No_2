@@ -42,7 +42,7 @@ class GameScene:
             scene_manager: Reference to SceneManager for access to display,
                            input, and draw subsystems.
         """
-        DebugLogger.section("Initializing GameScene")
+        DebugLogger.section("Initializing Scene: GameScene")
 
         self.scene_manager = scene_manager
         self.display = scene_manager.display
@@ -107,6 +107,8 @@ class GameScene:
 
         self.level_manager = LevelManager(self.spawn_manager, STAGE_1_WAVES)
         DebugLogger.init_entry("LevelManager loaded: Stage 1 waves")
+
+        DebugLogger.section("- Finished Initialization", only_title=True)
 
     # ===========================================================
     # Event Handling

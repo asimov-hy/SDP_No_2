@@ -33,8 +33,7 @@ class GameLoop:
 
     def __init__(self):
         """Initialize pygame and all foundational systems."""
-        DebugLogger.section("GAMELOOP INITIALIZATION")
-        DebugLogger.init_entry("Begin GameLoop Initialization")
+        DebugLogger.section("Initializing GameLoop")
 
         # -------------------------------------------------------
         # Initialize pygame systems
@@ -47,7 +46,7 @@ class GameLoop:
         # -------------------------------------------------------
         self._set_icon()
         pygame.display.set_caption(Display.CAPTION)
-        DebugLogger.init_entry("Pygame")
+        DebugLogger.init_entry("Pygame: Set Icon and Window Caption")
         DebugLogger.init_sub("Set Icon and Window Caption")
 
         # -------------------------------------------------------
@@ -73,6 +72,7 @@ class GameLoop:
         self.scenes = SceneManager(self.display, self.input_manager, self.draw_manager)
         # DebugLogger.init_sub("Linked [SceneManager] to [DisplayManager], [InputManager], [DrawManager]", level=1)
 
+
     # ===========================================================
     # Core Runtime Loop
     # ===========================================================
@@ -85,7 +85,7 @@ class GameLoop:
             - Update active scene and debug systems.
             - Render all visual elements each frame.
         """
-        DebugLogger.section("Beginning main loop")
+        DebugLogger.section("Game Loop")
 
         fixed_dt = Physics.FIXED_DT
         accumulator = 0.0

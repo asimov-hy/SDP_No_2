@@ -7,6 +7,7 @@ in a clean dotted diagnostic style.
 """
 
 import inspect
+import sys
 import os
 from datetime import datetime
 from src.core.game_settings import LoggerConfig
@@ -22,6 +23,7 @@ red = "\033[91m"
 
 class DebugLogger:
     length = 59
+    _entry_positions = {}
 
     COLORS = {
         # Base color
@@ -109,75 +111,66 @@ class DebugLogger:
     # ===========================================================
     # Section layout
     # ===========================================================
-
     @staticmethod
-    def section(title: str):
+    def section(title: str, only_title: bool = False):
+        """
+        Print a centered section block and remember its cursor position for updating.
+        """
         color = DebugLogger.COLORS["init"]
         reset = DebugLogger.COLORS["reset"]
         line = "─" * DebugLogger.length
-        print(f"{color}{line}")
-        print(f"[ {title} ]".center(DebugLogger.length))
-        print(f"{line}{reset}")
 
-    @staticmethod
-    def footer():
-        color = DebugLogger.COLORS["init"]
-        reset = DebugLogger.COLORS["reset"]
-        print(f"{color}{'─'*DebugLogger.length}{reset}")
+        if only_title:
+            # Centered plain title with one blank line above (no brackets or borders)
+            title_line = title.rjust(DebugLogger.length)
+            print(f"\n{color}{title_line}{reset}")
+        else:
+            # Full bordered section with brackets
+            title_line = f"[{title}]".center(DebugLogger.length)
+            print(f"\n{color}{line}\n"
+                  f"{title_line}\n"
+                  # f"{line}{reset}"
+                  )
 
     # ===========================================================
     # Flat diagnostic INIT layout
     # ===========================================================
     @staticmethod
-    def init_entry(module: str, status: str = "OK"):
-        """
-        Aligned dotted diagnostic entry.
-        - Dots begin at same position for all entries.
-        - Status always ends at the same column.
-        - Example:
-            > UIManager           .................   [OK]
-            > DisplayManager      .................   [Loading]
-            > SceneManager        .................   [Fail]
-        """
-        # Normalize status for color and consistency
+    def _render_entry(module: str, status: str) -> str:
+        """Builds a single formatted line with aligned dots and colored status."""
         status_upper = status.upper()
-        status_map = {
+        color_map = {
             "OK": DebugLogger.COLORS["ok"],
             "LOADING": DebugLogger.COLORS["state"],
             "FAIL": DebugLogger.COLORS["fail"],
         }
-
-        color = status_map.get(status_upper, DebugLogger.COLORS["init"])
+        color = color_map.get(status_upper, DebugLogger.COLORS["init"])
         reset = DebugLogger.COLORS["reset"]
 
-        # Configuration
         total_length = DebugLogger.length
         prefix = f"> {module}"
-        dot_start_column = 40      # where dots begin visually (adjust as you like)
-        gap_between_dots_and_status = 1
-
-        # Compute where status ends
         status_str = f"[{status}]"
-        status_end_column = total_length  # keep status right-aligned visually
-
-        # Determine number of dots
+        dot_start_column = 25
+        gap_between_dots_and_status = 3
         dots_start = max(dot_start_column - len(prefix), 1)
-        dot_count = max(status_end_column - (len(prefix) + dots_start + gap_between_dots_and_status + len(status_str)), 1)
+        dot_count = max(total_length - (len(prefix) + dots_start + gap_between_dots_and_status + len(status_str)), 1)
 
-        # Assemble the line
-        line = (
-            f"{prefix}"
+        base_color = DebugLogger.COLORS["init"]
+
+        return (
+            f"{base_color}{prefix}"
             f"{' ' * dots_start}"
             f"{'.' * dot_count}"
             f"{' ' * gap_between_dots_and_status}"
             f"{color}{status_str}{reset}"
         )
 
+    @staticmethod
+    def init_entry(module: str, status: str = "OK"):
+        """Prints a new dotted diagnostic entry and records its cursor position."""
+        line = DebugLogger._render_entry(module, status)
+        DebugLogger._entry_positions[module] = len(DebugLogger._entry_positions)
         print(line)
-
-
-
-
 
     @staticmethod
     def init_sub(detail: str, level: int = 1):
