@@ -43,8 +43,11 @@ class SceneManager:
             "GameScene": GameScene
         }
 
+        # Cached active instance (Hot Path Cache)
+        self._active_instance = None
+
         # Activate default starting scene
-        self.set_scene("StartScene", silent=True)
+        self.set_scene("StartScene")
 
     # ===========================================================
     # Scene Control
@@ -54,13 +57,12 @@ class SceneManager:
         self.scenes[name] = scene_class
         DebugLogger.state(f"Registered scene '{name}'")
 
-    def set_scene(self, name: str, silent=False):
+    def set_scene(self, name: str):
         """
         Switch to another scene by name.
 
         Args:
             name (str): Name of the target scene (e.g., "StartScene").
-            silent (bool): If True, suppress transition log output.
 
         Notes:
             Logs scene transitions and ignores invalid scene requests.
@@ -73,15 +75,27 @@ class SceneManager:
             DebugLogger.warn(f"Unknown scene: '{name}'")
             return
 
+        if self._active_instance and hasattr(self._active_instance, "on_exit"):
+            DebugLogger.state(f"Exiting scene: {self._active_instance.__class__.__name__}")
+            self._active_instance.on_exit()
+
         if isinstance(self.scenes[name], type):
             scene_class = self.scenes[name]
             self.scenes[name] = scene_class(self)
+
+        # Cache the active scene instance for hot-path access
+        self._active_instance = self.scenes[name]
+
+        # Trigger enter hook after switching
+        if hasattr(self._active_instance, "on_enter"):
+            DebugLogger.state(f"Entering scene: {self._active_instance.__class__.__name__}")
+            self._active_instance.on_enter()
 
         # Transition formatting
         new_class = self._get_scene_name(name)
         prev_class = self._get_scene_name(prev)
 
-        if prev_class and not silent:
+        if prev_class:
             DebugLogger.system(f"Scene Transition [{prev_class}] → [{new_class}]")
 
         # Log the current active scene
@@ -97,7 +111,8 @@ class SceneManager:
         Args:
             event (pygame.event.Event): The event object to be handled.
         """
-        self.scenes[self.active_scene].handle_event(event)
+        if self._active_instance:
+            self._active_instance.handle_event(event)
 
     def update(self, dt: float):
         """
@@ -106,7 +121,8 @@ class SceneManager:
         Args:
             dt (float): Delta time (in seconds) since the last frame.
         """
-        self.scenes[self.active_scene].update(dt)
+        if self._active_instance:
+            self._active_instance.update(dt)
 
     def draw(self, draw_manager):
         """
@@ -115,7 +131,8 @@ class SceneManager:
         Args:
             draw_manager: The DrawManager instance responsible for queuing draw calls.
         """
-        self.scenes[self.active_scene].draw(draw_manager)
+        if self._active_instance:
+            self._active_instance.draw(draw_manager)
 
     def _get_scene_name(self, scene_key):
         """Return a readable scene name from the registry."""

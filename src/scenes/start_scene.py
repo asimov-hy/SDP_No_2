@@ -73,3 +73,21 @@ class StartScene:
         surf = pygame.Surface((200, 80))
         surf.fill((0, 0, 0))
         draw_manager.queue_draw(surf, surf.get_rect(center=(640, 360)), layer=0)
+
+    # ===========================================================
+    # Lifecycle Hooks
+    # ===========================================================
+    def on_enter(self):
+        DebugLogger.state("[StartScene] on_enter()")
+
+    def on_exit(self):
+        DebugLogger.state("[StartScene] on_exit()")
+
+    def on_pause(self):
+        DebugLogger.state("[StartScene] on_pause()")
+
+    def on_resume(self):
+        DebugLogger.state("[StartScene] on_resume()")
+
+    def reset(self):
+        DebugLogger.state("[StartScene] reset()")

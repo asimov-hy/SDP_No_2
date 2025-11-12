@@ -189,3 +189,21 @@ class GameScene:
                 "enabled": self.pool_enabled.get(key, False)
             }
         return stats
+
+    # ===========================================================
+    # Lifecycle Hooks
+    # ===========================================================
+    def on_enter(self):
+        DebugLogger.state("[GameScene] on_enter()")
+
+    def on_exit(self):
+        DebugLogger.state("[GameScene] on_exit()")
+
+    def on_pause(self):
+        DebugLogger.state("[GameScene] on_pause()")
+
+    def on_resume(self):
+        DebugLogger.state("[GameScene] on_resume()")
+
+    def reset(self):
+        DebugLogger.state("[GameScene] reset()")
