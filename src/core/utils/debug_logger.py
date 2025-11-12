@@ -150,8 +150,8 @@ class DebugLogger:
         total_length = DebugLogger.length
         prefix = f"> {module}"
         status_str = f"[{status}]"
-        dot_start_column = 25
-        gap_between_dots_and_status = 3
+        dot_start_column = 30
+        gap_between_dots_and_status = 1
         dots_start = max(dot_start_column - len(prefix), 1)
         dot_count = max(total_length - (len(prefix) + dots_start + gap_between_dots_and_status + len(status_str)), 1)
 
@@ -160,7 +160,7 @@ class DebugLogger:
         return (
             f"{base_color}{prefix}"
             f"{' ' * dots_start}"
-            f"{'.' * dot_count}"
+            f"{'·' * dot_count}"
             f"{' ' * gap_between_dots_and_status}"
             f"{color}{status_str}{reset}"
         )

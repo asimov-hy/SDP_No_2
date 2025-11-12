@@ -22,10 +22,12 @@ from src.entities.player import Player
 from src.ui.ui_manager import UIManager
 from src.ui.subsystems.hud_manager import HUDManager
 
-from src.systems.world.spawn_manager import SpawnManager
-from src.systems.world.level_manager import LevelManager
 from src.systems.combat.bullet_manager import BulletManager
 from src.systems.combat.collision_manager import CollisionManager
+
+from src.systems.world.spawn_manager import SpawnManager
+from src.systems.world.level_manager import LevelManager
+from src.systems.world.pattern_registry import PatternRegistry
 
 
 class GameScene:
@@ -56,9 +58,7 @@ class GameScene:
         try:
             self.ui.attach_subsystem("hud", HUDManager())
         except Exception as e:
-            DebugLogger.warn(f"HUDManager unavailable: {e}")
-
-        # Entity Setup
+            DebugLogger.fail(f"HUDManager unavailable: {e}")
 
         # spawn player
         self.player = Player(draw_manager=self.draw_manager, input_manager=self.input_manager)
@@ -67,7 +67,7 @@ class GameScene:
         self.bullet_manager = BulletManager()
 
         self.player.bullet_manager = self.bullet_manager
-        DebugLogger.init_sub("Linked [BulletManager] to [Player]")
+        DebugLogger.init_sub("Connected [Player] → [BulletManager]")
 
         # Collision Manager Setup
         self.collision_manager = CollisionManager(
@@ -77,14 +77,14 @@ class GameScene:
         )
 
         self.bullet_manager.collision_manager = self.collision_manager
-        DebugLogger.init_sub("Linked [CollisionManager] to [BulletManager]")
+        DebugLogger.init_sub("Bound [CollisionManager] to [BulletManager]")
 
         # Register player's hitbox through the CollisionManager
         self.player.hitbox = self.collision_manager.register_hitbox(
             self.player,
             scale=self.player.hitbox_scale
         )
-        DebugLogger.init_sub("Linked [Player] to [CollisionHitbox]")
+        DebugLogger.init_sub("Registered [Player] with [CollisionManager]")
 
         # ===========================================================
         # Spawn Manager Setup
@@ -96,19 +96,16 @@ class GameScene:
         self.spawn_manager.enable_pooling("enemy", "straight", prewarm_count=10)
 
         # ===========================================================
-        # Stage Manager Setup (Predefined Waves)
+        # Level Manager Setup
         # ===========================================================
-        # Example stage definition — can be replaced with data or JSON later
-        STAGE_1_WAVES = [
-            {"spawn_time": 0.0, "enemy_type": "straight", "count": 3, "pattern": "line"},
-            {"spawn_time": 4.0, "enemy_type": "straight", "count": 5, "pattern": "v"},
-            {"spawn_time": 9.0, "enemy_type": "straight", "count": 8, "pattern": "line"},
-        ]
-
-        self.level_manager = LevelManager(self.spawn_manager, STAGE_1_WAVES)
-        DebugLogger.init_entry("LevelManager loaded: Stage 1 waves")
+        self.level_manager = LevelManager(
+            self.spawn_manager,
+            "src/data/stage_01.json"
+        )
+        DebugLogger.init_entry("LevelManager loaded")
 
         DebugLogger.section("- Finished Initialization", only_title=True)
+        DebugLogger.section("─" * 59 + "\n", only_title=True)
 
         self.paused = False
 
@@ -199,18 +196,18 @@ class GameScene:
     # Lifecycle Hooks
     # ===========================================================
     def on_enter(self):
-        DebugLogger.state("[GameScene] on_enter()")
+        DebugLogger.state("on_enter()")
 
     def on_exit(self):
-        DebugLogger.state("[GameScene] on_exit()")
+        DebugLogger.state("on_exit()")
 
     def on_pause(self):
         self.paused = True
         self.level_manager.stage_active = False
-        DebugLogger.state("[GameScene] on_pause()")
+        DebugLogger.state("on_pause()")
 
     def on_resume(self):
-        DebugLogger.state("[GameScene] on_resume()")
+        DebugLogger.state("on_resume()")
 
     def reset(self):
-        DebugLogger.state("[GameScene] reset()")
+        DebugLogger.state("reset()")

@@ -13,6 +13,8 @@ Responsibilities
 """
 
 import pygame
+from pygame.display import is_fullscreen
+
 from src.core.utils.debug_logger import DebugLogger
 
 
@@ -31,6 +33,8 @@ class DisplayManager:
             game_width (int): Logical game resolution width.
             game_height (int): Logical game resolution height.
         """
+        DebugLogger.init_entry("DisplayManager")
+
         # Core Setup
         self.game_width = game_width
         self.game_height = game_height
@@ -42,15 +46,14 @@ class DisplayManager:
 
         # Window Creation
         self._create_window(silent=True)
-        DebugLogger.init_entry("DisplayManager")
-        DebugLogger.init_sub(f"Initialized Windowed Mode ({game_width}x{game_height})")
+        mode = "Fullscreen" if is_fullscreen() else f"Windowed ({game_width}x{game_height})"
+        DebugLogger.init_sub(f"Display Mode: {mode}", level=1)
 
         # Scaling & Letterboxing
         self.scale = 1.0
         self.offset_x = 0
         self.offset_y = 0
         self._calculate_scale()
-        DebugLogger.init_sub("Calculated initial scaling and offsets")
 
         # Render Caches
         self.last_scaled_size = None

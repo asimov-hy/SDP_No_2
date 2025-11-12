@@ -27,6 +27,7 @@ class StartScene:
         self.scene_manager = scene_manager
         self.timer = 0.0
         DebugLogger.section("- Finished Initialization", only_title=True)
+        DebugLogger.section("─"*59+"\n", only_title=True)
 
     # ===========================================================
     # Event Handling
@@ -78,16 +79,16 @@ class StartScene:
     # Lifecycle Hooks
     # ===========================================================
     def on_enter(self):
-        DebugLogger.state("[StartScene] on_enter()")
+        DebugLogger.state("on_enter()")
 
     def on_exit(self):
-        DebugLogger.state("[StartScene] on_exit()")
+        DebugLogger.state("on_exit()")
 
     def on_pause(self):
-        DebugLogger.state("[StartScene] on_pause()")
+        DebugLogger.state("on_pause()")
 
     def on_resume(self):
-        DebugLogger.state("[StartScene] on_resume()")
+        DebugLogger.state("on_resume()")
 
     def reset(self):
-        DebugLogger.state("[StartScene] reset()")
+        DebugLogger.state("reset()")

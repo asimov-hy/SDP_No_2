@@ -83,12 +83,12 @@ class InputManager:
         if pygame.joystick.get_count() > 0:
             self.controller = pygame.joystick.Joystick(0)
             self.controller.init()
-            DebugLogger.init_sub("Controller input active")
+            DebugLogger.init_sub("Controller Input Initialized")
             DebugLogger.init_sub(f"Detected: {self.controller.get_name()}", level=2)
 
         self._has_controller = self.controller is not None
 
-        DebugLogger.init_sub("Keyboard input active")
+        DebugLogger.init_sub("Keyboard Input Initialized")
 
         # -------------------------------------------------------
         # Movement and gameplay state tracking

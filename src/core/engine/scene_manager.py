@@ -75,15 +75,20 @@ class SceneManager:
             DebugLogger.warn(f"Unknown scene: '{name}'")
             return
 
-        if self._active_instance and hasattr(self._active_instance, "on_exit"):
-            DebugLogger.state(f"Exiting scene: {self._active_instance.__class__.__name__}")
-            self._active_instance.on_exit()
+        # Transition formatting
+        prev_class = self._get_scene_name(prev)
+        next_class = self._get_scene_name(name) or name
 
+        if prev_class:
+            DebugLogger.system(f"Transitioning [{prev_class}] → [{next_class}]")
+        else:
+            DebugLogger.system(f"Loading Initial Scene: [{next_class}]")
+
+        # Create or retrieve scene instance
         if isinstance(self.scenes[name], type):
             scene_class = self.scenes[name]
             self.scenes[name] = scene_class(self)
 
-        # Cache the active scene instance for hot-path access
         self._active_instance = self.scenes[name]
 
         # Trigger enter hook after switching
@@ -91,15 +96,8 @@ class SceneManager:
             DebugLogger.state(f"Entering scene: {self._active_instance.__class__.__name__}")
             self._active_instance.on_enter()
 
-        # Transition formatting
-        new_class = self._get_scene_name(name)
-        prev_class = self._get_scene_name(prev)
-
-        if prev_class:
-            DebugLogger.system(f"Scene Transition [{prev_class}] → [{new_class}]")
-
         # Log the current active scene
-        DebugLogger.section(f"Set Scene: {new_class}")
+        DebugLogger.section(f"Active Scene: {next_class}")
 
     # ===========================================================
     # Event, Update, Draw Delegation

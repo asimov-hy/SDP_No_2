@@ -46,8 +46,8 @@ class GameLoop:
         # -------------------------------------------------------
         self._set_icon()
         pygame.display.set_caption(Display.CAPTION)
-        DebugLogger.init_entry("Pygame: Set Icon and Window Caption")
-        DebugLogger.init_sub("Set Icon and Window Caption")
+        DebugLogger.init_entry("Pygame")
+        DebugLogger.init_sub("Configured Icon and Window Caption")
 
         # -------------------------------------------------------
         # Core Systems
@@ -60,11 +60,15 @@ class GameLoop:
         # Global Debug HUD (independent of scenes)
         # -------------------------------------------------------
         self.debug_hud = DebugHUD(self.display)
-        DebugLogger.init_sub("Linked [DebugHUD] to [DisplayManager]", level=1)
+        DebugLogger.init_sub("Bound [DisplayManager] dependency", level=1)
         self.debug_hud.draw_manager = self.draw_manager
-        DebugLogger.init_sub("Linked [DebugHUD] to [DrawManager]", level=1)
+        DebugLogger.init_sub("Bound [DrawManager] dependency", level=1)
+
+        DebugLogger.init_entry("GameLoop Runtime")
         self.clock = pygame.time.Clock()
+        DebugLogger.init_sub("Game Clock Initialized", level=1)
         self.running = True
+        DebugLogger.init_sub("Runtime flag set True", level=1)
 
         # -------------------------------------------------------
         # Scene Management
