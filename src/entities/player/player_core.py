@@ -121,11 +121,11 @@ class Player(BaseEntity):
         # --- Global reference ---
         STATE.player_ref = self
 
-        DebugLogger.init("Player Initialized", sub=1, meta_mode="no_time")
-        DebugLogger.init(f"Player Location: ({x:.1f}, {y:.1f})", sub=2, meta_mode="none")
-        DebugLogger.init(f"Render Mode: {self.render_mode}", sub=2, meta_mode="none")
-        DebugLogger.init(f"Speed: {self.speed}", sub=2, meta_mode="none")
-        DebugLogger.init(f"Health: {self.health}", sub=2, is_last=True, meta_mode="none")
+        DebugLogger.init_entry("Player Initialized")
+        DebugLogger.init_sub(f"Player Location: ({x:.1f}, {y:.1f})")
+        DebugLogger.init_sub(f"Render Mode: {self.render_mode}")
+        DebugLogger.init_sub(f"Speed: {self.speed}")
+        DebugLogger.init_sub(f"Health: {self.health}")
 
     # ===========================================================
     # Helper Methods

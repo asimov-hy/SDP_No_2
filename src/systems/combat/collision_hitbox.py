@@ -74,7 +74,7 @@ class CollisionHitbox:
         else:
             DebugLogger.warn(f"{type(owner).__name__} missing 'rect' attribute!")
 
-        DebugLogger.init("CollisionHitbox Initialized", sub=1, meta_mode="no_time")
+        DebugLogger.init_entry("CollisionHitbox Initialized")
 
     # ===========================================================
     # Internal Setup

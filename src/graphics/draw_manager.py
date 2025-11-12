@@ -33,7 +33,7 @@ class DrawManager:
         self.surface = None  # Expose active surface for debug/hitbox draws
         self.background = None  # Cached background surface (optional)
         self.debug_hitboxes = []  # Persistent list for queued hitboxes
-        DebugLogger.init("DrawManager Initialized", meta_mode="no_time", sub=1)
+        DebugLogger.init_entry("DrawManager")
 
     # --------------------------------------------------------
     # Image Loading

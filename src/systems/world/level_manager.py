@@ -33,7 +33,7 @@ class LevelManager:
         self.wave_index = 0
         self.stage_active = True
 
-        DebugLogger.init("LevelManager Initialized", sub=1, meta_mode="no_time")
+        DebugLogger.init_entry("LevelManager Initialized")
 
     # ===========================================================
     # Update Logic

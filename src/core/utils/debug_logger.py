@@ -1,41 +1,52 @@
 """
 debug_logger.py
 ---------------
-Lightweight console logger for consistent, colorized, source-tagged engine output.
-
-Responsibilities
-----------------
-- Provide uniform, readable log formatting across modules.
-- Distinguish between system, state, action, and warning logs.
-- Include timestamps and source identifiers in all messages.
+Diagnostic console logger with aligned flat report layout.
+Keeps meta_mode for normal logs, but renders init reports
+in a clean dotted diagnostic style.
 """
 
 import inspect
-from datetime import datetime
 import os
+from datetime import datetime
 from src.core.game_settings import LoggerConfig
 
+black = "\033[0m"
+white = "\033[97m"
+green = "\033[92m"
+magenta = "\033[95m"
+cyan = "\033[96m"
+blue = "\033[94m"
+yellow = "\033[93m"
+red = "\033[91m"
 
 class DebugLogger:
-    """Global logger with consistent, colorized, source-tagged output."""
+    length = 59
 
     COLORS = {
-        "reset":  "\033[0m",
+        # Base color
+        "reset": black,
 
-        "init": "\033[97m",   # Bright white
-        "system": "\033[95m", # Magenta
-        "action": "\033[92m", # Green
-        "state": "\033[96m",  # Cyan
-        "warn": "\033[93m",   # Yellow
-        "trace": "\033[94m",  # Blue
+        # Initialization / Success
+        "init": white,
+        "ok": green,
+
+        # System colors
+        "system": magenta,
+        "state": cyan,
+        "action": green,
+        "trace": blue,
+
+        # Warnings / Failures
+        "warn": yellow,
+        "fail": red,
     }
 
     # ===========================================================
-    # Internal Helpers
+    # Internal helpers
     # ===========================================================
     @staticmethod
     def _get_caller():
-        """Detect the class or module where the logger was invoked (not defined)."""
         stack = inspect.stack()
         for i, frame in enumerate(stack):
             if frame.function in ("_log", "init"):
@@ -43,10 +54,8 @@ class DebugLogger:
                 break
         else:
             depth = 2
-
         frame = stack[depth]
         module = inspect.getmodule(frame[0])
-
         if "self" in frame.frame.f_locals:
             return frame.frame.f_locals["self"].__class__.__name__
         if "cls" in frame.frame.f_locals:
@@ -60,102 +69,159 @@ class DebugLogger:
         time = f"[{timestamp}]"
         source_ = f"[{source}]"
         tag_ = f"[{tag}]"
-
         modes = {
-            "full": f"{time} {source_}{tag_} ",
-            "no_time": f"{source_}{tag_} ",
+            "full":      f"{time} {source_}{tag_} ",
+            "no_time":   f"{source_}{tag_} ",
             "no_source": f"{time} {tag_} ",
-            "no_tag": f"{time} {source_} ",
-            "time": f"{time} ",
-            "source": f"{source_} ",
-            "tag": f"{tag_} ",
-            "none": ""
+            "no_tag":    f"{time} {source_} ",
+            "time":      f"{time} ",
+            "source":    f"{source_} ",
+            "tag":       f"{tag_} ",
+            "none":      "",
         }
         return modes.get(meta_mode, modes["full"])
 
     # ===========================================================
-    # Logger Filtering
+    # Core logging
     # ===========================================================
     @staticmethod
     def _should_log(category: str, level: str) -> bool:
-        """Check if this log type and category should print."""
         if not LoggerConfig.ENABLE_LOGGING:
             return False
-        if category not in LoggerConfig.CATEGORIES:
-            return False
-        if not LoggerConfig.CATEGORIES[category]:
+        if category not in LoggerConfig.CATEGORIES or not LoggerConfig.CATEGORIES[category]:
             return False
         order = ["NONE", "ERROR", "WARN", "INFO", "VERBOSE"]
-        if order.index(level) > order.index(LoggerConfig.LOG_LEVEL):
-            return False
-        return True
+        return order.index(level) <= order.index(LoggerConfig.LOG_LEVEL)
 
-    # ===========================================================
-    # Tree Indentation Helper
-    # ===========================================================
-    @staticmethod
-    def _build_tree_indent(sub: int, is_last: bool = False) -> str:
-        """Generate a tree-like indentation pattern."""
-        if sub <= 0:
-            return ""
-        lines = []
-        # lines.append(" "*13)
-        for i in range(1, sub):
-            lines.append("│   ")
-        lines.append("└─ " if is_last else "├─ ")
-        return "".join(lines)
-
-    # ===========================================================
-    # Core Logging Utility
-    # ===========================================================
     @staticmethod
     def _log(tag: str, message: str, color: str = "reset",
              category: str = "system", level: str = "INFO",
-             meta_mode: str = "full", sub: int = 0, is_last: bool = False):
-        """
-        Core log formatter with filtering, indentation, and metadata display.
-        Supports tree-like indentation through 'sub' and 'is_last'.
-        """
+             meta_mode: str = "full"):
         if not DebugLogger._should_log(category, level):
             return
-
         color_code = DebugLogger.COLORS.get(color, DebugLogger.COLORS["reset"])
         reset = DebugLogger.COLORS["reset"]
-
         timestamp = datetime.now().strftime("%H:%M:%S")
         source = DebugLogger._get_caller()
         prefix = DebugLogger._build_prefix(timestamp, source, tag, meta_mode)
-        indent = DebugLogger._build_tree_indent(sub, is_last)
+        print(f"{color_code}{prefix}{message}{reset}")
 
-        print(f"{color_code}{indent}{prefix}{message}{reset}")
+    # ===========================================================
+    # Section layout
+    # ===========================================================
+
+    @staticmethod
+    def section(title: str):
+        color = DebugLogger.COLORS["init"]
+        reset = DebugLogger.COLORS["reset"]
+        line = "─" * DebugLogger.length
+        print(f"{color}{line}")
+        print(f"[ {title} ]".center(DebugLogger.length))
+        print(f"{line}{reset}")
+
+    @staticmethod
+    def footer():
+        color = DebugLogger.COLORS["init"]
+        reset = DebugLogger.COLORS["reset"]
+        print(f"{color}{'─'*DebugLogger.length}{reset}")
+
+    # ===========================================================
+    # Flat diagnostic INIT layout
+    # ===========================================================
+    @staticmethod
+    def init_entry(module: str, status: str = "OK"):
+        """
+        Aligned dotted diagnostic entry.
+        - Dots begin at same position for all entries.
+        - Status always ends at the same column.
+        - Example:
+            > UIManager           .................   [OK]
+            > DisplayManager      .................   [Loading]
+            > SceneManager        .................   [Fail]
+        """
+        # Normalize status for color and consistency
+        status_upper = status.upper()
+        status_map = {
+            "OK": DebugLogger.COLORS["ok"],
+            "LOADING": DebugLogger.COLORS["state"],
+            "FAIL": DebugLogger.COLORS["fail"],
+        }
+
+        color = status_map.get(status_upper, DebugLogger.COLORS["init"])
+        reset = DebugLogger.COLORS["reset"]
+
+        # Configuration
+        total_length = DebugLogger.length
+        prefix = f"> {module}"
+        dot_start_column = 40      # where dots begin visually (adjust as you like)
+        gap_between_dots_and_status = 1
+
+        # Compute where status ends
+        status_str = f"[{status}]"
+        status_end_column = total_length  # keep status right-aligned visually
+
+        # Determine number of dots
+        dots_start = max(dot_start_column - len(prefix), 1)
+        dot_count = max(status_end_column - (len(prefix) + dots_start + gap_between_dots_and_status + len(status_str)), 1)
+
+        # Assemble the line
+        line = (
+            f"{prefix}"
+            f"{' ' * dots_start}"
+            f"{'.' * dot_count}"
+            f"{' ' * gap_between_dots_and_status}"
+            f"{color}{status_str}{reset}"
+        )
+
+        print(line)
+
+
+
+
+
+    @staticmethod
+    def init_sub(detail: str, level: int = 1):
+        """Print bullet-point sub detail with optional nested indentation."""
+        color = DebugLogger.COLORS["init"]
+        reset = DebugLogger.COLORS["reset"]
+
+        # Each level adds four spaces of indentation
+        indent = " " * (level * 4)
+        print(f"{indent}• {color}{detail}{reset}")
 
     # ===========================================================
     # Public Helper Methods
     # ===========================================================
-    @staticmethod
-    def action(msg: str, category: str = "system", meta_mode: str = "full", sub: int = 0, is_last: bool = False):
-        DebugLogger._log("ACTION", msg, "action", category, "INFO", meta_mode, sub, is_last)
 
     @staticmethod
-    def state(msg: str, category: str = "system", meta_mode: str = "full", sub: int = 0, is_last: bool = False):
-        DebugLogger._log("STATE", msg, "state", category, "INFO", meta_mode, sub, is_last)
-
-    @staticmethod
-    def system(msg: str, category: str = "system", meta_mode: str = "full", sub: int = 0, is_last: bool = False):
-        DebugLogger._log("SYSTEM", msg, "system", category, "INFO", meta_mode, sub, is_last)
-
-    @staticmethod
-    def warn(msg: str, category: str = "system", meta_mode: str = "full", sub: int = 0, is_last: bool = False):
-        DebugLogger._log("WARN", msg, "warn", category, "WARN", meta_mode, sub, is_last)
-
-    @staticmethod
-    def trace(msg: str, category: str = "collision", meta_mode: str = "full", sub: int = 0, is_last: bool = False):
-        DebugLogger._log("TRACE", msg, "trace", category, "VERBOSE", meta_mode, sub, is_last)
-
-    @staticmethod
-    def init(msg: str = "", category: str = "system", meta_mode: str = "full", sub: int = 0, is_last: bool = False):
+    def init(msg: str = "", category: str = "system", meta_mode: str = "full"):
         """Initialization log — same as normal log, but white and allows blank line spacing."""
         if not msg.strip():
             print()
             return
-        DebugLogger._log("INIT", msg, "init", category, "INFO", meta_mode, sub, is_last)
+        DebugLogger._log("INIT", msg, "init", category, "INFO", meta_mode)
+
+    @staticmethod
+    def system(msg: str, category: str = "system", meta_mode: str = "full"):
+        DebugLogger._log("SYSTEM", msg, "system", category, "INFO", meta_mode)
+
+    @staticmethod
+    def state(msg: str, category: str = "system", meta_mode: str = "full"):
+        DebugLogger._log("STATE", msg, "state", category, "INFO", meta_mode)
+
+    @staticmethod
+    def action(msg: str, category: str = "system", meta_mode: str = "full"):
+        DebugLogger._log("ACTION", msg, "ok", category, "INFO", meta_mode)
+
+    @staticmethod
+    def trace(msg: str, category: str = "collision", meta_mode: str = "full"):
+        DebugLogger._log("TRACE", msg, "trace", category, "VERBOSE", meta_mode)
+
+    @staticmethod
+    def warn(msg: str, category: str = "system", meta_mode: str = "full"):
+        DebugLogger._log("WARN", msg, "warn", category, "WARN", meta_mode)
+
+    @staticmethod
+    def fail(msg: str, category: str = "system", meta_mode: str = "full"):
+        """Log fatal or failed initialization events in red."""
+        DebugLogger._log("FAIL", msg, "fail", category, "ERROR", meta_mode)

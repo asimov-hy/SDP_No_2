@@ -42,17 +42,15 @@ class DisplayManager:
 
         # Window Creation
         self._create_window(silent=True)
-        DebugLogger.init("DisplayManager Initialized", meta_mode="no_time", sub=1)
-        DebugLogger.init(
-            f"Initialized Windowed Mode ({game_width}x{game_height})",
-            meta_mode="none", sub=2,)
+        DebugLogger.init_entry("DisplayManager")
+        DebugLogger.init_sub(f"Initialized Windowed Mode ({game_width}x{game_height})")
 
         # Scaling & Letterboxing
         self.scale = 1.0
         self.offset_x = 0
         self.offset_y = 0
         self._calculate_scale()
-        DebugLogger.init("Calculated initial scaling and offsets", meta_mode="none", sub=2, is_last=True)
+        DebugLogger.init_sub("Calculated initial scaling and offsets")
 
         # Render Caches
         self.last_scaled_size = None

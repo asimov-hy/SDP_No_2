@@ -68,7 +68,7 @@ class InputManager:
 
         self._switch_active_cache("gameplay")
 
-        DebugLogger.init("InputManager Initialized", meta_mode="no_time", sub=1)
+        DebugLogger.init_entry("InputManager")
 
         # -------------------------------------------------------
         # Validate that system bindings do not overlap with others
@@ -83,14 +83,12 @@ class InputManager:
         if pygame.joystick.get_count() > 0:
             self.controller = pygame.joystick.Joystick(0)
             self.controller.init()
-            DebugLogger.init(f"Controller input active",
-                             meta_mode="none", sub=2,)
-            DebugLogger.init(f"Detected: {self.controller.get_name()}",
-                             meta_mode="none", sub=2, )
+            DebugLogger.init_sub("Controller input active")
+            DebugLogger.init_sub(f"Detected: {self.controller.get_name()}", level=2)
 
         self._has_controller = self.controller is not None
 
-        DebugLogger.init("Keyboard input active", meta_mode="no_time", sub=2, is_last=True)
+        DebugLogger.init_sub("Keyboard input active")
 
         # -------------------------------------------------------
         # Movement and gameplay state tracking

@@ -32,20 +32,20 @@ class SceneManager:
         """
 
         self.display = display_manager
-        self.input = input_manager
+        self.input_manager = input_manager
         self.draw_manager = draw_manager
-        DebugLogger.init("SceneManager Initialized", meta_mode="no_time", sub=1)
+        DebugLogger.init_entry("SceneManager")
 
         # Create scene instances
+        DebugLogger.init_sub("Setting up initial scene")
         self.scenes = {
             "START": StartScene,
             "GAME": GameScene
         }
-        DebugLogger.init("Setting up scenes", meta_mode="none", sub=2)
 
         # Activate default starting scene
         self.set_scene("START", silent=True)
-        DebugLogger.init(f"Active Scene: {self.active_scene}", meta_mode="none", sub=2, is_last=True)
+        DebugLogger.init_sub(f"Active Scene: {self.active_scene}", level=2)
 
     # ===========================================================
     # Scene Control
@@ -70,11 +70,11 @@ class SceneManager:
         self.active_scene = name
 
         # Transition formatting
-        if not silent:
-            if prev:
-                DebugLogger.action(f"Begin Scene Transition [{prev.upper()}] → [{name.upper()}]")
-            else:
-                DebugLogger.action(f"Initializing Scene: [{name.upper()}]")
+        # if not silent:
+        if prev:
+            DebugLogger.action(f"Scene Transition [{prev.upper()}] → [{name.upper()}]")
+            # else:
+            #     DebugLogger.action(f"Initializing Scene: [{name.upper()}]")
 
         if name not in self.scenes:
             DebugLogger.warn(f"Attempted to switch to unknown scene: '{name}'")
@@ -83,15 +83,10 @@ class SceneManager:
         if isinstance(self.scenes[name], type):
             scene_class = self.scenes[name]
             self.scenes[name] = scene_class(self)
-            if not silent:
-                DebugLogger.action(f"Scene [{name}] instantiated")
 
         # Log active scene
-        width = 60
         if not silent:
-            DebugLogger.state("─" * width)
-            DebugLogger.state(f"{'Active Scene: ' + self.active_scene:^{width}}")
-            DebugLogger.state("─" * width)
+            DebugLogger.section(f"Active Scene: {self.active_scene}")
 
     # ===========================================================
     # Event, Update, Draw Delegation

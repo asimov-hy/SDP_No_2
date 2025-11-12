@@ -39,7 +39,7 @@ class DebugHUD:
 
         self._create_elements()
 
-        DebugLogger.init("DebugHUD Initialized", meta_mode="no_time", sub=1, is_last=True)
+        DebugLogger.init_entry("DebugHUD")
 
     # ===========================================================
     # Element Creation

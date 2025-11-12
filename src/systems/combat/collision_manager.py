@@ -60,7 +60,7 @@ class CollisionManager:
         # Centralized hitbox registry
         self.hitboxes = {}  # {entity_id: CollisionHitbox}
 
-        DebugLogger.init("CollisionManager Initialized", sub=1, meta_mode="no_time")
+        DebugLogger.init_entry("CollisionManager Initialized")
 
     # ===========================================================
     # Hitbox Lifecycle Management

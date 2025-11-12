@@ -51,7 +51,7 @@ class UIManager:
         # Initialize base developer UI
         self._create_base_ui()
 
-        DebugLogger.init("UIManager Initialized", meta_mode="no_time", sub=1)
+        DebugLogger.init_entry("UIManager")
 
     # ===========================================================
     # Initialization Helpers

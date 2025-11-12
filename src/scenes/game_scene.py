@@ -42,12 +42,11 @@ class GameScene:
             scene_manager: Reference to SceneManager for access to display,
                            input, and draw subsystems.
         """
-        DebugLogger.init("─" * 50, meta_mode="none")
-        DebugLogger.init("Initializing GameScene", meta_mode="no_time")
+        DebugLogger.section("Initializing GameScene")
 
         self.scene_manager = scene_manager
         self.display = scene_manager.display
-        self.input = scene_manager.input
+        self.input_manager = scene_manager.input_manager
         self.draw_manager = scene_manager.draw_manager
 
         # UI System Setup
@@ -62,13 +61,13 @@ class GameScene:
         # Entity Setup
 
         # spawn player
-        self.player = Player(draw_manager=self.draw_manager, input_manager=self.input)
+        self.player = Player(draw_manager=self.draw_manager, input_manager=self.input_manager)
 
         # Bullet Manager Setup
         self.bullet_manager = BulletManager()
 
         self.player.bullet_manager = self.bullet_manager
-        DebugLogger.init("Linked [BulletManager] to [Player]", sub=2, meta_mode="none", is_last=True)
+        DebugLogger.init_sub("Linked [BulletManager] to [Player]")
 
         # Collision Manager Setup
         self.collision_manager = CollisionManager(
@@ -78,14 +77,14 @@ class GameScene:
         )
 
         self.bullet_manager.collision_manager = self.collision_manager
-        DebugLogger.init("Linked [CollisionManager] to [BulletManager]", sub=2, meta_mode="none", is_last=True)
+        DebugLogger.init_sub("Linked [CollisionManager] to [BulletManager]")
 
         # Register player's hitbox through the CollisionManager
         self.player.hitbox = self.collision_manager.register_hitbox(
             self.player,
             scale=self.player.hitbox_scale
         )
-        DebugLogger.init("Linked [Player] to [CollisionHitbox]", meta_mode="none", sub=2, is_last=True)
+        DebugLogger.init_sub("Linked [Player] to [CollisionHitbox]")
 
         # ===========================================================
         # Spawn Manager Setup
@@ -107,9 +106,7 @@ class GameScene:
         ]
 
         self.level_manager = LevelManager(self.spawn_manager, STAGE_1_WAVES)
-        DebugLogger.init("LevelManager loaded: Stage 1 waves", sub=2, meta_mode="none", is_last=True)
-
-        DebugLogger.init("─" * 50, meta_mode="none")
+        DebugLogger.init_entry("LevelManager loaded: Stage 1 waves")
 
     # ===========================================================
     # Event Handling
@@ -135,7 +132,7 @@ class GameScene:
         """
 
         # 1) Player Input & Update
-        move = self.input.get_normalized_move()
+        move = self.input_manager.get_normalized_move()
         self.player.move_vec = move
         self.player.update(dt)
 

@@ -55,7 +55,7 @@ class SpawnManager:
         self.collision_manager = collision_manager
         self.entities = []  # Active enemy entities
 
-        DebugLogger.init("SpawnManager Initialized", sub=1, meta_mode="no_time")
+        DebugLogger.init_entry("SpawnManager Initialized")
 
         self.pools = {}  # {(category, type_name): [inactive_entities]}
         self.pool_enabled = {}  # {(category, type_name): bool}
@@ -128,8 +128,7 @@ class SpawnManager:
         if prewarm_count > 0:
             self._prewarm_pool(category, type_name, prewarm_count)
 
-        DebugLogger.init(f"Enabled pooling for [{category}:{type_name}] with {prewarm_count} instances",
-                          sub=2, meta_mode="none", is_last=True)
+        DebugLogger.init_sub(f"Enabled [{category}:{type_name}] pooling: {prewarm_count}")
 
     def _prewarm_pool(self, category: str, type_name: str, count: int):
         """Create instances ahead of time."""

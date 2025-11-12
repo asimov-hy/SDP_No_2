@@ -33,8 +33,8 @@ class GameLoop:
 
     def __init__(self):
         """Initialize pygame and all foundational systems."""
-        DebugLogger.init("─"*50, meta_mode="none")
-        DebugLogger.init("Begin GameLoop Initialization", meta_mode="no_time")
+        DebugLogger.section("GAMELOOP INITIALIZATION")
+        DebugLogger.init_entry("Begin GameLoop Initialization")
 
         # -------------------------------------------------------
         # Initialize pygame systems
@@ -47,29 +47,31 @@ class GameLoop:
         # -------------------------------------------------------
         self._set_icon()
         pygame.display.set_caption(Display.CAPTION)
-        DebugLogger.init("[Pygame] Set Icon and Window Caption", meta_mode="none", sub=1)
+        DebugLogger.init_entry("Pygame")
+        DebugLogger.init_sub("Set Icon and Window Caption")
 
         # -------------------------------------------------------
         # Core Systems
         # -------------------------------------------------------
         self.display = DisplayManager(Display.WIDTH, Display.HEIGHT)
-        self.input = InputManager()
+        self.input_manager = InputManager()
         self.draw_manager = DrawManager()
+
+        # -------------------------------------------------------
+        # Global Debug HUD (independent of scenes)
+        # -------------------------------------------------------
+        self.debug_hud = DebugHUD(self.display)
+        DebugLogger.init_sub("Linked [DebugHUD] to [DisplayManager]", level=1)
+        self.debug_hud.draw_manager = self.draw_manager
+        DebugLogger.init_sub("Linked [DebugHUD] to [DrawManager]", level=1)
         self.clock = pygame.time.Clock()
         self.running = True
 
         # -------------------------------------------------------
         # Scene Management
         # -------------------------------------------------------
-        self.scenes = SceneManager(self.display, self.input,self.draw_manager)
-
-        # -------------------------------------------------------
-        # Global Debug HUD (independent of scenes)
-        # -------------------------------------------------------
-        self.debug_hud = DebugHUD(self.display)
-        self.debug_hud.draw_manager = self.draw_manager
-
-        DebugLogger.init("─" * 50, meta_mode="none")
+        self.scenes = SceneManager(self.display, self.input_manager, self.draw_manager)
+        # DebugLogger.init_sub("Linked [SceneManager] to [DisplayManager], [InputManager], [DrawManager]", level=1)
 
     # ===========================================================
     # Core Runtime Loop
@@ -83,7 +85,7 @@ class GameLoop:
             - Update active scene and debug systems.
             - Render all visual elements each frame.
         """
-        DebugLogger.action("Beginning main loop")
+        DebugLogger.section("Beginning main loop")
 
         fixed_dt = Physics.FIXED_DT
         accumulator = 0.0
@@ -106,7 +108,7 @@ class GameLoop:
             # Fixed timestep update (physics, logic, input)
             # ---------------------------------------------------
             while accumulator >= fixed_dt:
-                self.input.update()
+                self.input_manager.update()
                 self.scenes.update(fixed_dt)
                 accumulator -= fixed_dt
                 frame_count += 1
@@ -168,7 +170,7 @@ class GameLoop:
             # Global / system-level input (always active)
             # Delegates to InputManager to handle F3, F11, etc.
             # ---------------------------------------------------
-            self.input.handle_system_input(event, self.display, self.debug_hud)
+            self.input_manager.handle_system_input(event, self.display, self.debug_hud)
 
             # ---------------------------------------------------
             # Scene-specific and debug HUD events
