@@ -33,17 +33,18 @@ import json
 import os
 from src.core.utils.debug_logger import DebugLogger
 from src.entities.entity_state import EntityCategory
+from src.systems.world.pattern_registry import PatternRegistry
 
 
 class LevelManager:
     """
     Phase-based level coordinator.
 
-    Handles multi-phase levels with waves, events, and conditional triggers.
+    Handles multiphase levels with waves, events, and conditional triggers.
     Backward compatible with single-phase legacy format.
     """
 
-    def __init__(self, spawn_manager, level_data):
+    def __init__(self, spawn_manager):
         """
         Initialize level manager.
 
@@ -54,30 +55,35 @@ class LevelManager:
                 - list: Legacy wave data [{"spawn_time": ...}]
                 - dict: Full level data {"phases": [...]}
         """
+        DebugLogger.init_entry("LevelManager Initialized")
+
         self.spawner = spawn_manager
 
-        # Load and normalize level data
-        self.data = self._load_level_data(level_data)
-
-        # Phase system
-        self.phases = self.data.get("phases", [])
+        self.data = None
+        self.phases = []
         self.current_phase_idx = 0
         self.phase_timer = 0.0
-        self.active = True
-
-        # Initialize first phase
-        if self.phases:
-            self._load_phase(0)
-        else:
-            DebugLogger.warn("No phases defined in level data")
-            self.active = False
-
-        DebugLogger.init_entry("LevelManager Initialized")
-        DebugLogger.init_sub(f"Phases: {len(self.phases)}")
+        self.active = False
 
     # ===========================================================
     # Data Loading
     # ===========================================================
+
+    def load(self, level_path: str):
+        """Load level data and initialize first phase."""
+        DebugLogger.init_entry(f"[Load Level] {os.path.splitext(os.path.basename(level_path))[0]}")
+
+
+        self.data = self._load_level_data(level_path)
+        self.phases = self.data.get("phases", [])
+        if not self.phases:
+            DebugLogger.warn("No phases found in level data")
+            return
+
+        self.current_phase_idx = 0
+        self.phase_timer = 0.0
+        self.active = True
+        self._load_phase(0)
 
     def _load_level_data(self, level_data):
         """
@@ -90,15 +96,9 @@ class LevelManager:
         if isinstance(level_data, str):
             return self._load_json_file(level_data)
 
-        # Case 2: Legacy wave list (backward compatibility)
-        if isinstance(level_data, list):
-            return self._convert_legacy_format(level_data)
-
-        # Case 3: Already a dict
+        # Case 2: Already a dict
         if isinstance(level_data, dict):
             # Ensure phases exist
-            if "phases" not in level_data:
-                level_data = self._convert_legacy_format(level_data.get("waves", []))
             return level_data
 
         DebugLogger.fail(f"Invalid level_data type: {type(level_data)}")
@@ -113,39 +113,11 @@ class LevelManager:
         try:
             with open(path, 'r') as f:
                 data = json.load(f)
-            DebugLogger.system(f"Loaded level: {data.get('name', path)}")
+            DebugLogger.init_sub(f"Level Name: {data.get('name', path)}")
             return data
         except json.JSONDecodeError as e:
             DebugLogger.fail(f"Invalid JSON in {path}: {e}")
             return {"phases": []}
-
-    def _convert_legacy_format(self, waves):
-        """
-        Convert old wave list to phase format.
-
-        Args:
-            waves: List of wave dicts with "spawn_time" key
-
-        Returns:
-            dict: Level data with single phase
-        """
-        # Rename "spawn_time" to "time" for consistency
-        normalized_waves = []
-        for wave in waves:
-            wave_copy = wave.copy()
-            if "spawn_time" in wave_copy:
-                wave_copy["time"] = wave_copy.pop("spawn_time")
-            normalized_waves.append(wave_copy)
-
-        return {
-            "id": "legacy",
-            "phases": [{
-                "id": "main",
-                "waves": normalized_waves,
-                "events": [],
-                "exit_trigger": "all_waves_cleared"
-            }]
-        }
 
     # ===========================================================
     # Phase Management
@@ -166,6 +138,8 @@ class LevelManager:
         phase = self.phases[phase_idx]
         phase_name = phase.get("name", phase.get("id", f"phase_{phase_idx}"))
 
+        DebugLogger.section(f"[ PHASE {phase_idx + 1}/{len(self.phases)} START ]: {phase_name}")
+
         # Load waves (sorted by time)
         self.waves = sorted(phase.get("waves", []), key=lambda w: w.get("time", 0))
         self.wave_idx = 0
@@ -180,8 +154,11 @@ class LevelManager:
         # Store exit trigger for this phase
         self.exit_trigger = phase.get("exit_trigger", "all_waves_cleared")
 
-        DebugLogger.system(f"Phase {phase_idx + 1}/{len(self.phases)}: {phase_name}")
+        # Detailed initialization sublines
         DebugLogger.init_sub(f"Waves: {len(self.waves)}, Events: {len(self.events)}")
+        DebugLogger.init_sub(f"Exit Trigger: {self.exit_trigger}")
+        DebugLogger.init_sub(f"Timer Reset → {self.phase_timer:.2f}s")
+        DebugLogger.section("─" * 59 + "\n", only_title=True)
 
     def _next_phase(self):
         """Advance to the next phase."""
@@ -253,7 +230,6 @@ class LevelManager:
                     "enemy_params": {...}
                 }
         """
-        from pattern_registry import PatternRegistry
 
         enemy_type = wave.get("enemy", "straight")
         count = wave.get("count", 1)
@@ -316,7 +292,6 @@ class LevelManager:
         handlers = {
             "music": self._event_music,
             "dialogue": self._event_dialogue,
-            "camera_shake": self._event_camera_shake,
             "spawn_hazard": self._event_spawn_hazard,
             "environment": self._event_environment,
         }
@@ -325,73 +300,16 @@ class LevelManager:
     # Event handlers (dummy implementations with hooks for future systems)
 
     def _event_music(self, params):
-        """
-        Music change event.
-
-        Future: Hook to SoundManager.play_music()
-        """
-        track = params.get("track", "unknown")
-        fade_duration = params.get("fade_duration", 0.0)
-
-        DebugLogger.action(f"[EVENT] Music: {track} (fade: {fade_duration}s)")
-
-        # TODO: Implement when SoundManager exists
-        # if hasattr(self, 'sound_manager'):
-        #     self.sound_manager.play_music(track, fade_duration)
+        pass
 
     def _event_dialogue(self, params):
-        """
-        Dialogue/text display event.
-
-        Future: Hook to DialogueManager or HUDManager
-        """
-        text = params.get("text", "")
-        duration = params.get("duration", 3.0)
-
-        DebugLogger.action(f"[EVENT] Dialogue: {text[:50]}...")
-
-        # TODO: Implement when dialogue system exists
-        # if hasattr(self, 'dialogue_manager'):
-        #     self.dialogue_manager.show(text, duration)
-
-    def _event_camera_shake(self, params):
-        """
-        Camera shake effect.
-
-        Future: Hook to DisplayManager or CameraController
-        """
-        intensity = params.get("intensity", 1.0)
-        duration = params.get("duration", 0.5)
-
-        DebugLogger.action(f"[EVENT] Camera shake: {intensity} for {duration}s")
-
-        # TODO: Implement when camera system exists
-        # if hasattr(self, 'camera'):
-        #     self.camera.shake(intensity, duration)
+        pass
 
     def _event_spawn_hazard(self, params):
-        """
-        Spawn environment hazard.
-
-        Uses existing SpawnManager.
-        """
-        hazard_type = params.get("type", "laser")
-        x = params.get("x", 640)
-        y = params.get("y", 0)
-
-        DebugLogger.action(f"[EVENT] Spawn hazard: {hazard_type} at ({x}, {y})")
-
-        # Spawn through existing system
-        self.spawner.spawn("environment", hazard_type, x, y, **params)
+        pass
 
     def _event_environment(self, params):
-        """Generic environment object spawn."""
-        obj_type = params.get("object", "obstacle")
-        x = params.get("x", 640)
-        y = params.get("y", 0)
-
-        DebugLogger.action(f"[EVENT] Environment: {obj_type}")
-        self.spawner.spawn("environment", obj_type, x, y, **params)
+        pass
 
     # ===========================================================
     # Trigger Evaluation (Phase Completion)

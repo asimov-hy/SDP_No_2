@@ -98,11 +98,7 @@ class GameScene:
         # ===========================================================
         # Level Manager Setup
         # ===========================================================
-        self.level_manager = LevelManager(
-            self.spawn_manager,
-            "src/data/stage_01.json"
-        )
-        DebugLogger.init_entry("LevelManager loaded")
+        self.level_manager = LevelManager(self.spawn_manager)
 
         DebugLogger.section("- Finished Initialization", only_title=True)
         DebugLogger.section("─" * 59 + "\n", only_title=True)
@@ -197,6 +193,7 @@ class GameScene:
     # ===========================================================
     def on_enter(self):
         DebugLogger.state("on_enter()")
+        self.level_manager.load("src/data/Stage 1.json")
 
     def on_exit(self):
         DebugLogger.state("on_exit()")

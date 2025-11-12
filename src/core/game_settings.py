@@ -107,7 +107,7 @@ class LoggerConfig:
         # ---------------------------------------------------
         # Rendering & Drawing
         # ---------------------------------------------------
-        "drawing": True,             # DrawManager operations and layer sorting
+        "drawing": False,             # DrawManager operations and layer sorting
         "render": True,              # Display render pipeline and scaling logs
 
         # ---------------------------------------------------

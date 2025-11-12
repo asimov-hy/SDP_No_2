@@ -91,13 +91,13 @@ class SceneManager:
 
         self._active_instance = self.scenes[name]
 
+        # Log the current active scene
+        DebugLogger.section(f"Active Scene: {next_class}")
+
         # Trigger enter hook after switching
         if hasattr(self._active_instance, "on_enter"):
             DebugLogger.state(f"Entering scene: {self._active_instance.__class__.__name__}")
             self._active_instance.on_enter()
-
-        # Log the current active scene
-        DebugLogger.section(f"Active Scene: {next_class}")
 
     # ===========================================================
     # Event, Update, Draw Delegation
