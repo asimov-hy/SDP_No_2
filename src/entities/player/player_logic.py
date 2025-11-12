@@ -8,6 +8,8 @@ They handle player-exclusive logic like i-frames, death cleanup, and visuals.
 """
 
 from src.core.utils.debug_logger import DebugLogger
+from src.entities.player.player_state import PlayerEffectState
+from src.entities.effect_manager import EffectManager
 
 
 # ===========================================================
@@ -18,7 +20,8 @@ def on_damage(player, amount: int):
     Called automatically by entity_logic.apply_damage() after player takes damage.
     Triggers invulnerability frames and visual feedback.
     """
-    pass
+    DebugLogger.action(f"Player took {amount} damage → activating IFRAME")
+    player.effect_manager.activate(PlayerEffectState.IFRAME)
 
 
 # ===========================================================

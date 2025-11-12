@@ -9,7 +9,7 @@ Responsibilities
 - Manage base attributes (position, speed, health placeholder)
 - Delegate updates to:
     - Movement → player_movement.py
-    - Combat   → player_combat.py
+    - Combat   → player_ability.py
     - Logic    → player_logic.py (state, effects, visuals)
 """
 
@@ -19,11 +19,13 @@ import os
 from src.core.game_settings import Display, Layers
 from src.core.game_state import STATE
 from src.core.utils.debug_logger import DebugLogger
-from src.entities.base_entity import BaseEntity
-from src.entities.entity_state import CollisionTags, LifecycleState, EntityCategory
-from .player_config import PLAYER_CONFIG
-from .player_state import InteractionState
+from src.core.utils.config_manager import load_json
 
+from src.entities.base_entity import BaseEntity
+from src.entities.effect_manager import EffectManager
+from src.entities.entity_state import CollisionTags, LifecycleState, EntityCategory
+
+from .player_state import InteractionState
 
 
 class Player(BaseEntity):
@@ -41,7 +43,7 @@ class Player(BaseEntity):
             image: Optional preloaded player image surface.
             draw_manager: Required for shape-based rendering optimization.
         """
-        cfg = PLAYER_CONFIG
+        cfg = load_json("player_config.json", {})
         self.cfg = cfg
         core = cfg["core_attributes"]
         default_state = cfg["default_shape"]
@@ -120,6 +122,7 @@ class Player(BaseEntity):
 
         # --- Global reference ---
         STATE.player_ref = self
+        self.effect_manager = EffectManager(self, cfg["effects"])
 
         DebugLogger.init_entry("Player Initialized")
         DebugLogger.init_sub(f"Player Location: ({x:.1f}, {y:.1f})")
@@ -185,13 +188,18 @@ class Player(BaseEntity):
         if self.death_state != LifecycleState.ALIVE:
             return
 
+        # 1. Time-based effects and temporary states
+        self.effect_manager.update(dt)
+        # 2. Input collection
         self.input_manager.update()
 
+        # 3. Movement and physics
         from .player_movement import update_movement
-        from .player_combat import update_shooting
-
         move_vec = getattr(self, "move_vec", pygame.Vector2(0, 0))
         update_movement(self, dt, move_vec)
+
+        # 4. Combat logic
+        from .player_ability import update_shooting
         attack_held = self.input_manager.is_attack_held()
         update_shooting(self, dt, attack_held)
 
@@ -211,5 +219,5 @@ class Player(BaseEntity):
             return
 
         if tag in (CollisionTags.ENEMY, CollisionTags.ENEMY_BULLET):
-            from .player_combat import damage_collision
+            from .player_ability import damage_collision
             damage_collision(self, other)

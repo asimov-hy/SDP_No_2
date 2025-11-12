@@ -1,5 +1,5 @@
 """
-player_combat.py
+player_ability.py
 ----------------
 Handles player combat-related systems:
 - Shooting and cooldown management.
@@ -62,33 +62,36 @@ def damage_collision(player, other):
     Handle collision responses with enemies or projectiles.
 
     Flow:
-        - Check interaction state (invincible, intangible, etc.)
+        - Skip if player is invincible, intangible, or already dead
+        - Skip if any temporary effect (e.g., iframe) is active
         - Retrieve damage value from collided entity
-        - Route through entity_logic.apply_damage()
-
-    Args:
-        player (Player): The player entity.
-        other (BaseEntity): The entity collided with.
+        - Apply damage and trigger IFRAME via EffectManager
     """
-
+    # Skip collisions if player is in non-default state
     if player.state is not InteractionState.DEFAULT:
         return
 
+    # Skip if player already dead
     if player.death_state != LifecycleState.ALIVE:
         return
 
+    # Determine damage value from the other entity
     damage = getattr(other, "damage", 1)
     if damage <= 0:
         return
 
+    # Apply damage
     player.health -= damage
+
+    # Update visual state
     from .player_logic import update_visual_state
     update_visual_state(player)
 
-    # Trigger animations/visuals
+    # Trigger IFRAME activation and hit visuals
     from .player_logic import on_damage
-    on_damage(player, damage)  # Handles hit animation
+    on_damage(player, damage)
 
+    # Handle player death
     if player.health <= 0:
         from .player_logic import on_death
         player.mark_dead()
