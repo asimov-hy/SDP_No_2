@@ -15,17 +15,20 @@ Responsibilities
 import pygame
 import time
 
+# Core runtime configurations
 from src.core.runtime.game_settings import Display, Physics, Debug
 
-from src.core.engine.input_manager import InputManager
-from src.core.engine.display_manager import DisplayManager
-from src.core.engine.scene_manager import SceneManager
+# Core service managers
+from src.core.services.input_manager import InputManager
+from src.core.services.display_manager import DisplayManager
+from src.core.runtime.scene_manager import SceneManager
 
+# Core debugging utilities
 from src.core.debug.debug_logger import DebugLogger
-
-from src.graphics.draw_manager import DrawManager
-
 from src.core.debug.debug_hud import DebugHUD
+
+# Rendering system
+from src.graphics.draw_manager import DrawManager
 
 
 class GameLoop:
@@ -75,6 +78,9 @@ class GameLoop:
         # -------------------------------------------------------
         self.scenes = SceneManager(self.display, self.input_manager, self.draw_manager)
         # DebugLogger.init_sub("Linked [SceneManager] to [DisplayManager], [InputManager], [DrawManager]", level=1)
+
+        # Dependency Injection: Link SceneManager back into InputManager
+        self.input_manager.link_scene_manager(self.scenes)
 
 
     # ===========================================================

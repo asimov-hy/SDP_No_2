@@ -31,16 +31,11 @@ Supports both legacy Python dicts and JSON files:
 
 import json
 import os
+
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.entity_state import EntityCategory
-from src.systems.world.pattern_registry import PatternRegistry
-
-
-class LevelManager:
-    """
-    Phase-based level coordinator.
-
-    Handles multiphase levels with waves, events, and conditional triggers.
+from src.systems.level.pattern_registry import PatternRegistry
+w
     Backward compatible with single-phase legacy format.
     """
 

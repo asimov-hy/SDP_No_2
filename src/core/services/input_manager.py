@@ -207,19 +207,19 @@ class InputManager:
 
         # Pause handling
         if self.pause_pressed:
-            try:
-                from src.core.engine.scene_manager import SceneManager
-                # Access active scene through the current SceneManager reference
-                if hasattr(self, "scene_manager") and self.scene_manager._active_instance:
-                    self.scene_manager._active_instance.on_pause()
-                else:
-                    DebugLogger.warn("Pause attempted but SceneManager not linked")
-            except Exception as e:
-                DebugLogger.warn(f"Pause handler failed: {e}")
+            if hasattr(self, "scene_manager") and self.scene_manager._active_instance:
+                self.scene_manager._active_instance.on_pause()
+            else:
+                DebugLogger.warn("Pause attempted but SceneManager not linked")
+
+    def link_scene_manager(self, scene_manager):
+        """Link SceneManager reference after initialization (dependency injection)."""
+        self.scene_manager = scene_manager
 
     # ===========================================================
     # UI Navigation Input
     # ===========================================================
+
     def _update_ui_navigation(self):
         """Poll input for UI navigation and interaction."""
         keys = pygame.key.get_pressed()

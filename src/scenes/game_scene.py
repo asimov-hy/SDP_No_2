@@ -25,8 +25,8 @@ from src.ui.hud_manager import HUDManager
 from src.systems.combat.bullet_manager import BulletManager
 from src.systems.collision.collision_manager import CollisionManager
 
-from src.systems.world.spawn_manager import SpawnManager
-from src.systems.world.level_manager import LevelManager
+from src.systems.level.spawn_manager import SpawnManager
+from src.systems.level.level_manager import LevelManager
 
 
 class GameScene:
