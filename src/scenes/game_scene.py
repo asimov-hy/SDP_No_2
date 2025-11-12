@@ -110,6 +110,8 @@ class GameScene:
 
         DebugLogger.section("- Finished Initialization", only_title=True)
 
+        self.paused = False
+
     # ===========================================================
     # Event Handling
     # ===========================================================
@@ -132,6 +134,9 @@ class GameScene:
         Args:
             dt (float): Delta time (in seconds) since the last frame.
         """
+
+        if self.paused:
+            return
 
         # 1) Player Input & Update
         move = self.input_manager.get_normalized_move()
@@ -200,6 +205,8 @@ class GameScene:
         DebugLogger.state("[GameScene] on_exit()")
 
     def on_pause(self):
+        self.paused = True
+        self.level_manager.stage_active = False
         DebugLogger.state("[GameScene] on_pause()")
 
     def on_resume(self):
