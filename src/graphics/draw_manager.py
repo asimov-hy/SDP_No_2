@@ -15,7 +15,7 @@ Responsibilities
 import pygame
 import math
 import os
-from src.core.utils.debug_logger import DebugLogger
+from src.core.debug.debug_logger import DebugLogger
 
 
 class DrawManager:

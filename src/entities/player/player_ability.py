@@ -6,7 +6,7 @@ Handles player combat-related systems:
 - Collision damage routing through entity_logic.
 """
 
-from src.core.utils.debug_logger import DebugLogger
+from src.core.debug.debug_logger import DebugLogger
 from src.entities.bullets.bullet_straight import StraightBullet
 from src.entities.player.player_state import InteractionState
 from src.entities.entity_state import LifecycleState

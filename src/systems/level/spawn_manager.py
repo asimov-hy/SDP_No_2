@@ -12,7 +12,7 @@ Responsibilities
 - Handle per-frame update and render passes for all active entities.
 """
 
-from src.core.utils.debug_logger import DebugLogger
+from src.core.debug.debug_logger import DebugLogger
 from src.entities.enemies.enemy_straight import EnemyStraight
 from src.entities.entity_registry import EntityRegistry
 from src.entities.entity_state import LifecycleState

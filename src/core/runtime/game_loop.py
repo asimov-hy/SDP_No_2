@@ -6,7 +6,7 @@ runtime cycle of the game.
 
 Responsibilities
 ----------------
-- Initialize pygame and global engine systems (display, input, draw manager)
+- Initialize pygame and global runtime systems (display, input, draw manager)
 - Create and delegate control to the SceneManager
 - Maintain the main timing loop (event → update → render)
 - Maintain a global DebugHUD independent of scenes
@@ -15,17 +15,17 @@ Responsibilities
 import pygame
 import time
 
-from src.core.game_settings import Display, Physics, Debug
+from src.core.runtime.game_settings import Display, Physics, Debug
 
 from src.core.engine.input_manager import InputManager
 from src.core.engine.display_manager import DisplayManager
 from src.core.engine.scene_manager import SceneManager
 
-from src.core.utils.debug_logger import DebugLogger
+from src.core.debug.debug_logger import DebugLogger
 
 from src.graphics.draw_manager import DrawManager
 
-from src.ui.subsystems.debug_hud import DebugHUD
+from src.core.debug.debug_hud import DebugHUD
 
 
 class GameLoop:
@@ -146,7 +146,7 @@ class GameLoop:
     # ===========================================================
     def _handle_events(self):
         """
-        Process pygame events and route them to subsystems.
+        Process pygame events and route them to components.
 
         Responsibilities:
             - Handle quit requests and window resizing.

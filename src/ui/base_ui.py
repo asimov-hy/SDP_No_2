@@ -12,7 +12,7 @@ Responsibilities
 """
 
 import pygame
-from src.core.utils.debug_logger import DebugLogger
+
 
 class BaseUI:
     """Base class for all UI components."""

@@ -7,7 +7,7 @@ Prevents duplication and keeps entity code clean.
 
 import os
 import json
-from src.core.utils.debug_logger import DebugLogger
+from src.core.debug.debug_logger import DebugLogger
 
 DATA_DIR = os.path.join("src", "data")
 

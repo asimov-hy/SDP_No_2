@@ -12,7 +12,7 @@ Responsibilities
 
 import pygame
 from src.entities.enemies.base_enemy import BaseEnemy
-from src.core.utils.debug_logger import DebugLogger
+from src.core.debug.debug_logger import DebugLogger
 
 
 class EnemyStraight(BaseEnemy):

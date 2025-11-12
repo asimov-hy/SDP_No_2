@@ -1,7 +1,7 @@
 """
 player_core.py
 --------------
-Defines the minimal Player entity core used to coordinate all subsystems.
+Defines the minimal Player entity core used to coordinate all components.
 
 Responsibilities
 ----------------
@@ -16,13 +16,13 @@ Responsibilities
 import pygame
 import os
 
-from src.core.game_settings import Display, Layers
-from src.core.game_state import STATE
-from src.core.utils.debug_logger import DebugLogger
-from src.core.utils.config_manager import load_json
+from src.core.runtime.game_settings import Display, Layers
+from src.core.runtime.game_state import STATE
+from src.core.debug.debug_logger import DebugLogger
+from src.core.services.config_manager import load_json
 
 from src.entities.base_entity import BaseEntity
-from src.entities.effect_manager import EffectManager
+from src.entities.status_manager import StatusManager
 from src.entities.entity_state import CollisionTags, LifecycleState, EntityCategory
 
 from .player_state import InteractionState
@@ -122,7 +122,7 @@ class Player(BaseEntity):
 
         # --- Global reference ---
         STATE.player_ref = self
-        self.effect_manager = EffectManager(self, cfg["effects"])
+        self.effect_manager = StatusManager(self, cfg["effects"])
 
         DebugLogger.init_entry("Player Initialized")
         DebugLogger.init_sub(f"Player Location: ({x:.1f}, {y:.1f})")
@@ -184,7 +184,7 @@ class Player(BaseEntity):
     # Frame Cycle
     # ===========================================================
     def update(self, dt):
-        """Update player subsystems."""
+        """Update player components."""
         if self.death_state != LifecycleState.ALIVE:
             return
 

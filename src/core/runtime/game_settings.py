@@ -65,7 +65,7 @@ class Debug:
 # ===========================================================
 class LoggerConfig:
     """
-    Controls which subsystems emit log messages and at what verbosity level.
+    Controls which components emit log messages and at what verbosity level.
     Used by DebugLogger to decide what to print.
     """
 
@@ -79,7 +79,7 @@ class LoggerConfig:
         # Core Engine Systems
         # ---------------------------------------------------
         "loading": False,
-        "system": True,              # General engine lifecycle and initialization
+        "system": True,              # General runtime lifecycle and initialization
         "display": True,             # DisplayManager, window creation, scaling
         "scene": True,               # SceneManager, transitions, and active scene info
         "input": True,               # InputManager events and key handling

@@ -7,9 +7,8 @@ These functions are called by entity_logic.py or directly by player systems.
 They handle player-exclusive logic like i-frames, death cleanup, and visuals.
 """
 
-from src.core.utils.debug_logger import DebugLogger
+from src.core.debug.debug_logger import DebugLogger
 from src.entities.player.player_state import PlayerEffectState
-from src.entities.effect_manager import EffectManager
 
 
 # ===========================================================

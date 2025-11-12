@@ -9,25 +9,24 @@ Responsibilities
 - Initialize gameplay entities (e.g., Player).
 - Update all active game logic each frame.
 - Manage the in-game UI system (HUDManager, overlays).
-- Forward input and events to appropriate subsystems.
+- Forward input and events to appropriate components.
 """
 
 import pygame
 
-from src.core.utils.debug_logger import DebugLogger
-from src.core.game_settings import Debug
+from src.core.debug.debug_logger import DebugLogger
+from src.core.runtime.game_settings import Debug
 
 from src.entities.player import Player
 
 from src.ui.ui_manager import UIManager
-from src.ui.subsystems.hud_manager import HUDManager
+from src.ui.hud_manager import HUDManager
 
 from src.systems.combat.bullet_manager import BulletManager
-from src.systems.combat.collision_manager import CollisionManager
+from src.systems.collision.collision_manager import CollisionManager
 
 from src.systems.world.spawn_manager import SpawnManager
 from src.systems.world.level_manager import LevelManager
-from src.systems.world.pattern_registry import PatternRegistry
 
 
 class GameScene:
@@ -42,7 +41,7 @@ class GameScene:
 
         Args:
             scene_manager: Reference to SceneManager for access to display,
-                           input, and draw subsystems.
+                           input, and draw components.
         """
         DebugLogger.section("Initializing Scene: GameScene")
 

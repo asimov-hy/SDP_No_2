@@ -11,7 +11,6 @@ Responsibilities
 """
 
 from src.entities.bullets.base_bullet import BaseBullet
-from src.core.utils.debug_logger import DebugLogger
 
 
 class StraightBullet(BaseBullet):

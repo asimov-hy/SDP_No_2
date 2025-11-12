@@ -31,7 +31,7 @@ Supports both legacy Python dicts and JSON files:
 
 import json
 import os
-from src.core.utils.debug_logger import DebugLogger
+from src.core.debug.debug_logger import DebugLogger
 from src.entities.entity_state import EntityCategory
 from src.systems.world.pattern_registry import PatternRegistry
 

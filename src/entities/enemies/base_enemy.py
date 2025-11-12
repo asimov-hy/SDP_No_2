@@ -11,8 +11,8 @@ Responsibilities
 """
 
 import pygame
-from src.core.game_settings import Display, Layers
-from src.core.utils.debug_logger import DebugLogger
+from src.core.runtime.game_settings import Display, Layers
+from src.core.debug.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import CollisionTags, LifecycleState, EntityCategory
 

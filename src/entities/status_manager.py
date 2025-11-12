@@ -1,5 +1,5 @@
 """
-effect_manager.py
+status_manager.py
 -----------------
 Generic effect management system for entities.
 
@@ -11,11 +11,11 @@ Responsibilities
 - Provide queries for active effects
 """
 
-from src.core.utils.debug_logger import DebugLogger
+from src.core.debug.debug_logger import DebugLogger
 from src.entities.player.player_state import InteractionState, PlayerEffectState
 
 
-class EffectManager:
+class StatusManager:
     """Manages temporary status effects on any entity."""
 
     def __init__(self, entity, config):

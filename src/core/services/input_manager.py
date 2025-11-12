@@ -10,7 +10,7 @@ Responsibilities
 - Merge keyboard and controller input into a single movement vector.
 """
 import pygame
-from src.core.utils.debug_logger import DebugLogger
+from src.core.debug.debug_logger import DebugLogger
 
 # ===========================================================
 # Default Key Bindings
@@ -397,7 +397,7 @@ class InputManager:
         # -------------------------------------------------------
         elif self._is_pressed_context("toggle_debug", keys, system_ctx):
             debug_hud.toggle()
-            from src.core.game_settings import Debug
+            from src.core.runtime.game_settings import Debug
             Debug.HITBOX_VISIBLE = debug_hud.visible
             state = "Visible" if Debug.HITBOX_VISIBLE else "Hidden"
             DebugLogger.action(f"Hitbox rendering set → {state}")

@@ -10,7 +10,7 @@ Responsibilities
 - Forward events, updates, and draw calls to the active scene.
 """
 
-from src.core.utils.debug_logger import DebugLogger
+from src.core.debug.debug_logger import DebugLogger
 from src.scenes.start_scene import StartScene
 from src.scenes.game_scene import GameScene
 

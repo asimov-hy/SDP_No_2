@@ -12,8 +12,8 @@ Responsibilities
 """
 
 import pygame
-from src.core import game_settings
-from src.core.utils.debug_logger import DebugLogger
+from src.core.runtime import game_settings
+from src.core.debug.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import LifecycleState, EntityCategory
 

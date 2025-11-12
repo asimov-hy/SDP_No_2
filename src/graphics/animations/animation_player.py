@@ -17,12 +17,9 @@ Supported Animations
 - die: Fade-out and shrink effect with optional shake.
 """
 
-import math
-from src.core.utils.debug_logger import DebugLogger
+from src.core.debug.debug_logger import DebugLogger
 
 # Animation utilities
-from src.graphics.animations.animation_utils.anim_visual import fade_out, scale_down
-from src.graphics.animations.animation_utils.anim_motion import spin_visual, shake_position, tilt
 from src.graphics.animation_registry import register
 
 

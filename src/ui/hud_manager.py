@@ -14,7 +14,7 @@ NOTE:
 This is a stub implementation and currently inactive.
 """
 
-from src.core.utils.debug_logger import DebugLogger
+from src.core.debug.debug_logger import DebugLogger
 
 
 class HUDManager:
