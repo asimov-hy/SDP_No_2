@@ -18,7 +18,7 @@ PatternRegistry.register("line", pattern_line)
 positions = PatternRegistry.get_positions("line", count=5, width=1280)
 """
 
-from src.core.utils.debug_logger import DebugLogger
+from src.core.debug.debug_logger import DebugLogger
 
 
 class PatternRegistry:

@@ -14,10 +14,11 @@ Responsibilities
 - Provide optional hitbox debug visualization.
 """
 
-from src.core.game_settings import Debug
-from src.core.utils.debug_logger import DebugLogger
-from src.entities.entity_state import LifecycleState, EntityCategory
-from src.systems.combat.collision_hitbox import CollisionHitbox
+from src.core.runtime.game_settings import Debug
+from src.core.debug.debug_logger import DebugLogger
+from src.entities.entity_state import LifecycleState
+from src.entities.player.player_state import InteractionState
+from src.systems.collision.collision_hitbox import CollisionHitbox
 
 
 class CollisionManager:
@@ -245,6 +246,10 @@ class CollisionManager:
                         tag_a = getattr(a, "collision_tag", None)
                         tag_b = getattr(b, "collision_tag", None)
                         if (tag_a, tag_b) not in self.rules and (tag_b, tag_a) not in self.rules:
+                            continue
+
+                        if (getattr(a, "state", 0) >= InteractionState.INTANGIBLE or
+                                getattr(b, "state", 0) >= InteractionState.INTANGIBLE):
                             continue
 
                         # Overlap test

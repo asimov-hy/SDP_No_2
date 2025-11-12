@@ -13,7 +13,7 @@ Responsibilities
 
 import pygame
 import math, random
-from src.core.utils.debug_logger import DebugLogger
+from src.core.debug.debug_logger import DebugLogger
 
 
 # ===========================================================

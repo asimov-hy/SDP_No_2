@@ -14,20 +14,25 @@ Responsibilities
 
 import pygame
 
-from src.core.utils.debug_logger import DebugLogger
-from src.core.game_settings import Debug
+# Core Systems
+from src.core.debug.debug_logger import DebugLogger
+from src.core.runtime.game_settings import Debug
 
-from src.entities.player import Player
+# Player Entity
+from src.entities.player.player_core import Player
 
+# UI Systems
 from src.ui.ui_manager import UIManager
-from src.ui.subsystems.hud_manager import HUDManager
+from src.ui.hud_manager import HUDManager
 
+# Combat Systems
 from src.systems.combat.bullet_manager import BulletManager
-from src.systems.combat.collision_manager import CollisionManager
+from src.systems.collision.collision_manager import CollisionManager
 
-from src.systems.world.spawn_manager import SpawnManager
-from src.systems.world.level_manager import LevelManager
-from src.systems.world.pattern_registry import PatternRegistry
+# Level and Spawn Systems
+from src.systems.level.spawn_manager import SpawnManager
+from src.systems.level.level_manager import LevelManager
+from src.systems.level.pattern_registry import PatternRegistry
 
 
 class GameScene:
@@ -157,17 +162,6 @@ class GameScene:
         # 5. Cleanup (now happens once)
         self.spawn_manager.cleanup()
 
-<<<<<<< Updated upstream
-        # 5) Bullet Update (after collision)
-        # Update positions for remaining bullets that survived collisions.
-        self.bullet_manager.update(dt)
-
-        # 6) UI Update
-        # Update HUD and overlays last, so they reflect the most recent state
-        # (e.g., score, health after collisions).
-        self.ui.update(pygame.mouse.get_pos())
-
-=======
         # 6. Projectiles
         self.bullet_manager.update(dt)
 
@@ -198,7 +192,6 @@ class GameScene:
         else:
             DebugLogger.system("All stages complete")
 
->>>>>>> Stashed changes
     # ===========================================================
     # Rendering
     # ===========================================================
@@ -232,7 +225,7 @@ class GameScene:
     # ===========================================================
     def on_enter(self):
         DebugLogger.state("on_enter()")
-        self.level_manager.load("src/data/Stage 1.json")
+        self.level_manager.load("levels/Stage 1.json")
 
     def on_exit(self):
         DebugLogger.state("on_exit()")

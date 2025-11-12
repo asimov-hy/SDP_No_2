@@ -33,34 +33,46 @@ This project demonstrates the use of:
 ├─ .gitignore
 │
 ├─ src/
-│  │
 │  ├─ __init__.py
+│  │
+│  ├─ audio/
+│  │   ├─ __init__.py
+│  │   └─ sound_manager.py
 │  │
 │  ├─ core/
 │  │   ├─ __init__.py
-│  │   ├─ game_loop.py
-│  │   ├─ game_settings.py
-│  │   ├─ game_state.py
 │  │   │
-│  │   ├─ engine/
+│  │   ├─ debug/
 │  │   │   ├─ __init__.py
-│  │   │   ├─ display_manager.py
-│  │   │   ├─ input_manager.py
+│  │   │   ├─ debug_hud.py
+│  │   │   └─ debug_logger.py
+│  │   │
+│  │   ├─ runtime/
+│  │   │   ├─ __init__.py
+│  │   │   ├─ game_loop.py
+│  │   │   ├─ game_settings.py
+│  │   │   ├─ game_state.py
 │  │   │   └─ scene_manager.py
 │  │   │
-│  │   └─ utils/
+│  │   └─ services/
 │  │       ├─ __init__.py
 │  │       ├─ config_manager.py
-│  │       └─ debug_logger.py
+│  │       ├─ display_manager.py
+│  │       └─ input_manager.py
 │  │
 │  ├─ data/
-│  │   └─ player_config.json
+│  │   ├─ configs/
+│  │   │   └─ player_config.py
+│  │   │
+│  │   └─ levels/
+│  │       └─ Stage 1.py
 │  │
 │  ├─ entities/
 │  │   ├─ __init__.py
 │  │   ├─ base_entity.py
 │  │   ├─ entity_registry.py
 │  │   ├─ entity_state.py
+│  │   ├─ status_manager.py
 │  │   │
 │  │   ├─ bullets/
 │  │   │  ├─ __init__.py
@@ -74,8 +86,7 @@ This project demonstrates the use of:
 │  │   │
 │  │   └─ player/
 │  │      ├─ __init__.py
-│  │      ├─ player_combat.py
-│  │      ├─ player_config.py
+│  │      ├─ player_ability.py
 │  │      ├─ player_core.py
 │  │      ├─ player_logic.py
 │  │      ├─ player_movement.py
@@ -87,7 +98,7 @@ This project demonstrates the use of:
 │  │   ├─ animation_registry.py
 │  │   ├─ draw_manager.py
 │  │   │
-│  │   └─ player/
+│  │   └─ animations/
 │  │      ├─ __init__.py
 │  │      ├─ animation_player.py
 │  │      │
@@ -104,41 +115,42 @@ This project demonstrates the use of:
 │  ├─ systems/
 │  │   ├─ __init__.py
 │  │   │
-│  │   ├─ combat/
+│  │   ├─ collision/
 │  │   │  ├─ __init__.py
-│  │   │  ├─ bullet_manager.py
 │  │   │  ├─ collision_hitbox.py
 │  │   │  └─ collision_manager.py
 │  │   │
-│  │   └─ enemies/
+│  │   ├─ combat/
+│  │   │  ├─ __init__.py
+│  │   │  └─ bullet_manager.py
+│  │   │
+│  │   └─ level/
 │  │      ├─ __init__.py
 │  │      ├─ level_manager.py
-│  │      ├─ sound_manager.py (empty)
+│  │      ├─ pattern_registry.py
 │  │      └─ spawn_manager.py
 │  │
 │  └─ ui/
 │      ├─ __init__.py
 │      ├─ base_ui.py
-│      ├─ ui_button.py
+│      ├─ menu_manager.py (empty)
 │      ├─ ui_manager.py
 │      │
-│      ├─ effects/
+│      ├─ components/
 │      │  ├─ __init__.py
-│      │  ├─ ui_animation.py (empty)
-│      │  └─ ui_fade.py (empty)
+│      │  └─ ui_button.py
 │      │
-│      └─ subsystems/
+│      └─ effects/
 │         ├─ __init__.py
-│         ├─ debug_hud.py
-│         ├─ hud_manager.py
-│         └─ menu_manager.py (empty)
+│         ├─ ui_animation.py (empty)
+│         └─ ui_fade.py (empty)
 │
 └─ assets/
    ├─ images/
-   │   ├─ player.png
+   │   ├─ player.png (unused)
    │   │
    │   └─ icons/
    │       └─ 202X_icon.png
    │
-   └─ sounds/
+   └─ audio/
 ```

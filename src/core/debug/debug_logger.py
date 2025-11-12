@@ -7,10 +7,9 @@ in a clean dotted diagnostic style.
 """
 
 import inspect
-import sys
 import os
 from datetime import datetime
-from src.core.game_settings import LoggerConfig
+from src.core.runtime.game_settings import LoggerConfig
 
 black = "\033[0m"
 white = "\033[97m"

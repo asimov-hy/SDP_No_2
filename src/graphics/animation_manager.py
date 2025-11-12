@@ -12,7 +12,7 @@ Responsibilities
 - Support in-animation effect triggers (e.g., particles, sounds, flashes).
 """
 
-from src.core.utils.debug_logger import DebugLogger
+from src.core.debug.debug_logger import DebugLogger
 from src.graphics.animation_registry import registry
 
 

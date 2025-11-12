@@ -6,7 +6,7 @@ for all active in-game entities (e.g., Player, Enemy, Bullet).
 
 Coordinate System Standard
 --------------------------
-All entities in the 202X engine use **center-based coordinates**:
+All entities in the 202X runtime use **center-based coordinates**:
 - self.pos represents the entity's visual and physical center.
 - self.rect.center is always synchronized with self.pos.
 - Movement, rotation, and collisions are performed relative to this center.
@@ -33,14 +33,14 @@ Responsibilities
 
 import pygame
 from typing import Optional
-from src.core.game_settings import Layers
-from src.core.utils.debug_logger import DebugLogger
+from src.core.runtime.game_settings import Layers
+from src.core.debug.debug_logger import DebugLogger
 from src.entities.entity_state import LifecycleState, EntityCategory
 
 
 class BaseEntity:
     """
-    Common interface for all entities within the game world.
+    Common interface for all entities within the game level.
 
     This class should be subclassed by all game entities (Player, Enemy, Bullet, etc.).
 

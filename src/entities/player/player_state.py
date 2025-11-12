@@ -46,41 +46,6 @@ class InteractionState(IntEnum):
 class PlayerEffectState(IntEnum):
     """Defines player-exclusive temporary effects."""
     NONE = 0
-    DAMAGE_IFRAME = auto()
-    DASH = auto()
-    POWERUP = auto()
-
-
-# ===========================================================
-# Effect → Behavior Mapping
-# ===========================================================
-EFFECT_RULES = {
-    PlayerEffectState.DAMAGE_IFRAME: {
-        "interaction": InteractionState.INTANGIBLE,  # Passes through enemies/bullets
-        "duration": 1.5,                             # seconds
-        "animation": "damage_flash",                 # Animation key to trigger
-    },
-}
-
-
-# ===========================================================
-# Helper Functions
-# ===========================================================
-def get_effect_duration(effect: PlayerEffectState) -> float:
-    """Get the duration of a player effect in seconds."""
-    return EFFECT_RULES.get(effect, {}).get("duration", 0.0)
-
-
-def get_effect_interaction_state(effect: PlayerEffectState) -> InteractionState:
-    """Get the interaction state associated with a player effect."""
-    return EFFECT_RULES.get(effect, {}).get("interaction", InteractionState.DEFAULT)
-
-
-def get_effect_animation(effect: PlayerEffectState) -> str | None:
-    """Get the animation key associated with a player effect."""
-    return EFFECT_RULES.get(effect, {}).get("animation")
-
-
-def should_cancel_on_action(effect: PlayerEffectState) -> bool:
-    """Check if this effect should cancel when player performs an action."""
-    return EFFECT_RULES.get(effect, {}).get("cancel_on_action", False)
+    IFRAME = auto()
+    # DASH = auto()
+    # POWERUP = auto()

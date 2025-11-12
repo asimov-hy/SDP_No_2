@@ -10,7 +10,7 @@ Responsibilities
 - Provide a safe unified `create()` factory for all entity spawning.
 """
 
-from src.core.utils.debug_logger import DebugLogger
+from src.core.debug.debug_logger import DebugLogger
 
 
 class EntityRegistry:

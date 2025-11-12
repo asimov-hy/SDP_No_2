@@ -29,11 +29,11 @@ Supports both legacy Python dicts and JSON files:
 - JSON: {"phases": [{"waves": [...], "events": [...]}]}
 """
 
-import json
 import os
-from src.core.utils.debug_logger import DebugLogger
+from src.core.services.config_manager import load_config
+from src.core.debug.debug_logger import DebugLogger
 from src.entities.entity_state import EntityCategory
-from src.systems.world.pattern_registry import PatternRegistry
+from src.systems.level.pattern_registry import PatternRegistry
 
 
 class LevelManager:
@@ -69,6 +69,13 @@ class LevelManager:
         self._remaining_enemies = 0
         self.active = False
 
+        self.waves = []
+        self.wave_idx = 0
+        self.events = []
+        self.event_idx = 0
+        self.exit_trigger = None
+        self._trigger_func = lambda: False
+
         # Callback
         self.on_stage_complete = None
 
@@ -78,8 +85,6 @@ class LevelManager:
 
     def load(self, level_path: str):
         """Load level data and initialize first phase."""
-        DebugLogger.init_entry(f"[Load Level] {os.path.splitext(os.path.basename(level_path))[0]}")
-
 
         self.data = self._load_level_data(level_path)
         self.phases = self.data.get("phases", [])
@@ -104,32 +109,18 @@ class LevelManager:
         Returns:
             dict: Normalized level data with "phases" array
         """
-        # Case 1: JSON file path
+        # Case 1: JSON or Python file path
         if isinstance(level_data, str):
-            return self._load_json_file(level_data)
+            data = load_config(level_data, {"phases": []})
+            DebugLogger.init_sub(f"Level Loaded: {os.path.basename(level_data)}")
+            return data
 
         # Case 2: Already a dict
         if isinstance(level_data, dict):
-            # Ensure phases exist
             return level_data
 
-        DebugLogger.fail(f"Invalid level_data type: {type(level_data)}")
+        DebugLogger.warn(f"Invalid level_data type: {type(level_data)}")
         return {"phases": []}
-
-    def _load_json_file(self, path):
-        """Load level data from JSON file."""
-        if not os.path.exists(path):
-            DebugLogger.fail(f"Level file not found: {path}")
-            return {"phases": []}
-
-        try:
-            with open(path, 'r') as f:
-                data = json.load(f)
-            DebugLogger.init_sub(f"Level Name: {data.get('name', path)}")
-            return data
-        except json.JSONDecodeError as e:
-            DebugLogger.fail(f"Invalid JSON in {path}: {e}")
-            return {"phases": []}
 
     # ===========================================================
     # Phase Management
@@ -229,6 +220,9 @@ class LevelManager:
             dt (float): Delta time in seconds
         """
         if not self.active:
+            return
+
+        if not hasattr(self, 'waves'):
             return
 
         self.phase_timer += dt
@@ -334,7 +328,7 @@ class LevelManager:
         Args:
             event (dict): Event configuration
                 {
-                    "type": "music" | "dialogue" | "camera_shake" | "spawn_hazard",
+                    "type": "music" | "dialogue" | "spawn_hazard",
                     "params": {...}
                 }
         """
@@ -434,11 +428,7 @@ class LevelManager:
         return any(
             getattr(e, "boss_id", None) == boss_id
             for e in self.spawner.entities
-<<<<<<< Updated upstream:src/systems/world/level_manager.py
         )
-=======
-        )
-
 
     def _should_check_trigger(self):
         """Only check trigger when waves are done or time-based."""
@@ -455,4 +445,3 @@ class LevelManager:
             return True
 
         return False
->>>>>>> Stashed changes:src/systems/level/level_manager.py

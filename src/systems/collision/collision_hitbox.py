@@ -30,8 +30,8 @@ Directional attacks: hitbox.set_offset(8, 0) for forward extension
 """
 
 import pygame
-from src.core.utils.debug_logger import DebugLogger
-from src.core.game_settings import Debug
+from src.core.debug.debug_logger import DebugLogger
+from src.core.runtime.game_settings import Debug
 
 
 class CollisionHitbox:

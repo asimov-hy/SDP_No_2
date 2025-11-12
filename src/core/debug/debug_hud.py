@@ -13,10 +13,10 @@ Responsibilities
 
 import pygame
 
-from src.core import game_settings
-from src.core.game_state import STATE
-from src.core.utils.debug_logger import DebugLogger
-from src.ui.ui_button import UIButton
+from src.core.runtime import game_settings
+from src.core.runtime.game_state import STATE
+from src.core.debug.debug_logger import DebugLogger
+from src.ui.components.ui_button import UIButton
 
 
 class DebugHUD:

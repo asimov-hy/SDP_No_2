@@ -13,7 +13,7 @@ Responsibilities
 
 import pygame
 from src.entities.bullets.bullet_straight import StraightBullet
-from src.core.utils.debug_logger import DebugLogger
+from src.core.debug.debug_logger import DebugLogger
 from src.entities.entity_state import LifecycleState
 
 

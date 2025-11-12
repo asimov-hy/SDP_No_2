@@ -11,7 +11,7 @@ Responsibilities
 """
 
 import pygame
-from src.core.game_settings import Display
+from src.core.runtime.game_settings import Display
 
 
 def update_movement(player, dt, move_vec):
