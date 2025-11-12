@@ -95,16 +95,6 @@
           }
         }
       ],
-      "events": [
-        {
-          "time": 4.0,
-          "type": "camera_shake",
-          "params": {
-            "intensity": 0.3,
-            "duration": 0.5
-          }
-        }
-      ],
       "exit_trigger": "all_waves_cleared"
     }
   ]

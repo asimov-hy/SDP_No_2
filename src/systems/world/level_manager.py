@@ -269,7 +269,7 @@ class LevelManager:
         Args:
             event (dict): Event configuration
                 {
-                    "type": "music" | "dialogue" | "camera_shake" | "spawn_hazard",
+                    "type": "music" | "dialogue" | "spawn_hazard",
                     "params": {...}
                 }
         """
