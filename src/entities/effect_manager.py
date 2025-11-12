@@ -108,6 +108,17 @@ class EffectManager:
 
     def _update_entity_state(self):
         """Recalculate entity interaction state from active effects."""
+        old_state = getattr(self.entity, "state", InteractionState.DEFAULT)
+
+        if not self.active_effects:
+            if old_state != InteractionState.DEFAULT:
+                DebugLogger.state(
+                    f"{self.entity.__class__.__name__} interaction mode: "
+                    f"{old_state.name} → DEFAULT"
+                )
+            self.entity.state = InteractionState.DEFAULT
+            return
+
         if not self.active_effects:
             self.entity.state = InteractionState.DEFAULT
             return
@@ -125,5 +136,11 @@ class EffectManager:
 
             if state > max_state:
                 max_state = state
+
+        if max_state != old_state:
+            DebugLogger.state(
+                f"{self.entity.__class__.__name__} interaction changed: "
+                f"{old_state.name} → {max_state.name}"
+            )
 
         self.entity.state = max_state
