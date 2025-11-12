@@ -42,7 +42,7 @@
 
   "effects": {
     "iframe": {
-      "duration": 1.5,
+      "duration": 2,
       "interaction_state": "INTANGIBLE"
     }
   }

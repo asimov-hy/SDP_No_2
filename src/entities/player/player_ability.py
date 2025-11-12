@@ -67,21 +67,34 @@ def damage_collision(player, other):
         - Retrieve damage value from collided entity
         - Apply damage and trigger IFRAME via EffectManager
     """
-    # Skip collisions if player is in non-default state
-    if player.state is not InteractionState.DEFAULT:
+    if player.death_state != LifecycleState.ALIVE:
+        DebugLogger.trace("Player already dead", category="collision")
         return
 
-    # Skip if player already dead
-    if player.death_state != LifecycleState.ALIVE:
+    # Skip collisions if player is in non-default state
+    if player.state is not InteractionState.DEFAULT:
+        DebugLogger.trace(f"PlayerState = {player.state.name}", category="collision")
         return
 
     # Determine damage value from the other entity
     damage = getattr(other, "damage", 1)
     if damage <= 0:
+        DebugLogger.trace(f"Invalid damage value {damage}", category="collision")
         return
 
     # Apply damage
+    prev_health = player.health
     player.health -= damage
+    DebugLogger.action(
+        f"Player took {damage} damage ({prev_health} → {player.health})",
+        category="collision"
+    )
+
+    # Handle player death
+    if player.health <= 0:
+        from .player_logic import on_death
+        player.mark_dead()
+        on_death(player)
 
     # Update visual state
     from .player_logic import update_visual_state
@@ -90,9 +103,3 @@ def damage_collision(player, other):
     # Trigger IFRAME activation and hit visuals
     from .player_logic import on_damage
     on_damage(player, damage)
-
-    # Handle player death
-    if player.health <= 0:
-        from .player_logic import on_death
-        player.mark_dead()
-        on_death(player)

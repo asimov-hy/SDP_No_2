@@ -11,6 +11,7 @@ Responsibilities
 - Provide queries for active effects
 """
 
+from src.core.utils.debug_logger import DebugLogger
 from src.entities.player.player_state import InteractionState, PlayerEffectState
 
 
@@ -47,9 +48,12 @@ class EffectManager:
 
         cfg = self.effect_config[effect_name]
         duration = cfg.get("duration", 0.0)
+        self.active_effects[effect] = duration
 
         # Add or refresh timer
         self.active_effects[effect] = duration
+
+        DebugLogger.action(f"{effect.name}: Duration: {duration:.2f}s")
 
         # Update entity interaction state
         self._update_entity_state()
@@ -78,6 +82,7 @@ class EffectManager:
         # Remove expired
         for effect in expired:
             del self.active_effects[effect]
+            DebugLogger.state(f"{effect.name} expired")
 
         # Recalculate state if anything changed
         if expired:
