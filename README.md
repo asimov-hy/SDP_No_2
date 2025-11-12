@@ -61,7 +61,7 @@ This project demonstrates the use of:
 │  │       └─ input_manager.py
 │  │
 │  ├─ data/
-│  │   ├─ config/
+│  │   ├─ configs/
 │  │   │   └─ player_config.py
 │  │   │
 │  │   └─ levels/

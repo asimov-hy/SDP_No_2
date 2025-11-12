@@ -19,7 +19,7 @@ import os
 from src.core.runtime.game_settings import Display, Layers
 from src.core.runtime.game_state import STATE
 from src.core.debug.debug_logger import DebugLogger
-from src.core.services.config_manager import load_json
+from src.core.services.config_manager import load_config
 
 from src.entities.base_entity import BaseEntity
 from src.entities.status_manager import StatusManager
@@ -43,16 +43,20 @@ class Player(BaseEntity):
             image: Optional preloaded player image surface.
             draw_manager: Required for shape-based rendering optimization.
         """
-        cfg = load_json("player_config.json", {})
+        cfg = load_config("player_config.json", {})
         self.cfg = cfg
+
         core = cfg["core_attributes"]
-        default_state = cfg["default_shape"]
-        size = tuple(cfg["size"])
-        self.render_mode = cfg["render_mode"]
+        render = cfg["render"]
+        health = cfg["health_states"]
+
+        self.render_mode = render["mode"]
+        size = tuple(render["size"])
+        default_state = render["default_shape"]
 
         # --- Visual setup ---
         if self.render_mode == "image":
-            image = self._load_sprite(cfg, image)
+            image = self._load_sprite(render, image)
             image = self._apply_scaling(size, image)
             shape_data = None
         else:
@@ -87,9 +91,9 @@ class Player(BaseEntity):
         self.state = InteractionState.DEFAULT
 
         # --- Visual states ---
-        self.image_states = cfg["image_states"]
-        self.color_states = cfg["color_states"]
-        self.health_thresholds = cfg["health_thresholds"]
+        self.image_states = health["image_states"]
+        self.color_states = health["color_states"]
+        self.health_thresholds = health["thresholds"]
         self._threshold_moderate = self.health_thresholds["moderate"]
         self._threshold_critical = self.health_thresholds["critical"]
         self._color_cache = self.color_states
@@ -134,21 +138,21 @@ class Player(BaseEntity):
     # Helper Methods
     # ===========================================================
     @staticmethod
-    def _load_sprite(cfg, image):
+    def _load_sprite(render_cfg, image):
         """Load player sprite from disk or fallback."""
         if image:
             return image
 
-        sprite_cfg = cfg.get("sprite", {})
-        path = sprite_cfg.get("path")
-        if not path or not os.path.exists(path):
-            DebugLogger.warn(f"Missing sprite: {path}, using fallback.")
+        sprite_path = render_cfg.get("sprite", {}).get("path")
+
+        if not sprite_path or not os.path.exists(sprite_path):
+            DebugLogger.warn(f"Missing sprite: {sprite_path}, using fallback.")
             placeholder = pygame.Surface((64, 64))
             placeholder.fill((255, 50, 50))
             return placeholder
 
-        image = pygame.image.load(path).convert_alpha()
-        DebugLogger.state(f"Loaded sprite from {path}")
+        image = pygame.image.load(sprite_path).convert_alpha()
+        DebugLogger.state(f"Loaded sprite from {sprite_path}")
         return image
 
     @staticmethod

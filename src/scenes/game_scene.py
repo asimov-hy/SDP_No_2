@@ -145,13 +145,31 @@ class GameScene:
         self.spawn_manager.cleanup()
 
         # 5) Bullet Update (after collision)
-        # Update positions for remaining bullets that survived collisions.
         self.bullet_manager.update(dt)
 
         # 6) UI Update
-        # Update HUD and overlays last, so they reflect the most recent state
-        # (e.g., score, health after collisions).
         self.ui.update(pygame.mouse.get_pos())
+
+        if not self.level_manager.active:  # when current stage finishes
+            next_stage = self._get_next_stage()
+            if next_stage:
+                DebugLogger.state(f"Loading next stage: {next_stage}")
+                self.level_manager.load(next_stage)
+            else:
+                DebugLogger.system("All stages complete — GameScene finished")
+
+    def _get_next_stage(self):
+        """Return the next stage filename, or None if finished."""
+        stages = [
+            "Stage 1.json",
+            "Stage 2.json",
+            "Stage 3.json",
+        ]
+        current = getattr(self.level_manager.data, "name", None)
+        for i, s in enumerate(stages):
+            if current and s.startswith(current):
+                return stages[i + 1] if i + 1 < len(stages) else None
+        return stages[0] if current is None else None
 
     # ===========================================================
     # Rendering
