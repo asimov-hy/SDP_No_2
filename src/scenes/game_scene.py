@@ -105,7 +105,7 @@ class GameScene:
         # ===========================================================
         # Level Manager Setup
         # ===========================================================
-        self.level_manager = LevelManager(self.spawn_manager)
+        self.level_manager = LevelManager(self.spawn_manager, player_ref=self.player)
         self.level_manager.on_stage_complete = self._on_stage_complete
 
         self.stage_queue = [

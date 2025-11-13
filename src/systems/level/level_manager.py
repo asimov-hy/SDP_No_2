@@ -42,7 +42,7 @@ class LevelManager:
     Backward compatible with single-phase legacy format.
     """
 
-    def __init__(self, spawn_manager):
+    def __init__(self, spawn_manager, player_ref=None):
         """
         Initialize level manager.
 
@@ -56,6 +56,7 @@ class LevelManager:
         DebugLogger.init_entry("LevelManager Initialized")
 
         self.spawner = spawn_manager
+        self.player = player_ref
         self.spawner.on_entity_destroyed = self._on_entity_destroyed
 
         # State
@@ -274,11 +275,11 @@ class LevelManager:
         # Determine entity type (enemy or item)
         if "enemy" in wave:
             category = "enemy"
-            entity_type = wave.get("enemy", "straight")
+            entity_type = wave.get("enemy", "straight") # enemy type from json or default straight
             entity_params = wave.get("enemy_params", {})
         elif "pickup" in wave:
             category = "pickup"
-            entity_type = wave.get("pickup", "health")
+            entity_type = wave.get("pickup", "health")  # item type from json or default: health
             entity_params = wave.get("item_params", {})
         else:
             DebugLogger.warn("Wave missing 'enemy' or 'item' key")
@@ -300,6 +301,17 @@ class LevelManager:
         # Spawn entities at each position
         spawned = 0
         for x, y in positions:
+
+            # Calculate movement parameters for this position
+            movement_params = self._calculate_movement(x, y, wave)
+
+            # Merge movement params into entity params
+            merged_params = {**entity_params, **movement_params}
+
+            # Inject player reference if homing
+            if movement_params.get("homing"):
+                merged_params["player_ref"] = self.player
+
             entity = self.spawner.spawn(category, entity_type, x, y, **entity_params)
             if entity:
                 spawned += 1
@@ -315,6 +327,80 @@ class LevelManager:
             f"Wave: {entity_type} x{count} | Pattern: {pattern}",
             category="stage"
         )
+
+    def _calculate_movement(self, x, y, wave):
+        """Generate movement parameters based on movement config"""
+        movement = wave.get("movement", {})
+        move_type = movement.get("type", "straight")
+        target = movement.get("target", "auto")
+
+        if move_type == "straight":
+            if target == "auto":
+                direction = self._direction_from_edge(x, y, wave.get("spawn_edge", "top"))
+            elif target == "center":
+                direction = self._direction_to_center(x, y)
+            elif target == "player":
+                direction = self._direction_to_player(x, y)
+            else:
+                direction = (0, 1)  # Default down
+            return {"direction": direction}
+
+        elif move_type == "homing_continuous":
+            return {
+                "homing": True,
+                "turn_rate": movement.get("params", {}).get("turn_rate", 180)
+            }
+
+        elif move_type == "homing_snapshot":
+            return {
+                "homing": "snapshot",
+                "lock_delay": movement.get("params", {}).get("lock_delay", 0.5)
+            }
+
+        elif move_type == "stationary":
+            return {"direction": (0, 0)}
+
+        # Default fallback
+        return {"direction": (0, 1)}
+
+    def _direction_from_edge(self, x, y, edge):
+        """Calculate inward direction from spawn edge"""
+        if edge == "top":
+            return (0, 1)
+        elif edge == "bottom":
+            return (0, -1)
+        elif edge == "left":
+            return (1, 0)
+        elif edge == "right":
+            return (-1, 0)
+        return (0, 1)
+
+    def _direction_to_center(self, x, y):
+        """Calculate direction to screen center"""
+        width = getattr(self.spawner.display, "game_width", 1280)
+        height = getattr(self.spawner.display, "game_height", 720)
+
+        center_x, center_y = width / 2, height / 2
+        dx, dy = center_x - x, center_y - y
+
+        # Normalize
+        length = (dx ** 2 + dy ** 2) ** 0.5
+        if length > 0:
+            return (dx / length, dy / length)
+        return (0, 1)
+
+    def _direction_to_player(self, x, y):
+        """Snapshot player position and calculate direction"""
+        if not self.player:
+            return (0, 1)
+
+        dx, dy = self.player.pos.x - x, self.player.pos.y - y
+
+        # Normalize
+        length = (dx ** 2 + dy ** 2) ** 0.5
+        if length > 0:
+            return (dx / length, dy / length)
+        return (0, 1)
 
     def _on_entity_destroyed(self, entity):
         """Called by SpawnManager when entity dies"""
