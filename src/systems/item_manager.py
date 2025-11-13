@@ -13,6 +13,7 @@ Responsibilities
 import json
 from src.entities.items.item import Item
 from src.core.utils.debug_logger import DebugLogger
+from src.data.item_types import ItemType # Import ItemType
 
 class ItemManager:
     """
@@ -31,8 +32,9 @@ class ItemManager:
             item_data_path (str): The path to the JSON file containing item definitions.
         """
         self.game_state = game_state
-        self.active_items: list[Item] = []
+        self.dropped_items: list[Item] = []
         self._item_definitions = self._load_item_definitions(item_data_path)
+        self._validate_item_types() # Call validation after loading definitions
 
     def _load_item_definitions(self, path: str) -> dict:
         """
@@ -59,10 +61,31 @@ class ItemManager:
             DebugLogger.error(f"Could not decode JSON from '{path}'. Check file format.")
             return {}
 
+    def _validate_item_types(self):
+        """
+        Validates that item IDs in ItemType are synchronized with items.json.
+        Logs warnings for any discrepancies.
+        """
+        defined_in_code = set(ItemType.get_all())
+        defined_in_json = set(self._item_definitions.keys())
+
+        # Check for items defined in code but not in JSON
+        missing_in_json = defined_in_code - defined_in_json
+        for item_id in missing_in_json:
+            DebugLogger.warn(f"ItemType '{item_id}' is defined in code but missing from items.json.")
+
+        # Check for items defined in JSON but not in code
+        missing_in_code = defined_in_json - defined_in_code
+        for item_id in missing_in_code:
+            DebugLogger.warn(f"Item '{item_id}' is defined in items.json but missing from ItemType.")
+
+        if not missing_in_json and not missing_in_code:
+            DebugLogger.system("ItemType and items.json are synchronized.")
+
     # ===========================================================
     # Public Methods for Item Lifecycle
     # ===========================================================
-    def spawn_item(self, item_id: str, position: tuple[int, int]):
+    def spawn_item(self, item_id: ItemType, position: tuple[int, int]):
         """
         Creates a new item instance and adds it to the active list.
 
@@ -73,7 +96,7 @@ class ItemManager:
         item_data = self._item_definitions.get(item_id)
         if item_data:
             new_item = Item(item_id, position, item_data)
-            self.active_items.append(new_item)
+            self.dropped_items.append(new_item)
             DebugLogger.info(f"Spawned item '{item_id}' at {position}.")
         else:
             DebugLogger.warn(f"Attempted to spawn an unknown item_id: '{item_id}'")
@@ -88,7 +111,7 @@ class ItemManager:
         Args:
             ...
         """
-        for item in reversed(self.active_items):
+        for item in reversed(self.dropped_items):
             item.update()
 
 
