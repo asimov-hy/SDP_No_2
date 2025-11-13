@@ -80,6 +80,17 @@
           }
         },
         {
+          "time": 4.0,
+          "enemy": "multiple_shot",
+          "count": 1,
+          "pattern": "single",
+          "pattern_params": {
+            "x_spacing": 120,
+            "y_spacing": 40,
+            "tip_depth": 120
+          }
+        },
+        {
           "time": 6.0,
           "enemy": "straight",
           "count": 12,
