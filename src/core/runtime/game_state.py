@@ -22,11 +22,10 @@ class GameState:
         self.is_game_over = False
         self.is_victory = False
 
-        # Gameplay settings
+        # Item
         self.current_drop_chance = 0.6  # Default item drop chance
-
-        # Queues
         self.item_spawn_requests = []
+        self.item_effect_queue = []
 
     def reset(self):
         """Reset state to defaults when starting a new game."""

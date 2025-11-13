@@ -111,7 +111,7 @@ class GameScene:
         self.level_manager.on_stage_complete = self._on_stage_complete
 
         # Item Manager Setup
-        self.item_manager = ItemManager(game_state=STATE, spawn_manager=self.spawn_manager) # Initialize ItemManager
+        self.item_manager = ItemManager(spawn_manager=self.spawn_manager) # Initialize ItemManager
 
         self.stage_queue = [
             "src/data/Stage 1.json",

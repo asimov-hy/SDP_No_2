@@ -17,9 +17,10 @@ import random
 import pygame
 from src.entities.entity_registry import EntityRegistry
 from src.entities.items.item import Item
-EntityRegistry.register("item", "default", Item)
+EntityRegistry.register("pickup", "default", Item)
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.items.item_types import ItemType
+from src.core.runtime.game_state import STATE
 
 class ItemManager:
     """
@@ -29,16 +30,14 @@ class ItemManager:
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(self, game_state=None, spawn_manager=None, item_data_path: str = 'src/data/configs/items.json'):
+    def __init__(self, spawn_manager=None, item_data_path: str = 'src/data/configs/items.json'):
         """
         Initializes the ItemManager.
 
         Args:
-            game_state: A reference to the global game state object.
             spawn_manager: A reference to the spawn manager object.
             item_data_path (str): The path to the JSON file containing item definitions.
         """
-        self.game_state = game_state
         self.spawn_manager = spawn_manager
         self.dropped_items: list[Item] = []
         self._item_definitions = self._load_item_definitions(item_data_path)
@@ -127,7 +126,7 @@ class ItemManager:
         item_data = self._item_definitions.get(item_id.value)
         if item_data:
             new_item = self.spawn_manager.spawn(
-                category="item",
+                category="pickup",
                 type_name="default",
                 x=position[0],
                 y=position[1],
@@ -174,18 +173,49 @@ class ItemManager:
     # ===========================================================
     def update(self, dt: float):
         """
-        Updates the logic for all dropped items and processes spawn requests.
+        Updates the logic for all dropped items and processes spawn/effect queues.
         """
         # Process spawn requests from the queue
-        if self.game_state and self.game_state.item_spawn_requests:
-            for request in self.game_state.item_spawn_requests:
+        if STATE.item_spawn_requests:
+            for request in STATE.item_spawn_requests:
                 self.try_spawn_random_item(
                     position=request["position"],
                     drop_chance=request["drop_chance"]
                 )
-            # Clear the queue after processing
-            self.game_state.item_spawn_requests.clear()
+            STATE.item_spawn_requests.clear()
 
         # Update existing items
         for item in reversed(self.dropped_items):
             item.update(dt)
+
+        # Process item effects from the queue
+        if STATE.item_effect_queue:
+            # Player reference is no longer passed to apply_effect
+            for effects_list in STATE.item_effect_queue:
+                for effect in effects_list:
+                    self.apply_effect(effect) # No player argument here
+
+            STATE.item_effect_queue.clear()
+
+    def apply_effect(self, effect: dict):
+        """
+        Applies a single item effect to the game state.
+        Effects that require direct player manipulation are passed for now.
+
+        Args:
+            effect (dict): The effect dictionary from items.json.
+        """
+        effect_type = effect.get("type")
+        match effect_type:
+            case "ADD_SCORE":
+                amount = effect.get("amount", 0)
+                STATE.score += amount
+                DebugLogger.system(f"Score increased by {amount}. Total score: {STATE.score}", category="system")
+
+            case "ADD_LIVES":
+                amount = effect.get("amount", 0)
+                STATE.lives += amount
+                DebugLogger.system(f"Lives increased by {amount}. Total lives: {STATE.lives}", category="system")
+
+            case _:
+                DebugLogger.warn(f"Unknown item effect type: '{effect_type}'", category="system")

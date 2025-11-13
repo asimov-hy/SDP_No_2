@@ -1,56 +1,8 @@
 {
-  "power_up_shotgun": {
-    "name": "Shotgun Power-up",
-    "asset_path": "assets/images/items/194x_shotgun_powerup.png",
-    "drop_weight": 9,
-    "conditions": [
-      { "type": "COLLECTIBLE", "value": true }
-    ],
-    "effects": [
-      {
-        "type": "CHANGE_WEAPON",
-        "weapon_type": "SHOTGUN",
-        "duration": 15.0
-      }
-    ]
-  },
-  "power_up_laser": {
-    "name": "Laser Power-up",
-    "asset_path": "assets/images/items/194x_laser_powerup.png",
-    "drop_weight": 5,
-    "conditions": [
-      { "type": "COLLECTIBLE", "value": true }
-    ],
-    "effects": [
-      {
-        "type": "CHANGE_WEAPON",
-        "weapon_type": "LASER",
-        "duration": 10.0
-      }
-    ]
-  },
-  "health_kit_small": {
-    "name": "Small Health Kit",
-    "asset_path": "assets/images/items/194x_health_kit_small.png",
-    "drop_weight": 20,
-    "conditions": [
-      { "type": "COLLECTIBLE", "value": true },
-      { "type": "PLAYER_HEALTH_BELOW_PERCENT", "value": 100 }
-    ],
-    "effects": [
-      {
-        "type": "HEAL",
-        "amount": 25
-      }
-    ]
-  },
   "extra_life": {
     "name": "Extra Life",
     "asset_path": "assets/images/items/194x_extra_life.png",
-    "drop_weight": 1,
-    "conditions": [
-      { "type": "COLLECTIBLE", "value": true }
-    ],
+    "drop_weight": 100,
     "effects": [
       {
         "type": "ADD_LIVES",
@@ -61,38 +13,12 @@
   "score_bonus_medal": {
     "name": "Bonus Medal",
     "asset_path": "assets/images/items/194x_bonus_medal.png",
-    "drop_weight": 70,
-    "conditions": [
-      { "type": "COLLECTIBLE", "value": true }
-    ],
+    "drop_weight": 100,
     "effects": [
       {
         "type": "ADD_SCORE",
         "amount": 500
       }
     ]
-  },
-  "bomb_item": {
-    "name": "Bomb",
-    "asset_path": "assets/images/items/194x_bomb_item.png",
-    "drop_weight": 15,
-    "conditions": [
-      { "type": "COLLECTIBLE", "value": true }
-    ],
-    "effects": [
-      {
-        "type": "ADD_BOMBS",
-        "amount": 1
-      }
-    ]
-  },
-  "enemy_plane_wreckage": {
-    "name": "Plane Wreckage",
-    "asset_path": "assets/images/items/194x_wreckage.png",
-    "drop_weight": 0,
-    "conditions": [
-      { "type": "COLLECTIBLE", "value": false }
-    ],
-    "effects": []
   }
 }
