@@ -7,7 +7,8 @@ All player animations centralized here for easy tuning.
 """
 
 from ..animation_effects.death_animation import death_fade
-from ..animation_effects.damage_animation import damage_flash
+from ..animation_effects.common_animation import blink, fade_color
+from src.core.debug.debug_logger import DebugLogger
 
 
 # ============================================================
@@ -24,27 +25,39 @@ def death_player(entity, t):
     """
     return death_fade(entity, t)
 
+
 # ============================================================
 # Damage Animations
 # ============================================================
 
 def damage_player(entity, t):
-    """
-    Standard damage feedback: quick red flash.
-    Duration: 0.15s recommended
-    """
-    return damage_flash(entity, t)
+    ctx = getattr(entity, 'anim_context', {})
+    interval = ctx.get('blink_interval', 0.1)
+    previous_state = ctx.get('previous_state', entity._current_visual_state)
+    target_state = ctx.get('target_state', entity._current_visual_state)
 
+    if entity.render_mode == "shape":
+        start_color = entity.get_target_color(previous_state)
+        end_color = entity.get_target_color(target_state)
 
-def invuln_blink(entity, t):
-    """
-    Invulnerability visual: alpha blink.
-    Duration: match invuln time (typically 1.0-2.0s)
+        # Lerp color directly
+        current_color = tuple(
+            int(start_color[i] + (end_color[i] - start_color[i]) * t)
+            for i in range(3)
+        )
 
-    Usage:
-        self.anim.play(invuln_blink, duration=self.invuln_time)
-    """
-    # Blink 4 times during invulnerability
-    import math
-    alpha = int(255 * (0.3 + 0.7 * abs(math.sin(t * 4 * math.pi))))
-    entity.image.set_alpha(alpha)
+        # Rebake shape with interpolated color
+        entity.refresh_visual(new_color=current_color)
+
+        # Apply blink on top
+        blink(entity, t, interval=interval)
+    else:
+        # Image mode - just blink (no color fade)
+        if not hasattr(entity, '_original_image'):
+            entity._original_image = entity.image.copy()
+        blink(entity, t, interval=interval)
+
+    # Cleanup at end
+    if t >= 1.0 and hasattr(entity, '_original_image'):
+        entity.image = entity._original_image.copy()
+        entity.image.set_alpha(255)

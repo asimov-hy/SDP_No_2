@@ -34,27 +34,25 @@ class Player(BaseEntity):
     def __init__(self, x: float | None = None, y: float | None = None,
                  image: pygame.Surface | None = None, draw_manager=None,
                  input_manager=None):
-        """
-        Initialize the player entity.
+        """Initialize the player entity."""
 
-        Args:
-            x: Optional x-coordinate for player spawn position.
-            y: Optional y-coordinate for player spawn position.
-            image: Optional preloaded player image surface.
-            draw_manager: Required for shape-based rendering optimization.
-        """
+        # ========================================
+        # 1. Load Config
+        # ========================================
         cfg = load_config("player_config.json", {})
         self.cfg = cfg
 
         core = cfg["core_attributes"]
         render = cfg["render"]
-        health = cfg["health_states"]
+        health_cfg = cfg["health_states"]
 
+        # ========================================
+        # 2. Render Setup
+        # ========================================
         self.render_mode = render["mode"]
         size = tuple(render["size"])
         default_state = render["default_shape"]
 
-        # --- Visual setup ---
         if self.render_mode == "image":
             image = self._load_sprite(render, image)
             image = self._apply_scaling(size, image)
@@ -68,71 +66,76 @@ class Player(BaseEntity):
                 "kwargs": {}
             }
 
-        # --- Spawn position ---
+        # Spawn position
         x, y = self._compute_spawn_position(x, y, size, image)
 
-        # --- Base entity init ---
+        # ========================================
+        # 3. Base Entity Init
+        # ========================================
         super().__init__(x, y, image=image, shape_data=shape_data, draw_manager=draw_manager)
 
         if self.render_mode == "shape":
             self.shape_data = shape_data
 
-        # --- Core stats ---
+        # ========================================
+        # 4. Core Stats
+        # ========================================
         self.velocity = pygame.Vector2(0, 0)
         self.speed = core["speed"]
         self.health = core["health"]
         self.max_health = self.health
+        self._cached_health = self.health
+
         self.visible = True
         self.layer = Layers.PLAYER
         self.collision_tag = CollisionTags.PLAYER
         self.category = EntityCategory.PLAYER
-
-        # --- Interaction state ---
         self.state = InteractionState.DEFAULT
 
-        # --- Visual states ---
-        self.image_states = health["image_states"]
-        self.color_states = health["color_states"]
-        self.health_thresholds = health["thresholds"]
+        # ========================================
+        # 5. Visual State System
+        # ========================================
+        self.health_thresholds = health_cfg["thresholds"]
         self._threshold_moderate = self.health_thresholds["moderate"]
         self._threshold_critical = self.health_thresholds["critical"]
-        self._color_cache = self.color_states
 
+        # Load images if needed
+        images = None
         if self.render_mode == "image":
-            self._image_cache = {
-                "normal": self._load_and_scale(self.image_states["normal"], size),
-                "damaged_moderate": self._load_and_scale(self.image_states["damaged_moderate"], size),
-                "damaged_critical": self._load_and_scale(self.image_states["damaged_critical"], size)
+            images = {
+                state_key: self._load_and_scale(path, size)
+                for state_key, path in health_cfg["image_states"].items()
             }
-        else:
-            self._image_cache = {}
 
-        # Track health for dirty checking
-        self._cached_health = self.health
+        # Setup via base entity
+        self.setup_visual_states(
+            health=self.health,
+            thresholds_dict=self.health_thresholds,
+            color_states={k: tuple(v) for k, v in health_cfg["color_states"].items()},
+            image_states=images,
+            render_mode=self.render_mode
+        )
 
-        # --- Collision setup ---
+        # ========================================
+        # 6. Collision & Combat
+        # ========================================
         self.hitbox_scale = core["hitbox_scale"]
 
-        # --- Combat setup ---
         if input_manager is not None:
             self.input_manager = input_manager
         self.bullet_manager = None
         self.shoot_cooldown = 0.1
         self.shoot_timer = 0.0
 
-        # --- Animation manager --- WIP
-        # from src.graphics.animation_manager import AnimationManager
-        # self.animation_manager = AnimationManager(self)
-
-        # --- Global reference ---
+        # ========================================
+        # 7. Global Ref & Status
+        # ========================================
         STATE.player_ref = self
         self.status_manager = StatusManager(self, cfg["status_effects"])
 
         DebugLogger.init_entry("Player Initialized")
-        DebugLogger.init_sub(f"Player Location: ({x:.1f}, {y:.1f})")
+        DebugLogger.init_sub(f"Location: ({x:.1f}, {y:.1f})")
         DebugLogger.init_sub(f"Render Mode: {self.render_mode}")
-        DebugLogger.init_sub(f"Speed: {self.speed}")
-        DebugLogger.init_sub(f"Health: {self.health}")
 
     # ===========================================================
     # Helper Methods

@@ -35,8 +35,6 @@ def damage_collision(player, other):
         DebugLogger.trace(f"PlayerState = {player.state.name}", category="collision")
         return
 
-    player.anim.play(damage_player, duration=0.15)
-
     # Determine damage value from the other entity
     damage = getattr(other, "damage", 1)
     if damage <= 0:
@@ -53,10 +51,36 @@ def damage_collision(player, other):
 
     # Handle player death
     if player.health <= 0:
+        print("ded")
         on_death(player)
+        return
+    print("not ded")
+
+    # Determine target visual state
+    if player.health <= player._threshold_critical:
+        target_state = "damaged_critical"
+    elif player.health <= player._threshold_moderate:
+        target_state = "damaged_moderate"
+    else:
+        target_state = "normal"
+
+    iframe_time = player.status_manager.effect_config["iframe"]["duration"]
+    previous_state = player._current_visual_state  # Get OLD state before damage
+
+    DebugLogger.state(
+        f"Visual transition: {previous_state} → {target_state}",
+        category="animation"
+    )
+
+    player.anim.play(
+        damage_player,
+        duration=iframe_time,
+        blink_interval=0.1,
+        previous_state=previous_state,
+        target_state=target_state
+    )
 
     # Trigger IFRAME and update visuals
-    update_visual_state(player)
     player.status_manager.activate(PlayerEffectState.IFRAME)
 
 
@@ -84,25 +108,27 @@ def on_death(player):
 # ===========================================================
 # Visual Update Hook
 # ===========================================================
-def update_visual_state(player):
-    """
-    Update player visuals based on health thresholds from config.
-    """
-    health = player.health
-    if health == player._cached_health:
-        return
-
-    player._cached_health = health
-
-    # Determine state
-    if health <= player._threshold_critical:
-        state_key = "damaged_critical"
-    elif health <= player._threshold_moderate:
-        state_key = "damaged_moderate"
-    else:
-        state_key = "normal"
-
-    if player.render_mode == "shape":
-        player.refresh_visual(new_color=player._color_cache[state_key])
-    else:
-        player.refresh_visual(new_image=player._image_cache[state_key])
+# def update_visual_state(player):
+#     """Update player visuals based on health thresholds from config."""
+#     health = player.health
+#     if health == player._cached_health:
+#         return
+#
+#     player._cached_health = health
+#
+#     # Determine state
+#     if health <= player._threshold_critical:
+#         state_key = "damaged_critical"
+#     elif health <= player._threshold_moderate:
+#         state_key = "damaged_moderate"
+#     else:
+#         state_key = "normal"
+#
+#     player._current_visual_state = state_key
+#
+#     if player.render_mode == "shape":
+#         player.refresh_visual(new_color=player.get_target_color(state_key))
+#     else:
+#         new_image = player.get_target_image(state_key)
+#         if new_image:
+#             player.refresh_visual(new_image=new_image)

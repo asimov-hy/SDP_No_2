@@ -147,6 +147,9 @@ class BaseEntity:
         self.category = EntityCategory.EFFECT
         self.collision_tag = "neutral"
 
+        self._current_visual_state = None  # Subclasses set initial state
+        self._visual_state_config = {}  # Subclasses populate state→image/color mapping
+
         self.anim = AnimationController()
 
     # ===========================================================
@@ -339,3 +342,61 @@ class BaseEntity:
             f"tag={self.collision_tag} "
             f"category={getattr(self, 'category', '?')}>"
         )
+
+    def setup_visual_states(self, health, thresholds_dict, color_states, image_states=None, render_mode="shape"):
+        """
+        Initialize visual state system from config data.
+        Auto-determines initial state from current health.
+
+        Args:
+            health: Current health value
+            thresholds_dict: {"moderate": 2, "critical": 1}
+            color_states: {"normal": (255,255,255), "damaged_moderate": ...}
+            image_states: Optional {"normal": pygame.Surface, ...}
+            render_mode: "shape" or "image"
+        """
+        # Get all state keys (ordered by threshold, highest first)
+        sorted_states = sorted(
+            thresholds_dict.items(),
+            key=lambda x: x[1],
+            reverse=True
+        )
+
+        # Determine initial state from health
+        state_key = None
+        for name, threshold in sorted_states:
+            if health <= threshold:
+                state_key = f"damaged_{name}"
+                break
+
+        # Fallback to first color state if above all thresholds
+        if state_key is None:
+            state_key = next(iter(color_states.keys()))
+
+        self._current_visual_state = state_key
+        self._visual_state_config = {
+            "thresholds": thresholds_dict,
+            "colors": color_states,
+            "images": image_states or {},
+            "render_mode": render_mode
+        }
+
+    def get_current_color(self):
+        """Get color for current visual state."""
+        colors = self._visual_state_config.get('colors', {})
+        return colors.get(self._current_visual_state, (255, 255, 255))
+
+    def get_target_color(self, state_key):
+        """Get color for target visual state."""
+        colors = self._visual_state_config.get('colors', {})
+        return colors.get(state_key, (255, 255, 255))
+
+    def get_current_image(self):
+        """Get image for current visual state."""
+        images = self._visual_state_config.get('images', {})
+        return images.get(self._current_visual_state)
+
+    def get_target_image(self, state_key):
+        """Get image for target visual state."""
+        images = self._visual_state_config.get('images', {})
+        return images.get(state_key)
