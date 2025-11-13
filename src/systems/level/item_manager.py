@@ -13,9 +13,13 @@ Responsibilities
 """
 import json
 import random
+
+import pygame
+from src.entities.entity_registry import EntityRegistry
 from src.entities.items.item import Item
-from src.core.utils.debug_logger import DebugLogger
-from src.data.item_types import ItemType
+EntityRegistry.register("item", "default", Item)
+from src.core.debug.debug_logger import DebugLogger
+from src.entities.items.item_types import ItemType
 
 class ItemManager:
     """
@@ -25,15 +29,17 @@ class ItemManager:
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(self, game_state=None, item_data_path: str = 'src/data/items.json'):
+    def __init__(self, game_state=None, spawn_manager=None, item_data_path: str = 'src/data/configs/items.json'):
         """
         Initializes the ItemManager.
 
         Args:
             game_state: A reference to the global game state object.
+            spawn_manager: A reference to the spawn manager object.
             item_data_path (str): The path to the JSON file containing item definitions.
         """
         self.game_state = game_state
+        self.spawn_manager = spawn_manager
         self.dropped_items: list[Item] = []
         self._item_definitions = self._load_item_definitions(item_data_path)
         self._validate_item_types()
@@ -62,10 +68,10 @@ class ItemManager:
                     DebugLogger.system(f"Loaded {len(definitions)} item definitions from '{path}'.")
                 return definitions
         except FileNotFoundError:
-            DebugLogger.error(f"Item data file not found at '{path}'.")
+            DebugLogger.fail(f"Item data file not found at '{path}'.")
             return {}
         except json.JSONDecodeError:
-            DebugLogger.error(f"Could not decode JSON from '{path}'. Check file format.")
+            DebugLogger.fail(f"Could not decode JSON from '{path}'. Check file format.")
             return {}
 
     def _validate_item_types(self):
@@ -120,9 +126,18 @@ class ItemManager:
         """
         item_data = self._item_definitions.get(item_id.value)
         if item_data:
-            new_item = Item(item_id, position, item_data)
+            new_item = self.spawn_manager.spawn(
+                category="item",
+                type_name="default",
+                x=position[0],
+                y=position[1],
+                item_data=item_data,
+                image=pygame.Surface((30, 30))
+            )
+            if new_item is None:
+                return
             self.dropped_items.append(new_item)
-            DebugLogger.info(f"Spawned item '{item_id.value}' at {position}.")
+            DebugLogger.trace(f"Spawned item '{item_id.value}' at {position}.", category="system")
         else:
             DebugLogger.warn(f"Attempted to spawn an unknown item_id: '{item_id.value}'")
 
@@ -150,16 +165,27 @@ class ItemManager:
                 k=1
             )[0]
             self.spawn_item(selected_item_id, position)
-            DebugLogger.info(f"Randomly spawned '{selected_item_id.value}' at {position} from loot table.")
+            DebugLogger.trace(f"Randomly spawned '{selected_item_id.value}' at {position} from loot table.", category="system")
         except IndexError:
             DebugLogger.warn("Could not select an item from the loot table (it might be empty).")
 
     # ===========================================================
     # Update Logic
     # ===========================================================
-    def update(self):
+    def update(self, dt: float):
         """
-        Updates the logic for all dropped items.
+        Updates the logic for all dropped items and processes spawn requests.
         """
+        # Process spawn requests from the queue
+        if self.game_state and self.game_state.item_spawn_requests:
+            for request in self.game_state.item_spawn_requests:
+                self.try_spawn_random_item(
+                    position=request["position"],
+                    drop_chance=request["drop_chance"]
+                )
+            # Clear the queue after processing
+            self.game_state.item_spawn_requests.clear()
+
+        # Update existing items
         for item in reversed(self.dropped_items):
-            item.update()
+            item.update(dt)

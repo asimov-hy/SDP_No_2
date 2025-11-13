@@ -12,6 +12,7 @@ Responsibilities
 
 import pygame
 from src.core.runtime.game_settings import Display, Layers
+from src.core.runtime.game_state import STATE
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import CollisionTags, LifecycleState, EntityCategory
@@ -103,7 +104,18 @@ class BaseEnemy(BaseEntity):
             self.on_death(source)
 
     def on_death(self, source):
+        """
+        Handles death effects and queues an item drop request.
+        """
+        # Play death animation
         self.anim.play(death_fade, duration=0.5)
+
+        # Add a request to the item spawn queue using the global drop chance
+        if STATE.current_drop_chance > 0:
+            STATE.item_spawn_requests.append({
+                "position": self.rect.center,
+                "drop_chance": STATE.current_drop_chance
+            })
 
     # ===========================================================
     # Rendering

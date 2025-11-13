@@ -16,6 +16,7 @@ class EntityCategory:
     PROJECTILE = "projectile"
     ENVIRONMENT = "environment"
     PICKUP = "pickup"
+    ITEM = "item"
     EFFECT = "effect"
 
 # ===========================================================
