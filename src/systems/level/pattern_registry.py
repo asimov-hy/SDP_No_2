@@ -2,7 +2,7 @@
 pattern_registry.py
 -------------------
 Factory for enemy formation patterns.
-Decouples spawn positioning logic from level data.
+Decouples spawn positioning logic from level config.
 
 Performance
 -----------

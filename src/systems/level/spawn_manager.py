@@ -260,7 +260,7 @@ class SpawnManager:
     def reset(self):
         """
         Completely reset SpawnManager for a new stage.
-        Clears all active entities_animation and pool data.
+        Clears all active entities_animation and pool config.
         """
         for e in self.entities:
             e.death_state = LifecycleState.DEAD

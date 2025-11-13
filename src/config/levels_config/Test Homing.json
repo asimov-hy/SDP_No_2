@@ -1,0 +1,290 @@
+{
+  "stage_id": "test_2_homing",
+  "stage_name": "Test Stage 2: Homing Enemy",
+  "duration": 12.0,
+  "waves": [
+    {
+      "comment": "Continuous Homing: Top",
+      "time": 0.0,
+      "enemy": "homing",
+      "spawn_edge": "top",
+      "spawn_position": 0.5,
+      "spawn_offset_y": -100,
+      "count": 1,
+      "enemy_params": {
+        "speed": 150,
+        "size": 35,
+        "homing": true,
+        "turn_rate": 180
+      }
+    },
+    {
+      "comment": "Continuous Homing: Top-Right",
+      "time": 0.3,
+      "enemy": "homing",
+      "spawn_edge": "top",
+      "spawn_position": 0.85,
+      "spawn_offset_y": -100,
+      "count": 1,
+      "enemy_params": {
+        "speed": 150,
+        "size": 35,
+        "homing": true,
+        "turn_rate": 180
+      }
+    },
+    {
+      "comment": "Continuous Homing: Right",
+      "time": 0.6,
+      "enemy": "homing",
+      "spawn_edge": "right",
+      "spawn_position": 0.5,
+      "spawn_offset_x": 100,
+      "count": 1,
+      "enemy_params": {
+        "speed": 150,
+        "size": 35,
+        "homing": true,
+        "turn_rate": 180
+      }
+    },
+    {
+      "comment": "Continuous Homing: Bottom-Right",
+      "time": 0.9,
+      "enemy": "homing",
+      "spawn_edge": "right",
+      "spawn_position": 0.85,
+      "spawn_offset_x": 100,
+      "count": 1,
+      "enemy_params": {
+        "speed": 150,
+        "size": 35,
+        "homing": true,
+        "turn_rate": 180
+      }
+    },
+    {
+      "comment": "Continuous Homing: Bottom",
+      "time": 1.2,
+      "enemy": "homing",
+      "spawn_edge": "bottom",
+      "spawn_position": 0.5,
+      "spawn_offset_y": 100,
+      "count": 1,
+      "enemy_params": {
+        "speed": 150,
+        "size": 35,
+        "homing": true,
+        "turn_rate": 180
+      }
+    },
+    {
+      "comment": "Continuous Homing: Bottom-Left",
+      "time": 1.5,
+      "enemy": "homing",
+      "spawn_edge": "bottom",
+      "spawn_position": 0.15,
+      "spawn_offset_y": 100,
+      "count": 1,
+      "enemy_params": {
+        "speed": 150,
+        "size": 35,
+        "homing": true,
+        "turn_rate": 180
+      }
+    },
+    {
+      "comment": "Continuous Homing: Left",
+      "time": 1.8,
+      "enemy": "homing",
+      "spawn_edge": "left",
+      "spawn_position": 0.5,
+      "spawn_offset_x": -100,
+      "count": 1,
+      "enemy_params": {
+        "speed": 150,
+        "size": 35,
+        "homing": true,
+        "turn_rate": 180
+      }
+    },
+    {
+      "comment": "Continuous Homing: Top-Left",
+      "time": 2.1,
+      "enemy": "homing",
+      "spawn_edge": "left",
+      "spawn_position": 0.15,
+      "spawn_offset_x": -100,
+      "count": 1,
+      "enemy_params": {
+        "speed": 150,
+        "size": 35,
+        "homing": true,
+        "turn_rate": 180
+      }
+    },
+    {
+      "comment": "Snapshot Homing: Top (0.5s lock)",
+      "time": 4.0,
+      "enemy": "homing",
+      "spawn_edge": "top",
+      "spawn_position": 0.5,
+      "spawn_offset_y": -100,
+      "count": 1,
+      "enemy_params": {
+        "speed": 200,
+        "size": 40,
+        "homing": "snapshot",
+        "lock_delay": 0.5,
+        "color": [255, 100, 100]
+      }
+    },
+    {
+      "comment": "Snapshot Homing: Top-Right (0.5s lock)",
+      "time": 4.3,
+      "enemy": "homing",
+      "spawn_edge": "top",
+      "spawn_position": 0.85,
+      "spawn_offset_y": -100,
+      "count": 1,
+      "enemy_params": {
+        "speed": 200,
+        "size": 40,
+        "homing": "snapshot",
+        "lock_delay": 0.5,
+        "color": [255, 100, 100]
+      }
+    },
+    {
+      "comment": "Snapshot Homing: Right (0.5s lock)",
+      "time": 4.6,
+      "enemy": "homing",
+      "spawn_edge": "right",
+      "spawn_position": 0.5,
+      "spawn_offset_x": 100,
+      "count": 1,
+      "enemy_params": {
+        "speed": 200,
+        "size": 40,
+        "homing": "snapshot",
+        "lock_delay": 0.5,
+        "color": [255, 100, 100]
+      }
+    },
+    {
+      "comment": "Snapshot Homing: Bottom-Right (0.5s lock)",
+      "time": 4.9,
+      "enemy": "homing",
+      "spawn_edge": "right",
+      "spawn_position": 0.85,
+      "spawn_offset_x": 100,
+      "count": 1,
+      "enemy_params": {
+        "speed": 200,
+        "size": 40,
+        "homing": "snapshot",
+        "lock_delay": 0.5,
+        "color": [255, 100, 100]
+      }
+    },
+    {
+      "comment": "Snapshot Homing: Bottom (0.5s lock)",
+      "time": 5.2,
+      "enemy": "homing",
+      "spawn_edge": "bottom",
+      "spawn_position": 0.5,
+      "spawn_offset_y": 100,
+      "count": 1,
+      "enemy_params": {
+        "speed": 200,
+        "size": 40,
+        "homing": "snapshot",
+        "lock_delay": 0.5,
+        "color": [255, 100, 100]
+      }
+    },
+    {
+      "comment": "Snapshot Homing: Bottom-Left (0.5s lock)",
+      "time": 5.5,
+      "enemy": "homing",
+      "spawn_edge": "bottom",
+      "spawn_position": 0.15,
+      "spawn_offset_y": 100,
+      "count": 1,
+      "enemy_params": {
+        "speed": 200,
+        "size": 40,
+        "homing": "snapshot",
+        "lock_delay": 0.5,
+        "color": [255, 100, 100]
+      }
+    },
+    {
+      "comment": "Snapshot Homing: Left (0.5s lock)",
+      "time": 5.8,
+      "enemy": "homing",
+      "spawn_edge": "left",
+      "spawn_position": 0.5,
+      "spawn_offset_x": -100,
+      "count": 1,
+      "enemy_params": {
+        "speed": 200,
+        "size": 40,
+        "homing": "snapshot",
+        "lock_delay": 0.5,
+        "color": [255, 100, 100]
+      }
+    },
+    {
+      "comment": "Snapshot Homing: Top-Left (0.5s lock)",
+      "time": 6.1,
+      "enemy": "homing",
+      "spawn_edge": "left",
+      "spawn_position": 0.15,
+      "spawn_offset_x": -100,
+      "count": 1,
+      "enemy_params": {
+        "speed": 200,
+        "size": 40,
+        "homing": "snapshot",
+        "lock_delay": 0.5,
+        "color": [255, 100, 100]
+      }
+    },
+    {
+      "comment": "Pattern: V formation continuous homing",
+      "time": 8.0,
+      "enemy": "homing",
+      "pattern": "v",
+      "count": 5,
+      "pattern_config": {
+        "edge": "top",
+        "offset_y": -100
+      },
+      "enemy_params": {
+        "speed": 120,
+        "size": 35,
+        "homing": true,
+        "turn_rate": 120
+      }
+    },
+    {
+      "comment": "Pattern: Line formation snapshot homing (1s lock)",
+      "time": 10.0,
+      "enemy": "homing",
+      "pattern": "line",
+      "count": 6,
+      "pattern_config": {
+        "edge": "top",
+        "offset_y": -100
+      },
+      "enemy_params": {
+        "speed": 180,
+        "size": 35,
+        "homing": "snapshot",
+        "lock_delay": 1.0,
+        "color": [255, 150, 0]
+      }
+    }
+  ]
+}

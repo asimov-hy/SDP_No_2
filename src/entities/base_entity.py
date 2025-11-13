@@ -128,7 +128,7 @@ class BaseEntity:
             size = shape_data.get("size", (10, 10)) if shape_data else (10, 10)
             self.rect = pygame.Rect(0, 0, *size)
             self.rect.center = (x, y)
-            # Store shape data for manual rendering (fallback path)
+            # Store shape config for manual rendering (fallback path)
             self.shape_data = shape_data
 
         self.draw_manager = draw_manager
@@ -402,7 +402,7 @@ class BaseEntity:
 
     def setup_sprite(self, health, thresholds_dict, color_states, image_states=None, render_mode="shape"):
         """
-        Initialize visual state system from config data.
+        Initialize visual state system from config config.
         Auto-determines initial state from current health.
 
         Args:

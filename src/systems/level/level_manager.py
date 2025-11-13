@@ -38,7 +38,7 @@ class LevelManager:
     """
     Phase-based level coordinator.
 
-    Handles multiphase levels with waves, events, and conditional triggers.
+    Handles multiphase levels_config with waves, events, and conditional triggers.
     Backward compatible with single-phase legacy format.
     """
 
@@ -50,8 +50,8 @@ class LevelManager:
             spawn_manager: SpawnManager instance for entity creation
             level_data: Either:
                 - str: Path to JSON level file
-                - list: Legacy wave data [{"spawn_time": ...}]
-                - dict: Full level data {"phases": [...]}
+                - list: Legacy wave config [{"spawn_time": ...}]
+                - dict: Full level config {"phases": [...]}
         """
         DebugLogger.init_entry("LevelManager Initialized")
 
@@ -83,7 +83,7 @@ class LevelManager:
     # ===========================================================
 
     def load(self, level_path: str):
-        """Load level data and initialize first phase."""
+        """Load level config and initialize first phase."""
 
         self.data = self._load_level_data(level_path)
         self.phases = self.data.get("phases", [])
@@ -103,10 +103,10 @@ class LevelManager:
 
     def _load_level_data(self, level_data):
         """
-        Load and normalize level data from various sources.
+        Load and normalize level config from various sources.
 
         Returns:
-            dict: Normalized level data with "phases" array
+            dict: Normalized level config with "phases" array
         """
         # Case 1: JSON or Python file path
         if isinstance(level_data, str):
@@ -127,7 +127,7 @@ class LevelManager:
 
     def _load_phase(self, phase_idx):
         """
-        Load wave and event data for a specific phase.
+        Load wave and event config for a specific phase.
 
         Args:
             phase_idx (int): Index in self.phases array
@@ -297,15 +297,20 @@ class LevelManager:
         spawned = 0
         for x, y in positions:
 
-            # Calculate movement parameters for this position
-            movement_params = self._calculate_movement(x, y, wave)
+            # Only calculate movement for enemies (not pickups)
+            if category == "enemy":
+                # Calculate movement parameters for this position
+                movement_params = self._calculate_movement(x, y, wave)
 
-            # Merge movement params into entity params
-            merged_params = {**entity_params, **movement_params}
+                # Merge movement params into entity params
+                merged_params = {**entity_params, **movement_params}
 
-            # Inject player reference if homing
-            if movement_params.get("homing"):
-                merged_params["player_ref"] = self.player
+                # Inject player reference if homing
+                if movement_params.get("homing"):
+                    merged_params["player_ref"] = self.player
+            else:
+                # Pickups don't need movement params
+                merged_params = entity_params
 
             entity = self.spawner.spawn(category, entity_type, x, y, **merged_params)
             if entity:
@@ -353,7 +358,7 @@ class LevelManager:
             return self._positions_from_pattern(wave)
 
         # Fallback
-        DebugLogger.warn("Wave has no position data (x/y, spawn_edge, or pattern)")
+        DebugLogger.warn("Wave has no position config (x/y, spawn_edge, or pattern)")
         return [(640, -100)]
 
     def _positions_from_edge(self, wave):
