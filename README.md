@@ -79,6 +79,11 @@ This project demonstrates the use of:
 │  │   │  ├─ base_bullet.py
 │  │   │  └─ bullet_straight.py
 │  │   │
+│  │   ├─ items/
+│  │   │  ├─ __init__.py
+│  │   │  ├─ base_item.py
+│  │   │  └─ item_health.py
+│  │   │
 │  │   ├─ enemies/
 │  │   │  ├─ __init__.py
 │  │   │  ├─ base_enemy.py
