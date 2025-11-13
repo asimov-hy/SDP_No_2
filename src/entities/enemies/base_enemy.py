@@ -12,8 +12,8 @@ Responsibilities
 
 import pygame
 from src.core.runtime.game_settings import Display, Layers
-from src.core.runtime.game_state import STATE
 from src.core.debug.debug_logger import DebugLogger
+from src.core.services.event_manager import EVENTS, EnemyDiedEvent
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import CollisionTags, LifecycleState, EntityCategory
 from src.graphics.animations.animation_effects.death_animation import death_fade
@@ -72,7 +72,10 @@ class BaseEnemy(BaseEntity):
         """Default downward movement for enemies."""
         if self.death_state == LifecycleState.DYING:
             if self.anim.update(self, dt):
-                self.add_item_spawn_request()
+                EVENTS.dispatch(EnemyDiedEvent(
+                    position=self.rect.center,
+                    enemy_type_tag=self.__class__.__name__,
+                ))
                 self.mark_dead(immediate=True)
             return
 
@@ -86,14 +89,6 @@ class BaseEnemy(BaseEntity):
         # Mark dead if off-screen
         if self.rect.top > Display.HEIGHT:
             self.mark_dead(immediate=True)
-
-    def add_item_spawn_request(self):
-        # Add a request to the item spawn queue using the global drop chance
-        if STATE.current_drop_chance > 0:
-            STATE.item_spawn_requests.append({
-                "position": self.rect.center,
-                "drop_chance": STATE.current_drop_chance
-            })
 
     def take_damage(self, amount: int, source: str = "unknown"):
         """

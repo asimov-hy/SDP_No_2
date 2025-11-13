@@ -24,8 +24,6 @@ class GameState:
 
         # Item
         self.current_drop_chance = 0.6  # Default item drop chance
-        self.item_spawn_requests = []
-        self.item_effect_queue = []
 
     def reset(self):
         """Reset state to defaults when starting a new game."""

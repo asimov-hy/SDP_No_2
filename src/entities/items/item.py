@@ -6,6 +6,7 @@ Defines the Item entity which represents a collectible object in the game world.
 import pygame
 
 from src.core.debug.debug_logger import DebugLogger
+from src.core.services.event_manager import EVENTS, ItemCollectedEvent
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import EntityCategory, LifecycleState, CollisionTags
 from src.core.runtime.game_settings import Layers, Display
@@ -92,8 +93,7 @@ class Item(BaseEntity):
         tag = getattr(other, "collision_tag", "unknown")
         # If collected by the player, mark for removal
         if tag == "player":
-            from src.core.runtime.game_state import STATE
-            STATE.item_effect_queue.append(self.effects)
+            EVENTS.dispatch(ItemCollectedEvent(effects=self.effects))
             self.mark_dead(immediate=True)
         else:
             DebugLogger.trace(f"[CollisionIgnored] {type(self).__name__} vs {tag}")

@@ -23,6 +23,8 @@ EntityRegistry.register("pickup", "default", Item)
 from src.core.debug.debug_logger import DebugLogger
 from src.core.runtime.game_state import STATE
 from src.entities.items.item_definitions import ItemType, validate_item_data
+from src.core.services.event_manager import EVENTS, EnemyDiedEvent, ItemCollectedEvent
+from src.entities.enemies.base_enemy import BaseEnemy
 
 
 class ItemManager:
@@ -56,6 +58,37 @@ class ItemManager:
         self._loot_table_ids: list[ItemType] = []
         self._loot_table_weights: list[int] = []
         self._build_loot_table()
+
+        self._subscribe_to_events() # Call subscription method
+
+    def _subscribe_to_events(self):
+        """Subscribes to relevant events from the event manager."""
+        EVENTS.subscribe(EnemyDiedEvent, self.on_enemy_destroyed)
+        EVENTS.subscribe(ItemCollectedEvent, self.on_item_collected)
+
+    def on_item_collected(self, event: ItemCollectedEvent):
+        """
+        Handles the ItemCollectedEvent to apply item effects.
+        
+        Args:
+            event (ItemCollectedEvent): The event containing the effects to apply.
+        """
+        for effect in event.effects:
+            self.apply_effect(effect)
+
+    def on_enemy_destroyed(self, event: EnemyDiedEvent):
+        """
+        Handles the OnEnemyDestroyed event to attempt spawning a random item.
+        
+        Args:
+            event (EnemyDiedEvent): The event
+        """
+        if event:
+            drop_chance = STATE.current_drop_chance
+            self.try_spawn_random_item(
+                position=event.position,
+                drop_chance=drop_chance
+            )
 
     def _load_item_definitions(self, path: str) -> dict:
         """
@@ -195,27 +228,9 @@ class ItemManager:
         """
         Updates the logic for all dropped items and processes spawn/effect queues.
         """
-        # Process spawn requests from the queue
-        if STATE.item_spawn_requests:
-            for request in STATE.item_spawn_requests:
-                self.try_spawn_random_item(
-                    position=request["position"],
-                    drop_chance=request["drop_chance"]
-                )
-            STATE.item_spawn_requests.clear()
-
         # Update existing items
         for item in reversed(self.dropped_items):
             item.update(dt)
-
-        # Process item effects from the queue
-        if STATE.item_effect_queue:
-            # Player reference is no longer passed to apply_effect
-            for effects_list in STATE.item_effect_queue:
-                for effect in effects_list:
-                    self.apply_effect(effect) # No player argument here
-
-            STATE.item_effect_queue.clear()
 
     def apply_effect(self, effect: dict):
         """
