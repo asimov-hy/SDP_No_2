@@ -9,7 +9,6 @@ from src.core.debug.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import EntityCategory, LifecycleState, CollisionTags
 from src.core.runtime.game_settings import Layers, Display
-from src.entities.items.item_types import ItemType
 from src.graphics.draw_manager import DrawManager
 
 
@@ -35,9 +34,7 @@ class Item(BaseEntity):
         super().__init__(x=x, y=y, image=image, draw_manager=draw_manager)
 
         # Item-specific data
-        # self.item_id = item_id
         self.name = item_data.get("name", "Unknown Item")
-        self.conditions = item_data.get("conditions", [])
         self.effects = item_data.get("effects", [])
 
         # Entity system properties
@@ -99,4 +96,10 @@ class Item(BaseEntity):
             DebugLogger.trace(f"[CollisionIgnored] {type(self).__name__} vs {tag}")
 
     def __repr__(self):
-        return f"<Item(id={self.item_id.value}, pos={self.pos}, state={self.death_state})>"
+        return (
+            f"{self.__class__.__name__}("
+            f"name='{self.name}', "
+            f"pos=({self.pos.x:.1f}, {self.pos.y:.1f}), "
+            f"state='{self.death_state.name}'"
+            ")"
+        )

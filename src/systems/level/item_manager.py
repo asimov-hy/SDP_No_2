@@ -1,26 +1,29 @@
 """
 item_manager.py
 ----------------
-Manages the lifecycle of all item data objects in the game.
+Handles the data-driven aspects of in-game items, including loading
+definitions, managing random drops, and applying collected item effects.
 
 Responsibilities
 ----------------
-- Loading item definitions from an external data file (JSON).
-- Creating new item instances in the game world (Factory role).
-- Tracking all active item instances.
-- Removing items that have been collected or expired.
-- Handling weighted random item drops.
+- Load item definitions from an external data file (JSON).
+- Act as a factory for creating new item instances via the SpawnManager.
+- Manage a weighted loot table for random item drops.
+- Process the global item effect queue and apply effects to the game state.
+- Track all active item instances spawned by this manager.
 """
 import json
 import random
+from datetime import datetime
 
 import pygame
 from src.entities.entity_registry import EntityRegistry
 from src.entities.items.item import Item
 EntityRegistry.register("pickup", "default", Item)
 from src.core.debug.debug_logger import DebugLogger
-from src.entities.items.item_types import ItemType
 from src.core.runtime.game_state import STATE
+from src.entities.items.item_definitions import ItemType, validate_item_data
+
 
 class ItemManager:
     """
@@ -41,9 +44,15 @@ class ItemManager:
         self.spawn_manager = spawn_manager
         self.dropped_items: list[Item] = []
         self._item_definitions = self._load_item_definitions(item_data_path)
-        self._validate_item_types()
+        
+        # Validate all item data at startup
+        if validate_item_data(self._item_definitions):
+            DebugLogger.system("Item data system successful.", category="system")
+        else:
+            DebugLogger.fail("Item data system failed with one or more warnings.", category="system")
 
         # Loot table for weighted random drops
+        random.seed(int(datetime.now().timestamp()))
         self._loot_table_ids: list[ItemType] = []
         self._loot_table_weights: list[int] = []
         self._build_loot_table()
@@ -72,25 +81,6 @@ class ItemManager:
         except json.JSONDecodeError:
             DebugLogger.fail(f"Could not decode JSON from '{path}'. Check file format.")
             return {}
-
-    def _validate_item_types(self):
-        """
-        Validates that item IDs in ItemType are synchronized with items.json.
-        Logs warnings for any discrepancies.
-        """
-        defined_in_code = set(ItemType.get_all())
-        defined_in_json = set(self._item_definitions.keys())
-
-        missing_in_json = defined_in_code - defined_in_json
-        for item_id in missing_in_json:
-            DebugLogger.warn(f"ItemType '{item_id}' is defined in code but missing from items.json.")
-
-        missing_in_code = defined_in_json - defined_in_code
-        for item_id in missing_in_code:
-            DebugLogger.warn(f"Item '{item_id}' is defined in items.json but missing from ItemType.")
-
-        if not missing_in_json and not missing_in_code:
-            DebugLogger.system("ItemType and items.json are synchronized.")
 
     def _build_loot_table(self):
         """
@@ -199,8 +189,10 @@ class ItemManager:
 
     def apply_effect(self, effect: dict):
         """
-        Applies a single item effect to the game state.
-        Effects that require direct player manipulation are passed for now.
+        Applies a single item effect to the global game state.
+
+        This method only handles effects that can be resolved by modifying
+        the `GameState` directly (e.g., score, lives).
 
         Args:
             effect (dict): The effect dictionary from items.json.
