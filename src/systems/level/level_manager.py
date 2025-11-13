@@ -291,12 +291,7 @@ class LevelManager:
         pattern = wave.get("pattern", "line")
 
         # Get spawn positions from pattern
-        width = getattr(self.spawner.display, "game_width", 1280)
-        pattern_params = wave.get("pattern_params", {})
-
-        positions = PatternRegistry.get_positions(
-            pattern, count, width, **pattern_params
-        )
+        positions = self._calculate_positions(wave)
 
         # Spawn entities at each position
         spawned = 0
@@ -312,7 +307,7 @@ class LevelManager:
             if movement_params.get("homing"):
                 merged_params["player_ref"] = self.player
 
-            entity = self.spawner.spawn(category, entity_type, x, y, **entity_params)
+            entity = self.spawner.spawn(category, entity_type, x, y, **merged_params)
             if entity:
                 spawned += 1
                 # Apply per-wave speed override if specified
@@ -327,6 +322,122 @@ class LevelManager:
             f"Wave: {entity_type} x{count} | Pattern: {pattern}",
             category="stage"
         )
+
+    # ===========================================================
+    # Position Calculation (Unified Spawn System)
+    # ===========================================================
+
+    def _calculate_positions(self, wave):
+        """
+        Unified position calculation for three spawn modes.
+
+        Auto-detects mode based on keys present in wave dict.
+
+        Args:
+            wave (dict): Wave configuration
+
+        Returns:
+            list[(float, float)]: Spawn positions
+        """
+        # Mode A: Direct spawn
+        if "x" in wave and "y" in wave:
+            count = wave.get("count", 1)
+            return [(wave["x"], wave["y"])] * count
+
+        # Mode B: Edge spawn
+        if "spawn_edge" in wave:
+            return self._positions_from_edge(wave)
+
+        # Mode C: Pattern spawn
+        if "pattern" in wave:
+            return self._positions_from_pattern(wave)
+
+        # Fallback
+        DebugLogger.warn("Wave has no position data (x/y, spawn_edge, or pattern)")
+        return [(640, -100)]
+
+    def _positions_from_edge(self, wave):
+        """
+        Generate positions along edge with pixel-perfect control.
+
+        Args:
+            wave (dict): Must contain "spawn_edge", optional:
+                - spawn_position: 0.0-1.0 (default 0.5)
+                - spawn_position_random: variance range (default 0.0)
+                - spawn_offset_x: absolute x offset (default 0)
+                - spawn_offset_y: absolute y offset (default -100)
+                - count: number of entities (default 1)
+
+        Returns:
+            list[(float, float)]: Calculated positions
+        """
+        import random
+
+        edge = wave["spawn_edge"]
+        position = wave.get("spawn_position", 0.5)
+        random_range = wave.get("spawn_position_random", 0.0)
+        offset_x = wave.get("spawn_offset_x", 0)
+        offset_y = wave.get("spawn_offset_y", -100)
+        count = wave.get("count", 1)
+
+        width = getattr(self.spawner.display, "game_width", 1280)
+        height = getattr(self.spawner.display, "game_height", 720)
+
+        positions = []
+        for _ in range(count):
+            # Apply randomness to normalized position
+            pos = position + random.uniform(-random_range, random_range)
+            pos = max(0.0, min(1.0, pos))  # Clamp to [0, 1]
+
+            # Convert to absolute coordinates based on edge
+            if edge == "top":
+                x = pos * width + offset_x
+                y = offset_y
+            elif edge == "bottom":
+                x = pos * width + offset_x
+                y = height + offset_y
+            elif edge == "left":
+                x = offset_x
+                y = pos * height + offset_y
+            elif edge == "right":
+                x = width + offset_x
+                y = pos * height + offset_y
+            else:
+                DebugLogger.warn(f"Unknown spawn_edge: {edge}")
+                x, y = width / 2, -100
+
+            positions.append((x, y))
+
+        return positions
+
+    def _positions_from_pattern(self, wave):
+        """
+        Generate positions using pattern registry.
+
+        Args:
+            wave (dict): Must contain "pattern", optional:
+                - count: number of entities
+                - pattern_config: dict passed to pattern function
+
+        Returns:
+            list[(float, float)]: Pattern-generated positions
+        """
+        pattern_name = wave["pattern"]
+        count = wave.get("count", 1)
+        pattern_config = wave.get("pattern_config", {})
+
+        width = getattr(self.spawner.display, "game_width", 1280)
+        height = getattr(self.spawner.display, "game_height", 720)
+
+        positions = PatternRegistry.get_positions(
+            pattern_name,
+            count,
+            width,
+            height,
+            pattern_config
+        )
+
+        return positions
 
     def _calculate_movement(self, x, y, wave):
         """Generate movement parameters based on movement config"""
