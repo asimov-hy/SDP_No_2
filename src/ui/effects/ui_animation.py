@@ -20,5 +20,5 @@ Example Use Cases
 -----------------
 - Smooth button hover scale or color transitions.
 - Sliding panels or fading notifications.
-- Tweened text movement or bounce effects.
+- Tweened text movement or bounce animation_effects.
 """

@@ -1,0 +1,101 @@
+{
+  "id": "stage_01",
+  "name": "Opening Assault",
+  "metadata": {
+    "difficulty": 1,
+    "par_time": 45.0,
+    "author": "202X Team"
+  },
+
+  "phases": [
+    {
+      "id": "opening",
+      "name": "First Wave",
+      "duration": 15.0,
+      "waves": [
+        {
+          "time": 0.0,
+          "enemy": "straight",
+          "count": 3,
+          "pattern": "line",
+          "pattern_params": {
+            "y_offset": -100,
+            "spacing": 200
+          }
+        },
+        {
+          "time": 5.0,
+          "enemy": "straight",
+          "count": 5,
+          "pattern": "v",
+          "pattern_params": {
+            "x_spacing": 120,
+            "y_spacing": 40,
+            "tip_depth": 120
+          },
+          "enemy_params": {
+            "speed": 220
+          }
+        }
+      ],
+      "events": [
+        {
+          "time": 0.0,
+          "type": "music",
+          "params": {
+            "track": "battle_theme_01",
+            "fade_duration": 1.0
+          }
+        },
+        {
+          "time": 3.0,
+          "type": "dialogue",
+          "params": {
+            "text": "Enemy wave incoming!",
+            "duration": 2.0
+          }
+        }
+      ],
+      "exit_trigger": "duration"
+    },
+
+    {
+      "id": "assault",
+      "name": "Main Assault",
+      "waves": [
+        {
+          "time": 0.0,
+          "enemy": "straight",
+          "count": 8,
+          "pattern": "line"
+        },
+        {
+          "time": 3.0,
+          "enemy": "straight",
+          "count": 6,
+          "pattern": "circle",
+          "pattern_params": {
+            "radius": 250,
+            "center_y": -150
+          }
+        },
+        {
+          "time": 6.0,
+          "enemy": "straight",
+          "count": 12,
+          "pattern": "grid",
+          "pattern_params": {
+            "cols": 4,
+            "row_spacing": 80,
+            "col_spacing": 100
+          },
+          "enemy_params": {
+            "speed": 180,
+            "health": 2
+          }
+        }
+      ],
+      "exit_trigger": "all_waves_cleared"
+    }
+  ]
+}
