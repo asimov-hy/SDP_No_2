@@ -235,6 +235,7 @@ class Player(BaseEntity):
         if tag is None:
             return
 
+        # damaging collisions
         if tag in (CollisionTags.ENEMY, CollisionTags.ENEMY_BULLET):
-            from .player_ability import damage_collision
+            from .player_logic import damage_collision
             damage_collision(self, other)

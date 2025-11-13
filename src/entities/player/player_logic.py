@@ -8,18 +8,55 @@ They handle player-exclusive logic like i-frames, death cleanup, and visuals.
 """
 
 from src.core.debug.debug_logger import DebugLogger
-from src.entities.player.player_state import PlayerEffectState
-from src.graphics.animations.entities_animation.player_animation import death_player
+from src.entities.entity_state import LifecycleState
+from src.entities.player.player_state import PlayerEffectState, InteractionState
+from src.graphics.animations.entities_animation.player_animation import damage_player, death_player
+
 
 # ===========================================================
 # Entity Hook: Damage Response
 # ===========================================================
-def on_damage(player, amount: int):
+def damage_collision(player, other):
     """
-    Called automatically by entity_logic.apply_damage() after player takes damage.
-    Triggers invulnerability frames and visual feedback.
+    Handle collision responses with enemies or projectiles.
+
+    Flow:
+        - Skip if player is invincible, intangible, or already dead
+        - Skip if any temporary effect (e.g., iframe) is active
+        - Retrieve damage value from collided entity
+        - Apply damage and trigger IFRAME via EffectManager
     """
-    DebugLogger.action(f"Player took {amount} damage → activating IFRAME")
+    if player.death_state != LifecycleState.ALIVE:
+        DebugLogger.trace("Player already dead", category="collision")
+        return
+
+    # Skip collisions if player is in non-default state
+    if player.state is not InteractionState.DEFAULT:
+        DebugLogger.trace(f"PlayerState = {player.state.name}", category="collision")
+        return
+
+    player.anim.play(damage_player, duration=0.15)
+
+    # Determine damage value from the other entity
+    damage = getattr(other, "damage", 1)
+    if damage <= 0:
+        DebugLogger.trace(f"Invalid damage value {damage}", category="collision")
+        return
+
+    # Apply damage
+    prev_health = player.health
+    player.health -= damage
+    DebugLogger.action(
+        f"Player took {damage} damage ({prev_health} → {player.health})",
+        category="collision"
+    )
+
+    # Handle player death
+    if player.health <= 0:
+        on_death(player)
+
+    # Trigger IFRAME and update visuals
+    update_visual_state(player)
     player.status_manager.activate(PlayerEffectState.IFRAME)
 
 
@@ -38,7 +75,7 @@ def on_death(player):
     player.anim.play(death_player, duration=1.0)
 
     # Enter DYING state (BaseEntity handles this)
-    player.mark_dead(immediate=False)
+    player.mark_dead()
 
     # Disable collisions during death animation
     player.collision_tag = "neutral"
