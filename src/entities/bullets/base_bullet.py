@@ -13,6 +13,7 @@ Responsibilities
 
 import pygame
 from src.core.runtime import game_settings
+from src.core.runtime.game_settings import Bounds
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import LifecycleState, EntityCategory
@@ -129,6 +130,19 @@ class BaseBullet(BaseEntity):
             f"{type(self).__name__} hit {type(target).__name__} → destroyed",
             category="collision"
         )
+
+    # ===========================================================
+    # Bounds & Margin System
+    # ===========================================================
+    def get_cleanup_margin(self):
+        """
+        Override cleanup margin based on bullet owner.
+        Player bullets use smaller margin, enemy bullets travel further offscreen.
+        """
+        if self.owner == "player":
+            return Bounds.BULLET_PLAYER_MARGIN
+        else:
+            return Bounds.BULLET_ENEMY_MARGIN
 
     # ===========================================================
     # Rendering

@@ -201,10 +201,7 @@ class BulletManager:
     # ===========================================================
     def _is_offscreen(self, bullet) -> bool:
         """Return True if the bullet has moved beyond the visible area."""
-        surface = pygame.display.get_surface()
-        if not surface:
-            return False
-        return not surface.get_rect().colliderect(bullet.rect)
+        return bullet.is_offscreen()
 
     # ===========================================================
     # Rendering

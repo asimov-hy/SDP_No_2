@@ -33,7 +33,7 @@ Responsibilities
 
 import pygame
 from typing import Optional
-from src.core.runtime.game_settings import Layers
+from src.core.runtime.game_settings import Layers, Bounds, Display
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.entity_state import LifecycleState, EntityCategory
 from src.graphics.animations.animation_controller import AnimationController
@@ -146,6 +146,7 @@ class BaseEntity:
         # -------------------------------------------------------
         self.category = EntityCategory.EFFECT
         self.collision_tag = "neutral"
+        self.tags = set()
 
         self._current_sprite = None  # Subclasses set initial state
         self._sprite_config = {}  # Subclasses populate state→image/color mapping
@@ -333,6 +334,62 @@ class BaseEntity:
             Distance in pixels.
         """
         return self.pos.distance_to(other.pos)
+
+    # ===========================================================
+    # Bounds & Margin System
+    # ===========================================================
+    def get_cleanup_margin(self):
+        """
+        Returns cleanup margin based on entity category.
+        Entity is removed when this far offscreen.
+        """
+        margin_map = {
+            EntityCategory.ENEMY: Bounds.ENEMY_CLEANUP_MARGIN,
+            EntityCategory.PROJECTILE: Bounds.BULLET_ENEMY_MARGIN,  # Default for bullets
+            EntityCategory.PICKUP: Bounds.ITEM_CLEANUP_MARGIN,
+            EntityCategory.ENVIRONMENT: Bounds.ENV_CLEANUP_MARGIN,
+        }
+        return margin_map.get(self.category, 200)  # Default 200px
+
+    def get_damage_margin(self):
+        """
+        Returns margin for hittable zone.
+        Entity can take damage only when within this margin from screen edges.
+        """
+        margin_map = {
+            EntityCategory.ENEMY: Bounds.ENEMY_DAMAGE_MARGIN,
+            EntityCategory.ENVIRONMENT: Bounds.ENV_DAMAGE_MARGIN,
+        }
+        return margin_map.get(self.category, 0)  # Default: hittable immediately
+
+    def is_offscreen(self):
+        """
+        Check if entity is far enough offscreen for cleanup.
+        Tests all 4 edges using cleanup_margin.
+        """
+        m = self.get_cleanup_margin()
+        return (self.rect.right < -m or
+                self.rect.left > Display.WIDTH + m or
+                self.rect.bottom < -m or
+                self.rect.top > Display.HEIGHT + m)
+
+    def is_hittable(self):
+        """
+        Check if entity is inside the damage zone (can receive collision damage).
+        Used by collision manager before processing bullet hits.
+        """
+        m = self.get_damage_margin()
+        return (self.rect.right > m and
+                self.rect.left < Display.WIDTH - m and
+                self.rect.bottom > m and
+                self.rect.top > Display.HEIGHT - m)
+
+    def has_tag(self, tag):
+        """
+        Check if entity has a specific tag or category.
+        Allows checking both primary category and secondary tags.
+        """
+        return tag == self.category or tag in self.tags
 
     def __repr__(self) -> str:
         """Debug string representation of entity."""

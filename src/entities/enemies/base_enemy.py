@@ -88,7 +88,7 @@ class BaseEnemy(BaseEntity):
         self.update_rotation()
 
         # Mark dead if off-screen
-        if self.rect.top > Display.HEIGHT:
+        if self.is_offscreen():
             self.mark_dead(immediate=True)
 
     def take_damage(self, amount: int, source: str = "unknown"):

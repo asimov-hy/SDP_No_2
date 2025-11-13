@@ -259,6 +259,14 @@ class CollisionManager:
 
                         # Overlap test
                         if a_hitbox.rect.colliderect(b_hitbox.rect):
+                            # Check if entities are in hittable zones before applying damage
+                            a_hittable = not hasattr(a, "is_hittable") or a.is_hittable()
+                            b_hittable = not hasattr(b, "is_hittable") or b.is_hittable()
+
+                            # Skip collision if either entity is outside damage zone
+                            if not (a_hittable and b_hittable):
+                                continue
+
                             append_collision((a, b))
                             DebugLogger.state(
                                 f"Collision: {type(a).__name__} ({tag_a}) <-> {type(b).__name__} ({tag_b})",
