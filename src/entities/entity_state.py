@@ -20,13 +20,15 @@ class EntityCategory:
     PLAYER = "player"
     ENEMY = "enemy"
     PROJECTILE = "projectile"  # Used for bullets (both player and enemy)
-    ENVIRONMENT = "environment"
     PICKUP = "pickup"
+    OBSTACLE = "obstacle"
+    HAZARD = "hazard"
+    ENVIRONMENT = "environment"
     EFFECT = "effect"
 
     # Valid categories for EntityRegistry registration
     # (PLAYER excluded - not spawnable via registry)
-    REGISTRY_VALID = {ENEMY, PROJECTILE, PICKUP, ENVIRONMENT, EFFECT}
+    REGISTRY_VALID = {ENEMY, PROJECTILE, PICKUP, OBSTACLE, HAZARD, ENVIRONMENT, EFFECT}
 
 
 # ===========================================================
