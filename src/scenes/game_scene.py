@@ -157,15 +157,15 @@ class GameScene:
         # 3. Physics
         self.player.update(dt)
 
-        # 4. Collision
+        # 4. Projectiles
+        self.bullet_manager.update(dt)
+
+        # 5. Collision
         self.collision_manager.update()
         self.collision_manager.detect()
 
-        # 5. Cleanup (now happens once)
+        # 6. Cleanup
         self.spawn_manager.cleanup()
-
-        # 6. Projectiles
-        self.bullet_manager.update(dt)
 
         # 7. UI
         self.ui.update(pygame.mouse.get_pos())
