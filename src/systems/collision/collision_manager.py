@@ -273,21 +273,39 @@ class CollisionManager:
                                 category="collision",
                             )
 
-                            # Let entities_animation handle their reactions
-                            try:
-                                if hasattr(a, "on_collision"):
-                                    a.on_collision(b)
-
-                                if hasattr(b, "on_collision"):
-                                    b.on_collision(a)
-
-                            except Exception as e:
-                                DebugLogger.warn(
-                                    f"[CollisionManager] Exception during collision between "
-                                    f"{type(a).__name__} and {type(b).__name__}: {e}",
-                                    category="collision"
-                                )
+                            # Route collision processing
+                            self._process_collision(a, b)
         return collisions
+
+    # ===========================================================
+    # Collision Processing
+    # ===========================================================
+    def _process_collision(self, entity_a, entity_b):
+        """
+        Route collision based on categories (future expansion).
+
+        Args:
+            entity_a: First entity in collision pair.
+            entity_b: Second entity in collision pair.
+        """
+        # Current behavior (keep working)
+        try:
+            if hasattr(entity_a, "on_collision"):
+                entity_a.on_collision(entity_b)
+
+            if hasattr(entity_b, "on_collision"):
+                entity_b.on_collision(entity_a)
+
+        except Exception as e:
+            DebugLogger.warn(
+                f"[CollisionManager] Exception during collision between "
+                f"{type(entity_a).__name__} and {type(entity_b).__name__}: {e}",
+                category="collision"
+            )
+
+        # TODO (Tier 3): Add category-based routing
+        # if entity_a.category == EntityCategory.HAZARD:
+        #     self._apply_effect(entity_a, entity_b)
 
     # ===========================================================
     # Debug Visualization
