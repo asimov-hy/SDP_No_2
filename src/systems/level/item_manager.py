@@ -115,13 +115,16 @@ class ItemManager:
         """
         item_data = self._item_definitions.get(item_id.value)
         if item_data:
+            asset_path = item_data.get("asset_path")
+            loaded_image = self._load_item_image(item_id.value, asset_path)
+
             new_item = self.spawn_manager.spawn(
                 category="pickup",
                 type_name="default",
                 x=position[0],
                 y=position[1],
                 item_data=item_data,
-                image=pygame.Surface((30, 30))
+                image=loaded_image # Pass the loaded image
             )
             if new_item is None:
                 return
@@ -129,6 +132,33 @@ class ItemManager:
             DebugLogger.trace(f"Spawned item '{item_id.value}' at {position}.", category="system")
         else:
             DebugLogger.warn(f"Attempted to spawn an unknown item_id: '{item_id.value}'")
+
+    def _load_item_image(self, item_id: str, asset_path: str) -> pygame.Surface:
+        """
+        Loads and scales an item image from the given asset path.
+        Provides a dummy image fallback if loading fails.
+
+        Args:
+            item_id (str): The ID of the item (for logging purposes).
+            asset_path (str): The file path to the item's image asset.
+
+        Returns:
+            pygame.Surface: The loaded and scaled image, or a dummy surface on failure.
+        """
+        loaded_image = None
+        if asset_path:
+            try:
+                loaded_image = pygame.image.load(asset_path).convert_alpha()
+                loaded_image = pygame.transform.scale(loaded_image, (30, 30))
+            except pygame.error as e:
+                DebugLogger.warn(f"Failed to load item image '{asset_path}' for item '{item_id}': {e}", category="system")
+        
+        if loaded_image is None:
+            DebugLogger.warn(f"Using dummy image for item '{item_id}'. Check asset_path: '{asset_path}'", category="system")
+            loaded_image = pygame.Surface((30, 30)) # Fallback to dummy
+        
+        return loaded_image
+
 
     def try_spawn_random_item(self, position: tuple[int, int], drop_chance: float = 0.15):
         """
