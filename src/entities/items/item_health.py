@@ -27,7 +27,7 @@ class ItemHealth(BaseItem):
         shape_data = {
             "type": "circle",
             "color": (0, 255, 100),
-            "size": (12, 12),
+            "size": (24, 24),
             "kwargs": {}
         }
 

@@ -108,7 +108,7 @@ class Player(BaseEntity):
             }
 
         # Setup via base entity
-        self.setup_visual_states(
+        self.setup_sprite(
             health=self.health,
             thresholds_dict=self.health_thresholds,
             color_states={k: tuple(v) for k, v in health_cfg["color_states"].items()},

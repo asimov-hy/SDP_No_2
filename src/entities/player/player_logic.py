@@ -51,10 +51,8 @@ def damage_collision(player, other):
 
     # Handle player death
     if player.health <= 0:
-        print("ded")
         on_death(player)
         return
-    print("not ded")
 
     # Determine target visual state
     if player.health <= player._threshold_critical:
@@ -65,7 +63,7 @@ def damage_collision(player, other):
         target_state = "normal"
 
     iframe_time = player.status_manager.effect_config["iframe"]["duration"]
-    previous_state = player._current_visual_state  # Get OLD state before damage
+    previous_state = player._current_sprite  # Get OLD state before damage
 
     DebugLogger.state(
         f"Visual transition: {previous_state} → {target_state}",
@@ -103,32 +101,3 @@ def on_death(player):
 
     # Disable collisions during death animation
     player.collision_tag = "neutral"
-
-
-# ===========================================================
-# Visual Update Hook
-# ===========================================================
-# def update_visual_state(player):
-#     """Update player visuals based on health thresholds from config."""
-#     health = player.health
-#     if health == player._cached_health:
-#         return
-#
-#     player._cached_health = health
-#
-#     # Determine state
-#     if health <= player._threshold_critical:
-#         state_key = "damaged_critical"
-#     elif health <= player._threshold_moderate:
-#         state_key = "damaged_moderate"
-#     else:
-#         state_key = "normal"
-#
-#     player._current_visual_state = state_key
-#
-#     if player.render_mode == "shape":
-#         player.refresh_visual(new_color=player.get_target_color(state_key))
-#     else:
-#         new_image = player.get_target_image(state_key)
-#         if new_image:
-#             player.refresh_visual(new_image=new_image)

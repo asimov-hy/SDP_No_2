@@ -38,7 +38,7 @@ class AnimationController:
             self.active_func = None
 
             if "target_state" in self.context:
-                _apply_visual_state(entity, self.context["target_state"])
+                _update_sprite(entity, self.context["target_state"])
 
             return True
         return False
@@ -50,7 +50,7 @@ def register(tag: str, anim_class):
     registry[tag] = anim_class
 
 
-def _apply_visual_state(entity, state_key):
+def _update_sprite(entity, state_key):
     """Apply visual state change after animation completes."""
     if hasattr(entity, "render_mode"):
         if entity.render_mode == "shape":
@@ -64,4 +64,4 @@ def _apply_visual_state(entity, state_key):
                 entity.refresh_visual(new_image=new_image)
 
         # Update current state tracker
-        entity._current_visual_state = state_key
+        entity._current_sprite = state_key
