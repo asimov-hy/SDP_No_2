@@ -14,6 +14,11 @@
     "name": "Bonus Medal",
     "asset_path": "assets/images/items/dummy_item.png",
     "drop_weight": 100,
+    "physics": {
+      "velo_x": 0,
+      "velo_y": 160,
+      "hitbox_scale": 0.85
+    },
     "effects": [
       {
         "type": "ADD_SCORE",

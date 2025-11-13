@@ -42,11 +42,14 @@ class Item(BaseEntity):
         self.layer = Layers.ENEMIES
         self.collision_tag = CollisionTags.PICKUP
 
-        # Movement properties
-        self.velocity = pygame.Vector2(0, 75)  # Move downwards at a constant speed
+        # Physics properties from data, with defaults
+        physics_data = item_data.get("physics", {})
+        velo_x = physics_data.get("velo_x", 0)
+        velo_y = physics_data.get("velo_y", 75)
+        self.velocity = pygame.Vector2(velo_x, velo_y)
 
-        # hitbox scale
-        self._hitbox_scale = 0.9
+        # Hitbox scale from data, with default
+        self._hitbox_scale = physics_data.get("hitbox_scale", 0.9)
 
     # ===========================================================
     # Core Update Loop
