@@ -382,7 +382,7 @@ class BaseEntity:
         return (self.rect.right > m and
                 self.rect.left < Display.WIDTH - m and
                 self.rect.bottom > m and
-                self.rect.top > Display.HEIGHT - m)
+                self.rect.top < Display.HEIGHT - m)
 
     def has_tag(self, tag):
         """
