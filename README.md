@@ -94,17 +94,24 @@ This project demonstrates the use of:
 │  │
 │  ├─ graphics/
 │  │   ├─ __init__.py
-│  │   ├─ animation_manager.py
-│  │   ├─ animation_registry.py
 │  │   ├─ draw_manager.py
 │  │   │
 │  │   └─ animations/
 │  │      ├─ __init__.py
-│  │      ├─ animation_player.py
+│  │      ├─ animation_controller.py
+│  │      ├─ animation_manager.py
 │  │      │
-│  │      └─ animation_utils/
-│  │         ├─ anim_motion.py
-│  │         └─ anim_visual.py
+│  │      ├─ animation_effects/
+│  │      │  ├─ __init__.py
+│  │      │  ├─ common_animation.py
+│  │      │  ├─ damage_animation.py
+│  │      │  ├─ death_animation.py
+│  │      │  └─ movement_animation.py
+│  │      │
+│  │      └─ entities/
+│  │         ├─ __init__.py
+│  │         ├─ enemy_animation.py
+│  │         └─ player_animation.py
 │  │
 │  ├─ scenes/
 │  │   ├─ __init__.py

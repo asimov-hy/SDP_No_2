@@ -2,11 +2,11 @@
 base_entity.py
 --------------
 Defines the BaseEntity class, which serves as the foundational interface
-for all active in-game entities (e.g., Player, Enemy, Bullet).
+for all active in-game entities_animation (e.g., Player, Enemy, Bullet).
 
 Coordinate System Standard
 --------------------------
-All entities in the 202X runtime use **center-based coordinates**:
+All entities_animation in the 202X runtime use **center-based coordinates**:
 - self.pos represents the entity's visual and physical center.
 - self.rect.center is always synchronized with self.pos.
 - Movement, rotation, and collisions are performed relative to this center.
@@ -26,9 +26,9 @@ Shape fallback (prototyping only):
 Responsibilities
 ----------------
 - Provide shared attributes such as image, rect, and alive state.
-- Define consistent update and draw interfaces for all entities.
+- Define consistent update and draw interfaces for all entities_animation.
 - Support both sprite-based and shape-based rendering with auto-optimization.
-- Serve as the parent class for specialized gameplay entities.
+- Serve as the parent class for specialized gameplay entities_animation.
 """
 
 import pygame
@@ -41,9 +41,9 @@ from src.graphics.animations.animation_controller import AnimationController
 
 class BaseEntity:
     """
-    Common interface for all entities within the game level.
+    Common interface for all entities_animation within the game level.
 
-    This class should be subclassed by all game entities (Player, Enemy, Bullet, etc.).
+    This class should be subclassed by all game entities_animation (Player, Enemy, Bullet, etc.).
 
     Subclass Requirements:
     ---------------------
@@ -124,7 +124,7 @@ class BaseEntity:
         if self.image:
             self.rect = self.image.get_rect(center=(x, y))
         else:
-            # Fallback for entities created without draw_manager
+            # Fallback for entities_animation created without draw_manager
             size = shape_data.get("size", (10, 10)) if shape_data else (10, 10)
             self.rect = pygame.Rect(0, 0, *size)
             self.rect.center = (x, y)

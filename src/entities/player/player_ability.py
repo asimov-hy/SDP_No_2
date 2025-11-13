@@ -10,6 +10,7 @@ from src.core.debug.debug_logger import DebugLogger
 from src.entities.bullets.bullet_straight import StraightBullet
 from src.entities.player.player_state import InteractionState
 from src.entities.entity_state import LifecycleState
+from src.graphics.animations.entities_animation.player_animation import damage_player
 
 
 # ===========================================================
@@ -75,6 +76,8 @@ def damage_collision(player, other):
     if player.state is not InteractionState.DEFAULT:
         DebugLogger.trace(f"PlayerState = {player.state.name}", category="collision")
         return
+
+    player.anim.play(damage_player, duration=0.15)
 
     # Determine damage value from the other entity
     damage = getattr(other, "damage", 1)

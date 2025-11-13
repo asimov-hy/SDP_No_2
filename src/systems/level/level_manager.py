@@ -409,14 +409,14 @@ class LevelManager:
     # ===========================================================
 
     def _has_enemies_alive(self):
-        """Check if any ENEMY category entities exist."""
+        """Check if any ENEMY category entities_animation exist."""
         return any(
             getattr(e, "category", None) == EntityCategory.ENEMY
             for e in self.spawner.entities
         )
 
     def _has_category_alive(self, category):
-        """Check if specific category entities exist."""
+        """Check if specific category entities_animation exist."""
         return any(
             getattr(e, "category", None) == category
             for e in self.spawner.entities
@@ -424,7 +424,7 @@ class LevelManager:
 
     def _has_boss_alive(self, boss_id):
         """Check if specific boss entity exists."""
-        # Requires boss entities to have "boss_id" attribute
+        # Requires boss entities_animation to have "boss_id" attribute
         return any(
             getattr(e, "boss_id", None) == boss_id
             for e in self.spawner.entities

@@ -8,7 +8,7 @@ from enum import IntEnum
 
 class EntityCategory:
     """
-    High-level logical grouping for entities.
+    High-level logical grouping for entities_animation.
     """
 
     PLAYER = "player"

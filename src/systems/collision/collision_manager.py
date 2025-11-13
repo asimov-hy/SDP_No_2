@@ -3,12 +3,12 @@ collision_manager.py
 --------------------
 Optimized modular collision handler with centralized hitbox management.
 Uses spatial hashing to reduce redundant collision checks
-and delegates actual responses to entities and bullets.
+and delegates actual responses to entities_animation and bullets.
 
 Responsibilities
 ----------------
-- Manage hitbox lifecycle for all entities (registration, updates, cleanup).
-- Detect collisions between bullets ↔ entities using spatial hashing.
+- Manage hitbox lifecycle for all entities_animation (registration, updates, cleanup).
+- Detect collisions between bullets ↔ entities_animation using spatial hashing.
 - Delegate collision responses to entity.on_collision() methods.
 - Support collision rules for flexible filtering.
 - Provide optional hitbox debug visualization.
@@ -120,10 +120,10 @@ class CollisionManager:
     def update(self):
         """
         Update all registered hitboxes to match entity positions.
-        Automatically cleans up hitboxes for dead entities.
+        Automatically cleans up hitboxes for dead entities_animation.
         """
         for entity_id, hitbox in list(self.hitboxes.items()):
-            # Clean up hitboxes for dead entities
+            # Clean up hitboxes for dead entities_animation
             entity = hitbox.owner
             if getattr(entity, "death_state", 0) >= LifecycleState.DEAD:
                 del self.hitboxes[entity_id]
@@ -140,7 +140,7 @@ class CollisionManager:
         Assign an entity to a grid cell based on its hitbox.
 
         Args:
-            grid: Spatial hash table mapping cell → list of entities.
+            grid: Spatial hash table mapping cell → list of entities_animation.
             obj: Any entity with a registered hitbox.
         """
         hitbox = self.hitboxes.get(id(obj))
@@ -164,7 +164,7 @@ class CollisionManager:
         """
         Optimized collision detection using spatial hashing.
 
-        Groups entities by screen regions to minimize redundant checks.
+        Groups entities_animation by screen regions to minimize redundant checks.
         Delegates all responses to each entity's on_collision() method.
 
         Returns:
@@ -203,7 +203,11 @@ class CollisionManager:
         if player:
             add_to_grid(grid, player)
         for entity in active_entities:
+            if entity is player:
+                DebugLogger.warn("WARNING: Player found in spawn_manager entities!")
+                continue
             add_to_grid(grid, entity)
+
         for bullet in active_bullets:
             add_to_grid(grid, bullet)
 
@@ -238,7 +242,7 @@ class CollisionManager:
                             continue
                         checked_pairs.add(pair_key)
 
-                        # Skip destroyed entities mid-frame
+                        # Skip destroyed entities_animation mid-frame
                         if a.death_state >= LifecycleState.DEAD or b.death_state >= LifecycleState.DEAD:
                             continue
 
@@ -260,7 +264,7 @@ class CollisionManager:
                                 category="collision",
                             )
 
-                            # Let entities handle their reactions
+                            # Let entities_animation handle their reactions
                             try:
                                 if hasattr(a, "on_collision"):
                                     a.on_collision(b)
@@ -281,7 +285,7 @@ class CollisionManager:
     # ===========================================================
     def draw_debug(self, surface):
         """
-        Draw hitboxes for all registered entities if debug mode is enabled.
+        Draw hitboxes for all registered entities_animation if debug mode is enabled.
 
         Args:
             surface: The rendering surface to draw onto.

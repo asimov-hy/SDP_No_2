@@ -1,7 +1,7 @@
 """
 base_enemy.py
 --------------
-Defines the shared base class for all enemy entities.
+Defines the shared base class for all enemy entities_animation.
 
 Responsibilities
 ----------------
@@ -19,7 +19,7 @@ from src.graphics.animations.animation_effects.death_animation import death_fade
 
 
 class BaseEnemy(BaseEntity):
-    """Base class providing shared logic for all enemy entities."""
+    """Base class providing shared logic for all enemy entities_animation."""
 
     # ===========================================================
     # Initialization

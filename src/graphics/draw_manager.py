@@ -6,10 +6,10 @@ and efficiently sending them to the main display surface.
 
 Responsibilities
 ----------------
-- Load and cache images used by entities and UI.
+- Load and cache images used by entities_animation and UI.
 - Maintain a draw queue (layered rendering system).
 - Sort queued draw calls by layer each frame and render them.
-- Provide helper methods for entities and UI elements to queue themselves.
+- Provide helper methods for entities_animation and UI elements to queue themselves.
 """
 
 import pygame
@@ -211,7 +211,7 @@ class DrawManager:
         creation time, then reused as a sprite for fast batched rendering.
 
         Performance: Prebaked shapes render at image speed (~4x faster than
-        per-frame shape drawing for 500+ entities).
+        per-frame shape drawing for 500+ entities_animation).
 
         Args:
             type (str): Shape type ("rect", "circle", "ellipse", etc.)

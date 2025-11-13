@@ -1,7 +1,7 @@
 """
 status_manager.py
 -----------------
-Generic effect management system for entities.
+Generic effect management system for entities_animation.
 
 Responsibilities
 ----------------

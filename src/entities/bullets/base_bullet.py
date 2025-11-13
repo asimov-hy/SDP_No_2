@@ -19,7 +19,7 @@ from src.entities.entity_state import LifecycleState, EntityCategory
 
 
 class BaseBullet(BaseEntity):
-    """Base class for all bullet entities."""
+    """Base class for all bullet entities_animation."""
 
     # ===========================================================
     # Initialization

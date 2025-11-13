@@ -62,9 +62,26 @@ class EnemyStraight(BaseEnemy):
         """
         super().update(dt)
 
-    def reset(self, x, y, direction=(0,1), speed=200, health=1, **kwargs):
+    def reset(self, x, y, direction=(0, 1), speed=200, health=1, size=50, color=(255, 0, 0), **kwargs):
         """Reset straight enemy with new parameters."""
-        super().reset(x, y, speed=speed, health=health, direction=direction, **kwargs)
+        super().reset(x, y, **kwargs)
+
+        # Regenerate sprite if size/color changed (optional optimization: only if different)
+        if self.draw_manager:
+            self._base_image = self.draw_manager.create_triangle(size, color, pointing="up")
+            self.image = self._base_image.copy()
+
+        # Reset physics
+        self.speed = speed
+        self.health = health
+        self.max_health = health
+        self.velocity = pygame.Vector2(direction).normalize() * speed
+
+        # Reset rotation state
+        self.rotation_angle = 0
+
+        # Force immediate rotation update to match velocity
+        self.update_rotation()
 
 from src.entities.entity_registry import EntityRegistry
 EntityRegistry.register("enemy", "straight", EnemyStraight)

@@ -189,8 +189,19 @@ class Player(BaseEntity):
     # ===========================================================
     def update(self, dt):
         """Update player components."""
+
+        if self.death_state == LifecycleState.DYING:
+            # Update animation; returns True when finished
+            if self.anim.update(self, dt):
+                # Finalize death
+                self.mark_dead(immediate=True)
+                DebugLogger.state("Player death animation complete", category="player")
+            return
+
         if self.death_state != LifecycleState.ALIVE:
             return
+
+        self.anim.update(self, dt)
 
         # 1. Time-based status_effects and temporary states
         self.status_manager.update(dt)
@@ -210,6 +221,7 @@ class Player(BaseEntity):
         # if self.animation_manager:
         #     self.animation_manager.update(dt)
 
+
     def draw(self, draw_manager):
         """Render player if visible."""
         if not self.visible:
@@ -218,6 +230,7 @@ class Player(BaseEntity):
 
     def on_collision(self, other):
         """Handle collision events."""
+
         tag = getattr(other, "collision_tag", None)
         if tag is None:
             return

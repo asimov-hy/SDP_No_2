@@ -2,14 +2,14 @@
 spawn_manager.py
 ----------------
 Generic manager responsible for dynamically spawning, updating, and rendering
-in-game entities during a scene (enemies, environment objects, pickups, etc.).
+in-game entities_animation during a scene (enemies, environment objects, pickups, etc.).
 
 Responsibilities
 ----------------
-- Spawn and organize all active entities registered in the EntityRegistry.
+- Spawn and organize all active entities_animation registered in the EntityRegistry.
 - Support scalable updates and cleanup for large numbers of dynamic objects.
-- Automatically link new entities to collision systems (if provided).
-- Handle per-frame update and render passes for all active entities.
+- Automatically link new entities_animation to collision systems (if provided).
+- Handle per-frame update and render passes for all active entities_animation.
 """
 
 from src.core.debug.debug_logger import DebugLogger
@@ -31,7 +31,7 @@ ENEMY_TYPES = {
 
 class SpawnManager:
     """
-    Centralized spawner for dynamic scene entities.
+    Centralized spawner for dynamic scene entities_animation.
 
     This system manages objects that are created and destroyed during gameplay,
     including enemies, environment props, projectiles, or special animation_effects.
@@ -53,7 +53,7 @@ class SpawnManager:
         self.draw_manager = draw_manager
         self.display = display
         self.collision_manager = collision_manager
-        self.entities = []  # Active enemy entities
+        self.entities = []  # Active enemy entities_animation
         self.on_entity_destroyed = None
 
         DebugLogger.init_entry("SpawnManager Initialized")
@@ -97,8 +97,10 @@ class SpawnManager:
             entity = EntityRegistry.create(category, type_name, x, y, **kwargs)
 
             if not entity:
-                DebugLogger.warn(f"Failed to spawn {category}: '{type_name}'")
+                # DebugLogger.warn(f"Failed to spawn {category}: '{type_name}'")
                 return None
+
+        DebugLogger.system(f"Spawned {type(entity).__name__} ID: {id(entity)}", category="entity")
 
         self.entities.append(entity)
 
@@ -186,7 +188,7 @@ class SpawnManager:
     # ===========================================================
     def update(self, dt: float):
         """
-        Update all active entities and remove inactive ones.
+        Update all active entities_animation and remove inactive ones.
 
         Args:
             dt (float): Delta time since last frame (in seconds).
@@ -214,7 +216,7 @@ class SpawnManager:
     # ===========================================================
     def cleanup(self):
         """
-        Immediately remove all entities that are no longer alive.
+        Immediately remove all entities_animation that are no longer alive.
 
         This is typically called after a major game event (e.g., scene reset
         or stage transition) to clear destroyed or expired objects.
@@ -243,7 +245,7 @@ class SpawnManager:
 
         if removed > 0:
             DebugLogger.state(
-                f"Cleaned up {removed} entities ({returned_to_pool} pooled)",
+                f"Cleaned up {removed} entities_animation ({returned_to_pool} pooled)",
                 category="entity_cleanup"
             )
 
@@ -270,7 +272,7 @@ class SpawnManager:
     def reset(self):
         """
         Completely reset SpawnManager for a new stage.
-        Clears all active entities and pool data.
+        Clears all active entities_animation and pool data.
         """
         for e in self.entities:
             e.death_state = LifecycleState.DEAD

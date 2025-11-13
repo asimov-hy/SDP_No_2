@@ -9,7 +9,7 @@ They handle player-exclusive logic like i-frames, death cleanup, and visuals.
 
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.player.player_state import PlayerEffectState
-
+from src.graphics.animations.entities_animation.player_animation import death_player
 
 # ===========================================================
 # Entity Hook: Damage Response
@@ -31,8 +31,17 @@ def on_death(player):
     Called automatically by entity_logic.handle_death() when player HP reaches zero.
     Clears the global player reference for game-over detection.
     """
-    DebugLogger.state("Player dead")
-    player.mark_dead()
+
+    DebugLogger.state("Player death triggered", category="player")
+
+    # Start the death animation
+    player.anim.play(death_player, duration=1.0)
+
+    # Enter DYING state (BaseEntity handles this)
+    player.mark_dead(immediate=False)
+
+    # Disable collisions during death animation
+    player.collision_tag = "neutral"
 
 
 # ===========================================================

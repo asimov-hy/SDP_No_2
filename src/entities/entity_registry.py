@@ -6,7 +6,7 @@ Central registry and factory for dynamic entity creation.
 Responsibilities
 ----------------
 - Maintain a global mapping of entity classes by category and type name.
-- Allow other modules to register entities automatically on import.
+- Allow other modules to register entities_animation automatically on import.
 - Provide a safe unified `create()` factory for all entity spawning.
 """
 
@@ -14,7 +14,7 @@ from src.core.debug.debug_logger import DebugLogger
 
 
 class EntityRegistry:
-    """Global registry and factory for creating entities dynamically."""
+    """Global registry and factory for creating entities_animation dynamically."""
 
     _registry = {}  # {category: {type_name: class}}
 

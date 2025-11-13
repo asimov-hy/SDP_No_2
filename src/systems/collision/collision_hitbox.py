@@ -1,7 +1,7 @@
 """
 collision_hitbox.py
 -------------------
-Defines the Hitbox class used by all active entities to provide
+Defines the Hitbox class used by all active entities_animation to provide
 modular and scalable collision detection bounds.
 
 Responsibilities

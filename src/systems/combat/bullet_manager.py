@@ -1,7 +1,7 @@
 """
 bullet_manager.py
 -----------------
-System responsible for managing all bullet entities during gameplay.
+System responsible for managing all bullet entities_animation during gameplay.
 
 Responsibilities
 ----------------
@@ -56,20 +56,21 @@ class BulletManager:
         """Reset an existing bullet from the pool."""
         b.pos.update(pos)
         b.vel.update(vel)
-        b.image = image
+
+        # Only update image if explicitly provided (not None)
+        if image is not None:
+            b.image = image
+            b.rect = b.image.get_rect(center=pos)
+        else:
+            # Keep existing prebaked image, just update position
+            b.rect.center = pos
+
         b.color = color
         b.radius = radius
         b.owner = owner
         b.damage = damage
         b.death_state = LifecycleState.ALIVE
         b.collision_tag = f"{owner}_bullet"
-
-        # Recreate or sync rect
-        if b.image:
-            b.rect = b.image.get_rect(center=pos)
-        else:
-            b.rect = pygame.Rect(0, 0, radius * 2, radius * 2)
-            b.rect.center = pos
 
     # ===========================================================
     # Pool Prewarming

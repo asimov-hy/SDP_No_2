@@ -1,12 +1,12 @@
 """
 game_scene.py
 -------------
-Defines the main in-game scene — includes core gameplay entities
+Defines the main in-game scene — includes core gameplay entities_animation
 and the player HUD overlay.
 
 Responsibilities
 ----------------
-- Initialize gameplay entities (e.g., Player).
+- Initialize gameplay entities_animation (e.g., Player).
 - Update all active game logic each frame.
 - Manage the in-game UI system (HUDManager, overlays).
 - Forward input and events to appropriate subsystems.
@@ -36,14 +36,14 @@ from src.systems.level.pattern_registry import PatternRegistry
 
 
 class GameScene:
-    """Handles all gameplay entities, logic, and UI systems."""
+    """Handles all gameplay entities_animation, logic, and UI systems."""
 
     # ===========================================================
     # Initialization
     # ===========================================================
     def __init__(self, scene_manager):
         """
-        Initialize the game scene, UI, and entities.
+        Initialize the game scene, UI, and entities_animation.
 
         Args:
             scene_manager: Reference to SceneManager for access to display,
@@ -90,11 +90,13 @@ class GameScene:
             scale=self.player.hitbox_scale
         )
         DebugLogger.init_sub("Registered [Player] with [CollisionManager]")
+        DebugLogger.warn(f"Player hitbox owner ID: {id(self.player.hitbox.owner)}")
 
         # ===========================================================
         # Spawn Manager Setup
         # ===========================================================
         self.spawn_manager = SpawnManager(self.draw_manager, self.display, self.collision_manager)
+        DebugLogger.warn(f"Player created. Is it in spawn_manager? {self.player in self.spawn_manager.entities}")
 
         self.collision_manager.spawn_manager = self.spawn_manager
 
@@ -123,7 +125,7 @@ class GameScene:
     # ===========================================================
     def handle_event(self, event):
         """
-        Forward input and system events to UI and entities.
+        Forward input and system events to UI and entities_animation.
 
         Args:
             event (pygame.event.Event): The event to process.
@@ -149,7 +151,7 @@ class GameScene:
         self.player.move_vec = move
 
         # 2. Single entity pass (combines spawn + level logic)
-        self.spawn_manager.update(dt)  # Updates entities
+        self.spawn_manager.update(dt)  # Updates entities_animation
         self.level_manager.update(dt)  # Only checks timers/waves
 
         # 3. Physics
@@ -182,7 +184,7 @@ class GameScene:
 
         self.spawn_manager.reset()
 
-        # self.spawn_manager.cleanup()  # Clear all entities
+        # self.spawn_manager.cleanup()  # Clear all entities_animation
         self.current_stage_idx += 1
 
         if self.current_stage_idx < len(self.stage_queue):
@@ -197,7 +199,7 @@ class GameScene:
     # ===========================================================
     def draw(self, draw_manager):
         """
-        Render all entities and UI elements to the draw queue.
+        Render all entities_animation and UI elements to the draw queue.
 
         Args:
             draw_manager (DrawManager): Centralized renderer responsible for batching and displaying.

@@ -28,7 +28,7 @@ class SceneManager:
         Args:
             display_manager: Reference to the DisplayManager handling rendering.
             input_manager: Reference to the InputManager managing user input.
-            draw_manager: Reference to the DrawManager responsible for rendering entities.
+            draw_manager: Reference to the DrawManager responsible for rendering entities_animation.
         """
 
         self.display = display_manager
