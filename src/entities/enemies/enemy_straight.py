@@ -22,7 +22,7 @@ class EnemyStraight(BaseEnemy):
     # Initialization
     # ===========================================================
     def __init__(self, x, y, direction=(0, 1), speed=200, health=1,
-                 size=50, color=(255, 0, 0), draw_manager=None):
+                 size=50, color=(255, 0, 0), draw_manager=None, score=10):
         """
         Args:
             x, y: Spawn position
@@ -40,7 +40,7 @@ class EnemyStraight(BaseEnemy):
         triangle_image = draw_manager.create_triangle(size, color, pointing="up")
 
         # Initialize base enemy
-        super().__init__(x, y, triangle_image, speed, health)
+        super().__init__(x, y, triangle_image, speed, health, score)
 
         # Set velocity from direction
         self.velocity = pygame.Vector2(direction).normalize() * self.speed

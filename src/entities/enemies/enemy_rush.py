@@ -8,7 +8,7 @@ class EnemyRush(BaseEnemy):
     # Initialization
     # ===========================================================
     def __init__(self, x, y, direction=(0, 1), speed=100, health=1,
-                 size=50, color=(214, 150, 39), draw_manager=None,
+                 size=50, color=(214, 150, 39), draw_manager=None, score=50,
                  approach_duration: float = 1, dash_speed: float = 300):
         # Create triangle sprite
         if draw_manager is None:
@@ -17,7 +17,7 @@ class EnemyRush(BaseEnemy):
         triangle_image = draw_manager.create_triangle(size, color, pointing="up")
 
         # Initialize base enemy
-        super().__init__(x, y, triangle_image, speed, health)
+        super().__init__(x, y, triangle_image, speed, health, score)
 
         self.direction = direction
         self.velocity = pygame.Vector2(direction).normalize() * speed

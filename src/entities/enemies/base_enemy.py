@@ -16,6 +16,7 @@ from src.core.debug.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import CollisionTags, LifecycleState, EntityCategory
 from src.graphics.animations.animation_effects.death_animation import death_fade
+from src.core.runtime.game_state import STATE
 
 
 class BaseEnemy(BaseEntity):
@@ -24,7 +25,7 @@ class BaseEnemy(BaseEntity):
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(self, x, y, image, speed=100, health=None):
+    def __init__(self, x, y, image, speed=100, health=None, score=1):
         """
         Initialize a base enemy entity.
 
@@ -42,6 +43,7 @@ class BaseEnemy(BaseEntity):
 
         self._base_image = image
         self.rotation_angle = 0  # Degrees, 0 = pointing right
+        self.score = score
 
         # Collision setup
         self.collision_tag = CollisionTags.ENEMY
@@ -104,6 +106,9 @@ class BaseEnemy(BaseEntity):
 
     def on_death(self, source):
         self.anim.play(death_fade, duration=0.5)
+        before_score = STATE.score
+        STATE.score += self.score
+        DebugLogger.state(f"[score] {before_score} + {self.score} -> {STATE.score}")
 
     # ===========================================================
     # Rendering
