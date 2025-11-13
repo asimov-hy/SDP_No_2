@@ -13,6 +13,8 @@ Responsibilities
 """
 
 from src.core.debug.debug_logger import DebugLogger
+from src.entities.enemies.enemy_rush import EnemyRush
+from src.entities.enemies.enemy_speed import EnemySpeed
 from src.entities.enemies.enemy_straight import EnemyStraight
 from src.entities.entity_registry import EntityRegistry
 from src.entities.entity_state import LifecycleState
@@ -23,6 +25,8 @@ from src.entities.entity_state import LifecycleState
 # ===========================================================
 ENEMY_TYPES = {
     "straight": EnemyStraight,
+    "speed": EnemySpeed,
+    "rush": EnemyRush
     # future types:
     # "zigzag": EnemyZigzag,
     # "shooter": EnemyShooter,

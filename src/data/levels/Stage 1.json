@@ -71,7 +71,7 @@
         },
         {
           "time": 3.0,
-          "enemy": "straight",
+          "enemy": "speed",
           "count": 6,
           "pattern": "circle",
           "pattern_params": {
@@ -92,6 +92,17 @@
           "enemy_params": {
             "speed": 180,
             "health": 2
+          }
+        },
+        {
+          "time": 9.0,
+          "enemy": "rush",
+          "count": 5,
+          "pattern": "v",
+          "pattern_params": {
+            "x_spacing": 120,
+            "y_spacing": 40,
+            "tip_depth": 120
           }
         }
       ],
