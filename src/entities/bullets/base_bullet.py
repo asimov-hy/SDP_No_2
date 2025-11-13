@@ -16,10 +16,16 @@ from src.core.runtime import game_settings
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import LifecycleState, EntityCategory
+from src.entities.entity_registry import EntityRegistry
 
 
 class BaseBullet(BaseEntity):
     """Base class for all bullet entities_animation."""
+
+    def __init_subclass__(cls, **kwargs):
+        """Auto-register bullet subclasses when they're defined."""
+        super().__init_subclass__(**kwargs)
+        EntityRegistry.auto_register(cls)
 
     # ===========================================================
     # Initialization

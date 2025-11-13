@@ -6,10 +6,13 @@ Example health pickup item.
 
 import pygame
 from .base_item import BaseItem
-from src.entities.entity_registry import EntityRegistry
+from src.entities.entity_state import EntityCategory
 
 class ItemHealth(BaseItem):
     """Small health restore item."""
+
+    __registry_category__ = EntityCategory.PICKUP
+    __registry_name__ = "health"
 
     def __init__(self, x, y, draw_manager=None):
         """
@@ -44,6 +47,3 @@ class ItemHealth(BaseItem):
         # Example health restoration (requires player health system)
         # if hasattr(player, 'health') and hasattr(player, 'max_health'):
         #     player.health = min(player.health + self.heal_amount, player.max_health)
-
-
-EntityRegistry.register("pickup", "health", ItemHealth)

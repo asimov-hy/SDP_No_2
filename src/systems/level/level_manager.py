@@ -284,6 +284,8 @@ class LevelManager:
             DebugLogger.warn("Wave missing 'enemy' or 'item' key")
             return
 
+        self._lazy_import_entity(category, entity_type)
+
         count = wave.get("count", 1)
         pattern = wave.get("pattern", "line")
 
@@ -454,3 +456,26 @@ class LevelManager:
             return True
 
         return False
+
+    def _lazy_import_entity(self, category, type_name):
+        """
+        Import entity module only when first needed.
+        Triggers auto registration through __init_subclass__.
+        """
+        try:
+            if category == "enemy":
+                module_path = f"src.entities.enemies.enemy_{type_name}"
+            elif category == "projectile":
+                module_path = f"src.entities.bullets.bullet_{type_name}"
+            elif category == "pickup":
+                module_path = f"src.entities.items.item_{type_name}"
+            else:
+                return
+
+            __import__(module_path)
+
+        except Exception as e:
+            from src.core.debug.debug_logger import DebugLogger
+            DebugLogger.warn(
+                f"[LazyLoad] Failed to import {category}:{type_name} ({e})"
+            )

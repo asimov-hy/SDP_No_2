@@ -16,10 +16,16 @@ from src.core.runtime.game_settings import Display, Layers
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import CollisionTags, LifecycleState, EntityCategory
+from src.entities.entity_registry import EntityRegistry
 
 
 class BaseItem(BaseEntity):
     """Base class for all collectible items."""
+
+    def __init_subclass__(cls, **kwargs):
+        """Auto-register item subclasses when they're defined."""
+        super().__init_subclass__(**kwargs)
+        EntityRegistry.auto_register(cls)
 
     def __init__(self, x, y, image=None, shape_data=None, draw_manager=None,
                  speed=50, despawn_y=None):

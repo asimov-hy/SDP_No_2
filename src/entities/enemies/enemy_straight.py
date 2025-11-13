@@ -12,11 +12,15 @@ Responsibilities
 
 import pygame
 from src.entities.enemies.base_enemy import BaseEnemy
+from src.entities.entity_state import EntityCategory
 from src.core.debug.debug_logger import DebugLogger
 
 
 class EnemyStraight(BaseEnemy):
     """Simple enemy that moves vertically downward and disappears when off-screen."""
+
+    __registry_category__ = EntityCategory.ENEMY
+    __registry_name__ = "straight"
 
     # ===========================================================
     # Initialization
@@ -82,6 +86,3 @@ class EnemyStraight(BaseEnemy):
 
         # Force immediate rotation update to match velocity
         self.update_rotation()
-
-from src.entities.entity_registry import EntityRegistry
-EntityRegistry.register("enemy", "straight", EnemyStraight)

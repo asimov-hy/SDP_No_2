@@ -15,11 +15,17 @@ from src.core.runtime.game_settings import Display, Layers
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import CollisionTags, LifecycleState, EntityCategory
+from src.entities.entity_registry import EntityRegistry
 from src.graphics.animations.animation_effects.death_animation import death_fade
 
 
 class BaseEnemy(BaseEntity):
     """Base class providing shared logic for all enemy entities_animation."""
+
+    def __init_subclass__(cls, **kwargs):
+        """Auto-register enemy subclasses when they're defined."""
+        super().__init_subclass__(**kwargs)
+        EntityRegistry.auto_register(cls)
 
     # ===========================================================
     # Initialization
