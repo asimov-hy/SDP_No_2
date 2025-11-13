@@ -8,7 +8,7 @@ Responsibilities
 - Spawn and recycle bullet objects (object pooling for performance).
 - Update bullet positions and states each frame.
 - Queue bullet rendering through the DrawManager.
-- Maintain ownership (player/enemy) for collision and effects.
+- Maintain ownership (player/enemy) for collision and animation_effects.
 """
 
 import pygame

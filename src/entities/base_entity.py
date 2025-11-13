@@ -36,6 +36,7 @@ from typing import Optional
 from src.core.runtime.game_settings import Layers
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.entity_state import LifecycleState, EntityCategory
+from src.graphics.animations.animation_controller import AnimationController
 
 
 class BaseEntity:
@@ -146,6 +147,8 @@ class BaseEntity:
         self.category = EntityCategory.EFFECT
         self.collision_tag = "neutral"
 
+        self.anim = AnimationController()
+
     # ===========================================================
     # Spatial Synchronization
     # ===========================================================
@@ -195,7 +198,7 @@ class BaseEntity:
             # Finalize death immediately
             self.death_state = LifecycleState.DEAD
         else:
-            # Begin death sequence (animation, effects, etc.)
+            # Begin death sequence (animation, animation_effects, etc.)
             self.death_state = LifecycleState.DYING
 
         DebugLogger.state(

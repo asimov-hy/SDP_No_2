@@ -101,7 +101,7 @@ class LoggerConfig:
         "entity_cleanup": False,     # Entity removal or offscreen cleanup
         "collision": False,          # CollisionManager, hit detection traces
         "bullet": True,              # BulletManager creation and pooling
-        "effects": False,            # Visual/particle effect creation and cleanup
+        "animation_effects": False,            # Visual/particle effect creation and cleanup
         "animation": True,           # AnimationManager initialization and updates
 
         # ---------------------------------------------------

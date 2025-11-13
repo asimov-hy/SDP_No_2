@@ -116,7 +116,7 @@ class BaseBullet(BaseEntity):
             - Log the event.
 
         Subclasses can override to add piercing, explosion, or
-        special effects upon impact.
+        special animation_effects upon impact.
         """
         self.death_state = LifecycleState.DEAD
         DebugLogger.state(

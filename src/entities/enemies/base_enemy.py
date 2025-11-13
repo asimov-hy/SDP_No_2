@@ -15,6 +15,7 @@ from src.core.runtime.game_settings import Display, Layers
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import CollisionTags, LifecycleState, EntityCategory
+from src.graphics.animations.animation_effects.death_animation import death_fade
 
 
 class BaseEnemy(BaseEntity):
@@ -68,6 +69,11 @@ class BaseEnemy(BaseEntity):
     # ===========================================================
     def update(self, dt: float):
         """Default downward movement for enemies."""
+        if self.death_state == LifecycleState.DYING:
+            if self.anim.update(self, dt):
+                self.mark_dead(immediate=True)
+            return
+
         if self.death_state != LifecycleState.ALIVE:
             return
 
@@ -93,11 +99,11 @@ class BaseEnemy(BaseEntity):
         self.on_damage(amount)
 
         if self.health <= 0:
-            self.mark_dead(immediate=True) # currently no death effects so skip
+            self.mark_dead(immediate=False)
             self.on_death(source)
 
     def on_death(self, source):
-        pass  # Overridden by subclasses
+        self.anim.play(death_fade, duration=0.5)
 
     # ===========================================================
     # Rendering

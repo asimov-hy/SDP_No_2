@@ -20,7 +20,7 @@ def on_damage(player, amount: int):
     Triggers invulnerability frames and visual feedback.
     """
     DebugLogger.action(f"Player took {amount} damage → activating IFRAME")
-    player.effect_manager.activate(PlayerEffectState.IFRAME)
+    player.status_manager.activate(PlayerEffectState.IFRAME)
 
 
 # ===========================================================

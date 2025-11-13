@@ -48,7 +48,7 @@
     }
   },
 
-  "effects": {
+  "status_effects": {
     "_notes": "Temporary effect configurations such as i-frames, dash, or buffs.",
     "iframe": {
       "duration": 2,

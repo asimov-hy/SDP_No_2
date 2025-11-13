@@ -1,15 +1,15 @@
 """
 player_state.py
 ---------------
-Defines player-specific states, effects, and constants.
+Defines player-specific states, animation_effects, and constants.
 
 Extends the shared InteractionState system from entity_state.py with
-player-exclusive temporary effects like invulnerability frames.
+player-exclusive temporary animation_effects like invulnerability frames.
 
 Responsibilities
 ----------------
 - Define player-specific effect states (i-frames, dash, etc.)
-- Map effects to interaction states, animations, and durations
+- Map animation_effects to interaction states, animations, and durations
 - Provide player-exclusive constants
 """
 
@@ -44,7 +44,7 @@ class InteractionState(IntEnum):
 # Player Effect States
 # ===========================================================
 class PlayerEffectState(IntEnum):
-    """Defines player-exclusive temporary effects."""
+    """Defines player-exclusive temporary animation_effects."""
     NONE = 0
     IFRAME = auto()
     # DASH = auto()

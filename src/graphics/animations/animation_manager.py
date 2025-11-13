@@ -13,7 +13,7 @@ Responsibilities
 """
 
 from src.core.debug.debug_logger import DebugLogger
-from src.graphics.animation_registry import registry
+from src.graphics.animations.animation_controller import registry
 
 
 class AnimationManager:
@@ -45,7 +45,7 @@ class AnimationManager:
         # -------------------------------------------------------
         self.enabled = True         # Allows disabling animations globally per entity
         self.on_complete = None     # Optional completion callback (e.g., re-enable hitbox)
-        self._effect_queue = []     # Holds effects scheduled to trigger during playback
+        self._effect_queue = []     # Holds animation_effects scheduled to trigger during playback
 
         DebugLogger.init(
             f"AnimationManager initialized for {type(entity).__name__}",
@@ -143,7 +143,7 @@ class AnimationManager:
         )
 
     def _check_effect_triggers(self, t: float):
-        """Execute any effects whose trigger times have been reached."""
+        """Execute any animation_effects whose trigger times have been reached."""
         for fx in list(self._effect_queue):
             if not fx["fired"] and t >= fx["trigger"]:
                 fx["fired"] = True
@@ -154,16 +154,16 @@ class AnimationManager:
                         eff(self.entity)
                     elif isinstance(eff, str):
                         if hasattr(self.entity, "effect_manager"):
-                            self.entity.effect_manager.trigger(eff)
+                            self.entity.status_manager.trigger(eff)
                         else:
                             DebugLogger.warn(
                                 f"[EffectSkip] {self.entity.collision_tag} has no effect_manager for '{eff}'",
-                                category="effects"
+                                category="animation_effects"
                             )
                 except Exception as e:
                     DebugLogger.warn(
                         f"[EffectFail] {eff} on {self.entity.collision_tag} → {e}",
-                        category="effects"
+                        category="animation_effects"
                     )
 
     # ===========================================================
@@ -194,7 +194,7 @@ class AnimationManager:
             method = getattr(self.animations, self.active_type, None)
             if callable(method):
                 method(t)
-                # Fire queued effects when appropriate
+                # Fire queued animation_effects when appropriate
                 self._check_effect_triggers(t)
             else:
                 DebugLogger.warn(

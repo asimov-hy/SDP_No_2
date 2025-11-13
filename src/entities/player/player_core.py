@@ -10,7 +10,7 @@ Responsibilities
 - Delegate updates to:
     - Movement → player_movement.py
     - Combat   → player_ability.py
-    - Logic    → player_logic.py (state, effects, visuals)
+    - Logic    → player_logic.py (status_effects, animation_effects, visuals)
 """
 
 import pygame
@@ -126,7 +126,7 @@ class Player(BaseEntity):
 
         # --- Global reference ---
         STATE.player_ref = self
-        self.effect_manager = StatusManager(self, cfg["effects"])
+        self.status_manager = StatusManager(self, cfg["status_effects"])
 
         DebugLogger.init_entry("Player Initialized")
         DebugLogger.init_sub(f"Player Location: ({x:.1f}, {y:.1f})")
@@ -192,8 +192,8 @@ class Player(BaseEntity):
         if self.death_state != LifecycleState.ALIVE:
             return
 
-        # 1. Time-based effects and temporary states
-        self.effect_manager.update(dt)
+        # 1. Time-based status_effects and temporary states
+        self.status_manager.update(dt)
         # 2. Input collection
         self.input_manager.update()
 

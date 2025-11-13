@@ -1,12 +1,12 @@
 """
-animation_player.py
+player_animation.py
 -------------------
 Defines the Player's specific animation behaviors.
 
 Responsibilities
 ----------------
 - Provide visual-only feedback animations for player actions.
-- Use animation utility modules for modular, composable effects.
+- Use animation utility modules for modular, composable animation_effects.
 - Ensure all animations are fail-safe and never affect physics or logic.
 
 Supported Animations
@@ -20,7 +20,7 @@ Supported Animations
 from src.core.debug.debug_logger import DebugLogger
 
 # Animation utilities
-from src.graphics.animation_registry import register
+from src.graphics.animations.animation_controller import register
 
 
 @register("player")
@@ -40,7 +40,7 @@ class AnimationPlayer:
         self.entity = entity
         self.alive = True
 
-        DebugLogger.state("AnimationPlayer initialized", category="effects")
+        DebugLogger.state("AnimationPlayer initialized", category="animation_effects")
 
     # ===========================================================
     # Dodge Animation

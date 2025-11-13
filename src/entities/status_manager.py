@@ -5,10 +5,10 @@ Generic effect management system for entities.
 
 Responsibilities
 ----------------
-- Track active temporary effects with timers
-- Merge interaction states from multiple effects
+- Track active temporary animation_effects with timers
+- Merge interaction states from multiple animation_effects
 - Update effect durations each frame
-- Provide queries for active effects
+- Provide queries for active animation_effects
 """
 
 from src.core.debug.debug_logger import DebugLogger
@@ -16,7 +16,7 @@ from src.entities.player.player_state import InteractionState, PlayerEffectState
 
 
 class StatusManager:
-    """Manages temporary status effects on any entity."""
+    """Manages temporary status animation_effects on any entity."""
 
     def __init__(self, entity, config):
         """
@@ -103,11 +103,11 @@ class StatusManager:
         return len(self.active_effects) > 0
 
     def get_active_effects(self) -> list:
-        """Get list of currently active effects."""
+        """Get list of currently active animation_effects."""
         return list(self.active_effects.keys())
 
     def _update_entity_state(self):
-        """Recalculate entity interaction state from active effects."""
+        """Recalculate entity interaction state from active animation_effects."""
         old_state = getattr(self.entity, "state", InteractionState.DEFAULT)
 
         if not self.active_effects:
@@ -123,7 +123,7 @@ class StatusManager:
             self.entity.state = InteractionState.DEFAULT
             return
 
-        # Find highest interaction state from all active effects
+        # Find highest interaction state from all active animation_effects
         max_state = InteractionState.DEFAULT
 
         for effect in self.active_effects.keys():

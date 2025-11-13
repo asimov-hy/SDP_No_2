@@ -42,7 +42,7 @@ class BaseUI:
     # ===========================================================
     def update(self, mouse_pos):
         """
-        Update element logic (hover effects, animations, etc.).
+        Update element logic (hover animation_effects, animations, etc.).
 
         Args:
             mouse_pos (tuple): Current mouse position.

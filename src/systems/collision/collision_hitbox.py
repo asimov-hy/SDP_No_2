@@ -25,7 +25,7 @@ Common Patterns
 ---------------
 Static hitbox: CollisionHitbox(entity, scale=1.0)
 Animation-driven: CollisionHitbox(entity, scale=0.9)
-Ability effects: hitbox.set_size(4, 4) then hitbox.reset()
+Ability animation_effects: hitbox.set_size(4, 4) then hitbox.reset()
 Directional attacks: hitbox.set_offset(8, 0) for forward extension
 """
 
@@ -193,7 +193,7 @@ class CollisionHitbox:
         Reset hitbox to original owner rect size and scale.
 
         Useful for:
-            - Ending temporary ability effects
+            - Ending temporary ability animation_effects
             - Reverting after animation sequences
             - Debug/testing
         """
@@ -230,7 +230,7 @@ class CollisionHitbox:
         """
         self.active = active
         state = "enabled" if active else "disabled"
-        DebugLogger.state(f"Hitbox {state} for {type(self.owner).__name__}", category="effects")
+        DebugLogger.state(f"Hitbox {state} for {type(self.owner).__name__}", category="animation_effects")
 
     # ===========================================================
     # Debug Visualization

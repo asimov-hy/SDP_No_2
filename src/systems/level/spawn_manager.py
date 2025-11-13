@@ -34,7 +34,7 @@ class SpawnManager:
     Centralized spawner for dynamic scene entities.
 
     This system manages objects that are created and destroyed during gameplay,
-    including enemies, environment props, projectiles, or special effects.
+    including enemies, environment props, projectiles, or special animation_effects.
     It handles initialization, updates, rendering, and lifecycle cleanup.
     """
 

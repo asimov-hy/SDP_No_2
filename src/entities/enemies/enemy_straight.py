@@ -47,7 +47,7 @@ class EnemyStraight(BaseEnemy):
 
         DebugLogger.init(
             f"Spawned EnemyStraight at ({x}, {y}) | Speed={speed}",
-            category="effects"
+            category="animation_effects"
         )
 
     # ===========================================================

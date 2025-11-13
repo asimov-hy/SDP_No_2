@@ -53,7 +53,7 @@ class StraightBullet(BaseBullet):
         Uses BaseBullet's drawing behavior to ensure consistent layering.
         """
         super().draw(draw_manager)
-        # Future: Add glow, flicker, or material effects here.
+        # Future: Add glow, flicker, or material animation_effects here.
 
 
 from src.entities.entity_registry import EntityRegistry
