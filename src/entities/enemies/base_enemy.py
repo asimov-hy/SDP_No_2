@@ -72,6 +72,7 @@ class BaseEnemy(BaseEntity):
         """Default downward movement for enemies."""
         if self.death_state == LifecycleState.DYING:
             if self.anim.update(self, dt):
+                self.add_item_spawn_request()
                 self.mark_dead(immediate=True)
             return
 
@@ -85,6 +86,14 @@ class BaseEnemy(BaseEntity):
         # Mark dead if off-screen
         if self.rect.top > Display.HEIGHT:
             self.mark_dead(immediate=True)
+
+    def add_item_spawn_request(self):
+        # Add a request to the item spawn queue using the global drop chance
+        if STATE.current_drop_chance > 0:
+            STATE.item_spawn_requests.append({
+                "position": self.rect.center,
+                "drop_chance": STATE.current_drop_chance
+            })
 
     def take_damage(self, amount: int, source: str = "unknown"):
         """
@@ -109,13 +118,6 @@ class BaseEnemy(BaseEntity):
         """
         # Play death animation
         self.anim.play(death_fade, duration=0.5)
-
-        # Add a request to the item spawn queue using the global drop chance
-        if STATE.current_drop_chance > 0:
-            STATE.item_spawn_requests.append({
-                "position": self.rect.center,
-                "drop_chance": STATE.current_drop_chance
-            })
 
     # ===========================================================
     # Rendering
