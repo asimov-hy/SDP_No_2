@@ -43,7 +43,7 @@ class BaseItem(BaseEntity):
         # Collision setup
         self.collision_tag = CollisionTags.PICKUP
         self.category = EntityCategory.PICKUP
-        self.layer = Layers.ENEMIES  # Same layer as enemies for now
+        self.layer = Layers.PICKUPS  # Same layer as enemies for now
 
         # Hitbox scale (smaller than visual for easier collection)
         self._hitbox_scale = 0.8

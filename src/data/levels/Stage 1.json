@@ -14,6 +14,16 @@
       "duration": 15.0,
       "waves": [
         {
+          "time": 2.0,
+          "pickup": "health",
+          "count": 1,
+          "pattern": "single",
+          "pattern_params": {
+            "x": 640,
+            "y": -50
+          }
+        },
+        {
           "time": 0.0,
           "enemy": "straight",
           "count": 3,

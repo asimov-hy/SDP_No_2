@@ -30,10 +30,11 @@ class Physics:
 class Layers:
     BACKGROUND = 0
     ENEMIES = 1
-    BULLETS = 2
-    PLAYER = 3
-    PARTICLES = 4
-    EFFECTS = 5
+    PICKUPS = 2
+    BULLETS = 3
+    PLAYER = 4
+    PARTICLES = 5
+    EFFECTS = 6
     DEBUG = 9
     UI = 10  # Always on top
 

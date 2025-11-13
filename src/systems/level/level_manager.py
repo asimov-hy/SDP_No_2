@@ -24,8 +24,6 @@ Cold path (phase transitions): ~0.8ms
 
 Data Format
 -----------
-Supports both legacy Python dicts and JSON files:
-- Legacy: STAGE_1_WAVES = [{"spawn_time": 0.0, ...}]
 - JSON: {"phases": [{"waves": [...], "events": [...]}]}
 """
 
@@ -273,7 +271,19 @@ class LevelManager:
                 }
         """
 
-        enemy_type = wave.get("enemy", "straight")
+        # Determine entity type (enemy or item)
+        if "enemy" in wave:
+            category = "enemy"
+            entity_type = wave.get("enemy", "straight")
+            entity_params = wave.get("enemy_params", {})
+        elif "pickup" in wave:
+            category = "pickup"
+            entity_type = wave.get("pickup", "health")
+            entity_params = wave.get("item_params", {})
+        else:
+            DebugLogger.warn("Wave missing 'enemy' or 'item' key")
+            return
+
         count = wave.get("count", 1)
         pattern = wave.get("pattern", "line")
 
@@ -285,23 +295,22 @@ class LevelManager:
             pattern, count, width, **pattern_params
         )
 
-        # Spawn enemies at each position
-        enemy_params = wave.get("enemy_params", {})
-
+        # Spawn entities at each position
         spawned = 0
         for x, y in positions:
-            enemy = self.spawner.spawn("enemy", enemy_type, x, y, **enemy_params)
-            if enemy:
+            entity = self.spawner.spawn(category, entity_type, x, y, **entity_params)
+            if entity:
                 spawned += 1
                 # Apply per-wave speed override if specified
-                if "speed" in enemy_params:
-                    enemy.speed = enemy_params["speed"]
+                if "speed" in entity_params:
+                    entity.speed = entity_params["speed"]
 
-        if self._waiting_for_clear:
+        # Only track enemies for wave clear conditions
+        if category == "enemy" and self._waiting_for_clear:
             self._remaining_enemies += spawned
 
         DebugLogger.state(
-            f"Wave: {enemy_type} x{count} | Pattern: {pattern}",
+            f"Wave: {entity_type} x{count} | Pattern: {pattern}",
             category="stage"
         )
 
