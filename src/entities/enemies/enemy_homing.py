@@ -69,10 +69,14 @@ class EnemyHoming(BaseEnemy):
         self.player_ref = player_ref if homing else None
 
         # Snapshot homing state
-        if homing == "snapshot":
+        if homing in ("snapshot", "snapshot_axis"):
             self.lock_delay = kwargs.get("lock_delay", 0.5)
             self.lock_timer = 0.0
             self.locked = False
+
+            # Store spawn edge for axis-locking mode
+            if homing == "snapshot_axis":
+                self.spawn_edge = kwargs.get("spawn_edge")
 
         DebugLogger.init(
             f"Spawned EnemyHoming  at ({x}, {y}) | Speed={speed} | Homing={homing}",
@@ -89,11 +93,12 @@ class EnemyHoming(BaseEnemy):
         Args:
             dt (float): Delta time (in seconds) since last frame.
         """
-        # NEW: Homing logic before base update
         if self.homing == True and self.player_ref:  # Continuous
             self._update_homing_continuous(dt)
         elif self.homing == "snapshot" and self.player_ref:
             self._update_homing_snapshot(dt)
+        elif self.homing == "snapshot_axis" and self.player_ref:
+            self._update_homing_snapshot_axis(dt)
 
         super().update(dt)
 
@@ -132,10 +137,14 @@ class EnemyHoming(BaseEnemy):
             self.player_ref = kwargs["player_ref"] if self.homing else None
 
         # Snapshot reset
-        if self.homing == "snapshot":
+        if self.homing in ("snapshot", "snapshot_axis"):
             self.lock_delay = kwargs.get("lock_delay", getattr(self, "lock_delay", 0.5))
             self.lock_timer = 0.0
             self.locked = False
+
+            # Update spawn_edge for snapshot_axis mode
+            if self.homing == "snapshot_axis":
+                self.spawn_edge = kwargs.get("spawn_edge", getattr(self, "spawn_edge", None))
 
     def _update_homing_continuous(self, dt):
         """Smooth turn toward player each frame"""
@@ -183,4 +192,35 @@ class EnemyHoming(BaseEnemy):
                 to_player = self.player_ref.pos - self.pos
                 if to_player.length() > 0:
                     self.velocity = to_player.normalize() * self.speed
+                self.locked = True
+
+    def _update_homing_snapshot_axis(self, dt):
+        """Lock perpendicular axis to player, move straight on spawn axis"""
+        if not self.player_ref or not hasattr(self.player_ref, 'pos'):
+            return
+
+        if not self.locked:
+            self.lock_timer += dt
+            if self.lock_timer >= self.lock_delay:
+                # Determine axis based on spawn edge and reposition
+                if self.spawn_edge in ("top", "bottom"):
+                    # Spawned from top/bottom → lock X axis, move on Y
+                    self.pos.x = self.player_ref.pos.x
+                    # Set velocity to move straight on Y axis
+                    direction_y = 1 if self.spawn_edge == "top" else -1
+                    self.velocity = pygame.Vector2(0, direction_y) * self.speed
+
+                elif self.spawn_edge in ("left", "right"):
+                    # Spawned from left/right → lock Y axis, move on X
+                    self.pos.y = self.player_ref.pos.y
+                    # Set velocity to move straight on X axis
+                    direction_x = 1 if self.spawn_edge == "left" else -1
+                    self.velocity = pygame.Vector2(direction_x, 0) * self.speed
+
+                else:
+                    # Fallback: no spawn_edge provided, behave like regular snapshot
+                    to_player = self.player_ref.pos - self.pos
+                    if to_player.length() > 0:
+                        self.velocity = to_player.normalize() * self.speed
+
                 self.locked = True

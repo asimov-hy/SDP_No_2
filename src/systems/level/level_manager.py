@@ -329,8 +329,9 @@ class LevelManager:
                     spawn_params.update(direction_params)
 
                 spawn_kwargs = {}
-                if spawn_params.get("direction") is None and spawn_edge:
-                    spawn_kwargs["spawn_edge"] = spawn_edge
+                if spawn_edge:
+                    if spawn_params.get("direction") is None or spawn_params.get("homing") == "snapshot_axis":
+                        spawn_kwargs["spawn_edge"] = spawn_edge
 
                 # Queue instead of spawning
                 self._deferred_spawns.append((
@@ -357,8 +358,9 @@ class LevelManager:
                     spawn_params.update(direction_params)
 
                 # Add spawn_edge only if needed
-                if spawn_params.get("direction") is None and spawn_edge:
-                    spawn_params["spawn_edge"] = spawn_edge
+                if spawn_edge:
+                    if spawn_params.get("direction") is None or spawn_params.get("homing") == "snapshot_axis":
+                        spawn_params["spawn_edge"] = spawn_edge
 
                 entity = self.spawner.spawn(
                     category, entity_type, x, y,
@@ -508,6 +510,11 @@ class LevelManager:
         elif move_type == "homing_snapshot":
             return False, {
                 "homing": "snapshot",
+                "lock_delay": movement.get("params", {}).get("lock_delay", 0.5)
+            }
+        elif move_type == "homing_snapshot_axis":
+            return False, {
+                "homing": "snapshot_axis",
                 "lock_delay": movement.get("params", {}).get("lock_delay", 0.5)
             }
         elif move_type == "straight":
