@@ -9,7 +9,7 @@ Responsibilities
 ----------------
 - Define position, size, layer, visibility, and enable state.
 - Provide interface methods for updating, handling clicks, and rendering.
-- 복잡한 UI 표현 방식 구현
+- Implementing complex UI expression
 """
 import pygame
 from src.core.utils.debug_logger import DebugLogger
