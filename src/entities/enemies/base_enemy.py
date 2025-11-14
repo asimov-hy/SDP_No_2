@@ -23,6 +23,16 @@ from src.graphics.animations.animation_effects.death_animation import death_fade
 class BaseEnemy(BaseEntity):
     """Base class providing shared logic for all enemy entities_animation."""
 
+    # Pre-computed direction vectors for auto-direction (optimization)
+    _DIR_DOWN = (0, 1)
+    _DIR_UP = (0, -1)
+    _DIR_LEFT = (-1, 0)
+    _DIR_RIGHT = (1, 0)
+    _DIR_DOWN_LEFT = (-1, 1)
+    _DIR_DOWN_RIGHT = (1, 1)
+    _DIR_UP_LEFT = (-1, -1)
+    _DIR_UP_RIGHT = (1, -1)
+
     def __init_subclass__(cls, **kwargs):
         """Auto-register enemy subclasses when they're defined."""
         super().__init_subclass__(**kwargs)
@@ -48,8 +58,7 @@ class BaseEnemy(BaseEntity):
         self.health = health if health is not None else 1
         self.max_health = self.health
 
-        self._base_image = self.image
-        self.rotation_angle = 0  # Degrees, 0 = pointing right
+        self._rotation_enabled = True
 
         # Collision setup
         self.collision_tag = CollisionTags.ENEMY
@@ -67,9 +76,6 @@ class BaseEnemy(BaseEntity):
         # Normalize and apply speed
         if self.velocity.length_squared() > 0:
             self.velocity = self.velocity.normalize() * self.speed
-
-        # Default movement vector (downward)
-        # self.velocity = pygame.Vector2(0, 0)
 
     # ===========================================================
     # Damage and State Handling
@@ -129,26 +135,6 @@ class BaseEnemy(BaseEntity):
         """Render the enemy sprite to the screen."""
         draw_manager.draw_entity(self, layer=self.layer)
 
-    def update_rotation(self):
-        """
-        Rotate image to match velocity direction.
-        Only rotates if velocity changed (optimization).
-        """
-        if self._base_image is None or self.velocity.length_squared() == 0:
-            return
-
-        # Calculate angle from velocity (-90 because base triangle points up)
-        forward = pygame.Vector2(0, -1)
-        target_angle = forward.angle_to(self.velocity)
-
-        # Only rotate if angle changed (avoid unnecessary rotations)
-        if abs(target_angle - self.rotation_angle) > 0.1:
-            self.rotation_angle = target_angle
-            self.image = pygame.transform.rotate(self._base_image, self.rotation_angle)
-            # Update rect to match new rotated size
-            old_center = self.rect.center
-            self.rect = self.image.get_rect(center=old_center)
-
     # ===========================================================
     # Collision Handling
     # ===========================================================
@@ -192,51 +178,52 @@ class BaseEnemy(BaseEntity):
         if edge == "top":
             if nx < Z1:
                 # left 35 percent → inward or right-inward
-                options = [(0, 1), (1, 1)]
+                options = [self._DIR_DOWN, self._DIR_DOWN_RIGHT]
             elif nx > 1 - Z2:
                 # right 35 percent → inward or left-inward
-                options = [(0, 1), (-1, 1)]
+                options = [self._DIR_DOWN, self._DIR_DOWN_LEFT]
             else:
                 # center 30 percent → all 3 inward dirs
-                options = [(0, 1), (-1, 1), (1, 1)]
+                options = [self._DIR_DOWN, self._DIR_DOWN_LEFT, self._DIR_DOWN_RIGHT]
 
         # ----------------------------------------------------
         # BOTTOM EDGE
         # ----------------------------------------------------
         elif edge == "bottom":
             if nx < Z1:
-                options = [(0, -1), (1, -1)]
+                options = [self._DIR_UP, self._DIR_UP_RIGHT]
             elif nx > 1 - Z2:
-                options = [(0, -1), (-1, -1)]
+                options = [self._DIR_UP, self._DIR_UP_LEFT]
             else:
-                options = [(0, -1), (-1, -1), (1, -1)]
+                options = [self._DIR_UP, self._DIR_UP_LEFT, self._DIR_UP_RIGHT]
 
         # ----------------------------------------------------
         # LEFT EDGE
         # ----------------------------------------------------
         elif edge == "left":
             if ny < Z1:
-                options = [(1, 1), (1, 0)]
+                options = [self._DIR_DOWN_RIGHT, self._DIR_RIGHT]
             elif ny > 1 - Z2:
-                options = [(1, -1), (1, 0)]
+                options = [self._DIR_UP_RIGHT, self._DIR_RIGHT]
             else:
-                options = [(1, 0), (1, -1), (1, 1)]
+                options = [self._DIR_RIGHT, self._DIR_UP_RIGHT, self._DIR_DOWN_RIGHT]
 
         # ----------------------------------------------------
         # RIGHT EDGE
         # ----------------------------------------------------
         elif edge == "right":
             if ny < Z1:
-                options = [(-1, 1), (-1, 0)]
+                options = [self._DIR_DOWN_LEFT, self._DIR_LEFT]
             elif ny > 1 - Z2:
-                options = [(-1, -1), (-1, 0)]
+                options = [self._DIR_UP_LEFT, self._DIR_LEFT]
             else:
-                options = [(-1, 0), (-1, -1), (-1, 1)]
+                options = [self._DIR_LEFT, self._DIR_UP_LEFT, self._DIR_DOWN_LEFT]
 
         else:
             return pygame.Vector2(0, 1)
 
-        return pygame.Vector2(random.choice(options))
+        chosen = random.choice(options)
+        return pygame.Vector2(chosen)
 
     def reset(self, x, y, direction=None, speed=None, health=None, spawn_edge=None, **kwargs):
         super().reset(x, y)
@@ -255,5 +242,4 @@ class BaseEnemy(BaseEntity):
         if self.velocity.length_squared() > 0:
             self.velocity = self.velocity.normalize() * self.speed
 
-        self.rotation_angle = 0
         self.update_rotation()

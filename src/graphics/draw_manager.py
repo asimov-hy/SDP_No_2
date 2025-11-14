@@ -202,32 +202,27 @@ class DrawManager:
     # ===========================================================
     # Shape Prebaking (Optimization)
     # ===========================================================
-    def prebake_shape(self, type, size, color, **kwargs):
+    def prebake_shape(self, type: str, size: tuple[int, int] | int, color: tuple[int, int, int],
+                      **kwargs) -> pygame.Surface:
         """
-        Convert a shape definition into a cached image surface.
+        Pre-render a shape into a reusable surface (optimization).
 
-        This is an optimization for static shapes (bullets, enemies) that don't
-        change color/size at runtime. The shape is drawn once to a surface at
-        creation time, then reused as a sprite for fast batched rendering.
+        INTERNAL USE ONLY: This method is called by BaseEntity.__init__()
+        when shape_data is provided. Entities should NEVER call this directly.
 
-        Performance: Prebaked shapes render at image speed (~4x faster than
-        per-frame shape drawing for 500+ entities_animation).
+        Entities: Use the shape_data pattern instead:
+            # CORRECT usage:
+            super().__init__(x, y,
+                shape_data={"type": "circle", "size": (8, 8), "color": (255, 255, 0)},
+                draw_manager=draw_manager
+            )
 
-        Args:
-            type (str): Shape type ("rect", "circle", "ellipse", etc.)
-            size (tuple[int, int]): Width and height of the surface
-            color (tuple[int, int, int]): RGB color
-            **kwargs: Shape-specific parameters (e.g., width for outline)
+            # INCORRECT usage (DO NOT DO THIS):
+            image = draw_manager.prebake_shape("circle", (8, 8), (255, 255, 0))
+            super().__init__(x, y, image=image)
 
         Returns:
             pygame.Surface: A surface with the shape pre-rendered
-
-        Example:
-            # In bullet __init__:
-            bullet_sprite = draw_manager.prebake_shape(
-                "circle", (8, 8), (255, 255, 0)
-            )
-            super().__init__(x, y, image=bullet_sprite)
         """
         # Handle equilateral triangle size calculation
         if type == "triangle" and kwargs.get("equilateral"):
@@ -259,32 +254,6 @@ class DrawManager:
         # Cache and return
         self.images[cache_key] = square_surface
         return square_surface
-
-    def create_triangle(self, size: int | tuple[int, int], color: tuple[int, int, int],
-                        pointing: str = "up") -> pygame.Surface:
-        """
-        Create a reusable triangle sprite (wrapper for prebake_shape).
-
-        Args:
-            size: If int, creates equilateral triangle. If tuple (w,h), custom dimensions.
-            color: RGB color
-            pointing: "up", "down", "left", "right"
-
-        Returns:
-            pygame.Surface: Cached triangle image
-        """
-        if isinstance(size, int):
-            w = size
-            h = int((math.sqrt(3) / 2) * w)  # 60° equilateral triangle
-        else:
-            w, h = size
-
-        return self.prebake_shape(
-            type="triangle",
-            size=(w, h),
-            color=color,
-            pointing=pointing
-        )
 
     # ===========================================================
     # Rendering

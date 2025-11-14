@@ -317,8 +317,13 @@ class LevelManager:
                 merged_params = entity_params
 
             spawn_kwargs = {}
-            if merged_params.get("direction") is None:
-                spawn_kwargs["spawn_edge"] = wave.get("spawn_edge")
+            # Forward spawn_edge from wave config or pattern_config
+            spawn_edge = wave.get("spawn_edge")
+            if spawn_edge is None and "pattern_config" in wave:
+                spawn_edge = wave["pattern_config"].get("edge")
+
+            if merged_params.get("direction") is None and spawn_edge:
+                spawn_kwargs["spawn_edge"] = spawn_edge
 
             entity = self.spawner.spawn(
                 category, entity_type, x, y,

@@ -110,8 +110,20 @@ class BaseEntity:
         self.pos = pygame.Vector2(x, y)
 
         # -------------------------------------------------------
-        # Rendering Setup (with auto-optimization)
+        # Validation: Prevent API misuse
         # -------------------------------------------------------
+        if image is not None and shape_data is not None:
+            raise ValueError(
+                f"{type(self).__name__}: Cannot provide both 'image' AND 'shape_data'. "
+                f"Use one or the other."
+            )
+
+        if shape_data and not draw_manager:
+            DebugLogger.warn(
+                f"{type(self).__name__}: shape_data provided without draw_manager. "
+                f"Shape will render per-frame (slow). Pass draw_manager for optimization."
+            )
+
         # AUTO-OPTIMIZATION: Convert shape to image at creation time
         if image is None and shape_data and draw_manager:
             kwargs = shape_data.get("kwargs", {})
@@ -130,6 +142,10 @@ class BaseEntity:
         else:
             self.image = image
 
+        # Store base image for rotation (if image was created)
+        if self.image:
+            self._base_image = self.image
+
         # -------------------------------------------------------
         # Rect Setup (center-aligned)
         # -------------------------------------------------------
@@ -145,9 +161,12 @@ class BaseEntity:
 
         self.draw_manager = draw_manager
 
-        # -------------------------------------------------------
+        # Rotation Support (optional, used by entities that rotate)
+        self._base_image = None  # Unrotated base image (set after image creation)
+        self.rotation_angle = 0  # Current rotation in degrees
+        self._rotation_enabled = False
+
         # Entity State
-        # -------------------------------------------------------
         self.death_state = LifecycleState.ALIVE
 
         # Default layer - subclasses SHOULD override this
@@ -276,7 +295,7 @@ class BaseEntity:
                 width=1
             )
 
-    def refresh_visual(self, new_image=None, new_color=None, shape_type=None, size=None):
+    def refresh_sprite(self, new_image=None, new_color=None, shape_type=None, size=None):
         """
         Rebuild entity visuals when appearance changes at runtime.
 
@@ -304,6 +323,11 @@ class BaseEntity:
                     size=size,
                     color=new_color
                 )
+
+        # Update base image for rotation support
+        if self.image:
+            self._base_image = self.image
+            self.rotation_angle = 0  # Reset rotation
 
         # Sync rect to new image size while preserving position
         if self.image:
@@ -469,3 +493,39 @@ class BaseEntity:
         """Get image for target visual state."""
         images = self._sprite_config.get('images', {})
         return images.get(state_key)
+
+    # ===========================================================
+    # Rotation System
+    # ===========================================================
+    def update_rotation(self, velocity=None):
+        """
+        Rotate image to match velocity direction.
+        Only rotates if velocity changed (optimization).
+
+        Args:
+            velocity: Optional velocity vector. If None, uses self.velocity.
+
+        Usage:
+            Subclasses should:
+            1. Set self._rotation_enabled = True in __init__
+            2. Call self.update_rotation() in update() or update_rotation(custom_vel)
+        """
+        if not self._rotation_enabled or self._base_image is None:
+            return
+
+        # Use provided velocity or fall back to self.velocity
+        vel = velocity if velocity is not None else getattr(self, 'velocity', None)
+        if vel is None or vel.length_squared() == 0:
+            return
+
+        # Calculate angle from velocity
+        forward = pygame.Vector2(0, -1)  # Base sprite points up
+        target_angle = forward.angle_to(vel)
+
+        # Only rotate if angle changed (avoid unnecessary rotations)
+        if abs(target_angle - self.rotation_angle) > 0.1:
+            self.rotation_angle = target_angle
+            self.image = pygame.transform.rotate(self._base_image, self.rotation_angle)
+            # Update rect to match new rotated size
+            old_center = self.rect.center
+            self.rect = self.image.get_rect(center=old_center)

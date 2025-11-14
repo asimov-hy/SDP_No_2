@@ -154,3 +154,57 @@ class BaseBullet(BaseEntity):
         Draws either an image or fallback circle based on render mode.
         """
         super().draw(draw_manager)
+
+    # ===========================================================
+    # Reset for Object Pooling
+    # ===========================================================
+    def reset(self, pos, vel, color=None, radius=None, owner=None, damage=None, **kwargs):
+        """
+        Reset bullet for object pooling reuse.
+
+        Args:
+            pos: New position (x, y) tuple
+            vel: New velocity (dx, dy) tuple
+            color: Optional new color (triggers sprite rebuild)
+            radius: Optional new radius (triggers sprite rebuild)
+            owner: New owner ("player" or "enemy")
+            damage: New damage value
+            **kwargs: Additional parameters passed to BaseEntity.reset()
+        """
+        # Reset base entity state
+        super().reset(pos[0], pos[1], **kwargs)
+
+        # Reset position and velocity
+        self.pos.update(pos)
+        self.vel.update(vel)
+
+        # Update owner if provided
+        if owner is not None:
+            self.owner = owner
+            self.collision_tag = f"{owner}_bullet"
+
+        # Update damage if provided
+        if damage is not None:
+            self.damage = damage
+
+        # Rebuild sprite if size/color changed
+        if (color is not None or radius is not None) and self.draw_manager:
+            new_radius = radius if radius is not None else self.radius
+            new_color = color if color is not None else self.shape_data.get("color", (255, 255, 255))
+
+            # Update stored properties
+            self.radius = new_radius
+            size = (new_radius * 2, new_radius * 2)
+
+            # Update shape_data
+            self.shape_data = {
+                "type": "circle",
+                "color": new_color,
+                "size": size
+            }
+
+            # Rebuild sprite
+            self.refresh_sprite(new_color=new_color, size=size)
+
+        # Sync rect to new position
+        self.sync_rect()

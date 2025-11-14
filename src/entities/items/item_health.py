@@ -4,7 +4,6 @@ item_health.py
 Example health pickup item.
 """
 
-import pygame
 from .base_item import BaseItem
 from src.entities.entity_state import EntityCategory
 
@@ -47,3 +46,20 @@ class ItemHealth(BaseItem):
         # Example health restoration (requires player health system)
         # if hasattr(player, 'health') and hasattr(player, 'max_health'):
         #     player.health = min(player.health + self.heal_amount, player.max_health)
+
+    def reset(self, x, y, heal_amount=None, **kwargs):
+        """
+        Reset health item for pooling.
+
+        Args:
+            x: New X position
+            y: New Y position
+            heal_amount: Optional new heal amount
+            **kwargs: Passed to BaseItem.reset()
+        """
+        # Reset base item
+        super().reset(x, y, **kwargs)
+
+        # Update heal amount if provided
+        if heal_amount is not None:
+            self.heal_amount = heal_amount

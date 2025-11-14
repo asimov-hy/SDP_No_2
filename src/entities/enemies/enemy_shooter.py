@@ -31,7 +31,7 @@ class EnemyShooter(BaseEnemy):
                  movement_type="linear", waypoints=None, waypoint_speed=100,
                  shoot_interval=1.0, bullet_speed=300, bullet_color=(255, 200, 0),
                  bullet_radius=5, aim_at_player=False, player_ref=None,
-                 bullet_manager=None, **kwargs):
+                 bullet_manager=None, spawn_edge=None, **kwargs):
         """
         Args:
             x, y: Spawn position
@@ -52,28 +52,32 @@ class EnemyShooter(BaseEnemy):
             player_ref: Reference to player for aiming
             bullet_manager: Required for spawning bullets
         """
-        if draw_manager is None:
-            raise ValueError("EnemyShooter requires draw_manager for sprite creation")
+        # Use shape_data pattern for proper BaseEntity integration
+        shape_data = {
+            "type": "rect",
+            "size": (size, size),
+            "color": color
+        }
 
-        # Create square sprite
-        square_image = draw_manager.prebake_shape("rect", (size, size), color)
+        super().__init__(x, y, shape_data=shape_data, draw_manager=draw_manager, speed=speed, health=health)
 
-        super().__init__(x, y, square_image, speed, health)
+        # Store parameters for reset()
+        self.size = size
+        self.color = color
+        self.draw_manager = draw_manager
 
         # Movement configuration
         self.movement_type = movement_type
         self.base_speed = speed
 
-        if movement_type == "linear":
-            self.velocity = pygame.Vector2(direction).normalize() * self.speed
-        elif movement_type == "waypoint":
+        # For linear movement, BaseEnemy already set velocity, no override needed
+        if movement_type == "waypoint":
+            # Only override velocity for waypoint mode
             self.waypoints = waypoints or [(x, y)]
             self.waypoint_speed = waypoint_speed
             self.current_waypoint_index = 0
             self.velocity = pygame.Vector2(0, 0)
             self._update_waypoint_velocity()
-        else:
-            raise ValueError(f"Invalid movement_type: {movement_type}")
 
         # Shooting configuration
         self.shoot_interval = shoot_interval
@@ -182,6 +186,17 @@ class EnemyShooter(BaseEnemy):
               bullet_color=(255, 200, 0), bullet_radius=5, aim_at_player=False,
               player_ref=None, **kwargs):
         """Reset shooter enemy parameters for pooling."""
+        # Rebake shape if size or color changed
+        if size != self.size or color != self.color:
+            self.size = size
+            self.color = color
+            self.image = self.draw_manager.prebake_shape(
+                type="rect",
+                size=(size, size),
+                color=color
+            )
+            self.rect = self.image.get_rect(center=(x, y))
+
         # Reset base properties
         super().reset(
             x, y,

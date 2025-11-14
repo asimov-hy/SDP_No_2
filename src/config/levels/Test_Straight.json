@@ -11,7 +11,7 @@
           "spawn_position": 0.50,
           "spawn_offset_y": -100,
           "enemy_params": { "speed": 200, "size": 50 },
-          "movement": { "type": "straight", "target": "auto" }
+          "movement": { "type": "straight", "target": "down" }
         },
         {
           "time": 0.2,
@@ -20,7 +20,7 @@
           "spawn_position": 0.20,
           "spawn_offset_y": -100,
           "enemy_params": { "speed": 200, "size": 50 },
-          "movement": { "type": "straight", "target": "auto" }
+          "movement": { "type": "straight", "target": "down" }
         },
         {
           "time": 0.4,
@@ -29,7 +29,7 @@
           "spawn_position": 0.80,
           "spawn_offset_y": -100,
           "enemy_params": { "speed": 200, "size": 50 },
-          "movement": { "type": "straight", "target": "auto" }
+          "movement": { "type": "straight", "target": "down" }
         },
 
         {
@@ -39,7 +39,7 @@
           "spawn_position": 0.50,
           "spawn_offset_x": 100,
           "enemy_params": { "speed": 200, "size": 50 },
-          "movement": { "type": "straight", "target": "auto" }
+          "movement": { "type": "straight", "target": "left" }
         },
         {
           "time": 1.2,
@@ -48,7 +48,7 @@
           "spawn_position": 0.20,
           "spawn_offset_x": 100,
           "enemy_params": { "speed": 200, "size": 50 },
-          "movement": { "type": "straight", "target": "auto" }
+          "movement": { "type": "straight", "target": "left" }
         },
         {
           "time": 1.4,
@@ -57,7 +57,7 @@
           "spawn_position": 0.80,
           "spawn_offset_x": 100,
           "enemy_params": { "speed": 200, "size": 50 },
-          "movement": { "type": "straight", "target": "auto" }
+          "movement": { "type": "straight", "target": "left" }
         },
 
         {
@@ -67,7 +67,7 @@
           "spawn_position": 0.50,
           "spawn_offset_y": 100,
           "enemy_params": { "speed": 200, "size": 50 },
-          "movement": { "type": "straight", "target": "auto" }
+          "movement": { "type": "straight", "target": "up" }
         },
         {
           "time": 2.2,
@@ -76,7 +76,7 @@
           "spawn_position": 0.20,
           "spawn_offset_y": 100,
           "enemy_params": { "speed": 200, "size": 50 },
-          "movement": { "type": "straight", "target": "auto" }
+          "movement": { "type": "straight", "target": "up" }
         },
         {
           "time": 2.4,
@@ -85,7 +85,7 @@
           "spawn_position": 0.80,
           "spawn_offset_y": 100,
           "enemy_params": { "speed": 200, "size": 50 },
-          "movement": { "type": "straight", "target": "auto" }
+          "movement": { "type": "straight", "target": "up" }
         },
 
         {
@@ -95,7 +95,7 @@
           "spawn_position": 0.50,
           "spawn_offset_x": -100,
           "enemy_params": { "speed": 200, "size": 50 },
-          "movement": { "type": "straight", "target": "auto" }
+          "movement": { "type": "straight", "target": "right" }
         },
         {
           "time": 3.2,
@@ -104,7 +104,7 @@
           "spawn_position": 0.20,
           "spawn_offset_x": -100,
           "enemy_params": { "speed": 200, "size": 50 },
-          "movement": { "type": "straight", "target": "auto" }
+          "movement": { "type": "straight", "target": "right" }
         },
         {
           "time": 3.4,
@@ -113,7 +113,7 @@
           "spawn_position": 0.80,
           "spawn_offset_x": -100,
           "enemy_params": { "speed": 200, "size": 50 },
-          "movement": { "type": "straight", "target": "auto" }
+          "movement": { "type": "straight", "target": "right" }
         }
       ]
     }

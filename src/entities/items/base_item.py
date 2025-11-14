@@ -90,3 +90,51 @@ class BaseItem(BaseEntity):
             player: Reference to player entity that collected this item.
         """
         print("Picked up item")
+
+    # ===========================================================
+    # Reset for Object Pooling
+    # ===========================================================
+    def reset(self, x, y, speed=None, despawn_y=None, color=None, size=None, **kwargs):
+        """
+        Reset item for object pooling reuse.
+
+        Args:
+            x: New X position
+            y: New Y position
+            speed: Optional new downward speed
+            despawn_y: Optional new despawn threshold
+            color: Optional new color (triggers sprite rebuild)
+            size: Optional new size (triggers sprite rebuild)
+            **kwargs: Additional parameters passed to BaseEntity.reset()
+        """
+        # Reset base entity state
+        super().reset(x, y, **kwargs)
+
+        # Update speed if provided
+        if speed is not None:
+            self.speed = speed
+            self.velocity = pygame.Vector2(0, self.speed)
+
+        # Update despawn threshold if provided
+        if despawn_y is not None:
+            self.despawn_y = despawn_y
+
+        # Rebuild sprite if size/color changed
+        if (color is not None or size is not None) and self.draw_manager:
+            new_color = color if color is not None else self.shape_data.get("color", (0, 255, 0))
+            new_size = size if size is not None else self.shape_data.get("size", (24, 24))
+            shape_type = self.shape_data.get("type", "circle")
+
+            # Update shape_data
+            self.shape_data = {
+                "type": shape_type,
+                "color": new_color,
+                "size": new_size,
+                "kwargs": self.shape_data.get("kwargs", {})
+            }
+
+            # Rebuild sprite
+            self.refresh_sprite(new_color=new_color, shape_type=shape_type, size=new_size)
+
+        # Sync rect to new position
+        self.sync_rect()

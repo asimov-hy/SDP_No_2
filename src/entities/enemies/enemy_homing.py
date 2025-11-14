@@ -109,20 +109,17 @@ class EnemyHoming(BaseEnemy):
 
         norm_size = (size, size) if isinstance(size, int) else size
 
+        # Update shape_data for new size/color
         self.shape_data = {
             "type": "circle",
             "size": norm_size,
             "color": color
         }
 
+        # Rebuild image if draw_manager available
         if self.draw_manager:
-            sd = self.shape_data
-            self._base_image = self.draw_manager.prebake_shape(
-                type=sd["type"],
-                size=sd["size"],
-                color=sd["color"]
-            )
-            self.image = self._base_image.copy()
+            self.refresh_sprite(new_color=color, size=norm_size)
+            self._base_image = self.image
 
         # Update homing mode if pool respawn passes new params
         if "homing" in kwargs:

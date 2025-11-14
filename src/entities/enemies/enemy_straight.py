@@ -89,18 +89,15 @@ class EnemyStraight(BaseEnemy):
         # Regenerate sprite if size/color changed
         norm_size = (size, size) if isinstance(size, int) else size
 
+        # Update shape_data for new size/color
         self.shape_data = {
             "type": "triangle",
             "size": norm_size,
             "color": color,
             "kwargs": {"pointing": "up", "equilateral": True}
         }
+
+        # Rebuild image if draw_manager available
         if self.draw_manager:
-            sd = self.shape_data
-            self._base_image = self.draw_manager.prebake_shape(
-                type=sd["type"],
-                size=sd["size"],
-                color=sd["color"],
-                **sd["kwargs"]
-            )
-            self.image = self._base_image.copy()
+            self.refresh_sprite(new_color=color, shape_type="triangle", size=norm_size)
+            self._base_image = self.image
