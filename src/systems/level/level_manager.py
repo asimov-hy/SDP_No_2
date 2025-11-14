@@ -112,6 +112,10 @@ class LevelManager:
         if isinstance(level_data, str):
             data = load_config(level_data, {"phases": []})
             DebugLogger.init_sub(f"Level Loaded: {os.path.basename(level_data)}")
+            DebugLogger.warn(f"Loaded data keys: {list(data.keys())}")
+            DebugLogger.warn(f"Phases count: {len(data.get('phases', []))}")
+            DebugLogger.warn(f"Raw loaded data: {data}")
+            DebugLogger.warn(f"Phases from data: {data.get('phases', 'KEY NOT FOUND')}")
             return data
 
         # Case 2: Already a dict

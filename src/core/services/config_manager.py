@@ -23,10 +23,9 @@ from src.core.debug.debug_logger import DebugLogger
 # ===========================================================
 DATA_ROOT = os.path.join("src", "config")
 SEARCH_DIRS = [
-    os.path.join(DATA_ROOT, "config"),
-    os.path.join(DATA_ROOT, "entities_config"),  # plural fallback
-    os.path.join(DATA_ROOT, "levels_config"),
-    DATA_ROOT,  # final fallback
+    DATA_ROOT,
+    os.path.join(DATA_ROOT, "entities"),  # plural fallback
+    os.path.join(DATA_ROOT, "levels"),
 ]
 
 

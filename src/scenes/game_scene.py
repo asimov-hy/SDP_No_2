@@ -110,8 +110,13 @@ class GameScene:
         self.level_manager.on_stage_complete = self._on_stage_complete
 
         # Load level registry and set campaign
-        LevelRegistry.load_config("config/levels.json")
+        LevelRegistry.load_config("campaigns.json")
         self.campaign = LevelRegistry.get_campaign("test")  # Use "main" for main campaign
+        if not self.campaign:
+            DebugLogger.warn("Campaign 'test' not found or empty")
+        else:
+            DebugLogger.warn(f"Campaign loaded: {len(self.campaign)} levels")
+
         self.current_level_idx = 0
 
         DebugLogger.section("- Finished Initialization", only_title=True)

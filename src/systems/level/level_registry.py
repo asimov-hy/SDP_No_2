@@ -33,14 +33,17 @@ class LevelConfig:
             level_id: Unique identifier for the level
             data: Level config from config
                 {
-                    "path": "levels_config/Stage_1.json",
+                    "path": "levels/Stage_1.json",
                     "name": "First Contact",
                     "unlocked": false,
                     "campaign": "main"
                 }
         """
         self.id = level_id
-        self.path = data["path"]
+        path = data["path"]
+        if not path.startswith("levels/") and not path.startswith("config/"):
+            path = f"levels/{path}"
+        self.path = path
         self.name = data.get("name", level_id)
         self.unlocked = data.get("unlocked", False)
         self.campaign = data.get("campaign", None)
@@ -59,8 +62,8 @@ class LevelRegistry:
     """
 
     _levels = {}  # {level_id: LevelConfig}
-    _campaigns = {}  # {campaign_name: {"name": str, "levels_config": [level_ids]}}
-    _default_start = None
+    _campaigns = {}  # {campaign_name: {"name": str, "levels": [level_ids]}}
+    _default_campaign = None
     _initialized = False
 
     # ===========================================================
@@ -68,14 +71,14 @@ class LevelRegistry:
     # ===========================================================
 
     @classmethod
-    def load_config(cls, config_path: str = "config/levels_config.json"):
+    def load_config(cls, config_path: str = "config/campaigns.json"):
         """
         Load level definitions from JSON config.
 
         Should be called once at game startup.
 
         Args:
-            config_path: Path to levels_config configuration file
+            config_path: Path to levels configuration file
         """
         if cls._initialized:
             DebugLogger.warn("[LevelRegistry] Already initialized, skipping reload")
@@ -84,31 +87,32 @@ class LevelRegistry:
         DebugLogger.init_entry("Loading Level Registry")
 
         try:
-            data = load_config(config_path, {"levels_config": {}, "campaigns": {}})
+            data = load_config(config_path, {"levels": {}, "campaigns": {}})
 
-            # Register levels_config
+            # Register levels
             level_count = 0
-            for level_id, level_data in data.get("levels_config", {}).items():
+            for level_id, level_data in data.get("levels", {}).items():
                 cls._levels[level_id] = LevelConfig(level_id, level_data)
                 level_count += 1
 
-            DebugLogger.init_sub(f"Registered {level_count} levels_config")
+            DebugLogger.init_sub(f"Registered {level_count} levels")
 
             # Register campaigns
             campaign_count = 0
             for campaign_name, campaign_data in data.get("campaigns", {}).items():
                 cls._campaigns[campaign_name] = {
                     "name": campaign_data.get("name", campaign_name),
-                    "levels_config": campaign_data.get("levels_config", [])
+                    "start_level": campaign_data.get("start_level"),
+                    "levels": campaign_data.get("levels", [])
                 }
                 campaign_count += 1
 
             DebugLogger.init_sub(f"Registered {campaign_count} campaigns")
 
             # Set default start
-            cls._default_start = data.get("default_start")
-            if cls._default_start:
-                DebugLogger.init_sub(f"Default start: {cls._default_start}")
+            cls._default_campaign = data.get("default_campaign")
+            if cls._default_campaign:
+                DebugLogger.init_sub(f"Default Campaign: {cls._default_campaign}")
 
             cls._initialized = True
             DebugLogger.init_entry("Level Registry Loaded")
@@ -137,41 +141,52 @@ class LevelRegistry:
     @classmethod
     def get_campaign(cls, campaign_name: str):
         """
-        Get ordered list of levels_config for a campaign.
+        Get ordered list of levels for a campaign.
 
         Args:
             campaign_name: Campaign identifier (e.g., "main", "test")
 
         Returns:
-            list[LevelConfig]: Ordered campaign levels_config
+            list[LevelConfig]: Ordered campaign levels
         """
         campaign = cls._campaigns.get(campaign_name)
         if not campaign:
             DebugLogger.warn(f"[LevelRegistry] Unknown campaign: {campaign_name}")
             return []
 
-        level_ids = campaign["levels_config"]
+        level_ids = campaign["levels"]
         return [cls._levels[lid] for lid in level_ids if lid in cls._levels]
 
     @classmethod
     def get_default_start(cls):
         """
-        Get the default starting level.
+        Get the default starting level from default campaign.
 
         Returns:
             LevelConfig or None
         """
-        if cls._default_start:
-            return cls.get(cls._default_start)
-        return None
+        if not cls._default_campaign:
+            return None
+
+        campaign = cls._campaigns.get(cls._default_campaign)
+        if not campaign:
+            return None
+
+        start_level_id = campaign.get("start_level")
+        if start_level_id:
+            return cls.get(start_level_id)
+
+        # Fallback: first level in campaign
+        levels = campaign.get("levels", [])
+        return cls.get(levels[0]) if levels else None
 
     @classmethod
     def get_unlocked(cls):
         """
-        Get all unlocked levels_config.
+        Get all unlocked levels.
 
         Returns:
-            list[LevelConfig]: All unlocked levels_config
+            list[LevelConfig]: All unlocked levels
         """
         return [lvl for lvl in cls._levels.values() if lvl.unlocked]
 
@@ -244,7 +259,7 @@ class LevelRegistry:
 
     @classmethod
     def debug_print_all(cls):
-        """Print all registered levels_config and campaigns for debugging."""
+        """Print all registered levels and campaigns for debugging."""
         DebugLogger.section("=== Level Registry ===")
 
         DebugLogger.system(f"Total Levels: {len(cls._levels)}")
@@ -255,15 +270,15 @@ class LevelRegistry:
         DebugLogger.system(f"\nTotal Campaigns: {len(cls._campaigns)}")
         for campaign_name, campaign_data in cls._campaigns.items():
             DebugLogger.system(f"  {campaign_name}: {campaign_data['name']}")
-            DebugLogger.system(f"    Levels: {', '.join(campaign_data['levels_config'])}")
+            DebugLogger.system(f"    Levels: {', '.join(campaign_data['levels'])}")
 
-        if cls._default_start:
-            DebugLogger.system(f"\nDefault Start: {cls._default_start}")
+        if cls._default_campaign:
+            DebugLogger.system(f"\nDefault Start: {cls._default_campaign}")
 
     @classmethod
     def reset(cls):
         """Clear all registry config (for testing)."""
         cls._levels.clear()
         cls._campaigns.clear()
-        cls._default_start = None
+        cls._default_campaign = None
         cls._initialized = False

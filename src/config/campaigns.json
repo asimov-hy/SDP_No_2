@@ -1,13 +1,15 @@
 {
+  "default_campaign": "test",
   "campaigns": {
     "test": {
       "name": "Test Suite",
+      "start_level": "test_straight",
       "levels": ["test_straight", "test_homing"]
     }
   },
   "levels": {
     "test_straight": {
-      "path": "levels/Test Straight.json",
+      "path": "levels/Test_Straight.json",
       "name": "Test: Straight Enemy",
       "description": "Tests edge spawning, patterns, and straight movement",
       "unlocked": true,
@@ -16,7 +18,7 @@
       "duration": 12.0
     },
     "test_homing": {
-      "path": "levels/Test Homing.json",
+      "path": "levels/Test_Homing.json",
       "name": "Test: Homing Enemy",
       "description": "Tests continuous and snapshot homing from all directions",
       "unlocked": true,
@@ -24,6 +26,5 @@
       "difficulty": "test",
       "duration": 12.0
     }
-  },
-  "default_start": "test_straight"
+  }
 }
