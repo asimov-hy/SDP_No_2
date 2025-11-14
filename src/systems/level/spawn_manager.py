@@ -76,6 +76,9 @@ class SpawnManager:
                 # Reset pooled entity
                 if hasattr(entity, "reset"):
                     entity.reset(x, y, **kwargs)
+                    # Reset alpha to prevent faded spawns
+                    if hasattr(entity, 'image') and entity.image:
+                        entity.image.set_alpha(255)
                 else:
                     DebugLogger.warn(f"{type(entity).__name__} missing reset() method")
                     entity = None  # Fallback to creation
