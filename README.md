@@ -39,6 +39,15 @@ This project demonstrates the use of:
 │  │   ├─ __init__.py
 │  │   └─ sound_manager.py
 │  │
+│  ├─ config/
+│  │   ├─ campaigns.json
+│  │   │
+│  │   ├─ entities/
+│  │   │   └─ player_config.py
+│  │   │
+│  │   └─ levels/
+│  │       └─ Stage 1.py
+│  │
 │  ├─ core/
 │  │   ├─ __init__.py
 │  │   │
@@ -60,13 +69,6 @@ This project demonstrates the use of:
 │  │       ├─ display_manager.py
 │  │       └─ input_manager.py
 │  │
-│  ├─ data/
-│  │   ├─ configs/
-│  │   │   └─ player_config.py
-│  │   │
-│  │   └─ levels/
-│  │       └─ Stage 1.py
-│  │
 │  ├─ entities/
 │  │   ├─ __init__.py
 │  │   ├─ base_entity.py
@@ -79,15 +81,22 @@ This project demonstrates the use of:
 │  │   │  ├─ base_bullet.py
 │  │   │  └─ bullet_straight.py
 │  │   │
+│  │   ├─ enemies/
+│  │   │  ├─ __init__.py
+│  │   │  ├─ base_enemy.py
+│  │   │  ├─ enemy_homing.py
+│  │   │  ├─ enemy_shooter.py
+│  │   │  └─ enemy_straight.py
+│  │   │
+│  │   ├─ environments/
+│  │   │  ├─ __init__.py
+│  │   │  ├─ base_hazard.py
+│  │   │  └─ base_obstacle.py
+│  │   │
 │  │   ├─ items/
 │  │   │  ├─ __init__.py
 │  │   │  ├─ base_item.py
 │  │   │  └─ item_health.py
-│  │   │
-│  │   ├─ enemies/
-│  │   │  ├─ __init__.py
-│  │   │  ├─ base_enemy.py
-│  │   │  └─ enemy_straight.py
 │  │   │
 │  │   └─ player/
 │  │      ├─ __init__.py
@@ -121,7 +130,6 @@ This project demonstrates the use of:
 │  ├─ scenes/
 │  │   ├─ __init__.py
 │  │   ├─ game_scene.py
-│  │   ├─ pause_scene.py (empty)
 │  │   └─ start_scene.py
 │  │
 │  ├─ systems/
@@ -139,12 +147,14 @@ This project demonstrates the use of:
 │  │   └─ level/
 │  │      ├─ __init__.py
 │  │      ├─ level_manager.py
+│  │      ├─ level_registry.py
 │  │      ├─ pattern_registry.py
 │  │      └─ spawn_manager.py
 │  │
 │  └─ ui/
 │      ├─ __init__.py
 │      ├─ base_ui.py
+│      ├─ hud_manager.py (empty)
 │      ├─ menu_manager.py (empty)
 │      ├─ ui_manager.py
 │      │
