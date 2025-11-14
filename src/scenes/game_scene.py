@@ -114,6 +114,7 @@ class GameScene:
 
         self.spawn_manager.enable_pooling("enemy", "straight", prewarm_count=10)
 
+        self.item_manager = ItemManager(spawn_manager=self.spawn_manager, item_data_path="src/config/entities/items.json")
         # ===========================================================
         # Level Manager Setup
         # ===========================================================

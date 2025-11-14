@@ -39,7 +39,7 @@ class Item(BaseEntity):
         self.effects = item_data.get("effects", [])
 
         # Entity system properties
-        self.category = EntityCategory.ITEM
+        self.category = EntityCategory.PICKUP
         self.layer = Layers.ENEMIES
         self.collision_tag = CollisionTags.PICKUP
 

@@ -217,8 +217,8 @@ class ItemManager:
             )[0]
             self.spawn_item(selected_item_id, position)
             DebugLogger.trace(f"Randomly spawned '{selected_item_id.value}' at {position} from loot table.", category="item")
-        except IndexError:
-            DebugLogger.warn("Could not select an item from the loot table (it might be empty).", category="item")
+        except Exception as e:
+            DebugLogger.warn(f"An Error as {e} ", category="item")
 
     # ===========================================================
     # Update Logic

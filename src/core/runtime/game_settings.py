@@ -122,6 +122,8 @@ class LoggerConfig:
         "bullet": True,              # BulletManager creation and pooling
         "animation_effects": False,            # Visual/particle effect creation and cleanup
         "animation": True,           # AnimationManager initialization and updates
+        "event": True,
+        "item": True,
 
         # ---------------------------------------------------
         # Rendering & Drawing
