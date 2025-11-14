@@ -14,6 +14,7 @@ import pygame
 import random
 from src.core.runtime.game_settings import Display, Layers
 from src.core.debug.debug_logger import DebugLogger
+from src.core.services.event_manager import EVENTS, EnemyDiedEvent
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import CollisionTags, LifecycleState, EntityCategory
 from src.entities.entity_registry import EntityRegistry
@@ -128,6 +129,10 @@ class BaseEnemy(BaseEntity):
         """Default downward movement for enemies."""
         if self.death_state == LifecycleState.DYING:
             if self.anim.update(self, dt):
+                EVENTS.dispatch(EnemyDiedEvent(
+                    position=self.rect.center,
+                    enemy_type_tag=self.__class__.__name__,
+                ))
                 self.mark_dead(immediate=True)
             return
 
@@ -160,6 +165,10 @@ class BaseEnemy(BaseEntity):
             self.on_death(source)
 
     def on_death(self, source):
+        """
+        Handles death effects and queues an item drop request.
+        """
+        # Play death animation
         self.anim.play(death_fade, duration=0.5)
 
     # ===========================================================

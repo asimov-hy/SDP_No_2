@@ -22,6 +22,9 @@ class GameState:
         self.is_game_over = False
         self.is_victory = False
 
+        # Item
+        self.current_drop_chance = 0.6  # Default item drop chance
+
     def reset(self):
         """Reset state to defaults when starting a new game."""
         self.__init__()

@@ -35,6 +35,8 @@ from src.systems.level.spawn_manager import SpawnManager
 from src.systems.level.level_manager import LevelManager
 from src.systems.level.pattern_registry import PatternRegistry
 from src.systems.level.level_registry import LevelRegistry
+from src.systems.level.item_manager import ItemManager # Added ItemManager import
+from src.core.runtime.game_state import STATE # Added STATE import
 
 
 class GameScene:
@@ -166,6 +168,7 @@ class GameScene:
         # 2. Single entity pass (combines spawn + level logic)
         self.spawn_manager.update(dt)  # Updates entities_animation
         self.level_manager.update(dt)  # Only checks timers/waves
+        self.item_manager.update(dt)     # Process item queue and update items
 
         # 3. Physics
         self.player.update(dt)

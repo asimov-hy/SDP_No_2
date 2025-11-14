@@ -11,10 +11,10 @@ Responsibilities
 - Automatically link new entities_animation to collision systems (if provided).
 - Handle per-frame update and render passes for all active entities_animation.
 """
-
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.entity_registry import EntityRegistry
 from src.entities.entity_state import LifecycleState
+from src.entities.base_entity import BaseEntity
 
 
 class SpawnManager:
@@ -52,7 +52,7 @@ class SpawnManager:
     # ===========================================================
     # Entity Spawning
     # ===========================================================
-    def spawn(self, category: str, type_name: str, x: float, y: float, **kwargs):
+    def spawn(self, category: str, type_name: str, x: float, y: float, **kwargs) -> BaseEntity | None:
         """
         Spawn a new entity and register it with the scene.
 
