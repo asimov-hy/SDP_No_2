@@ -44,7 +44,7 @@ EFFECT_SCHEMAS = {
     "ADD_LIVES": {"amount": int},
     "ADD_SCORE": {"amount": int},
     "ADD_PLAYER_HEALTH": {"amount": int},
-    "FIRE_RATE_UP": {"multiplier": float},
+    "FIRE_RATE_UP": {"multiplier": float, "duration": float},
 }
 
 ITEM_SCHEMA = {

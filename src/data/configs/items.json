@@ -28,8 +28,8 @@
   },
   "health_pack": {
     "name": "Health Pack",
-    "asset": "assets/images/items/dummy_item.png",
-    "drop_weight": 1000,
+    "asset_path": "assets/images/items/dummy_item.png",
+    "drop_weight": 10000,
     "effects": [
       {
         "type": "ADD_PLAYER_HEALTH",
@@ -39,12 +39,13 @@
   },
   "quick_fire": {
     "name": "Quick Fire",
-    "asset": "assets/images/items/dummy_item.png",
+    "asset_path": "assets/images/items/dummy_item.png",
     "drop_weight": 1000,
     "effects": [
       {
         "type": "FIRE_RATE_UP",
-        "multiplier": 2
+        "multiplier": 2,
+        "duration": 4
       }
     ]
   },

@@ -260,7 +260,8 @@ class ItemManager:
 
             case "FIRE_RATE_UP":
                 multiplier = effect.get("multiplier", 1)
-                EVENTS.dispatch(FireRateEvent(multiplier=multiplier))
+                duration = effect.get("duration", 0)
+                EVENTS.dispatch(FireRateEvent(multiplier=multiplier, duration=duration))
                 DebugLogger.system(f"Fire Rate multiplied by {multiplier}", category="system")
 
             case _:
