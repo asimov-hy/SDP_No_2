@@ -33,6 +33,8 @@ class ItemType(str, Enum):
     """Enumeration of all known item IDs used in the code."""
     EXTRA_LIFE = "extra_life"
     SCORE_BONUS_MEDAL = "score_bonus_medal"
+    HEALTH_PACK = "health_pack"
+    QUICK_FIRE = "quick_fire"
     DUMMY = "dummy"
 
 # ===========================================================
@@ -41,6 +43,8 @@ class ItemType(str, Enum):
 EFFECT_SCHEMAS = {
     "ADD_LIVES": {"amount": int},
     "ADD_SCORE": {"amount": int},
+    "ADD_PLAYER_HEALTH": {"amount": int},
+    "FIRE_RATE_UP": {"multiplier": float},
 }
 
 ITEM_SCHEMA = {

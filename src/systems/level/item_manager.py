@@ -23,8 +23,7 @@ EntityRegistry.register("pickup", "default", Item)
 from src.core.debug.debug_logger import DebugLogger
 from src.core.runtime.game_state import STATE
 from src.entities.items.item_definitions import ItemType, validate_item_data
-from src.core.services.event_manager import EVENTS, EnemyDiedEvent, ItemCollectedEvent
-from src.entities.enemies.base_enemy import BaseEnemy
+from src.core.services.event_manager import EVENTS, EnemyDiedEvent, ItemCollectedEvent, PlayerHealthEvent, FireRateEvent
 
 
 class ItemManager:
@@ -253,6 +252,16 @@ class ItemManager:
                 amount = effect.get("amount", 0)
                 STATE.lives += amount
                 DebugLogger.system(f"Lives increased by {amount}. Total lives: {STATE.lives}", category="system")
+
+            case "ADD_PLAYER_HEALTH":
+                amount = effect.get("amount", 0)
+                EVENTS.dispatch(PlayerHealthEvent(amount=amount))
+                DebugLogger.system(f"PLAYER_HEALTH increased by {amount}", category="system")
+
+            case "FIRE_RATE_UP":
+                multiplier = effect.get("multiplier", 1)
+                EVENTS.dispatch(FireRateEvent(multiplier=multiplier))
+                DebugLogger.system(f"Fire Rate multiplied by {multiplier}", category="system")
 
             case _:
                 DebugLogger.warn(f"Unknown item effect type: '{effect_type}'", category="system")

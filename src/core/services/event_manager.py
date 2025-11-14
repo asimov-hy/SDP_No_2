@@ -7,6 +7,7 @@ and dispatching. This allows for loose coupling between different game systems.
 from dataclasses import dataclass
 from collections import defaultdict
 from typing import Callable, Any, Type, Dict, Set, List
+from functools import partial # Added import
 from src.core.debug.debug_logger import DebugLogger
 
 # ===========================================================
@@ -28,6 +29,14 @@ class EnemyDiedEvent(EntityDiedEvent):
 class ItemCollectedEvent(BaseEvent):
     effects: list
 
+@dataclass(frozen=True)
+class PlayerHealthEvent(BaseEvent):
+    amount: int
+
+@dataclass(frozen=True)
+class FireRateEvent(BaseEvent):
+    multiplier: float
+
 SubscriberCallback = Callable[[Any], None]
 class EventManager:
     """
@@ -48,7 +57,8 @@ class EventManager:
             callback (SubscriberCallback): The function to call when the event occurs.
         """
         self._subscribers[event_type].add(callback)
-        DebugLogger.system(f"Subscribed '{callback.__name__}' to event '{event_type.__name__}'", category="system")
+        callback_name = callback.func.__name__ if isinstance(callback, partial) else callback.__name__
+        DebugLogger.system(f"Subscribed '{callback_name}' to event '{event_type.__name__}'", category="system")
 
     def unsubscribe(self, event_type: Type[BaseEvent], callback: SubscriberCallback) -> None:
         """
@@ -59,7 +69,8 @@ class EventManager:
             callback (Callable): The callback function to remove.
         """
         self._subscribers[event_type].discard(callback)
-        DebugLogger.system(f"Unsubscribed '{callback.__name__}' from event '{event_type.__name__}'", category="system")
+        callback_name = callback.func.__name__ if isinstance(callback, partial) else callback.__name__
+        DebugLogger.system(f"Unsubscribed '{callback_name}' from event '{event_type.__name__}'", category="system")
 
     def dispatch(self, event: BaseEvent) -> None:
         """
