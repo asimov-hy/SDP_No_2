@@ -78,6 +78,10 @@ class LevelManager:
         # Callback
         self.on_stage_complete = None
 
+        # Deferred spawning state
+        self._deferred_spawns = []  # Queue of (category, type_name, x, y, params)
+        self._spawns_per_frame = 15  # Configurable threshold
+
     # ===========================================================
     # Data Loading
     # ===========================================================
@@ -228,6 +232,8 @@ class LevelManager:
         if not hasattr(self, 'waves'):
             return
 
+        self._process_deferred_spawns()
+
         self.phase_timer += dt
 
         # Only check waves if any remain
@@ -267,23 +273,15 @@ class LevelManager:
 
         Args:
             wave (dict): Wave configuration
-                {
-                    "enemy": "straight",
-                    "count": 5,
-                    "pattern": "line",
-                    "pattern_params": {...},
-                    "enemy_params": {...}
-                }
         """
-
         # Determine entity type (enemy or item)
         if "enemy" in wave:
             category = "enemy"
-            entity_type = wave.get("enemy", "straight") # enemy type from json or default straight
+            entity_type = wave.get("enemy", "straight")
             entity_params = wave.get("enemy_params", {})
         elif "pickup" in wave:
             category = "pickup"
-            entity_type = wave.get("pickup", "health")  # item type from json or default: health
+            entity_type = wave.get("pickup", "health")
             entity_params = wave.get("item_params", {})
         else:
             DebugLogger.warn("Wave missing 'enemy' or 'item' key")
@@ -297,54 +295,87 @@ class LevelManager:
         # Get spawn positions from pattern
         positions = self._calculate_positions(wave)
 
-        # Spawn entities at each position
-        spawned = 0
-        for x, y in positions:
+        # === PRE-COMPUTE: Once per wave (Strategy 1) ===
+        spawn_edge = wave.get("spawn_edge") or wave.get("pattern_config", {}).get("edge")
+        base_params = entity_params.copy()
 
-            # Only calculate movement for enemies (not pickups)
-            if category == "enemy":
-                # Calculate movement parameters for this position
-                movement_params = self._calculate_movement(x, y, wave)
+        # Parse movement ONCE
+        if category == "enemy":
+            needs_position_calc, movement_params = self._parse_movement_config(wave)
 
-                # Merge movement params into entity params
-                merged_params = {**entity_params, **movement_params}
+            # Inject player_ref for homing types
+            if "homing" in movement_params:
+                movement_params["player_ref"] = self.player
 
-                # Inject player reference if homing
-                if movement_params.get("homing"):
-                    merged_params["player_ref"] = self.player
-            else:
-                # Pickups don't need movement params
-                merged_params = entity_params
+            # Pre-compute if uniform direction
+            if not needs_position_calc:
+                base_params.update(movement_params)
+        else:
+            needs_position_calc = False
+            movement_params = {}
 
-            spawn_kwargs = {}
-            # Forward spawn_edge from wave config or pattern_config
-            spawn_edge = wave.get("spawn_edge")
-            if spawn_edge is None and "pattern_config" in wave:
-                spawn_edge = wave["pattern_config"].get("edge")
+        # === STRATEGY 3: Deferred spawning for large waves ===
+        if len(positions) > self._spawns_per_frame:
+            # Queue spawns for gradual processing
+            for x, y in positions:
+                spawn_params = base_params.copy()
 
-            if merged_params.get("direction") is None and spawn_edge:
-                spawn_kwargs["spawn_edge"] = spawn_edge
+                # Only recalculate if position-dependent
+                if needs_position_calc:
+                    direction_params = self._calculate_position_dependent_direction(
+                        x, y,
+                        movement_params.get("target")
+                    )
+                    spawn_params.update(direction_params)
 
-            entity = self.spawner.spawn(
-                category, entity_type, x, y,
-                **spawn_kwargs,
-                **merged_params
+                spawn_kwargs = {}
+                if spawn_params.get("direction") is None and spawn_edge:
+                    spawn_kwargs["spawn_edge"] = spawn_edge
+
+                # Queue instead of spawning
+                self._deferred_spawns.append((
+                    category, entity_type, x, y,
+                    {**spawn_kwargs, **spawn_params}
+                ))
+
+            DebugLogger.state(
+                f"Queued {len(positions)} spawns (deferred) | Pattern: {pattern}",
+                category="stage"
             )
+        else:
+            # Small wave - spawn immediately
+            spawned = 0
+            for x, y in positions:
+                spawn_params = base_params.copy()
 
-            if entity:
-                spawned += 1
-                # Apply per-wave speed override if specified
-                if "speed" in entity_params:
-                    entity.speed = entity_params["speed"]
+                # Only recalculate if position-dependent
+                if needs_position_calc:
+                    direction_params = self._calculate_position_dependent_direction(
+                        x, y,
+                        movement_params.get("target")  # Pass the target from parsed config
+                    )
+                    spawn_params.update(direction_params)
 
-        # Only track enemies for wave clear conditions
-        if category == "enemy" and self._waiting_for_clear:
-            self._remaining_enemies += spawned
+                # Add spawn_edge only if needed
+                if spawn_params.get("direction") is None and spawn_edge:
+                    spawn_params["spawn_edge"] = spawn_edge
 
-        DebugLogger.state(
-            f"Wave: {entity_type} x{count} | Pattern: {pattern}",
-            category="stage"
-        )
+                entity = self.spawner.spawn(
+                    category, entity_type, x, y,
+                    **spawn_params
+                )
+
+                if entity:
+                    spawned += 1
+
+            # Only track enemies for wave clear conditions
+            if category == "enemy" and self._waiting_for_clear:
+                self._remaining_enemies += spawned
+
+            DebugLogger.state(
+                f"Wave: {entity_type} x{count} | Pattern: {pattern}",
+                category="stage"
+            )
 
     # ===========================================================
     # Position Calculation (Unified Spawn System)
@@ -462,68 +493,74 @@ class LevelManager:
 
         return positions
 
-    def _calculate_movement(self, x, y, wave):
-        """Generate movement parameters based on movement config"""
+    def _parse_movement_config(self, wave):
+        """Parse movement config ONCE per wave - returns movement type and base params"""
         movement = wave.get("movement", {})
         move_type = movement.get("type", "straight")
         target = movement.get("target", "auto")
 
-        if move_type == "straight":
-            if target == "auto":
-                return {
-                    "direction": None
-                }
-            elif target == "center":
-                direction = self._direction_to_center(x, y)
-            elif target == "player":
-                direction = self._direction_to_player(x, y)
-            else:
-                direction = (0, 1)  # Default down
-            return {"direction": direction}
-
-        elif move_type == "homing_continuous":
-            return {
+        # Return: (needs_position_calc: bool, base_params: dict)
+        if move_type == "homing_continuous":
+            return False, {
                 "homing": True,
                 "turn_rate": movement.get("params", {}).get("turn_rate", 180)
             }
-
         elif move_type == "homing_snapshot":
-            return {
+            return False, {
                 "homing": "snapshot",
                 "lock_delay": movement.get("params", {}).get("lock_delay", 0.5)
             }
-
+        elif move_type == "straight":
+            if target == "auto":
+                return False, {"direction": None}
+            elif target in ("center", "player"):
+                return True, {"target": target}  # Flag for per-position calc
+            else:
+                return False, {"direction": (0, 1)}
         elif move_type == "stationary":
-            return {"direction": (0, 0)}
+            return False, {"direction": (0, 0)}
 
-        # Default fallback
+        return False, {"direction": (0, 1)}
+
+    def _calculate_position_dependent_direction(self, x, y, target):
+        """Only called when position matters (center/player targets)"""
+        if target == "center":
+            return {"direction": self._direction_to_center(x, y)}
+        elif target == "player":
+            return {"direction": self._direction_to_player(x, y)}
         return {"direction": (0, 1)}
 
     def _direction_to_center(self, x, y):
         """Calculate direction to screen center"""
+        import pygame
+
         width = getattr(self.spawner.display, "game_width", 1280)
         height = getattr(self.spawner.display, "game_height", 720)
 
         center_x, center_y = width / 2, height / 2
         dx, dy = center_x - x, center_y - y
 
-        # Normalize
-        length = (dx ** 2 + dy ** 2) ** 0.5
-        if length > 0:
-            return (dx / length, dy / length)
+        # Use pygame's fast C-level normalization
+        vec = pygame.Vector2(dx, dy)
+        if vec.length_squared() > 0:
+            vec.normalize_ip()  # In-place, no allocation
+            return (vec.x, vec.y)
         return (0, 1)
 
     def _direction_to_player(self, x, y):
         """Snapshot player position and calculate direction"""
+        import pygame
+
         if not self.player:
             return (0, 1)
 
         dx, dy = self.player.pos.x - x, self.player.pos.y - y
 
-        # Normalize
-        length = (dx ** 2 + dy ** 2) ** 0.5
-        if length > 0:
-            return (dx / length, dy / length)
+        # Use pygame's fast C-level normalization
+        vec = pygame.Vector2(dx, dy)
+        if vec.length_squared() > 0:
+            vec.normalize_ip()  # In-place, no allocation
+            return (vec.x, vec.y)
         return (0, 1)
 
     def _on_entity_destroyed(self, entity):
@@ -689,3 +726,22 @@ class LevelManager:
             DebugLogger.warn(
                 f"[LazyLoad] Failed to import {category}:{type_name} ({e})"
             )
+
+    def _process_deferred_spawns(self):
+        """Process queued spawns gradually (called from update)."""
+        if not self._deferred_spawns:
+            return
+
+        # Spawn batch this frame
+        batch_size = min(self._spawns_per_frame, len(self._deferred_spawns))
+        spawned = 0
+
+        for _ in range(batch_size):
+            category, entity_type, x, y, params = self._deferred_spawns.pop(0)
+            entity = self.spawner.spawn(category, entity_type, x, y, **params)
+
+            if entity:
+                spawned += 1
+                # Track enemies for wave clear
+                if category == "enemy" and self._waiting_for_clear:
+                    self._remaining_enemies += 1

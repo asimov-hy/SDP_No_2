@@ -77,24 +77,28 @@ class EnemyStraight(BaseEnemy):
         super().update(dt)
 
     def reset(self, x, y, direction=(0, 1), speed=200, health=1, size=50, color=(255, 0, 0), **kwargs):
-        """Reset straight enemy with new parameters."""
-        # Regenerate sprite BEFORE calling super().reset()
+        # Only regenerate if visuals changed
         norm_size = (size, size) if isinstance(size, int) else size
 
-        # Update shape_data for new size/color
-        self.shape_data = {
-            "type": "triangle",
-            "size": norm_size,
-            "color": color,
-            "kwargs": {"pointing": "up", "equilateral": True}
-        }
+        # Initialize shape_data if first use, or check if regeneration needed
+        needs_regeneration = (
+                not hasattr(self, 'shape_data') or
+                norm_size != self.shape_data.get("size") or
+                color != self.shape_data.get("color")
+        )
 
-        # Rebuild image if draw_manager available
-        if self.draw_manager:
-            self.refresh_sprite(new_color=color, shape_type="triangle", size=norm_size)
-            self._base_image = self.image
+        if needs_regeneration:
+            self.shape_data = {
+                "type": "triangle",
+                "size": norm_size,
+                "color": color,
+                "kwargs": {"pointing": "up", "equilateral": True}
+            }
+            if self.draw_manager:
+                self.refresh_sprite(new_color=color, shape_type="triangle", size=norm_size)
+                self._base_image = self.image
 
-        # Call super AFTER image is ready
+        # Call super ONCE at the end
         super().reset(
             x, y,
             direction=direction,
