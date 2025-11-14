@@ -70,7 +70,7 @@ class GameScene:
         self.player = Player(draw_manager=self.draw_manager, input_manager=self.input_manager)
 
         # Bullet Manager Setup
-        self.bullet_manager = BulletManager()
+        self.bullet_manager = BulletManager(draw_manager=self.draw_manager)
 
         self.player.bullet_manager = self.bullet_manager
         DebugLogger.init_sub("Connected [Player] → [BulletManager]")

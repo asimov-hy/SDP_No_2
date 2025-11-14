@@ -56,12 +56,12 @@ def _update_sprite(entity, state_key):
         if entity.render_mode == "shape":
             # Use base entity helper instead of _color_cache
             new_color = entity.get_target_color(state_key)
-            entity.refresh_visual(new_color=new_color)
+            entity.refresh_sprite(new_color=new_color)
         else:
             # Use base entity helper instead of _image_cache
             new_image = entity.get_target_image(state_key)
             if new_image:
-                entity.refresh_visual(new_image=new_image)
+                entity.refresh_sprite(new_image=new_image)
 
         # Update current state tracker
         entity._current_sprite = state_key

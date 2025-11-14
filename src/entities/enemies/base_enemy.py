@@ -23,15 +23,48 @@ from src.graphics.animations.animation_effects.death_animation import death_fade
 class BaseEnemy(BaseEntity):
     """Base class providing shared logic for all enemy entities_animation."""
 
-    # Pre-computed direction vectors for auto-direction (optimization)
-    _DIR_DOWN = (0, 1)
-    _DIR_UP = (0, -1)
-    _DIR_LEFT = (-1, 0)
-    _DIR_RIGHT = (1, 0)
-    _DIR_DOWN_LEFT = (-1, 1)
-    _DIR_DOWN_RIGHT = (1, 1)
-    _DIR_UP_LEFT = (-1, -1)
-    _DIR_UP_RIGHT = (1, -1)
+    @staticmethod
+    def _classify_zone(normalized_pos: float) -> str:
+        """Classify position into corner/edge/center zones."""
+        if normalized_pos < 0.25 or normalized_pos > 0.75:
+            return "corner"
+        elif normalized_pos < 0.40 or normalized_pos > 0.60:
+            return "edge"
+        else:
+            return "center"
+
+    # Direction lookup table (computed once at class load)
+    _DIRECTION_MAP = {
+        "top": {
+            "corner_top": [(1, 1)],  # DOWN_RIGHT
+            "edge_top": [(0, 1), (1, 1)],  # DOWN, DOWN_RIGHT
+            "center": [(0, 1), (-1, 1), (1, 1)],  # DOWN, DOWN_LEFT, DOWN_RIGHT
+            "edge_bottom": [(0, 1), (-1, 1)],  # DOWN, DOWN_LEFT
+            "corner_bottom": [(-1, 1)]  # DOWN_LEFT
+        },
+        "bottom": {
+            "corner_top": [(1, -1)],  # UP_RIGHT
+            "edge_top": [(0, -1), (1, -1)],  # UP, UP_RIGHT
+            "center": [(0, -1), (-1, -1), (1, -1)],  # UP, UP_LEFT, UP_RIGHT
+            "edge_bottom": [(0, -1), (-1, -1)],  # UP, UP_LEFT
+            "corner_bottom": [(-1, -1)]  # UP_LEFT
+        },
+        "left": {
+            "corner_top": [(1, 1)],  # DOWN_RIGHT
+            "edge_top": [(1, 0), (1, 1)],  # RIGHT, DOWN_RIGHT
+            "center": [(1, 0), (1, -1), (1, 1)],  # RIGHT, UP_RIGHT, DOWN_RIGHT
+            "edge_bottom": [(1, 0), (1, -1)],  # RIGHT, UP_RIGHT
+            "corner_bottom": [(1, -1)]  # UP_RIGHT
+        },
+        "right": {
+            "corner_top": [(-1, 1)],  # DOWN_LEFT
+            "edge_top": [(-1, 0), (-1, 1)],  # LEFT, DOWN_LEFT
+            "center": [(-1, 0), (-1, -1), (-1, 1)],  # LEFT, UP_LEFT, DOWN_LEFT
+            "edge_bottom": [(-1, 0), (-1, -1)],  # LEFT, UP_LEFT
+            "corner_bottom": [(-1, -1)]  # UP_LEFT
+        }
+    }
+
 
     def __init_subclass__(cls, **kwargs):
         """Auto-register enemy subclasses when they're defined."""
@@ -43,7 +76,6 @@ class BaseEnemy(BaseEntity):
     # ===========================================================
     def __init__(self, x, y, image=None, shape_data=None, draw_manager=None,
                  speed=100, health=None, direction=None, spawn_edge=None, **kwargs):
-
         """
         Args:
             x, y: Position
@@ -76,6 +108,8 @@ class BaseEnemy(BaseEntity):
         # Normalize and apply speed
         if self.velocity.length_squared() > 0:
             self.velocity = self.velocity.normalize() * self.speed
+
+        self.update_rotation()
 
     # ===========================================================
     # Damage and State Handling
@@ -153,76 +187,60 @@ class BaseEnemy(BaseEntity):
             DebugLogger.trace(f"[CollisionIgnored] {type(self).__name__} vs {tag}")
 
     def _auto_direction_from_edge(self, edge):
+        """Auto-calculate direction based on spawn edge and position."""
 
+        # Validate/detect edge
         if edge is None:
-            return pygame.Vector2(0, 1)
+            if self.pos.x < 0:
+                edge = "left"
+            elif self.pos.x > Display.WIDTH:
+                edge = "right"
+            elif self.pos.y < 0:
+                edge = "top"
+            elif self.pos.y > Display.HEIGHT:
+                edge = "bottom"
+            else:
+                edge = "top"  # fallback
 
         edge = edge.lower()
 
-        # Screen dimensions
+        # Calculate normalized position on relevant axis
         width = Display.WIDTH
         height = Display.HEIGHT
 
-        # Get current normalized position (0 to 1)
-        nx = self.pos.x / width
-        ny = self.pos.y / height
+        if edge in ["top", "bottom"]:
+            norm_pos = self.pos.x / width
+        else:  # left or right
+            norm_pos = self.pos.y / height
 
-        # Zone split percentages
-        Z1 = 0.35  # left/top zone
-        Z2 = 0.35  # right/bottom zone
-        # center zone is implicit (1 - Z1 - Z2) = 0.30
+        # Clamp to [0, 1]
+        norm_pos = max(0.0, min(1.0, norm_pos))
 
-        # ----------------------------------------------------
-        # TOP EDGE
-        # ----------------------------------------------------
-        if edge == "top":
-            if nx < Z1:
-                # left 35 percent → inward or right-inward
-                options = [self._DIR_DOWN, self._DIR_DOWN_RIGHT]
-            elif nx > 1 - Z2:
-                # right 35 percent → inward or left-inward
-                options = [self._DIR_DOWN, self._DIR_DOWN_LEFT]
-            else:
-                # center 30 percent → all 3 inward dirs
-                options = [self._DIR_DOWN, self._DIR_DOWN_LEFT, self._DIR_DOWN_RIGHT]
+        # Classify zone
+        zone_type = self._classify_zone(norm_pos)
 
-        # ----------------------------------------------------
-        # BOTTOM EDGE
-        # ----------------------------------------------------
-        elif edge == "bottom":
-            if nx < Z1:
-                options = [self._DIR_UP, self._DIR_UP_RIGHT]
-            elif nx > 1 - Z2:
-                options = [self._DIR_UP, self._DIR_UP_LEFT]
-            else:
-                options = [self._DIR_UP, self._DIR_UP_LEFT, self._DIR_UP_RIGHT]
+        # Determine lookup key
+        if zone_type == "corner":
+            sub_zone = "top" if norm_pos < 0.5 else "bottom"
+            lookup_key = f"corner_{sub_zone}"
+        elif zone_type == "edge":
+            sub_zone = "top" if norm_pos < 0.5 else "bottom"
+            lookup_key = f"edge_{sub_zone}"
+        else:  # center
+            lookup_key = "center"
 
-        # ----------------------------------------------------
-        # LEFT EDGE
-        # ----------------------------------------------------
-        elif edge == "left":
-            if ny < Z1:
-                options = [self._DIR_DOWN_RIGHT, self._DIR_RIGHT]
-            elif ny > 1 - Z2:
-                options = [self._DIR_UP_RIGHT, self._DIR_RIGHT]
-            else:
-                options = [self._DIR_RIGHT, self._DIR_UP_RIGHT, self._DIR_DOWN_RIGHT]
+        # Lookup directions
+        options = self._DIRECTION_MAP.get(edge, {}).get(lookup_key, [(0, 1)])
 
-        # ----------------------------------------------------
-        # RIGHT EDGE
-        # ----------------------------------------------------
-        elif edge == "right":
-            if ny < Z1:
-                options = [self._DIR_DOWN_LEFT, self._DIR_LEFT]
-            elif ny > 1 - Z2:
-                options = [self._DIR_UP_LEFT, self._DIR_LEFT]
-            else:
-                options = [self._DIR_LEFT, self._DIR_UP_LEFT, self._DIR_DOWN_LEFT]
-
-        else:
-            return pygame.Vector2(0, 1)
-
+        # Choose and return
         chosen = random.choice(options)
+
+        # Optional debug (commented out)
+        # DebugLogger.trace(
+        #     f"Auto-direction: edge={edge}, pos={norm_pos:.2f}, "
+        #     f"zone={zone_type}, chosen={chosen}"
+        # )
+
         return pygame.Vector2(chosen)
 
     def reset(self, x, y, direction=None, speed=None, health=None, spawn_edge=None, **kwargs):

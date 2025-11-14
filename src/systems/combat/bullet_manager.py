@@ -23,12 +23,14 @@ class BulletManager:
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(self, collision_manager=None):
-        self.collision_manager = collision_manager
+    def __init__(self, draw_manager=None, collision_manager=None):
+        self.draw_manager = draw_manager
         self.active = []  # Active bullets currently in flight
         self.pool = []    # Inactive bullets available for reuse
 
-        self.prewarm_pool(owner="player", count=50)
+        # Only prewarm if draw_manager available
+        if self.draw_manager:
+            self.prewarm_pool(owner="player", count=50)
 
         DebugLogger.init_entry("BulletManager Initialized")
 
@@ -46,6 +48,7 @@ class BulletManager:
                 image=image, color=color,
                 radius=radius, owner=owner,
                 damage=damage, hitbox_scale=hitbox_scale,
+                draw_manager=self.draw_manager
             )
 
         bullet.collision_tag = f"{owner}_bullet"
@@ -96,7 +99,8 @@ class BulletManager:
                 (0, 0), (0, 0),
                 image=image, color=color,
                 radius=radius, owner=owner,
-                damage=damage, hitbox_scale=hitbox_scale
+                damage=damage, hitbox_scale=hitbox_scale,
+                draw_manager=self.draw_manager
             )
             bullet.death_state = LifecycleState.DEAD
             bullet.collision_tag = f"{owner}_bullet"
@@ -143,6 +147,7 @@ class BulletManager:
                 image=image, color=color,
                 radius=radius, owner=owner,
                 damage=damage, hitbox_scale=hitbox_scale,
+                draw_manager=self.draw_manager
             )
         except Exception as e:
             DebugLogger.warn(
@@ -154,6 +159,7 @@ class BulletManager:
                 image=image, color=color,
                 radius=radius, owner=owner,
                 damage=damage, hitbox_scale=hitbox_scale,
+                draw_manager=self.draw_manager
             )
 
         bullet.collision_tag = f"{owner}_bullet"

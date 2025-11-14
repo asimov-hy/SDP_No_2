@@ -47,7 +47,7 @@ def damage_player(entity, t):
         )
 
         # Rebake shape with interpolated color
-        entity.refresh_visual(new_color=current_color)
+        entity.refresh_sprite(new_color=current_color)
 
         # Apply blink on top
         blink(entity, t, interval=interval)

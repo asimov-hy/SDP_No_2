@@ -78,15 +78,7 @@ class EnemyStraight(BaseEnemy):
 
     def reset(self, x, y, direction=(0, 1), speed=200, health=1, size=50, color=(255, 0, 0), **kwargs):
         """Reset straight enemy with new parameters."""
-        super().reset(
-            x, y,
-            direction=direction,
-            speed=speed,
-            health=health,
-            spawn_edge=kwargs.get("spawn_edge")
-        )
-
-        # Regenerate sprite if size/color changed
+        # Regenerate sprite BEFORE calling super().reset()
         norm_size = (size, size) if isinstance(size, int) else size
 
         # Update shape_data for new size/color
@@ -101,3 +93,12 @@ class EnemyStraight(BaseEnemy):
         if self.draw_manager:
             self.refresh_sprite(new_color=color, shape_type="triangle", size=norm_size)
             self._base_image = self.image
+
+        # Call super AFTER image is ready
+        super().reset(
+            x, y,
+            direction=direction,
+            speed=speed,
+            health=health,
+            spawn_edge=kwargs.get("spawn_edge")
+        )

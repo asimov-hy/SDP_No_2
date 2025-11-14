@@ -344,6 +344,11 @@ class DrawManager:
         if points:
             # All polygon-based shapes (triangle, polygon, future shapes)
             pygame.draw.polygon(surface, color, points, width)
+
+            # For DEBUG
+            # if shape_type == "triangle" and len(points) > 0:
+            #     tip = points[0]  # First point is the tip for "up" triangles
+            #     pygame.draw.circle(surface, (255, 255, 0), tip, 3)
         elif shape_type == "rect":
             pygame.draw.rect(surface, color, rect, width)
         elif shape_type == "circle":

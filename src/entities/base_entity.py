@@ -162,7 +162,6 @@ class BaseEntity:
         self.draw_manager = draw_manager
 
         # Rotation Support (optional, used by entities that rotate)
-        self._base_image = None  # Unrotated base image (set after image creation)
         self.rotation_angle = 0  # Current rotation in degrees
         self._rotation_enabled = False
 
@@ -520,7 +519,7 @@ class BaseEntity:
 
         # Calculate angle from velocity
         forward = pygame.Vector2(0, -1)  # Base sprite points up
-        target_angle = forward.angle_to(vel)
+        target_angle = -forward.angle_to(vel)
 
         # Only rotate if angle changed (avoid unnecessary rotations)
         if abs(target_angle - self.rotation_angle) > 0.1:

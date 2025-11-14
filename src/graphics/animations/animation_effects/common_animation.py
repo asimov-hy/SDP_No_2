@@ -5,7 +5,10 @@ import pygame
 def fade_out(entity, t):
     """Fade entity from opaque to transparent."""
     alpha = int(255 * (1.0 - t))
-    entity.image.set_alpha(alpha)
+    # Copy image to avoid mutating shared cached surface
+    if entity.image.get_alpha() != alpha:
+        entity.image = entity.image.copy()
+        entity.image.set_alpha(alpha)
 
 
 def fade_in(entity, t):
