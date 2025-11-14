@@ -16,7 +16,7 @@ import pygame
 
 # Core Systems
 from src.core.debug.debug_logger import DebugLogger
-from src.core.runtime.game_settings import Debug
+from src.core.runtime.game_settings import Debug, Display
 
 # Player Entity
 from src.entities.player.player_core import Player
@@ -67,7 +67,15 @@ class GameScene:
             DebugLogger.fail(f"HUDManager unavailable: {e}")
 
         # spawn player
-        self.player = Player(draw_manager=self.draw_manager, input_manager=self.input_manager)
+        start_x = Display.WIDTH / 2
+        start_y = Display.HEIGHT / 2
+
+        self.player = Player(
+            x=start_x,
+            y=start_y,
+            draw_manager=self.draw_manager,
+            input_manager=self.input_manager
+        )
 
         # Bullet Manager Setup
         self.bullet_manager = BulletManager(draw_manager=self.draw_manager)
