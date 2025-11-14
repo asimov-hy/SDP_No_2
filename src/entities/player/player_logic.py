@@ -101,3 +101,50 @@ def on_death(player):
 
     # Disable collisions during death animation
     player.collision_tag = "neutral"
+
+
+# ===========================================================
+# Item Effect Application
+# ===========================================================
+def apply_item_effects(player, effects: list):
+    """
+    Apply item effects directly to player.
+    Called by items on collision.
+
+    Args:
+        player: Player entity
+        effects: List of effect dicts from items.json
+    """
+    if player.death_state != LifecycleState.ALIVE:
+        return
+
+    for effect in effects:
+        effect_type = effect.get("type")
+
+        if effect_type == "ADD_PLAYER_HEALTH":
+            amount = effect.get("amount", 0)
+            old_health = player.health
+            player.health = min(player.max_health, player.health + amount)
+
+            DebugLogger.action(
+                f"Health +{amount} ({old_health} → {player.health})",
+                category="item"
+            )
+
+        elif effect_type == "MULTIPLY_FIRE_RATE":
+            multiplier = effect.get("multiplier", 1.0)
+            duration = effect.get("duration", 0)
+
+            if not hasattr(player, '_original_shoot_cooldown'):
+                player._original_shoot_cooldown = player.shoot_cooldown
+
+            player.shoot_cooldown = player._original_shoot_cooldown / multiplier
+
+            DebugLogger.action(
+                f"Fire rate {multiplier}x for {duration}s",
+                category="item"
+            )
+            # TODO: Add duration handling via status_manager
+
+        else:
+            DebugLogger.warn(f"Unknown effect type: {effect_type}", category="item")

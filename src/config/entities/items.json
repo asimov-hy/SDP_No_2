@@ -1,0 +1,16 @@
+{
+  "health_small": {
+    "asset_path": null,
+    "movement": "straight",
+    "speed": 60,
+    "drop_weight": 10,
+    "size": [24, 24],
+    "color": [0, 255, 100],
+    "effects": [
+      {
+        "type": "ADD_PLAYER_HEALTH",
+        "amount": 1
+      }
+    ]
+  }
+}

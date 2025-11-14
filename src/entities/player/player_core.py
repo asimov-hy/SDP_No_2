@@ -39,7 +39,7 @@ class Player(BaseEntity):
         # ========================================
         # 1. Load Config
         # ========================================
-        cfg = load_config("player_config.json", {})
+        cfg = load_config("player.json", {})
         self.cfg = cfg
 
         core = cfg["core_attributes"]

@@ -17,18 +17,22 @@ from src.core.debug.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import CollisionTags, LifecycleState, EntityCategory
 from src.entities.entity_registry import EntityRegistry
+from src.core.services.event_manager import EVENTS, ItemCollectedEvent
 
 
 class BaseItem(BaseEntity):
     """Base class for all collectible items."""
+
+    __registry_category__ = "pickup"
+    __registry_name__ = "default"
 
     def __init_subclass__(cls, **kwargs):
         """Auto-register item subclasses when they're defined."""
         super().__init_subclass__(**kwargs)
         EntityRegistry.auto_register(cls)
 
-    def __init__(self, x, y, image=None, shape_data=None, draw_manager=None,
-                 speed=50, despawn_y=None):
+    def __init__(self, x, y, item_data=None, image=None, shape_data=None,
+                 draw_manager=None, speed=50, despawn_y=None):
         """
         Initialize a base item entity.
 
@@ -57,6 +61,31 @@ class BaseItem(BaseEntity):
         # Movement
         self.velocity = pygame.Vector2(0, self.speed)
 
+        # Store item data
+        self.item_data = item_data or {}
+
+        # Extract movement config from item_data
+        self.movement_type = self.item_data.get("movement", "straight")
+        self.speed = self.item_data.get("speed", speed)
+
+        # If no image provided, build from item_data
+        if image is None and shape_data is None:
+            shape_data = {
+                "type": "circle",
+                "color": tuple(self.item_data.get("color", [0, 255, 100])),
+                "size": tuple(self.item_data.get("size", [24, 24])),
+                "kwargs": {}
+            }
+            # Rebuild the sprite using shape_data
+            if draw_manager:
+                self.image = draw_manager.build_shape(
+                    shape_data["type"],
+                    shape_data["size"],
+                    shape_data["color"]
+                )
+                self.rect = self.image.get_rect(center=(x, y))
+                self.shape_data = shape_data
+
     def update(self, dt: float):
         """Update item position and check for despawn."""
         if self.death_state != LifecycleState.ALIVE:
@@ -74,12 +103,25 @@ class BaseItem(BaseEntity):
         """Render the item sprite."""
         draw_manager.draw_entity(self, layer=self.layer)
 
+    def get_effects(self) -> list:
+        """Returns effects list from item_data."""
+        return self.item_data.get("effects", [])
+
     def on_collision(self, other):
         """Handle collision with player."""
         tag = getattr(other, "collision_tag", "unknown")
 
         if tag == "player":
+            # Apply effects directly to player
+            from src.entities.player.player_logic import apply_item_effects
+            apply_item_effects(other, self.get_effects())
+
+            # Notify observers (achievements, UI, etc can subscribe)
+            EVENTS.dispatch(ItemCollectedEvent(effects=self.get_effects()))
+
+            # Legacy hook for subclasses (can be removed later)
             self.on_pickup(other)
+
             self.mark_dead(immediate=True)
 
     def on_pickup(self, player):
@@ -138,3 +180,5 @@ class BaseItem(BaseEntity):
 
         # Sync rect to new position
         self.sync_rect()
+
+EntityRegistry.register("pickup", "default", BaseItem)

@@ -35,6 +35,7 @@ from src.systems.level.spawn_manager import SpawnManager
 from src.systems.level.level_manager import LevelManager
 from src.systems.level.pattern_registry import PatternRegistry
 from src.systems.level.level_registry import LevelRegistry
+from src.systems.items.item_manager import ItemManager
 
 
 class GameScene:
@@ -111,6 +112,15 @@ class GameScene:
         self.collision_manager.spawn_manager = self.spawn_manager
 
         self.spawn_manager.enable_pooling("enemy", "straight", prewarm_count=10)
+
+        # ===========================================================
+        # Item Manager Setup
+        # ===========================================================
+        self.item_manager = ItemManager(
+            spawn_manager=self.spawn_manager,
+            item_data_path="items.json"
+        )
+        DebugLogger.init_sub("Connected [ItemManager] → [SpawnManager]")
 
         # ===========================================================
         # Level Manager Setup

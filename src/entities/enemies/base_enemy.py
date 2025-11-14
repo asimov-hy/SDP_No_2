@@ -18,6 +18,7 @@ from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import CollisionTags, LifecycleState, EntityCategory
 from src.entities.entity_registry import EntityRegistry
 from src.graphics.animations.animation_effects.death_animation import death_fade
+from src.core.services.event_manager import EVENTS, EnemyDiedEvent
 
 
 class BaseEnemy(BaseEntity):
@@ -161,6 +162,12 @@ class BaseEnemy(BaseEntity):
 
     def on_death(self, source):
         self.anim.play(death_fade, duration=0.5)
+
+        # Dispatch death event for loot system
+        EVENTS.dispatch(EnemyDiedEvent(
+            position=(self.rect.centerx, self.rect.centery),
+            enemy_type_tag=self.__class__.__name__
+        ))
 
     # ===========================================================
     # Rendering
