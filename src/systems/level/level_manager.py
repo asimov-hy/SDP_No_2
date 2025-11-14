@@ -299,24 +299,20 @@ class LevelManager:
         spawn_edge = wave.get("spawn_edge") or wave.get("pattern_config", {}).get("edge")
         base_params = entity_params.copy()
 
-        # Check if this is a homing enemy
-        movement_config = wave.get("movement", {})
-        is_homing = category == "enemy" and movement_config.get("type", "").startswith("homing")
+        # Parse movement ONCE
+        if category == "enemy":
+            needs_position_calc, movement_params = self._parse_movement_config(wave)
 
-        if is_homing:
-            base_params["player_ref"] = self.player
+            # Inject player_ref for homing types
+            if "homing" in movement_params:
+                movement_params["player_ref"] = self.player
 
-        # Check if all enemies share the same direction (not position-dependent)
-        needs_per_position_calc = (
-                category == "enemy" and
-                movement_config.get("type") == "straight" and
-                movement_config.get("target") in ("center", "player")
-        )
-
-        # Pre-calculate shared movement for uniform direction waves
-        if category == "enemy" and not needs_per_position_calc and positions:
-            movement_params = self._calculate_movement(positions[0][0], positions[0][1], wave)
-            base_params.update(movement_params)
+            # Pre-compute if uniform direction
+            if not needs_position_calc:
+                base_params.update(movement_params)
+        else:
+            needs_position_calc = False
+            movement_params = {}
 
         # === STRATEGY 3: Deferred spawning for large waves ===
         if len(positions) > self._spawns_per_frame:
@@ -325,9 +321,12 @@ class LevelManager:
                 spawn_params = base_params.copy()
 
                 # Only recalculate if position-dependent
-                if needs_per_position_calc:
-                    movement_params = self._calculate_movement(x, y, wave)
-                    spawn_params.update(movement_params)
+                if needs_position_calc:
+                    direction_params = self._calculate_position_dependent_direction(
+                        x, y,
+                        movement_params.get("target")
+                    )
+                    spawn_params.update(direction_params)
 
                 spawn_kwargs = {}
                 if spawn_params.get("direction") is None and spawn_edge:
@@ -350,9 +349,12 @@ class LevelManager:
                 spawn_params = base_params.copy()
 
                 # Only recalculate if position-dependent
-                if needs_per_position_calc:
-                    movement_params = self._calculate_movement(x, y, wave)
-                    spawn_params.update(movement_params)
+                if needs_position_calc:
+                    direction_params = self._calculate_position_dependent_direction(
+                        x, y,
+                        movement_params.get("target")  # Pass the target from parsed config
+                    )
+                    spawn_params.update(direction_params)
 
                 # Add spawn_edge only if needed
                 if spawn_params.get("direction") is None and spawn_edge:
@@ -491,41 +493,41 @@ class LevelManager:
 
         return positions
 
-    def _calculate_movement(self, x, y, wave):
-        """Generate movement parameters based on movement config"""
+    def _parse_movement_config(self, wave):
+        """Parse movement config ONCE per wave - returns movement type and base params"""
         movement = wave.get("movement", {})
         move_type = movement.get("type", "straight")
         target = movement.get("target", "auto")
 
-        if move_type == "straight":
-            if target == "auto":
-                return {
-                    "direction": None
-                }
-            elif target == "center":
-                direction = self._direction_to_center(x, y)
-            elif target == "player":
-                direction = self._direction_to_player(x, y)
-            else:
-                direction = (0, 1)  # Default down
-            return {"direction": direction}
-
-        elif move_type == "homing_continuous":
-            return {
+        # Return: (needs_position_calc: bool, base_params: dict)
+        if move_type == "homing_continuous":
+            return False, {
                 "homing": True,
                 "turn_rate": movement.get("params", {}).get("turn_rate", 180)
             }
-
         elif move_type == "homing_snapshot":
-            return {
+            return False, {
                 "homing": "snapshot",
                 "lock_delay": movement.get("params", {}).get("lock_delay", 0.5)
             }
-
+        elif move_type == "straight":
+            if target == "auto":
+                return False, {"direction": None}
+            elif target in ("center", "player"):
+                return True, {"target": target}  # Flag for per-position calc
+            else:
+                return False, {"direction": (0, 1)}
         elif move_type == "stationary":
-            return {"direction": (0, 0)}
+            return False, {"direction": (0, 0)}
 
-        # Default fallback
+        return False, {"direction": (0, 1)}
+
+    def _calculate_position_dependent_direction(self, x, y, target):
+        """Only called when position matters (center/player targets)"""
+        if target == "center":
+            return {"direction": self._direction_to_center(x, y)}
+        elif target == "player":
+            return {"direction": self._direction_to_player(x, y)}
         return {"direction": (0, 1)}
 
     def _direction_to_center(self, x, y):
