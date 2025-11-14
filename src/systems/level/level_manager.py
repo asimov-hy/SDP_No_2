@@ -316,7 +316,16 @@ class LevelManager:
                 # Pickups don't need movement params
                 merged_params = entity_params
 
-            entity = self.spawner.spawn(category, entity_type, x, y, **merged_params)
+            spawn_kwargs = {}
+            if merged_params.get("direction") is None:
+                spawn_kwargs["spawn_edge"] = wave.get("spawn_edge")
+
+            entity = self.spawner.spawn(
+                category, entity_type, x, y,
+                **spawn_kwargs,
+                **merged_params
+            )
+
             if entity:
                 spawned += 1
                 # Apply per-wave speed override if specified
@@ -456,7 +465,9 @@ class LevelManager:
 
         if move_type == "straight":
             if target == "auto":
-                direction = self._direction_from_edge(x, y, wave.get("spawn_edge", "top"))
+                return {
+                    "direction": None
+                }
             elif target == "center":
                 direction = self._direction_to_center(x, y)
             elif target == "player":
@@ -482,18 +493,6 @@ class LevelManager:
 
         # Default fallback
         return {"direction": (0, 1)}
-
-    def _direction_from_edge(self, x, y, edge):
-        """Calculate inward direction from spawn edge"""
-        if edge == "top":
-            return (0, 1)
-        elif edge == "bottom":
-            return (0, -1)
-        elif edge == "left":
-            return (1, 0)
-        elif edge == "right":
-            return (-1, 0)
-        return (0, 1)
 
     def _direction_to_center(self, x, y):
         """Calculate direction to screen center"""

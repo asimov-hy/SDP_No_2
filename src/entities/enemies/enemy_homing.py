@@ -41,17 +41,27 @@ class EnemyHoming(BaseEnemy):
             turn_rate: Degrees per second for continuous homing
             player_ref: Reference to player for homing calculations
         """
-        # Create triangle sprite
         if draw_manager is None:
-            raise ValueError("EnemyStraight requires draw_manager for triangle creation")
+            raise ValueError("EnemyHoming requires draw_manager for circle creation")
 
-        circle_image = draw_manager.create_circle(size, color)
+        # Normalize size: ensure tuple for circle
+        norm_size = (size, size) if isinstance(size, int) else size
 
-        # Initialize base enemy
-        super().__init__(x, y, circle_image, speed, health)
+        shape_data = {
+            "type": "circle",
+            "size": norm_size,
+            "color": color
+        }
 
-        # Set velocity from direction
-        self.velocity = pygame.Vector2(direction).normalize() * self.speed
+        super().__init__(
+            x, y,
+            shape_data=shape_data,
+            draw_manager=draw_manager,
+            speed=speed,
+            health=health,
+            direction=direction,
+            spawn_edge=kwargs.get("spawn_edge")
+        )
 
         # NEW: Homing support
         self.homing = homing
@@ -88,25 +98,47 @@ class EnemyHoming(BaseEnemy):
         super().update(dt)
 
     def reset(self, x, y, direction=(0, 1), speed=200, health=1, size=50, color=(255, 0, 0), **kwargs):
-        """Reset homing enemy with new parameters."""
-        super().reset(x, y, **kwargs)
+        # Forward auto-direction correctly
+        super().reset(
+            x, y,
+            direction=direction,
+            speed=speed,
+            health=health,
+            spawn_edge=kwargs.get("spawn_edge")
+        )
 
-        # Regenerate sprite if size/color changed (optional optimization: only if different)
+        norm_size = (size, size) if isinstance(size, int) else size
+
+        self.shape_data = {
+            "type": "circle",
+            "size": norm_size,
+            "color": color
+        }
+
         if self.draw_manager:
-            self._base_image = self.draw_manager.create_triangle(size, color, pointing="up")
+            sd = self.shape_data
+            self._base_image = self.draw_manager.prebake_shape(
+                type=sd["type"],
+                size=sd["size"],
+                color=sd["color"]
+            )
             self.image = self._base_image.copy()
 
-        # Reset physics
-        self.speed = speed
-        self.health = health
-        self.max_health = health
-        self.velocity = pygame.Vector2(direction).normalize() * speed
+        # Update homing mode if pool respawn passes new params
+        if "homing" in kwargs:
+            self.homing = kwargs["homing"]
 
-        # Reset rotation state
-        self.rotation_angle = 0
+        if "turn_rate" in kwargs:
+            self.turn_rate = kwargs["turn_rate"] if self.homing else 0
 
-        # Force immediate rotation update to match velocity
-        self.update_rotation()
+        if "player_ref" in kwargs:
+            self.player_ref = kwargs["player_ref"] if self.homing else None
+
+        # Snapshot reset
+        if self.homing == "snapshot":
+            self.lock_delay = kwargs.get("lock_delay", getattr(self, "lock_delay", 0.5))
+            self.lock_timer = 0.0
+            self.locked = False
 
     def _update_homing_continuous(self, dt):
         """Smooth turn toward player each frame"""

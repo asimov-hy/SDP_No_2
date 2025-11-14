@@ -114,7 +114,19 @@ class BaseEntity:
         # -------------------------------------------------------
         # AUTO-OPTIMIZATION: Convert shape to image at creation time
         if image is None and shape_data and draw_manager:
-            self.image = draw_manager.prebake_shape(**shape_data)
+            kwargs = shape_data.get("kwargs", {})
+            kwargs = kwargs.copy()
+            self.image = draw_manager.prebake_shape(
+                type=shape_data["type"],
+                size=shape_data["size"],
+                color=shape_data["color"],
+                **kwargs
+            )
+
+            sd_copy = shape_data.copy()
+            if "kwargs" in shape_data:
+                sd_copy["kwargs"] = shape_data["kwargs"].copy()
+            self.shape_data = sd_copy
         else:
             self.image = image
 

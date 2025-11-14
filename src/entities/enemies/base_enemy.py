@@ -11,6 +11,7 @@ Responsibilities
 """
 
 import pygame
+import random
 from src.core.runtime.game_settings import Display, Layers
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
@@ -30,23 +31,24 @@ class BaseEnemy(BaseEntity):
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(self, x, y, image, speed=100, health=None):
-        """
-        Initialize a base enemy entity.
+    def __init__(self, x, y, image=None, shape_data=None, draw_manager=None,
+                 speed=100, health=None, direction=None, spawn_edge=None, **kwargs):
 
-        Args:
-            x (float): Spawn X position.
-            y (float): Spawn Y position.
-            image (pygame.Surface): Enemy sprite image.
-            speed (float, optional): Movement speed (pixels per second).
-            health (int, optional): HP before destruction. Defaults to HealthPresets.ENEMY_NORMAL.
         """
-        super().__init__(x, y, image)
+        Args:
+            x, y: Position
+            image: Pre-made sprite (image mode)
+            shape_data: Shape definition (shape mode)
+            draw_manager: Required for shape mode
+            speed: Movement speed
+            health: HP
+        """
+        super().__init__(x, y, image=image, shape_data=shape_data, draw_manager=draw_manager)
         self.speed = speed
         self.health = health if health is not None else 1
         self.max_health = self.health
 
-        self._base_image = image
+        self._base_image = self.image
         self.rotation_angle = 0  # Degrees, 0 = pointing right
 
         # Collision setup
@@ -57,8 +59,17 @@ class BaseEnemy(BaseEntity):
         # hitbox scale
         self._hitbox_scale = 0.9
 
+        if direction is None:
+            self.velocity = self._auto_direction_from_edge(spawn_edge)
+        else:
+            self.velocity = pygame.Vector2(direction)
+
+        # Normalize and apply speed
+        if self.velocity.length_squared() > 0:
+            self.velocity = self.velocity.normalize() * self.speed
+
         # Default movement vector (downward)
-        self.velocity = pygame.Vector2(0, 0)
+        # self.velocity = pygame.Vector2(0, 0)
 
     # ===========================================================
     # Damage and State Handling
@@ -127,7 +138,8 @@ class BaseEnemy(BaseEntity):
             return
 
         # Calculate angle from velocity (-90 because base triangle points up)
-        target_angle = -self.velocity.as_polar()[1] - 90
+        forward = pygame.Vector2(0, -1)
+        target_angle = forward.angle_to(self.velocity)
 
         # Only rotate if angle changed (avoid unnecessary rotations)
         if abs(target_angle - self.rotation_angle) > 0.1:
@@ -153,3 +165,95 @@ class BaseEnemy(BaseEntity):
 
         else:
             DebugLogger.trace(f"[CollisionIgnored] {type(self).__name__} vs {tag}")
+
+    def _auto_direction_from_edge(self, edge):
+
+        if edge is None:
+            return pygame.Vector2(0, 1)
+
+        edge = edge.lower()
+
+        # Screen dimensions
+        width = Display.WIDTH
+        height = Display.HEIGHT
+
+        # Get current normalized position (0 to 1)
+        nx = self.pos.x / width
+        ny = self.pos.y / height
+
+        # Zone split percentages
+        Z1 = 0.35  # left/top zone
+        Z2 = 0.35  # right/bottom zone
+        # center zone is implicit (1 - Z1 - Z2) = 0.30
+
+        # ----------------------------------------------------
+        # TOP EDGE
+        # ----------------------------------------------------
+        if edge == "top":
+            if nx < Z1:
+                # left 35 percent → inward or right-inward
+                options = [(0, 1), (1, 1)]
+            elif nx > 1 - Z2:
+                # right 35 percent → inward or left-inward
+                options = [(0, 1), (-1, 1)]
+            else:
+                # center 30 percent → all 3 inward dirs
+                options = [(0, 1), (-1, 1), (1, 1)]
+
+        # ----------------------------------------------------
+        # BOTTOM EDGE
+        # ----------------------------------------------------
+        elif edge == "bottom":
+            if nx < Z1:
+                options = [(0, -1), (1, -1)]
+            elif nx > 1 - Z2:
+                options = [(0, -1), (-1, -1)]
+            else:
+                options = [(0, -1), (-1, -1), (1, -1)]
+
+        # ----------------------------------------------------
+        # LEFT EDGE
+        # ----------------------------------------------------
+        elif edge == "left":
+            if ny < Z1:
+                options = [(1, 1), (1, 0)]
+            elif ny > 1 - Z2:
+                options = [(1, -1), (1, 0)]
+            else:
+                options = [(1, 0), (1, -1), (1, 1)]
+
+        # ----------------------------------------------------
+        # RIGHT EDGE
+        # ----------------------------------------------------
+        elif edge == "right":
+            if ny < Z1:
+                options = [(-1, 1), (-1, 0)]
+            elif ny > 1 - Z2:
+                options = [(-1, -1), (-1, 0)]
+            else:
+                options = [(-1, 0), (-1, -1), (-1, 1)]
+
+        else:
+            return pygame.Vector2(0, 1)
+
+        return pygame.Vector2(random.choice(options))
+
+    def reset(self, x, y, direction=None, speed=None, health=None, spawn_edge=None, **kwargs):
+        super().reset(x, y)
+
+        if speed is not None:
+            self.speed = speed
+        if health is not None:
+            self.health = health
+            self.max_health = health
+
+        if direction is None:
+            self.velocity = self._auto_direction_from_edge(spawn_edge)
+        else:
+            self.velocity = pygame.Vector2(direction)
+
+        if self.velocity.length_squared() > 0:
+            self.velocity = self.velocity.normalize() * self.speed
+
+        self.rotation_angle = 0
+        self.update_rotation()

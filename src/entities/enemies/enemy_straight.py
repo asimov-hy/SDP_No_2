@@ -26,7 +26,7 @@ class EnemyStraight(BaseEnemy):
     # Initialization
     # ===========================================================
     def __init__(self, x, y, direction=(0, 1), speed=200, health=1,
-                 size=50, color=(255, 0, 0), draw_manager=None):
+                 size=50, color=(255, 0, 0), draw_manager=None, **kwargs):
         """
         Args:
             x, y: Spawn position
@@ -41,13 +41,23 @@ class EnemyStraight(BaseEnemy):
         if draw_manager is None:
             raise ValueError("EnemyStraight requires draw_manager for triangle creation")
 
-        triangle_image = draw_manager.create_triangle(size, color, pointing="up")
+        norm_size = (size, size) if isinstance(size, int) else size
 
-        # Initialize base enemy
-        super().__init__(x, y, triangle_image, speed, health)
-
-        # Set velocity from direction
-        self.velocity = pygame.Vector2(direction).normalize() * self.speed
+        shape_data = {
+            "type": "triangle",
+            "size": norm_size,
+            "color": color,
+            "kwargs": {"pointing": "up", "equilateral": True}
+        }
+        super().__init__(
+            x, y,
+            shape_data=shape_data,
+            draw_manager=draw_manager,
+            speed=speed,
+            health=health,
+            direction=direction,
+            spawn_edge=kwargs.get("spawn_edge", None)
+        )
 
         DebugLogger.init(
             f"Spawned EnemyStraight at ({x}, {y}) | Speed={speed}",
@@ -68,21 +78,29 @@ class EnemyStraight(BaseEnemy):
 
     def reset(self, x, y, direction=(0, 1), speed=200, health=1, size=50, color=(255, 0, 0), **kwargs):
         """Reset straight enemy with new parameters."""
-        super().reset(x, y, **kwargs)
+        super().reset(
+            x, y,
+            direction=direction,
+            speed=speed,
+            health=health,
+            spawn_edge=kwargs.get("spawn_edge")
+        )
 
-        # Regenerate sprite if size/color changed (optional optimization: only if different)
+        # Regenerate sprite if size/color changed
+        norm_size = (size, size) if isinstance(size, int) else size
+
+        self.shape_data = {
+            "type": "triangle",
+            "size": norm_size,
+            "color": color,
+            "kwargs": {"pointing": "up", "equilateral": True}
+        }
         if self.draw_manager:
-            self._base_image = self.draw_manager.create_triangle(size, color, pointing="up")
+            sd = self.shape_data
+            self._base_image = self.draw_manager.prebake_shape(
+                type=sd["type"],
+                size=sd["size"],
+                color=sd["color"],
+                **sd["kwargs"]
+            )
             self.image = self._base_image.copy()
-
-        # Reset physics
-        self.speed = speed
-        self.health = health
-        self.max_health = health
-        self.velocity = pygame.Vector2(direction).normalize() * speed
-
-        # Reset rotation state
-        self.rotation_angle = 0
-
-        # Force immediate rotation update to match velocity
-        self.update_rotation()

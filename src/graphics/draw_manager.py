@@ -229,6 +229,12 @@ class DrawManager:
             )
             super().__init__(x, y, image=bullet_sprite)
         """
+        # Handle equilateral triangle size calculation
+        if type == "triangle" and kwargs.get("equilateral"):
+            w = size if isinstance(size, int) else size[0]
+            h = int(w * math.sqrt(3) / 2)
+            size = (w, h)
+
         # Create cache key for reusing identical shapes
         cache_key = f"shape_{type}_{size}_{color}_{tuple(sorted(kwargs.items()))}"
 
@@ -236,65 +242,49 @@ class DrawManager:
         if cache_key in self.images:
             return self.images[cache_key]
 
-        # Create new surface with transparency
-        surface = pygame.Surface(size, pygame.SRCALPHA)
-        temp_rect = pygame.Rect(0, 0, *size)
+        # Square-pad shape to ensure correct rotation behavior
+        max_dim = max(size)  # ensure square
+        square_surface = pygame.Surface((max_dim, max_dim), pygame.SRCALPHA)
 
-        # Draw shape onto surface
-        self._draw_shape(surface, type, temp_rect, color, **kwargs)
+        # Find offsets to center the shape inside the square
+        offset_x = (max_dim - size[0]) // 2
+        offset_y = (max_dim - size[1]) // 2
 
-        # Cache for reuse
-        self.images[cache_key] = surface
+        # Adjust rectangle to draw inside padded area
+        temp_rect = pygame.Rect(offset_x, offset_y, size[0], size[1])
 
-        DebugLogger.trace(f"Prebaked shape: {type} {size} {color}")
+        # Draw shape onto *square* surface
+        self._draw_shape(square_surface, type, temp_rect, color, **kwargs)
 
-        return surface
+        # Cache and return
+        self.images[cache_key] = square_surface
+        return square_surface
 
     def create_triangle(self, size: int | tuple[int, int], color: tuple[int, int, int],
                         pointing: str = "up") -> pygame.Surface:
         """
-        Create a reusable triangle sprite (supports perfect equilateral geometry).
+        Create a reusable triangle sprite (wrapper for prebake_shape).
 
         Args:
-            size (int|tuple): If int, creates equilateral triangle with 60° angles.
-                              If tuple (w,h), creates custom isosceles triangle.
-            color (tuple): RGB color.
-            pointing (str): "up", "down", "left", "right" (base orientation).
+            size: If int, creates equilateral triangle. If tuple (w,h), custom dimensions.
+            color: RGB color
+            pointing: "up", "down", "left", "right"
 
         Returns:
-            pygame.Surface: Cached triangle image.
+            pygame.Surface: Cached triangle image
         """
         if isinstance(size, int):
             w = size
-            h = int((math.sqrt(3) / 2) * w)  # 60° equilateral triangle height
+            h = int((math.sqrt(3) / 2) * w)  # 60° equilateral triangle
         else:
             w, h = size
 
-        cache_key = f"triangle_{w}x{h}_{color}_{pointing}"
-        if cache_key in self.images:
-            return self.images[cache_key]
-
-        # Define points based on direction
-        if pointing == "up":
-            points = [(w // 2, 0), (0, h), (w, h)]
-        elif pointing == "down":
-            points = [(w // 2, h), (0, 0), (w, 0)]
-        elif pointing == "left":
-            points = [(0, h // 2), (w, 0), (w, h)]
-        elif pointing == "right":
-            points = [(w, h // 2), (0, 0), (0, h)]
-        else:
-            DebugLogger.warn(f"Invalid triangle direction '{pointing}', defaulting to 'up'")
-            points = [(w // 2, 0), (0, h), (w, h)]
-
-        surface = self.prebake_shape(
-            type="polygon",  # Changed from shape_type
+        return self.prebake_shape(
+            type="triangle",
             size=(w, h),
             color=color,
-            points=points
+            pointing=pointing
         )
-        self.images[cache_key] = surface
-        return surface
 
     # ===========================================================
     # Rendering
@@ -371,24 +361,26 @@ class DrawManager:
         Internal helper for drawing primitive shapes on a surface.
 
         Args:
-            surface (pygame.Surface): Target surface to draw onto.
-            shape_type (str): Type of shape ("rect", "circle", "ellipse", etc.).
-            rect (pygame.Rect): Shape bounds.
-            color (tuple[int, int, int]): RGB color.
-            **kwargs: Optional keyword args (e.g., width, points, start_pos, end_pos).
+            surface: Target surface to draw onto
+            shape_type: "rect", "circle", "triangle", "polygon", etc.
+            rect: Shape bounds
+            color: RGB color
+            **kwargs: Shape-specific parameters
         """
         width = kwargs.get("width", 0)
 
-        if shape_type == "rect":
+        # Calculate points for polygon-based shapes
+        points = self._calculate_shape_points(shape_type, rect.width, rect.height, **kwargs)
+
+        if points:
+            # All polygon-based shapes (triangle, polygon, future shapes)
+            pygame.draw.polygon(surface, color, points, width)
+        elif shape_type == "rect":
             pygame.draw.rect(surface, color, rect, width)
         elif shape_type == "circle":
             pygame.draw.circle(surface, color, rect.center, rect.width // 2, width)
         elif shape_type == "ellipse":
             pygame.draw.ellipse(surface, color, rect, width)
-        elif shape_type == "polygon":
-            points = kwargs.get("points", [])
-            if points:
-                pygame.draw.polygon(surface, color, points, width)
         elif shape_type == "line":
             start = kwargs.get("start_pos")
             end = kwargs.get("end_pos")
@@ -396,3 +388,39 @@ class DrawManager:
                 pygame.draw.line(surface, color, start, end, width)
         else:
             DebugLogger.warn(f"Unknown shape type: {shape_type}")
+
+    def _calculate_shape_points(self, shape_type, w, h, **kwargs):
+        """
+        Centralized point calculation for all geometric shapes.
+        Returns None for shapes that don't use points (rect, circle, ellipse).
+
+        Args:
+            shape_type: "triangle", "polygon", etc.
+            w, h: Shape dimensions
+            **kwargs: Shape-specific params (pointing, points, etc.)
+
+        Returns:
+            list | None: Vertex points or None for non-polygon shapes
+        """
+        if shape_type == "triangle":
+            pointing = kwargs.get("pointing", "up")
+            if pointing == "up":
+                return [(w // 2, 0), (0, h), (w, h)]
+            elif pointing == "down":
+                return [(w // 2, h), (0, 0), (w, 0)]
+            elif pointing == "left":
+                return [(0, h // 2), (w, 0), (w, h)]
+            elif pointing == "right":
+                return [(w, h // 2), (0, 0), (0, h)]
+            else:
+                DebugLogger.warn(f"Invalid triangle direction '{pointing}', defaulting to 'up'")
+                return [(w // 2, 0), (0, h), (w, h)]
+
+        elif shape_type == "polygon":
+            # Custom points passed directly
+            return kwargs.get("points", [])
+
+        # Future shapes: hexagon, star, arrow, etc. go here
+
+        return None  # Non-polygon shapes (rect, circle, ellipse)
+

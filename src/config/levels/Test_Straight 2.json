@@ -1,0 +1,244 @@
+{
+  "phases": [
+    {
+      "name": "Straight Test",
+      "exit_trigger": "all_waves_cleared",
+      "waves": [
+        {
+          "comment": "8 Directions: Top",
+          "time": 0.0,
+          "enemy": "straight",
+          "spawn_edge": "top",
+          "spawn_position": 0.5,
+          "spawn_offset_y": -100,
+          "count": 1,
+          "enemy_params": {
+            "speed": 150,
+            "size": 40
+          },
+          "movement": {
+            "type": "straight",
+            "target": "auto"
+          }
+        },
+        {
+          "comment": "8 Directions: Top-Right",
+          "time": 0.5,
+          "enemy": "straight",
+          "spawn_edge": "top",
+          "spawn_position": 0.75,
+          "spawn_offset_y": -100,
+          "count": 1,
+          "enemy_params": {
+            "speed": 150,
+            "size": 40
+          },
+          "movement": {
+            "type": "straight",
+            "target": "auto"
+          }
+        },
+        {
+          "comment": "8 Directions: Right",
+          "time": 1.0,
+          "enemy": "straight",
+          "spawn_edge": "right",
+          "spawn_position": 0.5,
+          "spawn_offset_x": 100,
+          "count": 1,
+          "enemy_params": {
+            "speed": 150,
+            "size": 40
+          },
+          "movement": {
+            "type": "straight",
+            "target": "auto"
+          }
+        },
+        {
+          "comment": "8 Directions: Bottom-Right",
+          "time": 1.5,
+          "enemy": "straight",
+          "spawn_edge": "right",
+          "spawn_position": 0.75,
+          "spawn_offset_x": 100,
+          "count": 1,
+          "enemy_params": {
+            "speed": 150,
+            "size": 40
+          },
+          "movement": {
+            "type": "straight",
+            "target": "auto"
+          }
+        },
+        {
+          "comment": "8 Directions: Bottom",
+          "time": 2.0,
+          "enemy": "straight",
+          "spawn_edge": "bottom",
+          "spawn_position": 0.5,
+          "spawn_offset_y": 100,
+          "count": 1,
+          "enemy_params": {
+            "speed": 150,
+            "size": 40
+          },
+          "movement": {
+            "type": "straight",
+            "target": "auto"
+          }
+        },
+        {
+          "comment": "8 Directions: Bottom-Left",
+          "time": 2.5,
+          "enemy": "straight",
+          "spawn_edge": "bottom",
+          "spawn_position": 0.25,
+          "spawn_offset_y": 100,
+          "count": 1,
+          "enemy_params": {
+            "speed": 150,
+            "size": 40
+          },
+          "movement": {
+            "type": "straight",
+            "target": "auto"
+          }
+        },
+        {
+          "comment": "8 Directions: Left",
+          "time": 3.0,
+          "enemy": "straight",
+          "spawn_edge": "left",
+          "spawn_position": 0.5,
+          "spawn_offset_x": -100,
+          "count": 1,
+          "enemy_params": {
+            "speed": 150,
+            "size": 40
+          },
+          "movement": {
+            "type": "straight",
+            "target": "auto"
+          }
+        },
+        {
+          "comment": "8 Directions: Top-Left",
+          "time": 3.5,
+          "enemy": "straight",
+          "spawn_edge": "left",
+          "spawn_position": 0.25,
+          "spawn_offset_x": -100,
+          "count": 1,
+          "enemy_params": {
+            "speed": 150,
+            "size": 40
+          },
+          "movement": {
+            "type": "straight",
+            "target": "auto"
+          }
+        },
+        {
+          "comment": "Pattern: Line from top",
+          "time": 5.0,
+          "enemy": "straight",
+          "pattern": "line",
+          "count": 5,
+          "pattern_config": {
+            "edge": "top",
+            "offset_y": -100
+          },
+          "enemy_params": {
+            "speed": 120,
+            "size": 35
+          },
+          "movement": {
+            "type": "straight",
+            "target": "auto"
+          }
+        },
+        {
+          "comment": "Pattern: V from right",
+          "time": 6.5,
+          "enemy": "straight",
+          "pattern": "v",
+          "count": 5,
+          "pattern_config": {
+            "edge": "right",
+            "offset_x": 100
+          },
+          "enemy_params": {
+            "speed": 120,
+            "size": 35
+          },
+          "movement": {
+            "type": "straight",
+            "target": "auto"
+          }
+        },
+        {
+          "comment": "Pattern: Circle from bottom",
+          "time": 8.0,
+          "enemy": "straight",
+          "pattern": "circle",
+          "count": 8,
+          "pattern_config": {
+            "edge": "bottom",
+            "radius": 150,
+            "offset_y": 100
+          },
+          "enemy_params": {
+            "speed": 100,
+            "size": 30
+          },
+          "movement": {
+            "type": "straight",
+            "target": "center"
+          }
+        },
+        {
+          "comment": "Pattern: Grid from left",
+          "time": 9.5,
+          "enemy": "straight",
+          "pattern": "grid",
+          "count": 9,
+          "pattern_config": {
+            "edge": "left",
+            "offset_x": -100,
+            "cols": 3
+          },
+          "enemy_params": {
+            "speed": 120,
+            "size": 30
+          },
+          "movement": {
+            "type": "straight",
+            "target": "auto"
+          }
+        },
+        {
+          "comment": "Pattern: Single from top-center",
+          "time": 11.0,
+          "enemy": "straight",
+          "pattern": "single",
+          "count": 1,
+          "pattern_config": {
+            "edge": "top",
+            "offset_y": -100
+          },
+          "enemy_params": {
+            "speed": 200,
+            "size": 50,
+            "color": [255, 255, 0]
+          },
+          "movement": {
+            "type": "straight",
+            "target": "player"
+          }
+        }
+      ]
+    }
+  ]
+}
