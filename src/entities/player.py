@@ -78,6 +78,7 @@ class Player(BaseEntity):
         self.health = cfg["health"]
         self.invincible = cfg["invincible"]
         self.hitbox_scale = cfg["hitbox_scale"]
+        self.exp = 100 # Set temporarily for the exp_bar(UI). Delete in the future.
 
         DebugLogger.init(f"Initialized at ({x}, {y}) | Speed={self.speed} | HP={self.health}")
 

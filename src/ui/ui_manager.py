@@ -37,26 +37,18 @@ class UIManager:
 
         # Organized groups for scalability
         self.groups = {
-            "hud": [],       # In-game overlays (health bar, ammo, etc.)
-            "menus": [],     # Interactive menus (pause, settings, etc.)
-            "system": []     # Popups, fade overlays, notifications
+            "hud": [],
+            "menus": [],
+            "system": []
         }
-
-        # Active group determines who receives input
         self.active_group = "hud"
-
-        # Subsystem registry (HUDManager, DebugHUD, etc.)
         self.subsystems = {}
-
-        # Initialize base developer UI
         self._create_base_ui()
-        # DebugLogger.system("Initialized with default groups and subsystems")
 
     # ===========================================================
     # Initialization Helpers
     # ===========================================================
     def _create_base_ui(self):
-        """Initialize developer/debug UI elements (optional for builds)."""
         pass
 
     # ===========================================================
@@ -65,12 +57,8 @@ class UIManager:
     def register(self, element, group="hud"):
         """Add a UI element to the specified group."""
         self.groups.setdefault(group, []).append(element)
-
-        # Auto-inject DrawManager for consistent icon rendering
         if hasattr(element, "draw_manager"):
             element.draw_manager = self.draw_manager
-
-        # DebugLogger.action(f"Registered element in group '{group}'")
 
     def remove(self, element, group=None):
         """Remove a UI element from its group or all groups."""
@@ -81,16 +69,13 @@ class UIManager:
             for g in self.groups.values():
                 if element in g:
                     g.remove(element)
-        # DebugLogger.state(f"Removed element from '{group or 'all'}'")
 
     def set_active_group(self, group_name):
         """Switch which group receives input (e.g., 'menus', 'hud')."""
         if group_name in self.groups:
             self.active_group = group_name
-            # DebugLogger.state(f"Active group changed → {group_name}")
         else:
             DebugLogger.warn(f"Tried to activate unknown group '{group_name}'")
-            pass
 
     # ===========================================================
     # Subsystem Integration
@@ -99,34 +84,38 @@ class UIManager:
         """
         Attach a specialized UI subsystem (HUDManager, MenuManager, etc.).
 
-        Subsystems must implement:
-            - update(mouse_pos)
-            - draw(draw_manager)
+        Subsystems can implement:
+            - update(mouse_pos) and/or update_values(game_data)
+            - draw(draw_manager) OR get_elements()
             - handle_event(event)
         """
         self.subsystems[name] = subsystem
 
-        # Inject DrawManager if supported
         if hasattr(subsystem, "draw_manager"):
             subsystem.draw_manager = self.draw_manager
 
-        # DebugLogger.system(f"Attached subsystem '{name}'")
+        DebugLogger.system(f"Attached subsystem '{name}'")
 
     # ===========================================================
     # Frame Updates
     # ===========================================================
-    def update(self, mouse_pos):
+
+    def update(self, mouse_pos, game_data: dict = None):
         """Update all visible elements in the active group and subsystems."""
-        # Update standalone elements in current active group
+
+        # 1. Update standalone elements
         for elem in self.groups[self.active_group]:
             if elem.visible:
                 elem.update(mouse_pos)
 
-        # Update attached sub-managers (HUDs, menus, debug)
-        for subsystem in self.subsystems.values():
-            subsystem.update(mouse_pos)
+        # 2. Update attached sub-managers
+        for name, subsystem in self.subsystems.items():
+            if hasattr(subsystem, "update"):
+                subsystem.update(mouse_pos)
 
-        # DebugLogger.state(f"Updated group '{self.active_group}' and subsystems")
+            # for hud subsystem, 'update_values'
+            if game_data and name == "hud" and hasattr(subsystem, "update_values"):
+                subsystem.update_values(game_data)
 
     # ===========================================================
     # Input Handling
@@ -140,10 +129,11 @@ class UIManager:
         """
         # Route to subsystems first (so menus/debug can intercept)
         for subsystem in self.subsystems.values():
-            action = subsystem.handle_event(event)
-            if action:
-                # DebugLogger.action(f"Subsystem action triggered: {action}")
-                return action
+            if hasattr(subsystem, "handle_event"):
+                action = subsystem.handle_event(event)
+                if action:
+                    DebugLogger.action(f"Subsystem action triggered: {action}")
+                    return action
 
         # Then route to active group
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -151,7 +141,7 @@ class UIManager:
                 if elem.visible and elem.enabled:
                     action = elem.handle_click(event.pos)
                     if action:
-                        # DebugLogger.action(f"Element triggered action: {action}")
+                        DebugLogger.action(f"Element triggered action: {action}")
                         return action
         return None
 
@@ -160,13 +150,25 @@ class UIManager:
     # ===========================================================
     def draw(self, draw_manager):
         """Render all active UI elements and visible subsystems."""
-        # Draw subsystems (HUDs, debug overlays)
-        for subsystem in self.subsystems.values():
-            subsystem.draw(draw_manager)
 
-        # Draw group-level elements
+        # Draw subsystems
+        for subsystem in self.subsystems.values():
+
+            # Case 1: Subsystem has get_elements() (ex) HUDManager
+            if hasattr(subsystem, "get_elements"):
+                for elem in subsystem.get_elements():
+                    if elem.visible:
+                        try:
+                            surface = elem.render_surface()
+                            draw_manager.queue_draw(surface, elem.rect, elem.layer)
+                        except Exception as e:
+                            DebugLogger.warn(f"Failed to render elem {type(elem)}: {e}")
+
+            # Case 2: Subsystem has its own draw() (ex) DebugHUD
+            elif hasattr(subsystem, "draw"):
+                subsystem.draw(draw_manager)
+
+        # Draw group-level elements (standalone elements)
         for elem in self.groups[self.active_group]:
             if elem.visible:
                 draw_manager.queue_draw(elem.render_surface(), elem.rect, elem.layer)
-
-    # DebugLogger.state(f"Drew UI group '{self.active_group}' and subsystems")

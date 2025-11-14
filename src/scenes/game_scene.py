@@ -56,7 +56,8 @@ class GameScene:
 
         # Base HUD (game overlay)
         try:
-            self.ui.attach_subsystem("hud", HUDManager())
+            hud_subsystem = HUDManager(Display.WIDTH, Display.HEIGHT)
+            self.ui.attach_subsystem("hud", hud_subsystem)
             DebugLogger.init("HUDManager attached successfully")
         except Exception as e:
             DebugLogger.warn(f"HUDManager unavailable: {e}")
@@ -130,7 +131,11 @@ class GameScene:
         self.spawner.update(dt)
 
         # UI updates (HUD, menus)
-        self.ui.update(pygame.mouse.get_pos())
+        game_data = {
+            'exp': self.player.exp, # Set temporarily for the exp_bar (future deleted)
+            'player_health': self.player.health
+        }
+        self.ui.update(pygame.mouse.get_pos(), game_data)
 
     # ===========================================================
     # Rendering
