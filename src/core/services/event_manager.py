@@ -36,6 +36,7 @@ class PlayerHealthEvent(BaseEvent):
 @dataclass(frozen=True)
 class FireRateEvent(BaseEvent):
     multiplier: float
+    duration: float
 
 SubscriberCallback = Callable[[Any], None]
 class EventManager:
@@ -58,7 +59,7 @@ class EventManager:
         """
         self._subscribers[event_type].add(callback)
         callback_name = callback.func.__name__ if isinstance(callback, partial) else callback.__name__
-        DebugLogger.system(f"Subscribed '{callback_name}' to event '{event_type.__name__}'", category="system")
+        DebugLogger.system(f"Subscribed '{callback_name}' to event '{event_type.__name__}'", category="event")
 
     def unsubscribe(self, event_type: Type[BaseEvent], callback: SubscriberCallback) -> None:
         """
@@ -70,7 +71,7 @@ class EventManager:
         """
         self._subscribers[event_type].discard(callback)
         callback_name = callback.func.__name__ if isinstance(callback, partial) else callback.__name__
-        DebugLogger.system(f"Unsubscribed '{callback_name}' from event '{event_type.__name__}'", category="system")
+        DebugLogger.system(f"Unsubscribed '{callback_name}' from event '{event_type.__name__}'", category="event")
 
     def dispatch(self, event: BaseEvent) -> None:
         """
@@ -81,13 +82,13 @@ class EventManager:
         """
         event_type: Type[BaseEvent] = type(event)
         subscribers_to_notify: List[SubscriberCallback] = list(self._subscribers.get(event_type, set()))
-        DebugLogger.system(f"Dispatching event '{event_type.__name__}' to {len(subscribers_to_notify)} subscribers", category="system")
+        DebugLogger.system(f"Dispatching event '{event_type.__name__}' to {len(subscribers_to_notify)} subscribers", category="event")
         # Iterate over a copy to allow unsubscription during dispatch
         for subscriber in subscribers_to_notify:
             try:
                 subscriber(event)
             except Exception as e:
-                DebugLogger.fail(f"Error in event handler for '{event}': {e}", category="system")
+                DebugLogger.fail(f"Error in event handler for '{event}': {e}", category="event")
 
 # ===========================================================
 # Global Instance

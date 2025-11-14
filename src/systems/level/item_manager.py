@@ -48,9 +48,9 @@ class ItemManager:
         
         # Validate all item data at startup
         if validate_item_data(self._item_definitions):
-            DebugLogger.system("Item data system successful.", category="system")
+            DebugLogger.system("Item data system successful.", category="item")
         else:
-            DebugLogger.fail("Item data system failed with one or more warnings.", category="system")
+            DebugLogger.fail("Item data system failed with one or more warnings.", category="item")
 
         # Loot table for weighted random drops
         random.seed(int(datetime.now().timestamp()))
@@ -103,22 +103,22 @@ class ItemManager:
             with open(path, 'r', encoding='utf-8') as f:
                 definitions = json.load(f)
                 if not definitions:
-                    DebugLogger.warn(f"Item data file at '{path}' is empty.")
+                    DebugLogger.warn(f"Item data file at '{path}' is empty.", category="item")
                 else:
-                    DebugLogger.system(f"Loaded {len(definitions)} item definitions from '{path}'.")
+                    DebugLogger.system(f"Loaded {len(definitions)} item definitions from '{path}'.", category="item")
                 return definitions
         except FileNotFoundError:
-            DebugLogger.fail(f"Item data file not found at '{path}'.")
+            DebugLogger.fail(f"Item data file not found at '{path}'.", category="item")
             return {}
         except json.JSONDecodeError:
-            DebugLogger.fail(f"Could not decode JSON from '{path}'. Check file format.")
+            DebugLogger.fail(f"Could not decode JSON from '{path}'. Check file format.", category="item")
             return {}
 
     def _build_loot_table(self):
         """
         Parses item definitions to build a weighted loot table for random drops.
         """
-        DebugLogger.system("Building item loot table...")
+        DebugLogger.system("Building item loot table...", category="item")
         for item_id, data in self._item_definitions.items():
             weight = data.get("drop_weight", 0)
             if weight > 0:
@@ -127,12 +127,12 @@ class ItemManager:
                     self._loot_table_ids.append(item_type)
                     self._loot_table_weights.append(weight)
                 except ValueError:
-                    DebugLogger.warn(f"Item '{item_id}' in items.json has a drop_weight but is not a valid ItemType.")
+                    DebugLogger.warn(f"Item '{item_id}' in items.json has a drop_weight but is not a valid ItemType.", category="item")
         
         if self._loot_table_ids:
-            DebugLogger.system(f"Loot table built with {len(self._loot_table_ids)} item(s).")
+            DebugLogger.system(f"Loot table built with {len(self._loot_table_ids)} item(s).", category="item")
         else:
-            DebugLogger.warn("Loot table is empty. No items have 'drop_weight' > 0 in items.json.")
+            DebugLogger.warn("Loot table is empty. No items have 'drop_weight' > 0 in items.json.", category="item")
 
     # ===========================================================
     # Public Methods for Item Lifecycle
@@ -161,9 +161,9 @@ class ItemManager:
             if new_item is None:
                 return
             self.dropped_items.append(new_item)
-            DebugLogger.trace(f"Spawned item '{item_id.value}' at {position}.", category="system")
+            DebugLogger.trace(f"Spawned item '{item_id.value}' at {position}.", category="item")
         else:
-            DebugLogger.warn(f"Attempted to spawn an unknown item_id: '{item_id.value}'")
+            DebugLogger.warn(f"Attempted to spawn an unknown item_id: '{item_id.value}'", category="item")
 
     def _load_item_image(self, item_id: str, asset_path: str) -> pygame.Surface:
         """
@@ -183,10 +183,10 @@ class ItemManager:
                 loaded_image = pygame.image.load(asset_path).convert_alpha()
                 loaded_image = pygame.transform.scale(loaded_image, (30, 30))
             except pygame.error as e:
-                DebugLogger.warn(f"Failed to load item image '{asset_path}' for item '{item_id}': {e}", category="system")
+                DebugLogger.warn(f"Failed to load item image '{asset_path}' for item '{item_id}': {e}", category="item")
         
         if loaded_image is None:
-            DebugLogger.warn(f"Using dummy image for item '{item_id}'. Check asset_path: '{asset_path}'", category="system")
+            DebugLogger.warn(f"Using dummy image for item '{item_id}'. Check asset_path: '{asset_path}'", category="item")
             loaded_image = pygame.Surface((30, 30)) # Fallback to dummy
         
         return loaded_image
@@ -216,9 +216,9 @@ class ItemManager:
                 k=1
             )[0]
             self.spawn_item(selected_item_id, position)
-            DebugLogger.trace(f"Randomly spawned '{selected_item_id.value}' at {position} from loot table.", category="system")
+            DebugLogger.trace(f"Randomly spawned '{selected_item_id.value}' at {position} from loot table.", category="item")
         except IndexError:
-            DebugLogger.warn("Could not select an item from the loot table (it might be empty).")
+            DebugLogger.warn("Could not select an item from the loot table (it might be empty).", category="item")
 
     # ===========================================================
     # Update Logic
@@ -246,23 +246,23 @@ class ItemManager:
             case "ADD_SCORE":
                 amount = effect.get("amount", 0)
                 STATE.score += amount
-                DebugLogger.system(f"Score increased by {amount}. Total score: {STATE.score}", category="system")
+                DebugLogger.system(f"Score increased by {amount}. Total score: {STATE.score}", category="item")
 
             case "ADD_LIVES":
                 amount = effect.get("amount", 0)
                 STATE.lives += amount
-                DebugLogger.system(f"Lives increased by {amount}. Total lives: {STATE.lives}", category="system")
+                DebugLogger.system(f"Lives increased by {amount}. Total lives: {STATE.lives}", category="item")
 
             case "ADD_PLAYER_HEALTH":
                 amount = effect.get("amount", 0)
                 EVENTS.dispatch(PlayerHealthEvent(amount=amount))
-                DebugLogger.system(f"PLAYER_HEALTH increased by {amount}", category="system")
+                DebugLogger.system(f"PLAYER_HEALTH increased by {amount}", category="item")
 
             case "FIRE_RATE_UP":
                 multiplier = effect.get("multiplier", 1)
                 duration = effect.get("duration", 0)
                 EVENTS.dispatch(FireRateEvent(multiplier=multiplier, duration=duration))
-                DebugLogger.system(f"Fire Rate multiplied by {multiplier}", category="system")
+                DebugLogger.system(f"Fire Rate multiplied by {multiplier}", category="item")
 
             case _:
-                DebugLogger.warn(f"Unknown item effect type: '{effect_type}'", category="system")
+                DebugLogger.warn(f"Unknown item effect type: '{effect_type}'", category="item")

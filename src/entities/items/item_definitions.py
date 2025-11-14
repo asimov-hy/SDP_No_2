@@ -67,7 +67,7 @@ def validate_item_data(all_item_data: dict) -> bool:
     Returns:
         True if validation passes, False otherwise.
     """
-    DebugLogger.system("Starting item data validation...", category="validation")
+    DebugLogger.system("Starting item data validation...", category="item")
     is_valid = True
 
     # 1. ID Synchronization
@@ -76,12 +76,12 @@ def validate_item_data(all_item_data: dict) -> bool:
 
     missing_from_json = code_ids - json_ids
     for item_id in missing_from_json:
-        DebugLogger.warn(f"Validation: Item '{item_id}' is in ItemType but missing from items.json.", category="validation")
+        DebugLogger.warn(f"Validation: Item '{item_id}' is in ItemType but missing from items.json.", category="item")
         is_valid = False
 
     missing_from_code = json_ids - code_ids
     for item_id in missing_from_code:
-        DebugLogger.warn(f"Validation: Item '{item_id}' is in items.json but missing from ItemType.", category="validation")
+        DebugLogger.warn(f"Validation: Item '{item_id}' is in items.json but missing from ItemType.", category="item")
         is_valid = False
 
     # 2. Schema and Effect Validation
@@ -90,17 +90,17 @@ def validate_item_data(all_item_data: dict) -> bool:
         # 2a. Item structure (required fields)
         for field, expected_type in ITEM_SCHEMA.items():
             if field not in data:
-                DebugLogger.warn(f"Validation: Item '{item_id}' is missing required field '{field}'.", category="validation")
+                DebugLogger.warn(f"Validation: Item '{item_id}' is missing required field '{field}'.", category="item")
                 is_valid = False
                 continue
             if not isinstance(data[field], expected_type):
-                DebugLogger.warn(f"Validation: Item '{item_id}' field '{field}' should be type '{expected_type.__name__}' but is '{type(data[field]).__name__}'.", category="validation")
+                DebugLogger.warn(f"Validation: Item '{item_id}' field '{field}' should be type '{expected_type.__name__}' but is '{type(data[field]).__name__}'.", category="item")
                 is_valid = False
 
         # 2b. Optional 'physics' object validation
         if "physics" in data:
             if not isinstance(data["physics"], dict):
-                DebugLogger.warn(f"Validation: 'physics' field in item '{item_id}' must be an object.", category="validation")
+                DebugLogger.warn(f"Validation: 'physics' field in item '{item_id}' must be an object.", category="item")
                 is_valid = False
             else:
                 physics_data = data["physics"]
@@ -111,34 +111,37 @@ def validate_item_data(all_item_data: dict) -> bool:
                 }
                 for field, expected_types in optional_fields.items():
                     if field in physics_data and not isinstance(physics_data[field], expected_types):
-                        DebugLogger.warn(f"Validation: Optional field 'physics.{field}' in item '{item_id}' has incorrect type. Expected number.", category="validation")
+                        DebugLogger.warn(f"Validation: Optional field 'physics.{field}' in item '{item_id}' has incorrect type. Expected number.", category="item")
                         is_valid = False
 
         # 2c. Effects structure
         for effect in data.get("effects", []):
             effect_type = effect.get("type")
             if not effect_type:
-                DebugLogger.warn(f"Validation: Item '{item_id}' has an effect with no 'type' field.", category="validation")
+                DebugLogger.warn(f"Validation: Item '{item_id}' has an effect with no 'type' field.", category="item")
                 is_valid = False
                 continue
             if effect_type not in known_effect_types:
-                DebugLogger.warn(f"Validation: Item '{item_id}' has an unknown effect type: '{effect_type}'.", category="validation")
+                DebugLogger.warn(f"Validation: Item '{item_id}' has an unknown effect type: '{effect_type}'.", category="item")
                 is_valid = False
                 continue
             
             effect_schema = EFFECT_SCHEMAS[effect_type]
             for field, expected_type in effect_schema.items():
                 if field not in effect:
-                    DebugLogger.warn(f"Validation: Item '{item_id}' effect '{effect_type}' is missing required field '{field}'.", category="validation")
+                    # This is a bit of a hack to allow for optional duration
+                    if field == "duration":
+                        continue
+                    DebugLogger.warn(f"Validation: Item '{item_id}' effect '{effect_type}' is missing required field '{field}'.", category="item")
                     is_valid = False
                     continue
                 if not isinstance(effect[field], expected_type):
-                    DebugLogger.warn(f"Validation: Item '{item_id}' effect '{effect_type}' field '{field}' should be type '{expected_type.__name__}' but is '{type(effect[field]).__name__}'.", category="validation")
+                    DebugLogger.warn(f"Validation: Item '{item_id}' effect '{effect_type}' field '{field}' should be type '{expected_type.__name__}' but is '{type(effect[field]).__name__}'.", category="item")
                     is_valid = False
     
     if is_valid:
-        DebugLogger.system("Item data validation successful.", category="validation")
+        DebugLogger.system("Item data validation successful.", category="item")
     else:
-        DebugLogger.fail("Item data validation failed with one or more warnings.", category="validation")
+        DebugLogger.fail("Item data validation failed with one or more warnings.", category="item")
 
     return is_valid

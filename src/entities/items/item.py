@@ -96,7 +96,7 @@ class Item(BaseEntity):
             EVENTS.dispatch(ItemCollectedEvent(effects=self.effects))
             self.mark_dead(immediate=True)
         else:
-            DebugLogger.trace(f"[CollisionIgnored] {type(self).__name__} vs {tag}")
+            DebugLogger.trace(f"[CollisionIgnored] {type(self).__name__} vs {tag}", category="item")
 
     def __repr__(self):
         return (
