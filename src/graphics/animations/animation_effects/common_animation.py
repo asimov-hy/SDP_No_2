@@ -14,7 +14,9 @@ def fade_out(entity, t):
 def fade_in(entity, t):
     """Fade entity from transparent to opaque."""
     alpha = int(255 * t)
-    entity.image.set_alpha(alpha)
+    if entity.image.get_alpha() != alpha:
+        entity.image = entity.image.copy()  # Add this line
+        entity.image.set_alpha(alpha)
 
 
 def scale_down(entity, t):

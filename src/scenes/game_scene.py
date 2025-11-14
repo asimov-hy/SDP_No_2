@@ -20,6 +20,7 @@ from src.core.runtime.game_settings import Debug, Display
 
 # Player Entity
 from src.entities.player.player_core import Player
+from src.entities.entity_state import LifecycleState
 
 # UI Systems
 from src.ui.ui_manager import UIManager
@@ -192,6 +193,10 @@ class GameScene:
 
     def _on_stage_complete(self):
         """Callback fired by LevelManager when stage ends."""
+        if self.player.death_state != LifecycleState.ALIVE:
+            DebugLogger.system("Player dead - skipping level progression")
+            return
+
         if self.current_level_idx < len(self.campaign):
             current_level = self.campaign[self.current_level_idx]
             DebugLogger.system(f"Level complete: {current_level.name}")
