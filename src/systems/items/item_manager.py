@@ -105,7 +105,7 @@ class ItemManager:
         # For now, use hardcoded 15% drop chance
         self.try_spawn_random_item(
             position=event.position,
-            drop_chance=1.0
+            drop_chance=0.35
         )
 
     # ===========================================================

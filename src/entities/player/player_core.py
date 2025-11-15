@@ -224,7 +224,6 @@ class Player(BaseEntity):
         # if self.animation_manager:
         #     self.animation_manager.update(dt)
 
-
     def draw(self, draw_manager):
         """Render player if visible."""
         if not self.visible:

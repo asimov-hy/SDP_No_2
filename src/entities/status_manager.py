@@ -13,6 +13,7 @@ Responsibilities
 
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.player.player_state import InteractionState, PlayerEffectState
+from src.entities.player.player_effects import StatModifier
 
 
 class StatusManager:
@@ -27,6 +28,8 @@ class StatusManager:
         self.entity = entity
         self.effect_config = config
         self.active_effects = {}  # {PlayerEffectState: remaining_time}
+
+        self.stat_modifiers = StatModifier()
 
     def activate(self, effect: PlayerEffectState) -> bool:
         """
@@ -60,6 +63,70 @@ class StatusManager:
 
         return True
 
+    def set_status(self, state: PlayerEffectState):
+        """
+        Set an instant state with no duration.
+
+        Args:
+            state: State to set
+        """
+        if state == PlayerEffectState.NONE:
+            return
+
+        self.active_effects[state] = -1  # -1 = no expiration
+        self._update_entity_state()
+
+    def clear_status(self, state: PlayerEffectState):
+        """
+        Manually clear a state.
+
+        Args:
+            state: State to clear
+        """
+        if state in self.active_effects:
+            del self.active_effects[state]
+            self._update_entity_state()
+
+    def set_timed_status(self, state: PlayerEffectState, duration: float):
+        """
+        Set a state that auto-expires after duration.
+
+        Args:
+            state: State to set
+            duration: Time in seconds before expiration
+        """
+        if state == PlayerEffectState.NONE:
+            return
+
+        self.active_effects[state] = duration
+        DebugLogger.action(f"{state.name}: Duration: {duration:.2f}s")
+        self._update_entity_state()
+
+    def add_stat_modifier(self, stat: str, value: float, duration: float, stack_type: str):
+        """
+        Add a stat modifier.
+
+        Args:
+            stat: Stat name (e.g., "speed", "fire_rate")
+            value: Multiplier value
+            duration: Duration in seconds (-1 for permanent)
+            stack_type: "ADD" or "REPLACE"
+        """
+        self.stat_modifiers.add(stat, value, duration, stack_type)
+
+    def get_stat(self, stat_name: str, base_value: float) -> float:
+        """
+        Get modified stat value.
+
+        Args:
+            stat_name: Name of stat
+            base_value: Base value before modifiers
+
+        Returns:
+            Modified value
+        """
+        return self.stat_modifiers.calculate(stat_name, base_value)
+
     def update(self, dt: float):
         """
         Update all active effect timers and remove expired ones.
@@ -67,12 +134,12 @@ class StatusManager:
         Args:
             dt: Delta time in seconds
         """
-        if not self.active_effects:
-            return
-
-        # Decrement timers
+        # Update timed states
         expired = []
         for effect, time_remaining in self.active_effects.items():
+            if time_remaining < 0:  # Permanent effect
+                continue
+
             new_time = time_remaining - dt
             if new_time <= 0:
                 expired.append(effect)
