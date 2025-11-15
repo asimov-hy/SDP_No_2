@@ -104,7 +104,7 @@ class GameLoop:
             # ---------------------------------------------------
             # Frame timing (with safety clamp)
             # ---------------------------------------------------
-            frame_time = self.clock.tick() / 1000.0
+            frame_time = self.clock.tick(Display.FPS) / 1000.0
             frame_time = min(frame_time, Physics.MAX_FRAME_TIME)
             accumulator += frame_time
 
@@ -225,10 +225,21 @@ class GameLoop:
         # -------------------------------------------------------
         # Frame Summary
         # -------------------------------------------------------
+        # Frame Summary
         frame_time_ms = (time.perf_counter() - start_total) * 1000
 
         fps = 1000.0 / frame_time_ms if frame_time_ms > 0 else 0.0
         self.debug_hud.current_fps = fps
+
+        # NEW: Timing breakdown for DebugHUD
+        self.debug_hud.frame_time = frame_time_ms
+        self.debug_hud.update_time = scene_time
+        self.debug_hud.render_time = render_time
+
+        # NEW: Store frame time history for graphing
+        self.debug_hud.frame_time_history.append(frame_time_ms)
+        if len(self.debug_hud.frame_time_history) > self.debug_hud.frame_time_history_max:
+            self.debug_hud.frame_time_history.pop(0)
 
         # Add FPS to history (for graph)
         self.debug_hud.fps_history.append(fps)
