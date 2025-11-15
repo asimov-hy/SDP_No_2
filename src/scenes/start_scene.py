@@ -43,10 +43,10 @@ class StartScene:
 
         # --- 1. Game Title Rendering ---
         try:
-            self.title_font = pygame.font.Font(FONT_PATH, 60)
+            self.title_font = pygame.font.Font(FONT_PATH, 100)
         except FileNotFoundError:
             DebugLogger.warn(f"Missing font file at {FONT_PATH}. Using default font.")
-            self.title_font = pygame.font.Font(None, 60)
+            self.title_font = pygame.font.Font(None, 100)
 
         self.title_surf = self.title_font.render("202X", True, (255, 255, 255))
         self.title_rect = self.title_surf.get_rect(center=(center_x, center_y - 100))
