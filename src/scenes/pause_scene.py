@@ -88,3 +88,79 @@ class PauseScene:
         self.ui_elements.append(self.main_menu_button)
 
         DebugLogger.section("- Finished Initialization", only_title=True)
+
+    # ===========================================================
+    # Event Handling
+    # ===========================================================
+    def handle_event(self, event):
+        """
+        Detect mouse clicks on UI buttons.
+        """
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:
+                for btn in self.ui_elements:
+                    action = btn.handle_click(event.pos)
+                    if action:
+                        self.on_button_click(action)
+                        break
+
+        def on_button_click(self, action: str):
+            DebugLogger.action(f"PauseScene received action: '{action}'")
+
+            if action == "resume_game":
+                self.scene_manager.set_scene("GameScene")
+                DebugLogger.system("Resuming game")
+
+            elif action == "main_menu":
+                DebugLogger.system("Exiting to StartScene")
+                self.scene_manager.set_scene("StartScene")
+
+    # ===========================================================
+    # Update Logic
+    # ===========================================================
+    def update(self, dt):
+        """
+        Update UI elements (e.g., hover states).
+        """
+        mouse_pos = pygame.mouse.get_pos()
+        for btn in self.ui_elements:
+            btn.update(mouse_pos)
+
+    # ===========================================================
+    # Rendering
+    # ===========================================================
+    def draw(self, draw_manager):
+        """
+        Render the title and all UI elements.
+        """
+        # 1. Background change
+        overlay = pygame.Surface((Display.WIDTH, Display.HEIGHT), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 180))
+        draw_manager.queue_draw(overlay, (0, 0), layer=90) # Under the UI
+
+        # 2. PAUSED Title
+        draw_manager.queue_draw(self.title_surf, self.title_rect, layer=100)
+
+        # 3. UI Buttons
+        for btn in self.ui_elements:
+            button_surface = btn.render_surface()
+            draw_manager.queue_draw(button_surface, btn.rect, layer=btn.layer)
+
+        # ===========================================================
+        # Lifecycle Hooks
+        # ===========================================================
+        def on_enter(self):
+            DebugLogger.state("on_enter() - PauseScene")
+            pygame.mouse.set_visible(True)
+
+        def on_exit(self):
+            DebugLogger.state("on_exit() - PauseScene")
+
+        def on_pause(self):
+            DebugLogger.state("on_pause()")
+
+        def on_resume(self):
+            DebugLogger.state("on_resume()")
+
+        def reset(self):
+            DebugLogger.state("reset()")

@@ -180,11 +180,11 @@ class StartScene:
     # Lifecycle Hooks
     # ===========================================================
     def on_enter(self):
-        DebugLogger.state("on_enter()")
+        DebugLogger.state("on_enter() - StartScene")
         pygame.mouse.set_visible(True)
 
     def on_exit(self):
-        DebugLogger.state("on_exit()")
+        DebugLogger.state("on_exit() - StartScene")
 
     def on_pause(self):
         DebugLogger.state("on_pause()")
