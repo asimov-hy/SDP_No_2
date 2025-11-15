@@ -47,28 +47,25 @@ class ExplosionEffect(EffectElements):
     def __init__(self, x, y, image_path, layer=100):
         width, height = 0, 0
         self.effect_image = None
-        self.is_active = False # 기본 상태
+        self.is_active = False
 
         try:
             self.effect_image = pygame.image.load(image_path).convert_alpha()
             width, height = self.effect_image.get_size()
             DebugLogger.init(f"Image load success: {image_path}")
             self.position = (x, y)
-            self.is_active = True # 성공 시 활성화
+            self.is_active = True
         except pygame.error:
             DebugLogger.warn(f"Image load fail: {image_path}")
-            # is_active는 False로 유지
 
         super().__init__(x, y, width, height, layer)
 
-        self.duration = 0.3 # 1초로 반영
+        self.duration = 0.3
         self.time_elapsed = 0.0
-        # self.is_active는 이제 try/except에서만 관리됩니다.
         self.current_size_factor = 1.0
 
     def update(self, add_time):
         """Updates the effect's timer and calculates the current size factor."""
-        # 💡 이미지와 활성화 상태를 모두 확인
         if not self.is_active or self.effect_image is None:
             return
 
@@ -98,7 +95,7 @@ class ExplosionEffect(EffectElements):
             self.rect.width = 0
             self.rect.height = 0
 
-    def draw(self, draw_manager):  # 👈 DrawManager를 인수로 받음
+    def draw(self, draw_manager):
         if not self.is_active or self.effect_image is None:
             return
 

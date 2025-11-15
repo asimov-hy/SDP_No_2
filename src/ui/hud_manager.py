@@ -73,14 +73,14 @@ class HUDManager:
             fill_image_path = PATH_EXP_BAR_FILL,
             current_key='exp',
             max_key='level_exp',    # Assuming 'level_exp' is used for the max value
-            layer=101
+            layer=9
         )
 
         top_bar_frame = BaseImage(
             x = 32,
             y = 24,
             image_path=PATH_EXP_BAR_FRAME,
-            layer=102
+            layer=8
         )
 
         self.elements.append(top_bar_fill)
@@ -95,14 +95,14 @@ class HUDManager:
             x = -2,
             y = 650,
             image_path=PATH_MAIN_BAR,
-            layer=100
+            layer=7
         )
 
         gauge_bg = BaseImage(
             x = 555,
             y = 620,
             image_path = PATH_HEALTH_GAUGE,
-            layer=101
+            layer=8
         )
 
         gauge_needle = GaugeNeedle(
@@ -113,7 +113,7 @@ class HUDManager:
             max_key='player_max_health',
             min_angle = -85,
             max_angle = 85,
-            layer=102
+            layer=9
         )
 
         self.elements.append(main_bg)
