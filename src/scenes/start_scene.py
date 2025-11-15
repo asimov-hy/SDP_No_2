@@ -103,15 +103,25 @@ class StartScene:
         Args:
             event (pygame.event.Event): The current Pygame event.
         """
-        if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
-            DebugLogger.action("Input detected. Ending StartScene")
+        # Needs modification - Set to mouse-click only for now.
+        # if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
+        #     DebugLogger.action("Input detected. Ending StartScene")
+        #
+        #     for btn in self.ui_elements:
+        #         action = btn.handle_click(event.pos)
+        #
+        #         if action:
+        #             self.on_button_click(action)
+        #             break
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:
 
-            for btn in self.ui_elements:
-                action = btn.handle_click(event.pos)
+                for btn in self.ui_elements:
+                    action = btn.handle_click(event.pos)
 
-                if action:
-                    self.on_button_click(action)
-                    break
+                    if action:
+                        self.on_button_click(action)
+                        break
 
     def on_button_click(self, action):
         DebugLogger.action(f"Button triggered action: {action}")
