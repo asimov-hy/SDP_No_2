@@ -101,52 +101,6 @@ def on_death(player):
     # Disable collisions during death animation
     player.collision_tag = "neutral"
 
-# ===========================================================
-# Event Handle Logic
-# ===========================================================
-def change_player_health(player, event: PlayerHealthEvent):
-    """
-    Handles the PlayerHealthEvent to change the player's current health.
-
-    Args:
-        player (Player): The player instance whose health should be changed.
-        event (PlayerHealthEvent): The event containing the amount to change.
-    """
-    if player.death_state != LifecycleState.ALIVE:
-        return
-
-    previous_health = player.health
-    player.health = min(player.max_health, player.health + event.amount)
-
-    if previous_health != player.health:
-        DebugLogger.action(
-            f"Player health changed by {event.amount}. "
-            f"({previous_health} -> {player.health})",
-            category="player"
-        )
-
-def change_fire_rate(player, event: FireRateEvent):
-    """
-    Handles the FireRateEvent to change the player's fire rate.
-
-    Args:
-        player (Player): The player instance whose fire rate should be changed.
-        event (FireRateEvent): The event containing the multiplier.
-    """
-    if player.death_state != LifecycleState.ALIVE:
-        return
-
-    previous_cooldown = player.shoot_cooldown
-    # A multiplier greater than 1 increases the fire rate (decreases cooldown)
-    player.shoot_cooldown = max(0.05, player.shoot_cooldown / event.multiplier)
-
-    if previous_cooldown != player.shoot_cooldown:
-        DebugLogger.action(
-            f"Player fire rate changed. "
-            f"Cooldown: {previous_cooldown:.3f}s -> {player.shoot_cooldown:.3f}s",
-            category="player"
-        )
-
 
 # ===========================================================
 # Visual Update Hook

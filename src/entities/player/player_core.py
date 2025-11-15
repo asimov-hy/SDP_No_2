@@ -147,26 +147,6 @@ class Player(BaseEntity):
         DebugLogger.init_sub(f"Location: ({x:.1f}, {y:.1f})")
         DebugLogger.init_sub(f"Render Mode: {self.render_mode}")
 
-        # ========================================
-        # 8. Event Subscription
-        # ========================================
-        self._subscribe_to_events()
-
-    def _subscribe_to_events(self):
-        """
-        Subscribes the player to all relevant game events.
-        """
-        from functools import partial
-        from src.core.services.event_manager import EVENTS, PlayerHealthEvent, FireRateEvent
-        from . import player_logic
-
-        health_change_handler = partial(player_logic.change_player_health, self)
-        EVENTS.subscribe(PlayerHealthEvent, health_change_handler)
-
-        fire_rate_handler = partial(player_logic.change_fire_rate, self)
-        EVENTS.subscribe(FireRateEvent, fire_rate_handler)
-
-
     # ===========================================================
     # Helper Methods
     # ===========================================================
