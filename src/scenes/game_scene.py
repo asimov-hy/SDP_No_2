@@ -30,6 +30,8 @@ from src.ui.hud_manager import HUDManager
 from src.systems.combat.bullet_manager import BulletManager
 from src.systems.collision.collision_manager import CollisionManager
 
+from src.ui.effects.effect_manager import EffectManager
+
 # Level and Spawn Systems
 from src.systems.level.spawn_manager import SpawnManager
 from src.systems.level.level_manager import LevelManager
@@ -64,7 +66,9 @@ class GameScene:
 
         # Base HUD (game overlay)
         try:
-            self.ui.attach_subsystem("hud", HUDManager())
+            hud_subsystem = HUDManager(Display.WIDTH, Display.HEIGHT)
+            self.ui.attach_subsystem("hud", hud_subsystem)
+            DebugLogger.init("HUDManager attached successfully")
         except Exception as e:
             DebugLogger.fail(f"HUDManager unavailable: {e}")
 
@@ -108,6 +112,13 @@ class GameScene:
         )
         DebugLogger.init_sub("Registered [Player] with [CollisionManager]")
         DebugLogger.warn(f"Player hitbox owner ID: {id(self.player.hitbox.owner)}")
+
+        # ===========================================================
+        # Effect
+        # ===========================================================
+        self.effect_manager = EffectManager(Display.WIDTH, Display.HEIGHT)
+        DebugLogger.init("EffectManager initialized successfully")
+
 
         # ===========================================================
         # Spawn Manager Setup
@@ -196,8 +207,15 @@ class GameScene:
         # 6. Cleanup
         self.spawn_manager.cleanup()
 
-        # 7. UI
+        # 7. Effect updates
+        self.effect_manager.update(dt)
+
+        # 8. UI
         self.ui.update(pygame.mouse.get_pos())
+
+        hud_manager = self.ui.subsystems.get("hud")
+        if hud_manager:
+            hud_manager.update_values()
 
         # if not self.level_manager.active:  # when current stage finishes
         #     next_stage = self._get_next_stage()
@@ -247,6 +265,7 @@ class GameScene:
         self.spawn_manager.draw()
         self.bullet_manager.draw(draw_manager)
         self.player.draw(draw_manager)
+        self.effect_manager.draw(draw_manager)
         self.ui.draw(draw_manager)
 
         # Optional Debug Rendering

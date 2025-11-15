@@ -20,7 +20,7 @@ from src.entities.entity_types import CollisionTags, EntityCategory
 from src.entities.entity_registry import EntityRegistry
 from src.graphics.animations.animation_effects.death_animation import death_fade
 from src.core.services.event_manager import EVENTS, EnemyDiedEvent
-
+from src.ui.effects.effect_manager import effect_manager
 
 class BaseEnemy(BaseEntity):
     """Base class providing shared logic for all enemy entities_animation."""
@@ -162,9 +162,15 @@ class BaseEnemy(BaseEntity):
             self.on_death(source)
 
     def on_death(self, source):
-        self.anim.play(death_fade, duration=0.5)
+        self.anim.play(death_fade, duration=0.2)
+        random_effect_type = effect_manager.get_random_explosion()
 
-        # Dispatch death event for loot system
+        effect_manager.create_explosion(
+            position=(self.rect.centerx, self.rect.centery),
+            effect_type=random_effect_type,
+            layer=self.layer + 1
+        )
+
         EVENTS.dispatch(EnemyDiedEvent(
             position=(self.rect.centerx, self.rect.centery),
             enemy_type_tag=self.__class__.__name__
