@@ -44,9 +44,17 @@ class DebugHUD:
         self.max_fps = 0.0
         self.min_fps_time = None
 
-        # FPS history buffer for graph
         self.fps_history = []
-        self.fps_history_max = 120  # last ~2 seconds at 60fps
+        self.fps_history_max = 120
+
+        # NEW: Frame-time and update/render tracking
+        self.frame_time = 0.0
+        self.update_time = 0.0
+        self.render_time = 0.0
+
+        # NEW: frame-time history (for pacing graph)
+        self.frame_time_history = []
+        self.frame_time_history_max = 120  # last ~2 seconds
 
         self._create_elements()
 
@@ -226,6 +234,23 @@ class DebugHUD:
         draw_manager.queue_draw(surface_recent, surface_recent.get_rect(topleft=(70, y + 20)), game_settings.Layers.UI)
         draw_manager.queue_draw(surface_min, surface_min.get_rect(topleft=(70, y + 40)), game_settings.Layers.UI)
         draw_manager.queue_draw(surface_max, surface_max.get_rect(topleft=(70, y + 60)), game_settings.Layers.UI)
+
+        # Frame-time metrics (ms)
+        ft = self.frame_time
+        ut = self.update_time
+        rt = self.render_time
+
+        ft_text = f"FT: {ft:.2f} ms"
+        ut_text = f"Update: {ut:.2f} ms"
+        rt_text = f"Render: {rt:.2f} ms"
+
+        surface_ft = font.render(ft_text, True, (255, 255, 100))
+        surface_ut = font.render(ut_text, True, (200, 255, 150))
+        surface_rt = font.render(rt_text, True, (150, 200, 255))
+
+        draw_manager.queue_draw(surface_ft, surface_ft.get_rect(topleft=(70, y + 100)), game_settings.Layers.UI)
+        draw_manager.queue_draw(surface_ut, surface_ut.get_rect(topleft=(70, y + 120)), game_settings.Layers.UI)
+        draw_manager.queue_draw(surface_rt, surface_rt.get_rect(topleft=(70, y + 140)), game_settings.Layers.UI)
 
         # # --------------------------------------------------------
         # # FPS Graph (last N frames)

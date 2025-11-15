@@ -184,7 +184,7 @@ class BaseEntity:
         Note: This is NOT called automatically in base update() to avoid
         syncing before movement is complete.
         """
-        self.rect.center = self.pos
+        self.rect.center = (round(self.pos.x), round(self.pos.y))
 
     # ===========================================================
     # Core Update Loop
