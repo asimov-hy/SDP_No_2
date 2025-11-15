@@ -22,11 +22,9 @@ from src.core.debug.debug_logger import DebugLogger
 from src.core.services.config_manager import load_config
 
 from src.entities.base_entity import BaseEntity
-from src.entities.status_manager import StatusManager
-from src.entities.entity_state import CollisionTags, LifecycleState, EntityCategory
-
-from .player_state import InteractionState
-
+from src.entities.state_manager import StateManager
+from src.entities.entity_state import LifecycleState, InteractionState
+from src.entities.entity_types import CollisionTags, EntityCategory
 
 class Player(BaseEntity):
     """Represents the controllable player entity."""
@@ -81,7 +79,7 @@ class Player(BaseEntity):
         # 4. Core Stats
         # ========================================
         self.velocity = pygame.Vector2(0, 0)
-        self.speed = core["speed"]
+        self.base_speed = core["speed"]
         self.health = core["health"]
         self.max_health = self.health
         self._cached_health = self.health
@@ -124,14 +122,14 @@ class Player(BaseEntity):
         if input_manager is not None:
             self.input_manager = input_manager
         self.bullet_manager = None
-        self.shoot_cooldown = 0.1
+        self.base_shoot_cooldown = 0.1
         self.shoot_timer = 0.0
 
         # ========================================
         # 7. Global Ref & Status
         # ========================================
         STATE.player_ref = self
-        self.status_manager = StatusManager(self, cfg["status_effects"])
+        self.state_manager = StateManager(self, cfg["status_effects"])
 
         DebugLogger.init_entry("Player Initialized")
         DebugLogger.init_sub(f"Location: ({x:.1f}, {y:.1f})")
@@ -207,7 +205,7 @@ class Player(BaseEntity):
         self.anim.update(self, dt)
 
         # 1. Time-based status_effects and temporary states
-        self.status_manager.update(dt)
+        self.state_manager.update(dt)
         # 2. Input collection
         self.input_manager.update()
 
@@ -241,3 +239,17 @@ class Player(BaseEntity):
         if tag in (CollisionTags.ENEMY, CollisionTags.ENEMY_BULLET):
             from .player_logic import damage_collision
             damage_collision(self, other)
+
+    # ===========================================================
+    # Stat Properties (with modifiers applied)
+    # ===========================================================
+    @property
+    def speed(self):
+        """Get speed with active modifiers applied."""
+        return self.state_manager.get_stat("speed", self.base_speed)
+
+    @property
+    def shoot_cooldown(self):
+        """Get shoot cooldown with fire rate modifiers applied."""
+        fire_rate_mult = self.state_manager.get_stat("fire_rate", 1.0)
+        return self.base_shoot_cooldown / fire_rate_mult

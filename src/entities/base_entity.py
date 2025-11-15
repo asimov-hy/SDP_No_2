@@ -35,7 +35,8 @@ import pygame
 from typing import Optional
 from src.core.runtime.game_settings import Layers, Bounds, Display
 from src.core.debug.debug_logger import DebugLogger
-from src.entities.entity_state import LifecycleState, EntityCategory
+from src.entities.entity_state import LifecycleState
+from src.entities.entity_types import EntityCategory
 from src.graphics.animations.animation_controller import AnimationController
 
 
@@ -86,23 +87,6 @@ class BaseEntity:
             2. Optimized shape: Provide `shape_data` + `draw_manager` (auto-converts to image)
             3. Fallback shape: Provide `shape_data` only (renders per-frame, slower)
             4. Debug default: No params (magenta rect, should not be used in production)
-
-        Performance:
-            Always provide draw_manager with shape_data to enable prebaking.
-            This gives shape convenience with image performance (~4x faster).
-
-        Examples:
-            # Image-based entity (fastest)
-            player = Player(100, 100, image=sprite)
-
-            # Shape-based with prebaking (also fast)
-            bullet = Bullet(200, 200,
-                shape_data={"type": "circle", "color": (255,255,0), "size": (8,8)},
-                draw_manager=game.draw_manager
-            )
-
-            # Fallback for prototyping (slower)
-            test = Entity(50, 50, shape_data={"type": "rect", ...})
         """
         # -------------------------------------------------------
         # Core Spatial Attributes
@@ -174,7 +158,7 @@ class BaseEntity:
         # -------------------------------------------------------
         # Attributes
         # -------------------------------------------------------
-        self.category = EntityCategory.EFFECT
+        self.category = EntityCategory.PARTICLE
         self.collision_tag = "neutral"
         self.tags = set()
 
