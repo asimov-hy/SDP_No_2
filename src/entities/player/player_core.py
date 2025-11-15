@@ -26,6 +26,7 @@ from src.entities.state_manager import StateManager
 from src.entities.entity_state import LifecycleState, InteractionState
 from src.entities.entity_types import CollisionTags, EntityCategory
 
+
 class Player(BaseEntity):
     """Represents the controllable player entity."""
 
@@ -82,7 +83,6 @@ class Player(BaseEntity):
         self.base_speed = core["speed"]
         self.health = core["health"]
         self.max_health = self.health
-        self._cached_health = self.health
 
         self.visible = True
         self.layer = Layers.PLAYER
@@ -230,9 +230,6 @@ class Player(BaseEntity):
         from .player_ability import update_shooting
         attack_held = self.input_manager.is_attack_held()
         update_shooting(self, dt, attack_held)
-
-        # if self.animation_manager:
-        #     self.animation_manager.update(dt)
 
     def draw(self, draw_manager):
         """Render player if visible."""

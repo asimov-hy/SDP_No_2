@@ -9,7 +9,7 @@ Responsibilities
 - Dynamically resolve animation handlers using a shared registry system.
 - Provide a consistent interface for starting, updating, and stopping animations.
 - Guarantee fail-safety — animation errors never crash the main game loop.
-- Support in-animation effect triggers (e.g., particles, sounds, flashes).
+- Support in-animation effects triggers (e.g., particles, sounds, flashes).
 """
 
 from src.core.debug.debug_logger import DebugLogger
@@ -120,21 +120,21 @@ class AnimationManager:
         self._effect_queue.clear()
 
     # ===========================================================
-    # Effect Integration
+    # effects Integration
     # ===========================================================
     def bind_effect(self, trigger_time: float, effect):
         """
-        Schedule an effect to fire once during the active animation.
+        Schedule an effects to fire once during the active animation.
 
         Args:
-            trigger_time (float): Normalized time (0.0–1.0) when effect should occur.
-            effect (Callable | str): Function or named effect to trigger.
+            trigger_time (float): Normalized time (0.0–1.0) when effects should occur.
+            effect (Callable | str): Function or named effects to trigger.
                                      If str, it will call entity.effect_manager.trigger(name).
         """
         trigger_time = max(0.0, min(trigger_time, 1.0))
         self._effect_queue.append({
             "trigger": trigger_time,
-            "effect": effect,
+            "effects": effect,
             "fired": False,
         })
         DebugLogger.state(
@@ -147,7 +147,7 @@ class AnimationManager:
         for fx in list(self._effect_queue):
             if not fx["fired"] and t >= fx["trigger"]:
                 fx["fired"] = True
-                eff = fx["effect"]
+                eff = fx["effects"]
 
                 try:
                     if callable(eff):

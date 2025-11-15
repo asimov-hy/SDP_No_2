@@ -8,7 +8,7 @@ Responsibilities
 ----------------
 - Initialize gameplay entities_animation (e.g., Player).
 - Update all active game logic each frame.
-- Manage the in-game UI system (HUDManager, overlays).
+- Manage the in-game ui system (HUDManager, overlays).
 - Forward input and events to appropriate subsystems.
 """
 
@@ -22,15 +22,12 @@ from src.core.runtime.game_settings import Debug, Display
 from src.entities.player.player_core import Player
 from src.entities.entity_state import LifecycleState
 
-# UI Systems
-from src.ui.ui_manager import UIManager
-from src.ui.hud_manager import HUDManager
+# ui Systems
+from src.ui.core.ui_manager import UIManager
 
 # Combat Systems
 from src.systems.combat.bullet_manager import BulletManager
 from src.systems.collision.collision_manager import CollisionManager
-
-from src.ui.effects.effect_manager import EffectManager
 
 # Level and Spawn Systems
 from src.systems.level.spawn_manager import SpawnManager
@@ -41,14 +38,14 @@ from src.systems.items.item_manager import ItemManager
 
 
 class GameScene:
-    """Handles all gameplay entities_animation, logic, and UI systems."""
+    """Handles all gameplay entities_animation, logic, and ui systems."""
 
     # ===========================================================
     # Initialization
     # ===========================================================
     def __init__(self, scene_manager):
         """
-        Initialize the game scene, UI, and entities_animation.
+        Initialize the game scene, ui, and entities_animation.
 
         Args:
             scene_manager: Reference to SceneManager for access to display,
@@ -61,16 +58,15 @@ class GameScene:
         self.input_manager = scene_manager.input_manager
         self.draw_manager = scene_manager.draw_manager
 
-        # UI System Setup
-        self.ui = UIManager(self.display, self.draw_manager)
+        # ui System Setup
+        self.ui = UIManager(
+            display_manager=self.display,
+            draw_manager=self.draw_manager,
+            game_width=Display.WIDTH,
+            game_height=Display.HEIGHT
+        )
 
-        # Base HUD (game overlay)
-        try:
-            hud_subsystem = HUDManager(Display.WIDTH, Display.HEIGHT)
-            self.ui.attach_subsystem("hud", hud_subsystem)
-            DebugLogger.init("HUDManager attached successfully")
-        except Exception as e:
-            DebugLogger.fail(f"HUDManager unavailable: {e}")
+        self.ui.load_screen("pause", "screens/pause_menu.yaml")
 
         # spawn player
         start_x = Display.WIDTH / 2
@@ -82,6 +78,12 @@ class GameScene:
             draw_manager=self.draw_manager,
             input_manager=self.input_manager
         )
+
+        # Register player for ui data binding
+        self.ui.register_binding("player", self.player)
+
+        # Load player HUD
+        self.ui.load_hud("hud/player_hud.yaml")
 
         # Bullet Manager Setup
         self.bullet_manager = BulletManager(draw_manager=self.draw_manager)
@@ -112,13 +114,6 @@ class GameScene:
         )
         DebugLogger.init_sub("Registered [Player] with [CollisionManager]")
         DebugLogger.warn(f"Player hitbox owner ID: {id(self.player.hitbox.owner)}")
-
-        # ===========================================================
-        # Effect
-        # ===========================================================
-        self.effect_manager = EffectManager(Display.WIDTH, Display.HEIGHT)
-        DebugLogger.init("EffectManager initialized successfully")
-
 
         # ===========================================================
         # Spawn Manager Setup
@@ -164,20 +159,24 @@ class GameScene:
     # Event Handling
     # ===========================================================
     def handle_event(self, event):
-        """
-        Forward input and system events to UI and entities_animation.
-
-        Args:
-            event (pygame.event.Event): The event to process.
-        """
         self.ui.handle_event(event)
+
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            if self.paused:
+                # Resume game
+                self.paused = False
+                self.ui.hide_screen("pause")
+            else:
+                # Pause game
+                self.paused = True
+                self.ui.show_screen("pause")
 
     # ===========================================================
     # Update Logic
     # ===========================================================
     def update(self, dt: float):
         """
-        Update gameplay logic and UI each frame.
+        Update gameplay logic and ui each frame.
 
         Args:
             dt (float): Delta time (in seconds) since the last frame.
@@ -207,23 +206,11 @@ class GameScene:
         # 6. Cleanup
         self.spawn_manager.cleanup()
 
-        # 7. Effect updates
-        self.effect_manager.update(dt)
+        # 7. effects updates
+        # self.effect_manager.update(dt)
 
-        # 8. UI
-        self.ui.update(pygame.mouse.get_pos())
-
-        hud_manager = self.ui.subsystems.get("hud")
-        if hud_manager:
-            hud_manager.update_values()
-
-        # if not self.level_manager.active:  # when current stage finishes
-        #     next_stage = self._get_next_stage()
-        #     if next_stage:
-        #         DebugLogger.state(f"Loading next stage: {next_stage}")
-        #         self.level_manager.load(next_stage)
-        #     else:
-        #         DebugLogger.system("All stages complete — GameScene finished")
+        # 8. ui
+        self.ui.update(dt, pygame.mouse.get_pos())
 
     def _on_stage_complete(self):
         """Callback fired by LevelManager when stage ends."""
@@ -256,7 +243,7 @@ class GameScene:
     # ===========================================================
     def draw(self, draw_manager):
         """
-        Render all entities_animation and UI elements to the draw queue.
+        Render all entities_animation and ui elements to the draw queue.
 
         Args:
             draw_manager (DrawManager): Centralized renderer responsible for batching and displaying.
@@ -265,7 +252,7 @@ class GameScene:
         self.spawn_manager.draw()
         self.bullet_manager.draw(draw_manager)
         self.player.draw(draw_manager)
-        self.effect_manager.draw(draw_manager)
+        # self.effect_manager.draw(draw_manager) - animation/particle effects - ignore for now
         self.ui.draw(draw_manager)
 
         # Optional Debug Rendering

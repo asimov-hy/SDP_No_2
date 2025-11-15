@@ -28,7 +28,7 @@ class EnemyDiedEvent(BaseEvent):
 @dataclass(frozen=True)
 class ItemCollectedEvent(BaseEvent):
     """Dispatched when player collects an item."""
-    effects: list  # List of effect dicts from item data
+    effects: list  # List of effects dicts from item data
 
 
 @dataclass(frozen=True)

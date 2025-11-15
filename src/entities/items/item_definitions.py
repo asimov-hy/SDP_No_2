@@ -84,7 +84,7 @@ def validate_item_data(all_item_data: dict) -> bool:
         DebugLogger.warn(f"Validation: Item '{item_id}' is in items.json but missing from ItemType.", category="item")
         is_valid = False
 
-    # 2. Schema and Effect Validation
+    # 2. Schema and effects Validation
     known_effect_types = set(EFFECT_SCHEMAS.keys())
     for item_id, data in all_item_data.items():
         # 2a. Item structure (required fields)

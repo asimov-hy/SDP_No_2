@@ -117,7 +117,7 @@ class BaseItem(BaseEntity):
             # Apply effects directly to player
             apply_item_effects(other, self.get_effects())
 
-            # Notify observers (achievements, UI, etc can subscribe)
+            # Notify observers (achievements, ui, etc can subscribe)
             EVENTS.dispatch(ItemCollectedEvent(effects=self.get_effects()))
 
             # Legacy hook for subclasses (can be removed later)

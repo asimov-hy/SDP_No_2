@@ -19,7 +19,7 @@
     "size": [64, 64],
 
     "sprite": {
-      "path": "assets/images/sprites/players/robot_Garda.png"
+      "path": "assets/images/characters/player/robot_Garda.png"
     },
 
     "default_shape": {
@@ -36,9 +36,9 @@
     },
 
     "image_states": {
-      "normal": "assets/images/sprites/players/robot_Garda.png",
-      "damaged_moderate": "assets/images/sprites/players/robot_Garda.png",
-      "damaged_critical": "assets/images/sprites/players/robot_Garda.png"
+      "normal": "assets/images/characters/player/robot_Garda.png",
+      "damaged_moderate": "assets/images/characters/player/robot_Garda.png",
+      "damaged_critical": "assets/images/characters/player/robot_Garda.png"
     },
 
     "color_states": {

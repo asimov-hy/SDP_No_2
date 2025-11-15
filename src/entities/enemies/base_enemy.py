@@ -20,7 +20,7 @@ from src.entities.entity_types import CollisionTags, EntityCategory
 from src.entities.entity_registry import EntityRegistry
 from src.graphics.animations.animation_effects.death_animation import death_fade
 from src.core.services.event_manager import EVENTS, EnemyDiedEvent
-from src.ui.effects.effect_manager import effect_manager
+
 
 class BaseEnemy(BaseEntity):
     """Base class providing shared logic for all enemy entities_animation."""
@@ -66,7 +66,6 @@ class BaseEnemy(BaseEntity):
             "corner_bottom": [(-1, -1)]  # UP_LEFT
         }
     }
-
 
     def __init_subclass__(cls, **kwargs):
         """Auto-register enemy subclasses when they're defined."""
@@ -163,13 +162,13 @@ class BaseEnemy(BaseEntity):
 
     def on_death(self, source):
         self.anim.play(death_fade, duration=0.2)
-        random_effect_type = effect_manager.get_random_explosion()
-
-        effect_manager.create_explosion(
-            position=(self.rect.centerx, self.rect.centery),
-            effect_type=random_effect_type,
-            layer=self.layer + 1
-        )
+        # random_effect_type = effect_manager.get_random_explosion()
+        #
+        # effect_manager.create_explosion(
+        #     position=(self.rect.centerx, self.rect.centery),
+        #     effect_type=random_effect_type,
+        #     layer=self.layer + 1
+        # )
 
         EVENTS.dispatch(EnemyDiedEvent(
             position=(self.rect.centerx, self.rect.centery),

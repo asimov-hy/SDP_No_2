@@ -6,10 +6,10 @@ and efficiently sending them to the main display surface.
 
 Responsibilities
 ----------------
-- Load and cache images used by entities_animation and UI.
+- Load and cache images used by entities_animation and ui.
 - Maintain a draw queue (layered rendering system).
 - Sort queued draw calls by layer each frame and render them.
-- Provide helper methods for entities_animation and UI elements to queue themselves.
+- Provide helper methods for entities_animation and ui elements to queue themselves.
 """
 
 import pygame
@@ -66,7 +66,7 @@ class DrawManager:
 
     def load_icon(self, name, size=(24, 24)):
         """
-        Load or retrieve a cached UI icon.
+        Load or retrieve a cached ui icon.
 
         Args:
             name (str): Name of the icon file (without extension).

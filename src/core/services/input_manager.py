@@ -107,7 +107,7 @@ class InputManager:
         self.bomb_pressed = False
         self.pause_pressed = False
 
-        # UI navigation states
+        # ui navigation states
         self.ui_up = False
         self.ui_down = False
         self.ui_left = False
@@ -120,7 +120,7 @@ class InputManager:
     # ===========================================================
     def _validate_bindings(self):
         """
-        Ensure that system-level bindings do not overlap with gameplay or UI bindings.
+        Ensure that system-level bindings do not overlap with gameplay or ui bindings.
         Logs a warning if any overlap is detected.
         """
         system_keys = {k for keys in self.key_bindings["system"].values() for k in keys}
@@ -217,11 +217,11 @@ class InputManager:
         self.scene_manager = scene_manager
 
     # ===========================================================
-    # UI Navigation Input
+    # ui Navigation Input
     # ===========================================================
 
     def _update_ui_navigation(self):
-        """Poll input for UI navigation and interaction."""
+        """Poll input for ui navigation and interaction."""
         keys = pygame.key.get_pressed()
         self.ui_up = self._is_pressed("navigate_up", keys)
         self.ui_down = self._is_pressed("navigate_down", keys)
@@ -231,7 +231,7 @@ class InputManager:
         self.ui_back = self._is_pressed("back", keys)
 
         # ------------------------------------------
-        # Controller support for UI
+        # Controller support for ui
         # ------------------------------------------
         if self.controller:
             self._update_ui_controller()
@@ -327,12 +327,12 @@ class InputManager:
         Check if any bound key in a specific context dictionary is pressed.
 
         Used for system-level inputs that should always be available,
-        regardless of gameplay/UI context.
+        regardless of gameplay/ui context.
 
         Args:
             action (str): Input action name.
             keys (pygame.key.ScancodeWrapper): Current keyboard state.
-            context_dict (dict): Key-binding map for a specific context.
+            context_dict (dict): Key-binding maps for a specific context.
         """
         if action not in context_dict:
             return False
@@ -372,7 +372,7 @@ class InputManager:
     def handle_system_input(self, event, display, debug_hud):
         """
         Handle global system-level input that is always available.
-        These bindings function independently of gameplay/UI contexts.
+        These bindings function independently of gameplay/ui contexts.
 
         Args:
             event (pygame.Event): The current input event.
@@ -430,7 +430,7 @@ class InputManager:
             self._context_keys[context_name] = list(key_set)
 
     def _update_ui_controller(self):
-        """Controller support for UI (only called if controller exists)."""
+        """Controller support for ui (only called if controller exists)."""
         hat_x, hat_y = self.controller.get_hat(0)
         x_axis = self.controller.get_axis(0)
         y_axis = self.controller.get_axis(1)
