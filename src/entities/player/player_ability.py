@@ -43,8 +43,8 @@ def _fire_bullet(player):
     player.bullet_manager.spawn_custom(
         StraightBullet,
         pos=player.rect.center,
-        vel=(0, -900),  # Upward trajectory
-        color=(255, 255, 100),
+        vel=(0, -900),
+        image=player.bullet_image,
         radius=4,
         owner="player",
     )

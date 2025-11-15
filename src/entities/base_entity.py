@@ -33,9 +33,10 @@ Responsibilities
 
 import pygame
 from typing import Optional
-from src.core.runtime.game_settings import Layers
+from src.core.runtime.game_settings import Layers, Bounds, Display
 from src.core.debug.debug_logger import DebugLogger
-from src.entities.entity_state import LifecycleState, EntityCategory
+from src.entities.entity_state import LifecycleState
+from src.entities.entity_types import EntityCategory
 from src.graphics.animations.animation_controller import AnimationController
 
 
@@ -86,23 +87,6 @@ class BaseEntity:
             2. Optimized shape: Provide `shape_data` + `draw_manager` (auto-converts to image)
             3. Fallback shape: Provide `shape_data` only (renders per-frame, slower)
             4. Debug default: No params (magenta rect, should not be used in production)
-
-        Performance:
-            Always provide draw_manager with shape_data to enable prebaking.
-            This gives shape convenience with image performance (~4x faster).
-
-        Examples:
-            # Image-based entity (fastest)
-            player = Player(100, 100, image=sprite)
-
-            # Shape-based with prebaking (also fast)
-            bullet = Bullet(200, 200,
-                shape_data={"type": "circle", "color": (255,255,0), "size": (8,8)},
-                draw_manager=game.draw_manager
-            )
-
-            # Fallback for prototyping (slower)
-            test = Entity(50, 50, shape_data={"type": "rect", ...})
         """
         # -------------------------------------------------------
         # Core Spatial Attributes
@@ -110,13 +94,41 @@ class BaseEntity:
         self.pos = pygame.Vector2(x, y)
 
         # -------------------------------------------------------
-        # Rendering Setup (with auto-optimization)
+        # Validation: Prevent API misuse
         # -------------------------------------------------------
+        if image is not None and shape_data is not None:
+            raise ValueError(
+                f"{type(self).__name__}: Cannot provide both 'image' AND 'shape_data'. "
+                f"Use one or the other."
+            )
+
+        if shape_data and not draw_manager:
+            DebugLogger.warn(
+                f"{type(self).__name__}: shape_data provided without draw_manager. "
+                f"Shape will render per-frame (slow). Pass draw_manager for optimization."
+            )
+
         # AUTO-OPTIMIZATION: Convert shape to image at creation time
         if image is None and shape_data and draw_manager:
-            self.image = draw_manager.prebake_shape(**shape_data)
+            kwargs = shape_data.get("kwargs", {})
+            kwargs = kwargs.copy()
+            self.image = draw_manager.prebake_shape(
+                type=shape_data["type"],
+                size=shape_data["size"],
+                color=shape_data["color"],
+                **kwargs
+            )
+
+            sd_copy = shape_data.copy()
+            if "kwargs" in shape_data:
+                sd_copy["kwargs"] = shape_data["kwargs"].copy()
+            self.shape_data = sd_copy
         else:
             self.image = image
+
+        # Store base image for rotation (if image was created)
+        if self.image:
+            self._base_image = self.image
 
         # -------------------------------------------------------
         # Rect Setup (center-aligned)
@@ -128,14 +140,16 @@ class BaseEntity:
             size = shape_data.get("size", (10, 10)) if shape_data else (10, 10)
             self.rect = pygame.Rect(0, 0, *size)
             self.rect.center = (x, y)
-            # Store shape data for manual rendering (fallback path)
+            # Store shape config for manual rendering (fallback path)
             self.shape_data = shape_data
 
         self.draw_manager = draw_manager
 
-        # -------------------------------------------------------
+        # Rotation Support (optional, used by entities that rotate)
+        self.rotation_angle = 0  # Current rotation in degrees
+        self._rotation_enabled = False
+
         # Entity State
-        # -------------------------------------------------------
         self.death_state = LifecycleState.ALIVE
 
         # Default layer - subclasses SHOULD override this
@@ -144,8 +158,9 @@ class BaseEntity:
         # -------------------------------------------------------
         # Attributes
         # -------------------------------------------------------
-        self.category = EntityCategory.EFFECT
+        self.category = EntityCategory.PARTICLE
         self.collision_tag = "neutral"
+        self.tags = set()
 
         self._current_sprite = None  # Subclasses set initial state
         self._sprite_config = {}  # Subclasses populate state→image/color mapping
@@ -169,7 +184,7 @@ class BaseEntity:
         Note: This is NOT called automatically in base update() to avoid
         syncing before movement is complete.
         """
-        self.rect.center = self.pos
+        self.rect.center = (round(self.pos.x), round(self.pos.y))
 
     # ===========================================================
     # Core Update Loop
@@ -263,7 +278,7 @@ class BaseEntity:
                 width=1
             )
 
-    def refresh_visual(self, new_image=None, new_color=None, shape_type=None, size=None):
+    def refresh_sprite(self, new_image=None, new_color=None, shape_type=None, size=None):
         """
         Rebuild entity visuals when appearance changes at runtime.
 
@@ -291,6 +306,11 @@ class BaseEntity:
                     size=size,
                     color=new_color
                 )
+
+        # Update base image for rotation support
+        if self.image:
+            self._base_image = self.image
+            self.rotation_angle = 0  # Reset rotation
 
         # Sync rect to new image size while preserving position
         if self.image:
@@ -334,6 +354,62 @@ class BaseEntity:
         """
         return self.pos.distance_to(other.pos)
 
+    # ===========================================================
+    # Bounds & Margin System
+    # ===========================================================
+    def get_cleanup_margin(self):
+        """
+        Returns cleanup margin based on entity category.
+        Entity is removed when this far offscreen.
+        """
+        margin_map = {
+            EntityCategory.ENEMY: Bounds.ENEMY_CLEANUP_MARGIN,
+            EntityCategory.PROJECTILE: Bounds.BULLET_ENEMY_MARGIN,  # Default for bullets
+            EntityCategory.PICKUP: Bounds.ITEM_CLEANUP_MARGIN,
+            EntityCategory.ENVIRONMENT: Bounds.ENV_CLEANUP_MARGIN,
+        }
+        return margin_map.get(self.category, 200)  # Default 200px
+
+    def get_damage_margin(self):
+        """
+        Returns margin for hittable zone.
+        Entity can take damage only when within this margin from screen edges.
+        """
+        margin_map = {
+            EntityCategory.ENEMY: Bounds.ENEMY_DAMAGE_MARGIN,
+            EntityCategory.ENVIRONMENT: Bounds.ENV_DAMAGE_MARGIN,
+        }
+        return margin_map.get(self.category, 0)  # Default: hittable immediately
+
+    def is_offscreen(self):
+        """
+        Check if entity is far enough offscreen for cleanup.
+        Tests all 4 edges using cleanup_margin.
+        """
+        m = self.get_cleanup_margin()
+        return (self.rect.right < -m or
+                self.rect.left > Display.WIDTH + m or
+                self.rect.bottom < -m or
+                self.rect.top > Display.HEIGHT + m)
+
+    def is_hittable(self):
+        """
+        Check if entity is inside the damage zone (can receive collision damage).
+        Used by collision manager before processing bullet hits.
+        """
+        m = self.get_damage_margin()
+        return (self.rect.right > m and
+                self.rect.left < Display.WIDTH - m and
+                self.rect.bottom > m and
+                self.rect.top < Display.HEIGHT - m)
+
+    def has_tag(self, tag):
+        """
+        Check if entity has a specific tag or category.
+        Allows checking both primary category and secondary tags.
+        """
+        return tag == self.category or tag in self.tags
+
     def __repr__(self) -> str:
         """Debug string representation of entity."""
         return (
@@ -345,7 +421,7 @@ class BaseEntity:
 
     def setup_sprite(self, health, thresholds_dict, color_states, image_states=None, render_mode="shape"):
         """
-        Initialize visual state system from config data.
+        Initialize visual state system from config config.
         Auto-determines initial state from current health.
 
         Args:
@@ -400,3 +476,39 @@ class BaseEntity:
         """Get image for target visual state."""
         images = self._sprite_config.get('images', {})
         return images.get(state_key)
+
+    # ===========================================================
+    # Rotation System
+    # ===========================================================
+    def update_rotation(self, velocity=None):
+        """
+        Rotate image to match velocity direction.
+        Only rotates if velocity changed (optimization).
+
+        Args:
+            velocity: Optional velocity vector. If None, uses self.velocity.
+
+        Usage:
+            Subclasses should:
+            1. Set self._rotation_enabled = True in __init__
+            2. Call self.update_rotation() in update() or update_rotation(custom_vel)
+        """
+        if not self._rotation_enabled or self._base_image is None:
+            return
+
+        # Use provided velocity or fall back to self.velocity
+        vel = velocity if velocity is not None else getattr(self, 'velocity', None)
+        if vel is None or vel.length_squared() == 0:
+            return
+
+        # Calculate angle from velocity
+        forward = pygame.Vector2(0, -1)  # Base sprite points up
+        target_angle = -forward.angle_to(vel)
+
+        # Only rotate if angle changed (avoid unnecessary rotations)
+        if abs(target_angle - self.rotation_angle) > 0.1:
+            self.rotation_angle = target_angle
+            self.image = pygame.transform.rotate(self._base_image, self.rotation_angle)
+            # Update rect to match new rotated size
+            old_center = self.rect.center
+            self.rect = self.image.get_rect(center=old_center)

@@ -1,52 +1,12 @@
 """
 entity_state.py
 ---------------
-Defines universal constants and enumerations for all entity types.
+Defines runtime state enumerations for all entity types.
+Contains only states that change over time during gameplay.
 """
 
-from enum import IntEnum
+from enum import IntEnum, auto
 
-
-class EntityCategory:
-    """
-    High-level logical grouping for entities.
-    Used for both runtime categorization AND registry registration.
-
-    Example:
-        class EnemyNew(BaseEnemy):
-            __registry_category__ = EntityCategory.ENEMY
-            __registry_name__ = "new"
-    """
-    PLAYER = "player"
-    ENEMY = "enemy"
-    PROJECTILE = "projectile"  # Used for bullets (both player and enemy)
-    ENVIRONMENT = "environment"
-    PICKUP = "pickup"
-    EFFECT = "effect"
-
-    # Valid categories for EntityRegistry registration
-    # (PLAYER excluded - not spawnable via registry)
-    REGISTRY_VALID = {ENEMY, PROJECTILE, PICKUP, ENVIRONMENT, EFFECT}
-
-
-# ===========================================================
-# Collision Tag Constants
-# ===========================================================
-class CollisionTags:
-    """
-    Standard collision tags for entity.collision_tag.
-    Prevents typos and enables IDE autocomplete.
-    """
-    NEUTRAL = "neutral"
-
-    PLAYER = "player"
-    PLAYER_BULLET = "player_bullet"
-
-    ENEMY = "enemy"
-    ENEMY_BULLET = "enemy_bullet"
-
-    PICKUP = "pickup"
-    HAZARD = "hazard"
 
 class LifecycleState(IntEnum):
     """
@@ -56,3 +16,27 @@ class LifecycleState(IntEnum):
     ALIVE = 0
     DYING = 1      # Playing death animation/effect
     DEAD = 2       # Ready for cleanup
+
+
+class InteractionState(IntEnum):
+    """
+    Defines how the entity collider interacts with others.
+
+    Determines how collisions affect the entity and its surroundings.
+
+    Collision Meaning:
+      self        → entity receives damage
+      opponent    → collision opponent interacts with entity
+      hazard      → entity takes damage from environmental hazards
+      environment → interacts physically with walls or terrain
+
+    State Levels:
+      0 -> DEFAULT       self: O   opponent: O   hazard: O   environment: O
+      1 -> INVINCIBLE    self: X   opponent: O   hazard: O   environment: O
+      2 -> INTANGIBLE    self: X   opponent: X   hazard: X   environment: O
+      3 -> CLIP_THROUGH  self: X   opponent: X   hazard: X   environment: X
+    """
+    DEFAULT = 0
+    INVINCIBLE = 1
+    INTANGIBLE = 2
+    CLIP_THROUGH = 3

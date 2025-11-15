@@ -65,7 +65,7 @@ class CollisionHitbox:
         self.active = True
         self._manual_size = False
 
-        # Cached data
+        # Cached config
         self._size_cache = None
         self._color_cache = self._cache_color()
 

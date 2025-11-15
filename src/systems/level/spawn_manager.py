@@ -11,10 +11,10 @@ Responsibilities
 - Automatically link new entities_animation to collision systems (if provided).
 - Handle per-frame update and render passes for all active entities_animation.
 """
-
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.entity_registry import EntityRegistry
 from src.entities.entity_state import LifecycleState
+from src.entities.base_entity import BaseEntity
 
 
 class SpawnManager:
@@ -52,7 +52,7 @@ class SpawnManager:
     # ===========================================================
     # Entity Spawning
     # ===========================================================
-    def spawn(self, category: str, type_name: str, x: float, y: float, **kwargs):
+    def spawn(self, category: str, type_name: str, x: float, y: float, **kwargs) -> BaseEntity | None:
         """
         Spawn a new entity and register it with the scene.
 
@@ -76,6 +76,9 @@ class SpawnManager:
                 # Reset pooled entity
                 if hasattr(entity, "reset"):
                     entity.reset(x, y, **kwargs)
+                    # Reset alpha to prevent faded spawns
+                    if hasattr(entity, 'image') and entity.image:
+                        entity.image.set_alpha(255)
                 else:
                     DebugLogger.warn(f"{type(entity).__name__} missing reset() method")
                     entity = None  # Fallback to creation
@@ -260,7 +263,7 @@ class SpawnManager:
     def reset(self):
         """
         Completely reset SpawnManager for a new stage.
-        Clears all active entities_animation and pool data.
+        Clears all active entities_animation and pool config.
         """
         for e in self.entities:
             e.death_state = LifecycleState.DEAD

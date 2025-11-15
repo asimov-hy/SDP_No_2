@@ -11,6 +11,7 @@ Responsibilities
 """
 
 from src.core.debug.debug_logger import DebugLogger
+from src.entities.entity_types import EntityCategory
 
 
 class EntityRegistry:
@@ -79,7 +80,6 @@ class EntityRegistry:
 
         # Validation 4: Check category is valid
         try:
-            from src.entities.entity_state import EntityCategory
             if category not in EntityCategory.REGISTRY_VALID:
                 DebugLogger.warn(
                     f"[Registry] Unknown category '{category}' for {entity_class.__name__}. "

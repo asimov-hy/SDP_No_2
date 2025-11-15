@@ -154,7 +154,7 @@ class AnimationManager:
                         eff(self.entity)
                     elif isinstance(eff, str):
                         if hasattr(self.entity, "effect_manager"):
-                            self.entity.status_manager.trigger(eff)
+                            self.entity.state_manager.timed_state(eff)
                         else:
                             DebugLogger.warn(
                                 f"[EffectSkip] {self.entity.collision_tag} has no effect_manager for '{eff}'",
