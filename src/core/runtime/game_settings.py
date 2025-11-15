@@ -52,9 +52,8 @@ class Layers:
     BULLETS = 3
     PLAYER = 4
     PARTICLES = 5
-    EFFECTS = 6
-    DEBUG = 9
-    UI = 10  # Always on top
+    UI = 9
+    DEBUG = 10   # Always on top
 
 
 # ===========================================================

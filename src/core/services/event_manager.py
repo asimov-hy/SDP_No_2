@@ -61,8 +61,9 @@ class EventManager:
             self._subscribers[event_type] = []
 
         self._subscribers[event_type].append(callback)
+        callback_name = getattr(callback, '__name__', repr(callback))
         DebugLogger.init_sub(
-            f"Subscribed '{callback.__name__}' to '{event_type.__name__}'"
+            f"Subscribed '{callback_name}' to '{event_type.__name__}'"
         )
 
     def unsubscribe(self, event_type: Type[BaseEvent], callback: Callable) -> None:
@@ -82,8 +83,9 @@ class EventManager:
                 try:
                     callback(event)
                 except Exception as e:
-                    DebugLogger.error(
-                        f"Error in event callback {callback.__name__}: {e}"
+                    callback_name = getattr(callback, '__name__', repr(callback))
+                    DebugLogger.warn(
+                        f"Error in event callback {callback_name}: {e}"
                     )
 
 
