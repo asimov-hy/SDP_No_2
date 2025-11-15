@@ -39,15 +39,6 @@ This project demonstrates the use of:
 │  │   ├─ __init__.py
 │  │   └─ sound_manager.py
 │  │
-│  ├─ config/
-│  │   ├─ campaigns.json
-│  │   │
-│  │   ├─ entities/
-│  │   │   └─ player_config.py
-│  │   │
-│  │   └─ levels/
-│  │       └─ Stage 1.py
-│  │
 │  ├─ core/
 │  │   ├─ __init__.py
 │  │   │
@@ -69,6 +60,18 @@ This project demonstrates the use of:
 │  │       ├─ display_manager.py
 │  │       └─ input_manager.py
 │  │
+│  ├─ config/
+│  │   ├─ campaigns.json
+│  │   │
+│  │   ├─ entities/
+│  │   │   ├─ items.json
+│  │   │   └─ player.json
+│  │   │
+│  │   └─ levels/
+│  │       ├─ Test_Homing.json
+│  │       ├─ Test_Straight.json
+│  │       └─ Test_Straight 2.json
+│  │
 │  ├─ entities/
 │  │   ├─ __init__.py
 │  │   ├─ base_entity.py
@@ -81,48 +84,41 @@ This project demonstrates the use of:
 │  │   │  ├─ base_bullet.py
 │  │   │  └─ bullet_straight.py
 │  │   │
-│  │   ├─ enemies/
-│  │   │  ├─ __init__.py
-│  │   │  ├─ base_enemy.py
-│  │   │  ├─ enemy_homing.py
-│  │   │  ├─ enemy_shooter.py
-│  │   │  └─ enemy_straight.py
-│  │   │
-│  │   ├─ environments/
-│  │   │  ├─ __init__.py
-│  │   │  ├─ base_hazard.py
-│  │   │  └─ base_obstacle.py
-│  │   │
 │  │   ├─ items/
-│  │   │  ├─ __init__.py
-│  │   │  ├─ base_item.py
-│  │   │  └─ item_health.py
+│  │   │   ├─ __init__.py
+│  │   │   ├─ base_item.py
+│  │   │   └─ item_health.py
+│  │   │
+│  │   ├─ enemies/
+│  │   │   ├─ __init__.py
+│  │   │   ├─ base_enemy.py
+│  │   │   └─ enemy_straight.py
 │  │   │
 │  │   └─ player/
-│  │      ├─ __init__.py
-│  │      ├─ player_ability.py
-│  │      ├─ player_core.py
-│  │      ├─ player_logic.py
-│  │      ├─ player_movement.py
-│  │      └─ player_state.py
+│  │       ├─ __init__.py
+│  │       ├─ player_ability.py
+│  │       ├─ player_core.py
+│  │       ├─ player_logic.py
+│  │       ├─ player_movement.py
+│  │       └─ player_state.py
 │  │
 │  ├─ graphics/
 │  │   ├─ __init__.py
 │  │   ├─ draw_manager.py
 │  │   │
 │  │   └─ animations/
-│  │      ├─ __init__.py
-│  │      ├─ animation_controller.py
-│  │      ├─ animation_manager.py
-│  │      │
-│  │      ├─ animation_effects/
-│  │      │  ├─ __init__.py
-│  │      │  ├─ common_animation.py
-│  │      │  ├─ damage_animation.py
-│  │      │  ├─ death_animation.py
-│  │      │  └─ movement_animation.py
-│  │      │
-│  │      └─ entities/
+│  │       ├─ __init__.py
+│  │       ├─ animation_controller.py
+│  │       ├─ animation_manager.py
+│  │       │
+│  │       ├─ animation_effects/
+│  │       │  ├─ __init__.py
+│  │       │  ├─ common_animation.py
+│  │       │  ├─ damage_animation.py
+│  │       │  ├─ death_animation.py
+│  │       │  └─ movement_animation.py
+│  │       │
+│  │       └─ entities/
 │  │         ├─ __init__.py
 │  │         ├─ enemy_animation.py
 │  │         └─ player_animation.py
@@ -130,42 +126,41 @@ This project demonstrates the use of:
 │  ├─ scenes/
 │  │   ├─ __init__.py
 │  │   ├─ game_scene.py
+│  │   ├─ pause_scene.py (empty)
 │  │   └─ start_scene.py
 │  │
 │  ├─ systems/
 │  │   ├─ __init__.py
 │  │   │
 │  │   ├─ collision/
-│  │   │  ├─ __init__.py
-│  │   │  ├─ collision_hitbox.py
-│  │   │  └─ collision_manager.py
+│  │   │   ├─ __init__.py
+│  │   │   ├─ collision_hitbox.py
+│  │   │   └─ collision_manager.py
 │  │   │
 │  │   ├─ combat/
-│  │   │  ├─ __init__.py
-│  │   │  └─ bullet_manager.py
+│  │   │   ├─ __init__.py
+│  │   │   └─ bullet_manager.py
 │  │   │
 │  │   └─ level/
-│  │      ├─ __init__.py
-│  │      ├─ level_manager.py
-│  │      ├─ level_registry.py
-│  │      ├─ pattern_registry.py
-│  │      └─ spawn_manager.py
+│  │       ├─ __init__.py
+│  │       ├─ level_manager.py
+│  │       ├─ pattern_registry.py
+│  │       └─ spawn_manager.py
 │  │
 │  └─ ui/
 │      ├─ __init__.py
 │      ├─ base_ui.py
-│      ├─ hud_manager.py (empty)
 │      ├─ menu_manager.py (empty)
 │      ├─ ui_manager.py
 │      │
 │      ├─ components/
-│      │  ├─ __init__.py
-│      │  └─ ui_button.py
+│      │   ├─ __init__.py
+│      │   └─ ui_button.py
 │      │
 │      └─ effects/
-│         ├─ __init__.py
-│         ├─ ui_animation.py (empty)
-│         └─ ui_fade.py (empty)
+│          ├─ __init__.py
+│          ├─ ui_animation.py (empty)
+│          └─ ui_fade.py (empty)
 │
 └─ assets/
    ├─ images/

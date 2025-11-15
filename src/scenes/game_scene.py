@@ -30,13 +30,14 @@ from src.ui.hud_manager import HUDManager
 from src.systems.combat.bullet_manager import BulletManager
 from src.systems.collision.collision_manager import CollisionManager
 
+from src.ui.effects.effect_manager import EffectManager
+
 # Level and Spawn Systems
 from src.systems.level.spawn_manager import SpawnManager
 from src.systems.level.level_manager import LevelManager
 from src.systems.level.pattern_registry import PatternRegistry
 from src.systems.level.level_registry import LevelRegistry
-from src.systems.level.item_manager import ItemManager # Added ItemManager import
-from src.core.runtime.game_state import STATE # Added STATE import
+from src.systems.items.item_manager import ItemManager
 
 
 class GameScene:
@@ -65,7 +66,9 @@ class GameScene:
 
         # Base HUD (game overlay)
         try:
-            self.ui.attach_subsystem("hud", HUDManager())
+            hud_subsystem = HUDManager(Display.WIDTH, Display.HEIGHT)
+            self.ui.attach_subsystem("hud", hud_subsystem)
+            DebugLogger.init("HUDManager attached successfully")
         except Exception as e:
             DebugLogger.fail(f"HUDManager unavailable: {e}")
 
@@ -86,6 +89,12 @@ class GameScene:
         self.player.bullet_manager = self.bullet_manager
         DebugLogger.init_sub("Connected [Player] → [BulletManager]")
 
+        self.bullet_manager.prewarm_pool(
+            owner="player",
+            count=50,
+            image=self.player.bullet_image  # ← REQUIRED
+        )
+
         # Collision Manager Setup
         self.collision_manager = CollisionManager(
             self.player,
@@ -105,6 +114,13 @@ class GameScene:
         DebugLogger.warn(f"Player hitbox owner ID: {id(self.player.hitbox.owner)}")
 
         # ===========================================================
+        # Effect
+        # ===========================================================
+        self.effect_manager = EffectManager(Display.WIDTH, Display.HEIGHT)
+        DebugLogger.init("EffectManager initialized successfully")
+
+
+        # ===========================================================
         # Spawn Manager Setup
         # ===========================================================
         self.spawn_manager = SpawnManager(self.draw_manager, self.display, self.collision_manager)
@@ -114,7 +130,15 @@ class GameScene:
 
         self.spawn_manager.enable_pooling("enemy", "straight", prewarm_count=10)
 
-        self.item_manager = ItemManager(spawn_manager=self.spawn_manager, item_data_path="src/config/entities/items.json")
+        # ===========================================================
+        # Item Manager Setup
+        # ===========================================================
+        self.item_manager = ItemManager(
+            spawn_manager=self.spawn_manager,
+            item_data_path="items.json"
+        )
+        DebugLogger.init_sub("Connected [ItemManager] → [SpawnManager]")
+
         # ===========================================================
         # Level Manager Setup
         # ===========================================================
@@ -169,7 +193,6 @@ class GameScene:
         # 2. Single entity pass (combines spawn + level logic)
         self.spawn_manager.update(dt)  # Updates entities_animation
         self.level_manager.update(dt)  # Only checks timers/waves
-        self.item_manager.update(dt)     # Process item queue and update items
 
         # 3. Physics
         self.player.update(dt)
@@ -184,8 +207,15 @@ class GameScene:
         # 6. Cleanup
         self.spawn_manager.cleanup()
 
-        # 7. UI
+        # 7. Effect updates
+        self.effect_manager.update(dt)
+
+        # 8. UI
         self.ui.update(pygame.mouse.get_pos())
+
+        hud_manager = self.ui.subsystems.get("hud")
+        if hud_manager:
+            hud_manager.update_values()
 
         # if not self.level_manager.active:  # when current stage finishes
         #     next_stage = self._get_next_stage()
@@ -235,6 +265,7 @@ class GameScene:
         self.spawn_manager.draw()
         self.bullet_manager.draw(draw_manager)
         self.player.draw(draw_manager)
+        self.effect_manager.draw(draw_manager)
         self.ui.draw(draw_manager)
 
         # Optional Debug Rendering
@@ -253,12 +284,12 @@ class GameScene:
     # Lifecycle Hooks
     # ===========================================================
     def on_enter(self):
-        if self.campaign:
-            start_level = self.campaign[0]
+        start_level = LevelRegistry.get_default_start()  # <-- Uses start_level key
+        if start_level:
             DebugLogger.state(f"Starting level: {start_level.name}")
             self.level_manager.load(start_level.path)
         else:
-            DebugLogger.warn("No campaign loaded")
+            DebugLogger.warn("No start level found")
 
     def on_exit(self):
         DebugLogger.state("on_exit()")

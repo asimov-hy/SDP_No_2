@@ -14,12 +14,13 @@ import pygame
 import random
 from src.core.runtime.game_settings import Display, Layers
 from src.core.debug.debug_logger import DebugLogger
-from src.core.services.event_manager import EVENTS, EnemyDiedEvent
 from src.entities.base_entity import BaseEntity
-from src.entities.entity_state import CollisionTags, LifecycleState, EntityCategory
+from src.entities.entity_state import LifecycleState
+from src.entities.entity_types import CollisionTags, EntityCategory
 from src.entities.entity_registry import EntityRegistry
 from src.graphics.animations.animation_effects.death_animation import death_fade
-
+from src.core.services.event_manager import EVENTS, EnemyDiedEvent
+from src.ui.effects.effect_manager import effect_manager
 
 class BaseEnemy(BaseEntity):
     """Base class providing shared logic for all enemy entities_animation."""
@@ -129,10 +130,6 @@ class BaseEnemy(BaseEntity):
         """Default downward movement for enemies."""
         if self.death_state == LifecycleState.DYING:
             if self.anim.update(self, dt):
-                EVENTS.dispatch(EnemyDiedEvent(
-                    position=self.rect.center,
-                    enemy_type_tag=self.__class__.__name__,
-                ))
                 self.mark_dead(immediate=True)
             return
 
@@ -152,7 +149,7 @@ class BaseEnemy(BaseEntity):
         Reduce health by the given amount and handle death.
         Calls on_damage() and on_death() hooks as needed.
         """
-        if self.death_state >= LifecycleState.DEAD:
+        if self.death_state != LifecycleState.ALIVE:
             return
 
         self.health = max(0, self.health - amount)
@@ -165,11 +162,19 @@ class BaseEnemy(BaseEntity):
             self.on_death(source)
 
     def on_death(self, source):
-        """
-        Handles death effects and queues an item drop request.
-        """
-        # Play death animation
-        self.anim.play(death_fade, duration=0.5)
+        self.anim.play(death_fade, duration=0.2)
+        random_effect_type = effect_manager.get_random_explosion()
+
+        effect_manager.create_explosion(
+            position=(self.rect.centerx, self.rect.centery),
+            effect_type=random_effect_type,
+            layer=self.layer + 1
+        )
+
+        EVENTS.dispatch(EnemyDiedEvent(
+            position=(self.rect.centerx, self.rect.centery),
+            enemy_type_tag=self.__class__.__name__
+        ))
 
     # ===========================================================
     # Rendering

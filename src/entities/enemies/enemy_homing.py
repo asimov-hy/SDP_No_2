@@ -12,7 +12,7 @@ Responsibilities
 
 import pygame
 from src.entities.enemies.base_enemy import BaseEnemy
-from src.entities.entity_state import EntityCategory
+from src.entities.entity_types import EntityCategory
 from src.core.debug.debug_logger import DebugLogger
 
 

@@ -37,6 +37,17 @@ class DebugHUD:
         self.visible = False
         self._last_visibility = self.visible
 
+        self.smoothed_fps = 0.0
+        self.recent_fps_sum = 0.0
+        self.recent_fps_count = 0
+        self.min_fps = float('inf')
+        self.max_fps = 0.0
+        self.min_fps_time = None
+
+        # FPS history buffer for graph
+        self.fps_history = []
+        self.fps_history_max = 120  # last ~2 seconds at 60fps
+
         self._create_elements()
 
         DebugLogger.init_entry("DebugHUD")
@@ -188,13 +199,51 @@ class DebugHUD:
             draw_manager.queue_draw(surface_vel, rect_vel, game_settings.Layers.UI)
 
         # --------------------------------------------------------
-        # Hitbox Debug Toggle Indicator
+        # FPS Metrics: Smoothed / Recent Avg / Min / Max
         # --------------------------------------------------------
-        y_offset = 60
-        hitbox_state = "ON" if game_settings.Debug.HITBOX_VISIBLE else "OFF"
-        hitbox_color = (0, 255, 0) if game_settings.Debug.HITBOX_VISIBLE else (255, 80, 80)
-        surface_hitbox = font.render(f"Hitbox: {hitbox_state}", True, hitbox_color)
-        draw_manager.queue_draw(surface_hitbox, surface_hitbox.get_rect(topleft=(70, y_offset)), game_settings.Layers.UI)
+        y = 60
+
+        # Recent rolling average
+        recent_avg = (
+            self.recent_fps_sum / self.recent_fps_count
+            if self.recent_fps_count > 0 else 0.0
+        )
+
+        # Text lines
+        fps_smooth = f"FPS (smoothed): {self.smoothed_fps:.1f}"
+        fps_recent = f"Recent Avg FPS: {recent_avg:.1f}"
+        fps_min = f"Min FPS: {self.min_fps:.1f} ({self.min_fps_time})" if self.min_fps_time else "Min FPS: --"
+        fps_max = f"Max FPS: {self.max_fps:.1f}"
+
+        # Render surfaces
+        surface_smooth = font.render(fps_smooth, True, (0, 255, 0))
+        surface_recent = font.render(fps_recent, True, (0, 200, 255))
+        surface_min = font.render(fps_min, True, (255, 200, 0))
+        surface_max = font.render(fps_max, True, (100, 200, 255))
+
+        # Draw
+        draw_manager.queue_draw(surface_smooth, surface_smooth.get_rect(topleft=(70, y)), game_settings.Layers.UI)
+        draw_manager.queue_draw(surface_recent, surface_recent.get_rect(topleft=(70, y + 20)), game_settings.Layers.UI)
+        draw_manager.queue_draw(surface_min, surface_min.get_rect(topleft=(70, y + 40)), game_settings.Layers.UI)
+        draw_manager.queue_draw(surface_max, surface_max.get_rect(topleft=(70, y + 60)), game_settings.Layers.UI)
+
+        # # --------------------------------------------------------
+        # # FPS Graph (last N frames)
+        # # --------------------------------------------------------
+        # graph_x = 70
+        # graph_y = y + 90
+        # bar_width = 2
+        # max_height = 40
+        #
+        # for i, fps in enumerate(self.fps_history):
+        #     height = min(120, fps) * (max_height / 120)
+        #     rect = pygame.Rect(
+        #         graph_x + i * bar_width,
+        #         graph_y + (max_height - height),
+        #         bar_width,
+        #         height
+        #     )
+        #     draw_manager.queue_draw_rect(rect, (0, 255, 120), game_settings.Layers.UI)
 
     # ===========================================================
     # Visibility Controls
