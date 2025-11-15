@@ -82,9 +82,6 @@ def damage_collision(player, other):
     player.status_manager.activate(PlayerEffectState.IFRAME)
 
 
-# ===========================================================
-# Entity Hook: Death Cleanup
-# ===========================================================
 def on_death(player):
     """
     Called automatically by entity_logic.handle_death() when player HP reaches zero.

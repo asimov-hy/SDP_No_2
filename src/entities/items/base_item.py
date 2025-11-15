@@ -78,7 +78,7 @@ class BaseItem(BaseEntity):
             }
             # Rebuild the sprite using shape_data
             if draw_manager:
-                self.image = draw_manager.build_shape(
+                self.image = draw_manager.prebake_shape(
                     shape_data["type"],
                     shape_data["size"],
                     shape_data["color"]

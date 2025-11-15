@@ -148,7 +148,7 @@ class BaseEnemy(BaseEntity):
         Reduce health by the given amount and handle death.
         Calls on_damage() and on_death() hooks as needed.
         """
-        if self.death_state >= LifecycleState.DEAD:
+        if self.death_state != LifecycleState.ALIVE:
             return
 
         self.health = max(0, self.health - amount)
