@@ -11,6 +11,7 @@ Responsibilities
 """
 
 from src.core.debug.debug_logger import DebugLogger
+from src.scenes.pause_scene import PauseScene
 from src.scenes.start_scene import StartScene
 from src.scenes.game_scene import GameScene
 
@@ -40,7 +41,8 @@ class SceneManager:
         DebugLogger.init_sub("Setting up initial scene")
         self.scenes = {
             "StartScene": StartScene,
-            "GameScene": GameScene
+            "GameScene": GameScene,
+            "PauseScene": PauseScene
         }
 
         # Cached active instance (Hot Path Cache)
@@ -98,6 +100,20 @@ class SceneManager:
         if hasattr(self._active_instance, "on_enter"):
             DebugLogger.state(f"Entering scene: {self._active_instance.__class__.__name__}")
             self._active_instance.on_enter()
+
+    def reset_and_set_scene(self, name):
+        """
+                Forcibly deletes the existing scene instance and creates a new one
+                before switching to it. (Mainly used to restart the GameScene).
+                """
+        if name in self.scenes and not isinstance(self.scenes[name], type):
+            DebugLogger.system(f"Resetting instance of '{name}'")
+            # Revert the stored instance back to its original class definition
+            scene_class = type(self.scenes[name])
+            self.scenes[name] = scene_class  # Replace instance with class
+
+        # Now, set_scene will create a new instance (calling __init__)
+        self.set_scene(name)
 
     # ===========================================================
     # Event, Update, Draw Delegation
