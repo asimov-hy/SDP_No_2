@@ -75,7 +75,7 @@ class StartScene:
         # Exit Button
         self.exit_button = UIButton(
             x=center_x - btn_width // 2,
-            y=btn_y_start,
+            y=btn_y_start + btn_padding,
             width=btn_width,
             height=btn_height,
             action="exit_game",
@@ -134,11 +134,11 @@ class StartScene:
         Args:
             dt (float): Delta time (in seconds) since the last frame.
         """
-        # DebugLogger.init_entry("Starting StartScene")
-        self.timer += dt
-        if self.timer > 1.0:  # 1 second delay
-            DebugLogger.system("Ending StartScene")
-            self.scene_manager.set_scene("GameScene")
+        # # DebugLogger.init_entry("Starting StartScene")
+        # self.timer += dt
+        # if self.timer > 1.0:  # 1 second delay
+        #     DebugLogger.system("Ending StartScene")
+        #     self.scene_manager.set_scene("GameScene")
 
         mouse_pos = pygame.mouse.get_pos()
         for btn in self.ui_elements:
@@ -155,15 +155,23 @@ class StartScene:
             draw_manager: DrawManager instance responsible for rendering.
         """
         # Draw a simple background or message
-        surf = pygame.Surface((200, 80))
-        surf.fill((0, 0, 0))
-        draw_manager.queue_draw(surf, surf.get_rect(center=(640, 360)), layer=0)
+        # surf = pygame.Surface((200, 80))
+        # surf.fill((0, 0, 0))
+        game_surface = self.display.get_game_surface()
+        game_surface.fill((10, 10, 30))
+
+        draw_manager.queue_draw(self.title_surf, self.title_rect, layer = 10)
+
+        for btn in self.ui_elements:
+            button_surface = btn.render_surface()
+            draw_manager.queue_draw(button_surface, btn.rect, layer = btn.layer)
 
     # ===========================================================
     # Lifecycle Hooks
     # ===========================================================
     def on_enter(self):
         DebugLogger.state("on_enter()")
+        pygame.mouse.set_visible(True)
 
     def on_exit(self):
         DebugLogger.state("on_exit()")
