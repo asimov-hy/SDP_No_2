@@ -19,6 +19,8 @@ import os
 from src.core.services.event_manager import EVENTS, EnemyDiedEvent
 from src.core.services.config_manager import load_config
 from src.core.debug.debug_logger import DebugLogger
+from src.entities.entity_registry import EntityRegistry
+from src.entities.items.base_item import BaseItem
 
 
 # ===========================================================
@@ -27,11 +29,18 @@ from src.core.debug.debug_logger import DebugLogger
 
 class ItemType(Enum):
     """Enum for all available item types."""
-    EXTRA_LIFE = "extra_life"
-    SCORE_BONUS_MEDAL = "score_bonus_medal"
-    HEALTH_PACK = "health_pack"
+    MAX_HEALTH_UP = "max_health_up"
+    HEALTH_PACK_SMALL = "health_pack_small"
+    HEALTH_PACK_MEDIUM = "health_pack_medium"
+    HEALTH_PACK_LARGE = "health_pack_large"
+    SHIELD_PACK = "shield_pack"
     QUICK_FIRE = "quick_fire"
-    DUMMY = "dummy"
+    EXTRA_LIFE = "extra_life"
+    SCORE_MEDAL_SMALL = "score_medal_small"
+    SCORE_MEDAL_MEDIUM = "score_medal_medium"
+    SCORE_MEDAL_LARGE = "score_medal_large"
+    SPEED_UP = "speed_up"
+    POWER_UP = "power_up"
 
 
 # ===========================================================
@@ -49,6 +58,7 @@ class ItemManager:
             spawn_manager: Reference to SpawnManager for creating items
             item_data_path: Path to items.json configuration file
         """
+        EntityRegistry.register("pickup", "default", BaseItem)
         self.spawn_manager = spawn_manager
         self._item_definitions = {}
         self._loot_table_ids = []
@@ -70,8 +80,9 @@ class ItemManager:
         self._item_definitions = load_config(path, default_dict={})
 
         if self._item_definitions:
-            DebugLogger.init_sub(
-                f"Loaded {len(self._item_definitions)} item definitions"
+            DebugLogger.trace(
+                f"Loaded {len(self._item_definitions)} item definitions",
+                category="item"
             )
         else:
             DebugLogger.warn(f"No items loaded from {path}")

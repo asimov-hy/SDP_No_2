@@ -27,6 +27,7 @@ def effect_handler(effect_name: str):
 # ===========================================================
 # Effect Handlers
 # ===========================================================
+@effect_handler("ADD_HEALTH")
 def handle_ADD_HEALTH(player, effect_data):
     """Add health to player (capped at max_health)."""
     amount = effect_data.get("amount", 0)
@@ -38,7 +39,7 @@ def handle_ADD_HEALTH(player, effect_data):
         category="item"
     )
 
-
+@effect_handler("ADD_MAX_HEALTH")
 def handle_ADD_MAX_HEALTH(player, effect_data):
     """Increase max health and heal for the difference."""
     amount = effect_data.get("amount", 0)
@@ -51,7 +52,7 @@ def handle_ADD_MAX_HEALTH(player, effect_data):
         category="item"
     )
 
-
+@effect_handler("FULL_HEAL")
 def handle_FULL_HEAL(player, effect_data):
     """Restore player to full health."""
     old_health = player.health
@@ -62,7 +63,7 @@ def handle_FULL_HEAL(player, effect_data):
         category="item"
     )
 
-
+@effect_handler("MULTIPLY_SPEED")
 def handle_MULTIPLY_SPEED(player, effect_data):
     """Temporarily multiply player movement speed."""
     multiplier = effect_data.get("multiplier", 1.0)
@@ -76,7 +77,7 @@ def handle_MULTIPLY_SPEED(player, effect_data):
         category="item"
     )
 
-
+@effect_handler("MULTIPLY_FIRE_RATE")
 def handle_MULTIPLY_FIRE_RATE(player, effect_data):
     """Temporarily multiply player fire rate."""
     multiplier = effect_data.get("multiplier", 1.0)
@@ -90,7 +91,7 @@ def handle_MULTIPLY_FIRE_RATE(player, effect_data):
         category="item"
     )
 
-
+@effect_handler("ADD_DAMAGE")
 def handle_ADD_DAMAGE(player, effect_data):
     """Add flat damage bonus to player projectiles."""
     amount = effect_data.get("amount", 1)
@@ -104,7 +105,7 @@ def handle_ADD_DAMAGE(player, effect_data):
         category="item"
     )
 
-
+@effect_handler("GRANT_SHIELD")
 def handle_GRANT_SHIELD(player, effect_data):
     """Grant temporary shield/invincibility."""
     duration = effect_data.get("duration", 3.0)
@@ -117,7 +118,7 @@ def handle_GRANT_SHIELD(player, effect_data):
         category="item"
     )
 
-
+@effect_handler("ADD_SCORE")
 def handle_ADD_SCORE(player, effect_data):
     """Add score points (debug only - no score system implemented)."""
     amount = effect_data.get("amount", 0)
