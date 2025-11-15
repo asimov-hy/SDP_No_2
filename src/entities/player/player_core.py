@@ -126,10 +126,22 @@ class Player(BaseEntity):
         self.shoot_timer = 0.0
 
         # ========================================
+        # Load Player Bullet Sprite
+        # ========================================
+        bullet_path = "assets/images/sprites/bullets/100H.png"
+        if os.path.exists(bullet_path):
+            self.bullet_image = pygame.image.load(bullet_path).convert_alpha()
+            self.bullet_image = pygame.transform.scale(self.bullet_image, (16, 32))
+        else:
+            DebugLogger.warn(f"Missing bullet sprite: {bullet_path}")
+            self.bullet_image = pygame.Surface((8, 16), pygame.SRCALPHA)
+            pygame.draw.rect(self.bullet_image, (255, 255, 100), (0, 0, 8, 16))
+
+        # ========================================
         # 7. Global Ref & Status
         # ========================================
         STATE.player_ref = self
-        self.state_manager = StateManager(self, cfg["status_effects"])
+        self.state_manager = StateManager(self, cfg["state_effects"])
 
         DebugLogger.init_entry("Player Initialized")
         DebugLogger.init_sub(f"Location: ({x:.1f}, {y:.1f})")

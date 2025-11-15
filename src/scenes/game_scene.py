@@ -85,6 +85,12 @@ class GameScene:
         self.player.bullet_manager = self.bullet_manager
         DebugLogger.init_sub("Connected [Player] → [BulletManager]")
 
+        self.bullet_manager.prewarm_pool(
+            owner="player",
+            count=50,
+            image=self.player.bullet_image  # ← REQUIRED
+        )
+
         # Collision Manager Setup
         self.collision_manager = CollisionManager(
             self.player,
