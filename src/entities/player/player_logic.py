@@ -10,7 +10,8 @@ They handle player-exclusive logic like i-frames, death cleanup, and visuals.
 from src.core.debug.debug_logger import DebugLogger
 from src.core.services.event_manager import PlayerHealthEvent, FireRateEvent
 from src.entities.entity_state import LifecycleState
-from src.entities.player.player_state import PlayerEffectState, InteractionState
+from src.entities.entity_state import InteractionState
+from src.entities.player.player_state import PlayerEffectState
 from src.graphics.animations.entities_animation.player_animation import damage_player, death_player
 
 
@@ -63,7 +64,7 @@ def damage_collision(player, other):
     else:
         target_state = "normal"
 
-    iframe_time = player.status_manager.effect_config["iframe"]["duration"]
+    iframe_time = player.state_manager.state_config["iframe"]["duration"]
     previous_state = player._current_sprite  # Get OLD state before damage
 
     DebugLogger.state(
@@ -80,12 +81,9 @@ def damage_collision(player, other):
     )
 
     # Trigger IFRAME and update visuals
-    player.status_manager.activate(PlayerEffectState.IFRAME)
+    player.state_manager.timed_state(PlayerEffectState.IFRAME)
 
 
-# ===========================================================
-# Entity Hook: Death Cleanup
-# ===========================================================
 def on_death(player):
     """
     Called automatically by entity_logic.handle_death() when player HP reaches zero.

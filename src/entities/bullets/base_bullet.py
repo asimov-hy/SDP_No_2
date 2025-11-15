@@ -16,7 +16,8 @@ from src.core.runtime import game_settings
 from src.core.runtime.game_settings import Bounds
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
-from src.entities.entity_state import LifecycleState, EntityCategory
+from src.entities.entity_state import LifecycleState
+from src.entities.entity_types import EntityCategory
 from src.entities.entity_registry import EntityRegistry
 
 

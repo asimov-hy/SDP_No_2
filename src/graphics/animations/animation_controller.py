@@ -37,6 +37,9 @@ class AnimationController:
         if t >= 1.0:
             self.active_func = None
 
+            if hasattr(entity, 'image') and entity.image:
+                entity.image.set_alpha(255)
+
             if "target_state" in self.context:
                 _update_sprite(entity, self.context["target_state"])
 

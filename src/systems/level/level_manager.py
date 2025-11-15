@@ -30,7 +30,7 @@ Data Format
 import os
 from src.core.services.config_manager import load_config
 from src.core.debug.debug_logger import DebugLogger
-from src.entities.entity_state import EntityCategory
+from src.entities.entity_types import EntityCategory
 from src.systems.level.pattern_registry import PatternRegistry
 
 

@@ -82,7 +82,6 @@ class GameLoop:
         # Dependency Injection: Link SceneManager back into InputManager
         self.input_manager.link_scene_manager(self.scenes)
 
-
     # ===========================================================
     # Core Runtime Loop
     # ===========================================================
@@ -227,6 +226,36 @@ class GameLoop:
         # Frame Summary
         # -------------------------------------------------------
         frame_time_ms = (time.perf_counter() - start_total) * 1000
+
+        fps = 1000.0 / frame_time_ms if frame_time_ms > 0 else 0.0
+        self.debug_hud.current_fps = fps
+
+        # Add FPS to history (for graph)
+        self.debug_hud.fps_history.append(fps)
+        if len(self.debug_hud.fps_history) > self.debug_hud.fps_history_max:
+            self.debug_hud.fps_history.pop(0)
+
+        # Smoothed
+        self.debug_hud.smoothed_fps = (
+            self.debug_hud.smoothed_fps * 0.9 + fps * 0.1
+            if self.debug_hud.smoothed_fps > 0 else fps
+        )
+
+        # Recent Average
+        self.debug_hud.recent_fps_sum += fps
+        self.debug_hud.recent_fps_count += 1
+
+        if self.debug_hud.recent_fps_count > 300:  # 5-second window
+            self.debug_hud.recent_fps_sum *= 0.5
+            self.debug_hud.recent_fps_count = int(self.debug_hud.recent_fps_count * 0.5)
+
+        # Max / Min tracking
+        if fps > self.debug_hud.max_fps:
+            self.debug_hud.max_fps = fps
+
+        if fps < self.debug_hud.min_fps:
+            self.debug_hud.min_fps = fps
+            self.debug_hud.min_fps_time = time.strftime("%H:%M:%S")
 
         if frame_time_ms > Debug.FRAME_TIME_WARNING:
             DebugLogger.warn(

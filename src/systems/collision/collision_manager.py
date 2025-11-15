@@ -17,7 +17,7 @@ Responsibilities
 from src.core.runtime.game_settings import Debug
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.entity_state import LifecycleState
-from src.entities.player.player_state import InteractionState
+from src.entities.entity_state import InteractionState
 from src.systems.collision.collision_hitbox import CollisionHitbox
 
 
