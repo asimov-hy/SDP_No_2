@@ -4,6 +4,7 @@ game_state.py
 Holds all mutable runtime state of the game.
 Separate from static configuration in game_settings.py.
 """
+from src.systems.exp.exp_manager import ExpManager
 
 class GameState:
     def __init__(self):
@@ -12,6 +13,7 @@ class GameState:
         self.previous_scene = None
 
         # Player & gameplay
+        self.exp_manager = ExpManager(self)
         self.score = 0
         self.lives = 3
         self.level = 1

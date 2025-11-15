@@ -18,7 +18,6 @@ from src.entities.entity_state import CollisionTags, LifecycleState, EntityCateg
 from src.entities.entity_registry import EntityRegistry
 from src.graphics.animations.animation_effects.death_animation import death_fade
 
-
 class BaseEnemy(BaseEntity):
     """Base class providing shared logic for all enemy entities_animation."""
 
@@ -109,7 +108,17 @@ class BaseEnemy(BaseEntity):
             self.on_death(source)
 
     def on_death(self, source):
+        from src.core.runtime.game_state import STATE # Avoid circular import
+
+        exp_amount = self.get_exp_reward()
+        STATE.exp_manager.exp_up(exp_amount)
+
         self.anim.play(death_fade, duration=0.5)
+
+    def get_exp_reward(self):
+        """Return EXP reward for this enemy."""
+        return getattr(self, "base_exp", 20)  # default EXP = 20
+
 
     # ===========================================================
     # Rendering
