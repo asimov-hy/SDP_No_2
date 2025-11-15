@@ -19,7 +19,6 @@ import os
 from src.core.services.event_manager import EVENTS, EnemyDiedEvent
 from src.core.services.config_manager import load_config
 from src.core.debug.debug_logger import DebugLogger
-from src.entities.items.base_item import BaseItem
 
 
 # ===========================================================
