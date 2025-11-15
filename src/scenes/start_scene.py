@@ -78,7 +78,7 @@ class StartScene:
             y=btn_y_start,
             width=btn_width,
             height=btn_height,
-            action="start_game",
+            action="exit_game",
             color=(80, 150, 200),
             hover_color=(100, 180, 230),
             pressed_color=(60, 120, 160),
@@ -105,8 +105,24 @@ class StartScene:
         """
         if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
             DebugLogger.action("Input detected. Ending StartScene")
-            self.scene_manager.set_scene("GameScene")
 
+            for btn in self.ui_elements:
+                action = btn.handle_click(event.pos)
+
+                if action:
+                    self.on_button_click(action)
+                    break
+
+    def on_button_click(self, action):
+        DebugLogger.action(f"Button triggered action: {action}")
+
+        if action == "start_game":
+            self.scene_manager.set_scene("GameScene")
+            DebugLogger.system("Starting GameScene")
+        elif action == "exit_game":
+            DebugLogger.system("Shutting down game")
+            pygame.quit()
+            sys.exit()
     # ===========================================================
     # Update Logic
     # ===========================================================
@@ -123,6 +139,10 @@ class StartScene:
         if self.timer > 1.0:  # 1 second delay
             DebugLogger.system("Ending StartScene")
             self.scene_manager.set_scene("GameScene")
+
+        mouse_pos = pygame.mouse.get_pos()
+        for btn in self.ui_elements:
+            btn.update(mouse_pos)
 
     # ===========================================================
     # Rendering
