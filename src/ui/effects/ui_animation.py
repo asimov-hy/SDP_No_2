@@ -12,7 +12,7 @@ such as position, scale, color, or opacity.
 
 Implementation Notes
 --------------------
-- Should be abstract and data-driven (interpolate between values).
+- Should be abstract and config-driven (interpolate between values).
 - Can be used by any UI element (buttons, HUD icons, menus).
 - Does not handle input — purely visual animation helpers.
 
@@ -20,5 +20,5 @@ Example Use Cases
 -----------------
 - Smooth button hover scale or color transitions.
 - Sliding panels or fading notifications.
-- Tweened text movement or bounce effects.
+- Tweened text movement or bounce animation_effects.
 """

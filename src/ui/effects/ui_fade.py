@@ -3,7 +3,7 @@ NOTE: This module is purely theoretical and may change at any time.
 
 ui_fade.py
 ----------
-Implements fade-in/fade-out effects for UI or scene transitions.
+Implements fade-in/fade-out animation_effects for UI or scene transitions.
 
 Theoretical Purpose
 -------------------

@@ -13,7 +13,8 @@ Responsibilities
 
 import pygame
 
-from src.core.utils.debug_logger import DebugLogger
+from src.core.debug.debug_logger import DebugLogger
+
 
 class StartScene:
     """Temporary start scene that auto-transitions to GameScene."""
@@ -22,9 +23,11 @@ class StartScene:
     # Initialization
     # ===========================================================
     def __init__(self, scene_manager):
+        DebugLogger.section("Initializing Scene: StartScene")
         self.scene_manager = scene_manager
         self.timer = 0.0
-        DebugLogger.init("║{:<57}║".format(f"\t\t└─ [StartScene][INIT]\t→ Initialized Starting Scene"), show_meta=False)
+        DebugLogger.section("- Finished Initialization", only_title=True)
+        DebugLogger.section("─"*59+"\n", only_title=True)
 
     # ===========================================================
     # Event Handling
@@ -37,8 +40,8 @@ class StartScene:
             event (pygame.event.Event): The current Pygame event.
         """
         if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
-            DebugLogger.action("Input detected → switching to GameScene")
-            self.scene_manager.set_scene("GAME")
+            DebugLogger.action("Input detected. Ending StartScene")
+            self.scene_manager.set_scene("GameScene")
 
     # ===========================================================
     # Update Logic
@@ -51,10 +54,11 @@ class StartScene:
         Args:
             dt (float): Delta time (in seconds) since the last frame.
         """
+        # DebugLogger.init_entry("Starting StartScene")
         self.timer += dt
         if self.timer > 1.0:  # 1 second delay
-            DebugLogger.action("Auto-transition → GameScene")
-            self.scene_manager.set_scene("GAME")
+            DebugLogger.system("Ending StartScene")
+            self.scene_manager.set_scene("GameScene")
 
     # ===========================================================
     # Rendering
@@ -70,3 +74,21 @@ class StartScene:
         surf = pygame.Surface((200, 80))
         surf.fill((0, 0, 0))
         draw_manager.queue_draw(surf, surf.get_rect(center=(640, 360)), layer=0)
+
+    # ===========================================================
+    # Lifecycle Hooks
+    # ===========================================================
+    def on_enter(self):
+        DebugLogger.state("on_enter()")
+
+    def on_exit(self):
+        DebugLogger.state("on_exit()")
+
+    def on_pause(self):
+        DebugLogger.state("on_pause()")
+
+    def on_resume(self):
+        DebugLogger.state("on_resume()")
+
+    def reset(self):
+        DebugLogger.state("reset()")
