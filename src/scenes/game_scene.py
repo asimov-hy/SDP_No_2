@@ -284,12 +284,12 @@ class GameScene:
     # Lifecycle Hooks
     # ===========================================================
     def on_enter(self):
-        if self.campaign:
-            start_level = self.campaign[0]
+        start_level = LevelRegistry.get_default_start()  # <-- Uses start_level key
+        if start_level:
             DebugLogger.state(f"Starting level: {start_level.name}")
             self.level_manager.load(start_level.path)
         else:
-            DebugLogger.warn("No campaign loaded")
+            DebugLogger.warn("No start level found")
 
     def on_exit(self):
         DebugLogger.state("on_exit()")

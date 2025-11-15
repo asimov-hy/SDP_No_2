@@ -1,11 +1,3 @@
-"""
-game_state.py
--------------
-Holds all mutable runtime state of the game.
-Separate from static configuration in game_settings.py.
-"""
-
-
 class GameState:
     def __init__(self):
         # Scene control
