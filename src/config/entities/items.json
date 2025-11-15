@@ -1,15 +1,51 @@
 {
-  "health_small": {
-    "asset_path": null,
-    "movement": "straight",
-    "speed": 60,
-    "drop_weight": 10,
-    "size": [24, 24],
-    "color": [0, 255, 100],
+  "score_bonus_medal": {
+    "name": "Bonus Medal",
+    "asset_path": "assets/images/items/dummy_item.png",
+    "drop_weight": 100,
+    "physics": {
+      "velo_x": 0,
+      "velo_y": 160,
+      "hitbox_scale": 0.85
+    },
     "effects": [
       {
-        "type": "ADD_PLAYER_HEALTH",
+        "type": "ADD_SCORE",
+        "amount": 500
+      }
+    ]
+  },
+  "health_pack": {
+    "name": "Health Pack",
+    "asset_path": "assets/images/items/dummy_item.png",
+    "drop_weight": 10000,
+    "effects": [
+      {
+        "type": "ADD_HEALTH",
         "amount": 1
+      }
+    ]
+  },
+  "quick_fire": {
+    "name": "Quick Fire",
+    "asset_path": "assets/images/items/dummy_item.png",
+    "drop_weight": 1000,
+    "effects": [
+      {
+        "type": "MULTIPLY_FIRE_RATE",
+        "multiplier": 2,
+        "duration": 4
+      }
+    ]
+  },
+  "dummy": {
+    "name": "Bonus Medal",
+    "asset_path": "assets/images/items/dummy_item.png",
+    "drop_weight": 100,
+    "effects": [
+      {
+        "type": "ADD_SCORE",
+        "amount": 500
       }
     ]
   }

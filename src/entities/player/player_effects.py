@@ -13,6 +13,14 @@ Responsibilities
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.entity_state import LifecycleState
 
+EFFECT_HANDLERS = {}
+
+def effect_handler(effect_name: str):
+    """Decorator to auto-register effect handlers."""
+    def decorator(func):
+        EFFECT_HANDLERS[effect_name] = func
+        return func
+    return decorator
 
 # ===========================================================
 # Effect Handlers
@@ -107,21 +115,19 @@ def handle_GRANT_SHIELD(player, effect_data):
         category="item"
     )
 
+def handle_ADD_SCORE(player, effect_data):
+    """Add score points (debug only - no score system implemented)."""
+    amount = effect_data.get("amount", 0)
+
+    DebugLogger.action(
+        f"Score +{amount} (not implemented - debug only)",
+        category="item"
+    )
+
 
 # ===========================================================
 # Effect Dispatcher
 # ===========================================================
-EFFECT_HANDLERS = {
-    "ADD_HEALTH": handle_ADD_HEALTH,
-    "ADD_MAX_HEALTH": handle_ADD_MAX_HEALTH,
-    "FULL_HEAL": handle_FULL_HEAL,
-    "MULTIPLY_SPEED": handle_MULTIPLY_SPEED,
-    "MULTIPLY_FIRE_RATE": handle_MULTIPLY_FIRE_RATE,
-    "ADD_DAMAGE": handle_ADD_DAMAGE,
-    "GRANT_SHIELD": handle_GRANT_SHIELD,
-}
-
-
 def apply_item_effects(player, effects: list):
     """
     Apply item effects to player.

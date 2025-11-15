@@ -28,8 +28,11 @@ from src.entities.items.base_item import BaseItem
 
 class ItemType(Enum):
     """Enum for all available item types."""
-    HEALTH_SMALL = "health_small"
-    # Add more as you add to items.json
+    EXTRA_LIFE = "extra_life"
+    SCORE_BONUS_MEDAL = "score_bonus_medal"
+    HEALTH_PACK = "health_pack"
+    QUICK_FIRE = "quick_fire"
+    DUMMY = "dummy"
 
 
 # ===========================================================
