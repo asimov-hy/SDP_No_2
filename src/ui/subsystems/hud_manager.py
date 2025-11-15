@@ -138,7 +138,7 @@ class HUDManager:
         self.elements.append(gauge_bg)
         self.elements.append(gauge_needle)
 
-        DebugLogger.system("[HUDManager] HUD assembled successfully.")
+        DebugLogger.init("[HUDManager] HUD assembled successfully.")
 
     def get_elements(self):
         """

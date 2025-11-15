@@ -59,7 +59,7 @@ class ExplosionEffect(EffectElements):
             # Load the sprite image for the explosion
             self.effect_image = pygame.image.load(image_path).convert_alpha()
             width, height = self.effect_image.get_size()
-            DebugLogger.warn(f"Image load success: {image_path}")
+            DebugLogger.init(f"Image load success: {image_path}")
             # Store the original center position
             self.position = (x, y)
         except pygame.error:

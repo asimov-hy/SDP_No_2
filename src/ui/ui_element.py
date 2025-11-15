@@ -88,7 +88,7 @@ class BaseImage(UIElement):
         try:
             self.image = pygame.image.load(image_path).convert_alpha()
             width, height = self.image.get_size()
-            DebugLogger.warn(f"Image load success: {image_path}")
+            DebugLogger.init(f"Image load success: {image_path}")
         except pygame.error:
             DebugLogger.warn(f"Image load fail: {image_path}")
 

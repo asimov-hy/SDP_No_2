@@ -94,7 +94,7 @@ class UIManager:
         if hasattr(subsystem, "draw_manager"):
             subsystem.draw_manager = self.draw_manager
 
-        DebugLogger.system(f"Attached subsystem '{name}'")
+        DebugLogger.init(f"Attached subsystem '{name}'")
 
     # ===========================================================
     # Frame Updates
