@@ -15,12 +15,14 @@ from src.entities.entity_state import LifecycleState
 
 EFFECT_HANDLERS = {}
 
+
 def effect_handler(effect_name: str):
     """Decorator to auto-register effect handlers."""
     def decorator(func):
         EFFECT_HANDLERS[effect_name] = func
         return func
     return decorator
+
 
 # ===========================================================
 # Effect Handlers
@@ -114,6 +116,7 @@ def handle_GRANT_SHIELD(player, effect_data):
         f"Shield granted for {duration}s",
         category="item"
     )
+
 
 def handle_ADD_SCORE(player, effect_data):
     """Add score points (debug only - no score system implemented)."""
