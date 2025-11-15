@@ -12,6 +12,7 @@ Responsibilities
 from src.core.settings import Debug, Display, Layers
 from src.entities.base_entity import BaseEntity
 from src.core.utils.debug_logger import DebugLogger
+from src.ui.effects.effect_manager import EffectManager
 
 
 
@@ -59,6 +60,14 @@ class Enemy(BaseEntity):
 
         if self.hp <= 0:
             self.alive = False
+
+            effect_manager = EffectManager()
+            random_effect_type = effect_manager.get_random_explosion()
+            effect_manager.create_explosion(
+                position=self.rect.center,
+                effect_type=random_effect_type
+            )
+
             DebugLogger.state(f"Destroyed at {self.rect.topleft}")
 
     # ===========================================================

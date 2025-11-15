@@ -26,6 +26,8 @@ from src.ui.subsystems.hud_manager import HUDManager
 from src.systems.spawn_manager import SpawnManager
 from src.systems.stage_manager import StageManager
 
+from src.ui.effects.effect_manager import EffectManager
+
 
 
 class GameScene:
@@ -61,6 +63,13 @@ class GameScene:
             DebugLogger.init("HUDManager attached successfully")
         except Exception as e:
             DebugLogger.warn(f"HUDManager unavailable: {e}")
+
+        # ===========================================================
+        # Effect
+        # ===========================================================
+        self.effect_manager = EffectManager(Display.WIDTH, Display.HEIGHT)
+        DebugLogger.init("EffectManager initialized successfully")
+
 
         # ===========================================================
         # Entity Setup
@@ -130,12 +139,11 @@ class GameScene:
         self.stage_manager.update(dt)
         self.spawner.update(dt)
 
+        # Effect updates
+        self.effect_manager.update(dt)
+
         # UI updates (HUD, menus)
-        game_data = {
-            'exp': self.player.exp, # Set temporarily for the exp_bar (future deleted)
-            'player_health': self.player.health
-        }
-        self.ui.update(pygame.mouse.get_pos(), game_data)
+        self.ui.update(pygame.mouse.get_pos())
 
     # ===========================================================
     # Rendering
@@ -152,6 +160,9 @@ class GameScene:
 
         # Wave-based enemies
         self.spawner.draw()
+
+        # Effects rendering
+        self.effect_manager.draw(draw_manager)
 
         # UI overlays
         self.ui.draw(draw_manager)

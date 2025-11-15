@@ -16,6 +16,7 @@ This is a stub implementation and currently inactive.
 
 from src.core.utils.debug_logger import DebugLogger
 from src.ui.ui_element import *
+from src.core.game_state import STATE
 
 class HUDManager:
     """
@@ -151,11 +152,14 @@ class HUDManager:
         """
         return self.elements
 
-    def update_values(self, game_data_dict):
+    def update_values(self):
         """
         Updates the state of all managed HUD elements based on game data.
         """
+        game_data = {
+            'level': STATE.level,
+            'player_health': STATE.player_ref.health
+        }
+
         for elem in self.elements:
-            # Pass the entire data dictionary.
-            # Each element will find the keys it cares about.
-            elem.update_value(**game_data_dict)
+            elem.update_value(**game_data)
