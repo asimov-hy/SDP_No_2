@@ -135,6 +135,7 @@ class GameScene:
         DebugLogger.section("─" * 59 + "\n", only_title=True)
 
         self.paused = False
+        self.is_initialized = False # Flag of initializing scene
 
     # ===========================================================
     # Event Handling
@@ -146,6 +147,14 @@ class GameScene:
         Args:
             event (pygame.event.Event): The event to process.
         """
+
+        # Detect ESC KEY
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                DebugLogger.action("Pause key (ESC) pressed.")
+                self.scene_manager.set_scene("PauseScene")
+                return
+
         self.ui.handle_event(event)
 
     # ===========================================================
@@ -253,6 +262,15 @@ class GameScene:
     # Lifecycle Hooks
     # ===========================================================
     def on_enter(self):
+        if self.is_initialized:
+            DebugLogger.state("Resuming GameScene")
+            self.paused = False
+            pygame.mouse.set_visible(False)
+            return
+
+        self.is_initialized = True
+        pygame.mouse.set_visible(False)
+
         if self.campaign:
             start_level = self.campaign[0]
             DebugLogger.state(f"Starting level: {start_level.name}")

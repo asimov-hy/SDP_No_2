@@ -127,8 +127,8 @@ class StartScene:
         DebugLogger.action(f"Button triggered action: {action}")
 
         if action == "start_game":
-            self.scene_manager.set_scene("GameScene")
-            DebugLogger.system("Starting GameScene")
+            self.scene_manager.reset_and_set_scene("GameScene")
+            DebugLogger.system("Starting new GameScene")
         elif action == "exit_game":
             DebugLogger.system("Shutting down game")
             pygame.quit()

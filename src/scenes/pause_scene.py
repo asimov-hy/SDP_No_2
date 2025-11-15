@@ -104,16 +104,16 @@ class PauseScene:
                         self.on_button_click(action)
                         break
 
-        def on_button_click(self, action: str):
-            DebugLogger.action(f"PauseScene received action: '{action}'")
+    def on_button_click(self, action: str):
+        DebugLogger.action(f"PauseScene received action: '{action}'")
 
-            if action == "resume_game":
-                self.scene_manager.set_scene("GameScene")
-                DebugLogger.system("Resuming game")
+        if action == "resume_game":
+            self.scene_manager.set_scene("GameScene")
+            DebugLogger.system("Resuming game")
 
-            elif action == "main_menu":
-                DebugLogger.system("Exiting to StartScene")
-                self.scene_manager.set_scene("StartScene")
+        elif action == "main_menu":
+            DebugLogger.system("Exiting to StartScene")
+            self.scene_manager.set_scene("StartScene")
 
     # ===========================================================
     # Update Logic
@@ -146,21 +146,21 @@ class PauseScene:
             button_surface = btn.render_surface()
             draw_manager.queue_draw(button_surface, btn.rect, layer=btn.layer)
 
-        # ===========================================================
-        # Lifecycle Hooks
-        # ===========================================================
-        def on_enter(self):
-            DebugLogger.state("on_enter() - PauseScene")
-            pygame.mouse.set_visible(True)
+    # ===========================================================
+    # Lifecycle Hooks
+    # ===========================================================
+    def on_enter(self):
+        DebugLogger.state("on_enter() - PauseScene")
+        pygame.mouse.set_visible(True)
 
-        def on_exit(self):
-            DebugLogger.state("on_exit() - PauseScene")
+    def on_exit(self):
+        DebugLogger.state("on_exit() - PauseScene")
 
-        def on_pause(self):
-            DebugLogger.state("on_pause()")
+    def on_pause(self):
+        DebugLogger.state("on_pause()")
 
-        def on_resume(self):
-            DebugLogger.state("on_resume()")
+    def on_resume(self):
+        DebugLogger.state("on_resume()")
 
-        def reset(self):
-            DebugLogger.state("reset()")
+    def reset(self):
+        DebugLogger.state("reset()")
