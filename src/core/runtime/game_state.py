@@ -15,6 +15,8 @@ class GameState:
         self.score = 0
         self.lives = 3
         self.level = 1
+        self.exp = 0
+        self.level_exp = 30
         self.player_ref = None  # Can hold player instance reference
 
         # Flags
