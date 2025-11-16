@@ -228,7 +228,7 @@ class Player(BaseEntity):
 
         # 4. Combat logic
         from .player_ability import update_shooting
-        attack_held = self.input_manager.is_attack_held()
+        attack_held = self.input_manager.is_action_held("attack")
         update_shooting(self, dt, attack_held)
 
     def draw(self, draw_manager):

@@ -101,19 +101,21 @@ class InputManager:
         self._last_raw_move = pygame.Vector2(0, 0)
         self._normalized_dirty = True
 
-        # Action states (gameplay)
-        self.attack_pressed = False
-        self.attack_held = False
-        self.bomb_pressed = False
-        self.pause_pressed = False
+        # Action registry - stores all action states
+        self._actions = {
+            # Gameplay actions
+            "attack": {"pressed": False, "held": False},
+            "bomb": {"pressed": False},
+            "pause": {"pressed": False},
 
-        # ui navigation states
-        self.ui_up = False
-        self.ui_down = False
-        self.ui_left = False
-        self.ui_right = False
-        self.ui_confirm = False
-        self.ui_back = False
+            # UI navigation actions
+            "ui_up": {"pressed": False},
+            "ui_down": {"pressed": False},
+            "ui_left": {"pressed": False},
+            "ui_right": {"pressed": False},
+            "ui_confirm": {"pressed": False},
+            "ui_back": {"pressed": False},
+        }
 
     # ===========================================================
     # Validation
@@ -186,11 +188,12 @@ class InputManager:
         # -----------------------------------------------------------
         # Attack input
         # -----------------------------------------------------------
-        self.attack_pressed = self._is_pressed("attack", keys)
-        self.attack_held = self.attack_pressed
+        attack_state = self._is_pressed("attack", keys)
+        self._actions["attack"]["pressed"] = attack_state
+        self._actions["attack"]["held"] = attack_state
 
-        self.bomb_pressed = self._is_pressed("bomb", keys)
-        self.pause_pressed = self._is_pressed("pause", keys)
+        self._actions["bomb"]["pressed"] = self._is_pressed("bomb", keys)
+        self._actions["pause"]["pressed"] = self._is_pressed("pause", keys)
 
         # Merge controller input (unchanged)
         # self._update_controller()
@@ -221,38 +224,21 @@ class InputManager:
     # ===========================================================
 
     def _update_ui_navigation(self):
-        """Poll input for ui navigation and interaction."""
+        """Poll input for ui navigation."""
         keys = pygame.key.get_pressed()
-        self.ui_up = self._is_pressed("navigate_up", keys)
-        self.ui_down = self._is_pressed("navigate_down", keys)
-        self.ui_left = self._is_pressed("navigate_left", keys)
-        self.ui_right = self._is_pressed("navigate_right", keys)
-        self.ui_confirm = self._is_pressed("confirm", keys)
-        self.ui_back = self._is_pressed("back", keys)
+
+        self._actions["ui_up"]["pressed"] = self._is_pressed("navigate_up", keys)
+        self._actions["ui_down"]["pressed"] = self._is_pressed("navigate_down", keys)
+        self._actions["ui_left"]["pressed"] = self._is_pressed("navigate_left", keys)
+        self._actions["ui_right"]["pressed"] = self._is_pressed("navigate_right", keys)
+        self._actions["ui_confirm"]["pressed"] = self._is_pressed("confirm", keys)
+        self._actions["ui_back"]["pressed"] = self._is_pressed("back", keys)
 
         # ------------------------------------------
         # Controller support for ui
         # ------------------------------------------
         if self.controller:
             self._update_ui_controller()
-            # hat_x, hat_y = self.controller.get_hat(0)  # D-pad
-            # x_axis = self.controller.get_axis(0)  # Analog X
-            # y_axis = self.controller.get_axis(1)  # Analog Y
-            # threshold = 0.5
-            #
-            # # D-pad or analog emulate arrow keys
-            # if hat_y == 1 or y_axis < -threshold:
-            #     self.ui_up = True
-            # elif hat_y == -1 or y_axis > threshold:
-            #     self.ui_down = True
-            # if hat_x == -1 or x_axis < -threshold:
-            #     self.ui_left = True
-            # elif hat_x == 1 or x_axis > threshold:
-            #     self.ui_right = True
-            #
-            # # Controller buttons (customizable later)
-            # self.ui_confirm = self.controller.get_button(0)  # usually A / Cross
-            # self.ui_back = self.controller.get_button(1)  # usually B / Circle
 
     # ===========================================================
     # Controller Input
@@ -362,10 +348,6 @@ class InputManager:
         self._normalized_dirty = False
         return self._normalized_move
 
-    def is_attack_held(self):
-        """Return whether the attack key/button is currently held."""
-        return self.attack_held
-
     # ===========================================================
     # System-Level Input (Global Hotkeys)
     # ===========================================================
@@ -437,13 +419,59 @@ class InputManager:
         threshold = 0.5
 
         if hat_y == 1 or y_axis < -threshold:
-            self.ui_up = True
+            self._actions["ui_up"]["pressed"] = True
         elif hat_y == -1 or y_axis > threshold:
-            self.ui_down = True
+            self._actions["ui_down"]["pressed"] = True
         if hat_x == -1 or x_axis < -threshold:
-            self.ui_left = True
+            self._actions["ui_left"]["pressed"] = True
         elif hat_x == 1 or x_axis > threshold:
-            self.ui_right = True
+            self._actions["ui_right"]["pressed"] = True
 
-        self.ui_confirm = self.controller.get_button(0)
-        self.ui_back = self.controller.get_button(1)
+        self._actions["ui_confirm"]["pressed"] = self.controller.get_button(0)
+        self._actions["ui_back"]["pressed"] = self.controller.get_button(1)
+
+    # ===========================================================
+    # Action Query Interface
+    # ===========================================================
+    def is_action_pressed(self, action: str) -> bool:
+        """
+        Check if an action was pressed this frame.
+
+        Args:
+            action (str): Action name (e.g., "attack", "bomb")
+
+        Returns:
+            bool: True if action is pressed this frame
+        """
+        return self._actions.get(action, {}).get("pressed", False)
+
+    def is_action_held(self, action: str) -> bool:
+        """
+        Check if an action is currently held down.
+
+        Args:
+            action (str): Action name (e.g., "attack")
+
+        Returns:
+            bool: True if action is held
+        """
+        return self._actions.get(action, {}).get("held", False)
+
+    # ===========================================================
+    # Backward Compatibility Properties (temporary)
+    # ===========================================================
+    @property
+    def attack_pressed(self) -> bool:
+        return self.is_action_pressed("attack")
+
+    @property
+    def bomb_pressed(self) -> bool:
+        return self.is_action_pressed("bomb")
+
+    @property
+    def pause_pressed(self) -> bool:
+        return self.is_action_pressed("pause")
+
+    @property
+    def attack_held(self) -> bool:
+        return self.is_action_held("attack")
