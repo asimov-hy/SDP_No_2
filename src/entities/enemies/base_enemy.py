@@ -90,7 +90,7 @@ class BaseEnemy(BaseEntity):
         self.health = health if health is not None else 1
         self.max_health = self.health
 
-        self.base_exp = 20
+        self.exp_value = 0
 
         self._rotation_enabled = True
 
@@ -100,7 +100,7 @@ class BaseEnemy(BaseEntity):
         self.layer = Layers.ENEMIES
 
         # hitbox scale
-        self._hitbox_scale = 0.9
+        self._hitbox_scale = kwargs.get('hitbox_scale', 0.9)
 
         if direction is None:
             self.velocity = self._auto_direction_from_edge(spawn_edge)
@@ -174,7 +174,7 @@ class BaseEnemy(BaseEntity):
         EVENTS.dispatch(EnemyDiedEvent(
             position=(self.rect.centerx, self.rect.centery),
             enemy_type_tag=self.__class__.__name__,
-            exp=self.base_exp
+            exp=self.exp_value
         ))
 
     # ===========================================================

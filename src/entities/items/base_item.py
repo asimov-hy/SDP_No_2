@@ -58,7 +58,9 @@ class BaseItem(BaseEntity):
         self.layer = Layers.PICKUPS  # Same layer as enemies for now
 
         # Hitbox scale (smaller than visual for easier collection)
-        self._hitbox_scale = 0.8
+        self._hitbox_scale = 0.8  # Can be overridden in item_data
+        if item_data and 'hitbox' in item_data:
+            self._hitbox_scale = item_data['hitbox'].get('scale', 0.8)
 
         # Movement
         self.velocity = pygame.Vector2(0, self.speed)

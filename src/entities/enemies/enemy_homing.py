@@ -25,45 +25,82 @@ class EnemyHoming(BaseEnemy):
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(self, x, y, direction=(0, 1), speed=200, health=1,
-                 size=50, color=(0, 128, 255), draw_manager=None,
-                 homing=False, turn_rate=180, player_ref=None, **kwargs):
+    def __init__(self, x, y, direction=(0, 1), speed=None, health=None,
+                 size=None, draw_manager=None,
+                 homing=False, turn_rate=None, player_ref=None, **kwargs):
         """
         Args:
             x, y: Spawn position
             direction: Tuple (dx, dy) for movement direction
-            speed: Pixels per second
-            health: HP before death
-            size: Triangle size (equilateral if int, else (w, h))
-            color: RGB tuple
-            draw_manager: Required for triangle creation
+            speed: Pixels per second (override, or use JSON default)
+            health: HP before death (override, or use JSON default)
+            size: Size override (or use JSON default)
+            draw_manager: Required for sprite loading
             homing: False, True (continuous), or "snapshot"
-            turn_rate: Degrees per second for continuous homing
+            turn_rate: Degrees per second for continuous homing (override, or use JSON default)
             player_ref: Reference to player for homing calculations
         """
-        if draw_manager is None:
-            raise ValueError("EnemyHoming requires draw_manager for circle creation")
+        from src.entities.entity_registry import EntityRegistry
 
-        # Normalize size: ensure tuple for circle
+        # Load defaults from JSON
+        defaults = EntityRegistry.get_data("enemy", "homing")
+
+        # Apply overrides or use defaults
+        speed = speed if speed is not None else defaults.get("speed", 150)
+        health = health if health is not None else defaults.get("hp", 1)
+        size = size if size is not None else defaults.get("size", 52)
+        turn_rate = turn_rate if turn_rate is not None else defaults.get("turn_rate", 180)
+        image_path = defaults.get("image")
+        hitbox_scale = defaults.get("hitbox", {}).get("scale", 0.9)
+
+        if draw_manager is None:
+            raise ValueError("EnemyHoming requires draw_manager")
+
         norm_size = (size, size) if isinstance(size, int) else size
 
-        shape_data = {
-            "type": "circle",
-            "size": norm_size,
-            "color": color
-        }
+        # Try loading image, fallback to shape
+        if image_path:
+            img = pygame.image.load(image_path).convert_alpha()
+            img = pygame.transform.scale(img, norm_size)
 
-        super().__init__(
-            x, y,
-            shape_data=shape_data,
-            draw_manager=draw_manager,
-            speed=speed,
-            health=health,
-            direction=direction,
-            spawn_edge=kwargs.get("spawn_edge")
-        )
+            super().__init__(
+                x, y,
+                image=img,
+                draw_manager=draw_manager,
+                speed=speed,
+                health=health,
+                direction=direction,
+                spawn_edge=kwargs.get("spawn_edge"),
+                hitbox_scale=hitbox_scale
+            )
+        else:
+            # Fallback to shape
+            shape_data = {
+                "type": "circle",
+                "size": norm_size,
+                "color": defaults.get("color", [0, 128, 255])
+            }
 
-        # NEW: Homing support
+            super().__init__(
+                x, y,
+                shape_data=shape_data,
+                draw_manager=draw_manager,
+                speed=speed,
+                health=health,
+                direction=direction,
+                spawn_edge=kwargs.get("spawn_edge"),
+                hitbox_scale=hitbox_scale
+            )
+
+        # Homing support
+        self.homing = homing
+        self.turn_rate = turn_rate if homing else 0
+        self.player_ref = player_ref if homing else None
+
+        # Store exp value
+        self.exp_value = defaults.get("exp", 0)
+
+        # Homing support
         self.homing = homing
         self.turn_rate = turn_rate if homing else 0
         self.player_ref = player_ref if homing else None

@@ -11,9 +11,11 @@ Responsibilities
 """
 
 import pygame
+import os
 from src.entities.enemies.base_enemy import BaseEnemy
 from src.entities.entity_types import EntityCategory
 from src.core.debug.debug_logger import DebugLogger
+from src.entities.entity_registry import EntityRegistry
 
 
 class EnemyStraight(BaseEnemy):
@@ -25,52 +27,72 @@ class EnemyStraight(BaseEnemy):
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(self, x, y, direction=(0, 1), speed=200, health=1,
-                 size=50, color=(255, 0, 0), draw_manager=None, **kwargs):
+    def __init__(self, x, y, direction=(0, 1), speed=None, health=None,
+                 size=None, draw_manager=None, **kwargs):
         """
         Args:
             x, y: Spawn position
             direction: Tuple (dx, dy) for movement direction
-            speed: Pixels per second
-            health: HP before death
-            size: Triangle size (equilateral if int, else (w, h))
-            color: RGB tuple
-            draw_manager: Required for triangle creation
+            speed: Pixels per second (override, or use JSON default)
+            health: HP before death (override, or use JSON default)
+            size: Size override (or use JSON default)
+            draw_manager: Required for sprite loading
         """
-        # Create triangle sprite
+        from src.entities.entity_registry import EntityRegistry
+        import os
+
+        # Load defaults from JSON
+        defaults = EntityRegistry.get_data("enemy", "straight")
+
+        # Apply overrides or use defaults
+        speed = speed if speed is not None else defaults.get("speed", 200)
+        health = health if health is not None else defaults.get("hp", 1)
+        size = size if size is not None else defaults.get("size", 48)
+        image_path = defaults.get("image", "assets/images/characters/enemies/missile.png")
+        hitbox_scale = defaults.get("hitbox", {}).get("scale", 0.85)
+
+        # Create sprite
         if draw_manager is None:
-            raise ValueError("EnemyStraight requires draw_manager for triangle creation")
+            raise ValueError("EnemyStraight requires draw_manager for sprite loading")
 
         norm_size = (size, size) if isinstance(size, int) else size
 
-        img = pygame.image.load("assets/images/characters/enemies/missile.png").convert_alpha()
-        img = pygame.transform.scale(img, (48, 48))
+        # Load image or use fallback shape
+        if image_path and os.path.exists(image_path):
+            img = pygame.image.load(image_path).convert_alpha()
+            img = pygame.transform.scale(img, norm_size)
 
-        super().__init__(
-            x, y,
-            image=img,
-            draw_manager=draw_manager,
-            speed=speed,
-            health=health,
-            direction=direction,
-            spawn_edge=kwargs.get("spawn_edge", None)
-        )
+            super().__init__(
+                x, y,
+                image=img,
+                draw_manager=draw_manager,
+                speed=speed,
+                health=health,
+                direction=direction,
+                spawn_edge=kwargs.get("spawn_edge", None),
+                hitbox_scale=hitbox_scale
+            )
+        else:
+            # Fallback to shape
+            shape_data = {
+                "type": "circle",
+                "color": defaults.get("color", [255, 0, 0]),
+                "size": norm_size
+            }
 
-        # shape_data = {
-        #     "type": "triangle",
-        #     "size": norm_size,
-        #     "color": color,
-        #     "kwargs": {"pointing": "up", "equilateral": True}
-        # }
-        # super().__init__(
-        #     x, y,
-        #     shape_data=shape_data,
-        #     draw_manager=draw_manager,
-        #     speed=speed,
-        #     health=health,
-        #     direction=direction,
-        #     spawn_edge=kwargs.get("spawn_edge", None)
-        # )
+            super().__init__(
+                x, y,
+                shape_data=shape_data,
+                draw_manager=draw_manager,
+                speed=speed,
+                health=health,
+                direction=direction,
+                spawn_edge=kwargs.get("spawn_edge", None),
+                hitbox_scale=hitbox_scale
+            )
+
+        # Store exp value for when enemy dies
+        self.exp_value = defaults.get("exp", 0)
 
         DebugLogger.init(
             f"Spawned EnemyStraight at ({x}, {y}) | Speed={speed}",

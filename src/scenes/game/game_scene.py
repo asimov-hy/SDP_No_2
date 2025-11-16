@@ -19,6 +19,7 @@ from src.systems.level.spawn_manager import SpawnManager
 from src.systems.level.level_manager import LevelManager
 from src.systems.level.level_registry import LevelRegistry
 from src.systems.items.item_manager import ItemManager
+from src.entities.entity_registry import EntityRegistry
 
 import src.graphics.animations.entities_animation.player_animation
 import src.graphics.animations.entities_animation.enemy_animation
@@ -41,6 +42,8 @@ class GameScene(GameplayScene):
         self.input_manager = scene_manager.input_manager
         self.draw_manager = scene_manager.draw_manager
 
+        self._load_entity_configs()
+
         # === SYSTEM INITIALIZATION (keep existing setup code) ===
         self._init_ui()
         self._init_player()
@@ -56,6 +59,13 @@ class GameScene(GameplayScene):
 
         DebugLogger.section("- Finished Initialization", only_title=True)
         DebugLogger.section("─" * 59 + "\n", only_title=True)
+
+    def _load_entity_configs(self):
+        """Load all entity JSON definitions."""
+
+        EntityRegistry.load_entity_data("entities/enemies.json")
+        # EntityRegistry.load_entity_data("entities/bullets.json")
+        EntityRegistry.load_entity_data("entities/items.json")
 
     def _init_ui(self):
         """Initialize UI system."""

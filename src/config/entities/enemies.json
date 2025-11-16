@@ -1,0 +1,24 @@
+{
+  "straight": {
+    "image": "assets/images/characters/enemies/missile.png",
+    "hp": 1,
+    "speed": 200,
+    "exp": 50,
+    "size": 48,
+    "hitbox": {
+      "scale": 0.85
+    }
+  },
+  "homing": {
+    "image": null,
+    "hp": 1,
+    "speed": 150,
+    "exp": 75,
+    "size": 52,
+    "color": [0, 128, 255],
+    "turn_rate": 180,
+    "hitbox": {
+      "scale": 0.9
+    }
+  }
+}

@@ -26,76 +26,91 @@ class EnemyShooter(BaseEnemy):
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(self, x, y, direction=(0, 1), speed=150, health=3,
-                 size=60, color=(255, 128, 0), draw_manager=None,
-                 movement_type="linear", waypoints=None, waypoint_speed=100,
-                 shoot_interval=1.0, bullet_speed=300, bullet_color=(255, 200, 0),
-                 bullet_radius=5, aim_at_player=False, player_ref=None,
-                 bullet_manager=None, spawn_edge=None, **kwargs):
+    def __init__(self, x, y, speed=None, health=None, size=None, draw_manager=None, movement_type=None,
+                 waypoints=None, waypoint_speed=None, shoot_interval=None, bullet_speed=None, bullet_color=None,
+                 bullet_radius=None, aim_at_player=None, player_ref=None, bullet_manager=None, **kwargs):
         """
-        Args:
-            x, y: Spawn position
-            direction: Tuple (dx, dy) for linear movement direction
-            speed: Pixels per second for linear movement
-            health: HP before death
-            size: Sprite size
-            color: RGB tuple
-            draw_manager: Required for sprite creation
-            movement_type: "linear" or "waypoint"
-            waypoints: List of (x, y) positions for waypoint movement
-            waypoint_speed: Speed when moving between waypoints
-            shoot_interval: Seconds between shots
-            bullet_speed: Bullet velocity magnitude
-            bullet_color: RGB tuple for bullets
-            bullet_radius: Bullet size
-            aim_at_player: If True, aim bullets at player; else use fixed direction
-            player_ref: Reference to player for aiming
-            bullet_manager: Required for spawning bullets
+        JSON-driven shooter enemy with optional overrides.
         """
-        # Use shape_data pattern for proper BaseEntity integration
-        shape_data = {
-            "type": "rect",
-            "size": (size, size),
-            "color": color
-        }
+        import pygame
+        from src.entities.entity_registry import EntityRegistry
 
-        super().__init__(x, y, shape_data=shape_data, draw_manager=draw_manager, speed=speed, health=health)
+        if draw_manager is None:
+            raise ValueError("EnemyShooter requires draw_manager")
 
-        # Store parameters for reset()
-        self.size = size
-        self.color = color
-        self.draw_manager = draw_manager
+        # ============================
+        # Load defaults from JSON
+        # ============================
+        defaults = EntityRegistry.get_data("enemy", "shooter")
 
-        # Movement configuration
+        speed = speed if speed is not None else defaults.get("speed", 100)
+        health = health if health is not None else defaults.get("hp", 2)
+        size = size if size is not None else defaults.get("size", 60)
+
+        movement_type = movement_type if movement_type is not None else defaults.get("movement_type", "linear")
+        waypoint_speed = waypoint_speed if waypoint_speed is not None else defaults.get("waypoint_speed", 120)
+        waypoints = waypoints if waypoints is not None else defaults.get("waypoints", None)
+
+        shoot_interval = shoot_interval if shoot_interval is not None else defaults.get("shoot_interval", 1.25)
+        bullet_speed = bullet_speed if bullet_speed is not None else defaults.get("bullet_speed", 300)
+        bullet_color = bullet_color if bullet_color is not None else tuple(defaults.get("bullet_color", [255, 200, 0]))
+        bullet_radius = bullet_radius if bullet_radius is not None else defaults.get("bullet_radius", 6)
+
+        aim_at_player = aim_at_player if aim_at_player is not None else defaults.get("aim_at_player", True)
+
+        image_path = defaults.get("image", "assets/images/characters/enemies/shooter.png")
+        hitbox_scale = defaults.get("hitbox", {}).get("scale", 0.85)
+
+        norm_size = (size, size) if isinstance(size, int) else size
+
+        # ============================
+        # Load sprite
+        # ============================
+        img = pygame.image.load(image_path).convert_alpha()
+        img = pygame.transform.scale(img, norm_size)
+
+        super().__init__(
+            x, y,
+            image=img,
+            draw_manager=draw_manager,
+            speed=speed,
+            health=health,
+            spawn_edge=kwargs.get("spawn_edge", None)
+        )
+
+        # Store EXP from JSON
+        self.exp_value = defaults.get("exp", 0)
+
+        # ============================
+        # Store parameters for movement
+        # ============================
         self.movement_type = movement_type
         self.base_speed = speed
 
-        # For linear movement, BaseEnemy already set velocity, no override needed
         if movement_type == "waypoint":
-            # Only override velocity for waypoint mode
             self.waypoints = waypoints or [(x, y)]
             self.waypoint_speed = waypoint_speed
             self.current_waypoint_index = 0
             self.velocity = pygame.Vector2(0, 0)
             self._update_waypoint_velocity()
 
+        # ============================
         # Shooting configuration
+        # ============================
         self.shoot_interval = shoot_interval
         self.shoot_timer = 0.0
         self.bullet_speed = bullet_speed
         self.bullet_color = bullet_color
         self.bullet_radius = bullet_radius
+
         self.aim_at_player = aim_at_player
         self.player_ref = player_ref
         self.bullet_manager = bullet_manager
 
-        if bullet_manager is None:
-            DebugLogger.warn("EnemyShooter created without bullet_manager - cannot shoot")
-
+        from src.core.debug.debug_logger import DebugLogger
         DebugLogger.init(
-            f"Spawned EnemyShooter at ({x}, {y}) | Movement={movement_type} | "
-            f"ShootInterval={shoot_interval}s",
-            category="animation_effects"
+            f"Spawned EnemyShooter at ({x}, {y}) | Move={movement_type} | ShootInterval={shoot_interval}",
+            category="enemy"
         )
 
     # ===========================================================
