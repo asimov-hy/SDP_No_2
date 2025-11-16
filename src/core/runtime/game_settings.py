@@ -123,6 +123,7 @@ class LoggerConfig:
         "animation": True,           # AnimationManager initialization and updates
         "event": True,
         "item": True,
+        "level": False,
 
         # ---------------------------------------------------
         # Rendering & Drawing

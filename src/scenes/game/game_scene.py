@@ -20,6 +20,9 @@ from src.systems.level.level_manager import LevelManager
 from src.systems.level.level_registry import LevelRegistry
 from src.systems.items.item_manager import ItemManager
 
+import src.graphics.animations.entities_animation.player_animation
+import src.graphics.animations.entities_animation.enemy_animation
+
 # Import controllers
 from src.scenes.game.gameplay_controller import GameplayController
 from src.scenes.game.entity_controller import EntityController

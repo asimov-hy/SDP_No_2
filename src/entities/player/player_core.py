@@ -205,7 +205,7 @@ class Player(BaseEntity):
 
         if self.death_state == LifecycleState.DYING:
             # Update animation; returns True when finished
-            if self.anim.update(self, dt):
+            if self.anim_manager.update(dt):
                 # Finalize death
                 self.mark_dead(immediate=True)
                 DebugLogger.state("Player death animation complete", category="player")
@@ -214,7 +214,7 @@ class Player(BaseEntity):
         if self.death_state != LifecycleState.ALIVE:
             return
 
-        self.anim.update(self, dt)
+        self.anim_manager.update(dt)
 
         # 1. Time-based status_effects and temporary states
         self.state_manager.update(dt)

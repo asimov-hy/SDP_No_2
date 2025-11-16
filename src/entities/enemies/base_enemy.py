@@ -18,7 +18,6 @@ from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import LifecycleState
 from src.entities.entity_types import CollisionTags, EntityCategory
 from src.entities.entity_registry import EntityRegistry
-from src.graphics.animations.animation_effects.death_animation import death_fade
 from src.core.services.event_manager import EVENTS, EnemyDiedEvent
 
 
@@ -128,7 +127,7 @@ class BaseEnemy(BaseEntity):
     def update(self, dt: float):
         """Default downward movement for enemies."""
         if self.death_state == LifecycleState.DYING:
-            if self.anim.update(self, dt):
+            if self.anim_manager.update(dt):
                 self.mark_dead(immediate=True)
             return
 
@@ -161,7 +160,7 @@ class BaseEnemy(BaseEntity):
             self.on_death(source)
 
     def on_death(self, source):
-        self.anim.play(death_fade, duration=0.2)
+        self.anim_manager.play("death", duration=0.2)
         # random_effect_type = effect_manager.get_random_explosion()
         #
         # effect_manager.create_explosion(

@@ -12,7 +12,6 @@ from src.core.services.event_manager import PlayerHealthEvent, FireRateEvent
 from src.entities.entity_state import LifecycleState
 from src.entities.entity_state import InteractionState
 from src.entities.player.player_state import PlayerEffectState
-from src.graphics.animations.entities_animation.player_animation import damage_player, death_player
 
 
 # ===========================================================
@@ -72,8 +71,8 @@ def damage_collision(player, other):
         category="animation"
     )
 
-    player.anim.play(
-        damage_player,
+    player.anim_manager.play(
+        "damage",  # Use string name, not function
         duration=iframe_time,
         blink_interval=0.1,
         previous_state=previous_state,
@@ -93,7 +92,7 @@ def on_death(player):
     DebugLogger.state("Player death triggered", category="player")
 
     # Start the death animation
-    player.anim.play(death_player, duration=1.0)
+    player.anim_manager.play("death", duration=1.0)
 
     # Enter DYING state (BaseEntity handles this)
     player.mark_dead()

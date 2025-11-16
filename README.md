@@ -49,10 +49,15 @@ This project demonstrates the use of:
 │  │   │
 │  │   ├─ runtime/
 │  │   │   ├─ __init__.py
+│  │   │   ├─ base_scene.py
 │  │   │   ├─ game_loop.py
-│  │   │   ├─ game_settings.py
 │  │   │   ├─ game_state.py
-│  │   │   └─ scene_manager.py
+│  │   │   ├─ gameplay_scene.py
+│  │   │   ├─ menu_scene.py
+│  │   │   ├─ scene_controller.py
+│  │   │   ├─ scene_manager.py
+│  │   │   ├─ scene_state.py
+│  │   │   └─ settings_manager.py
 │  │   │
 │  │   └─ services/
 │  │       ├─ __init__.py

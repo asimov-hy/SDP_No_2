@@ -37,7 +37,7 @@ from src.core.runtime.game_settings import Layers, Bounds, Display
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.entity_state import LifecycleState
 from src.entities.entity_types import EntityCategory
-from src.graphics.animations.animation_controller import AnimationController
+from src.graphics.animations.animation_manager import AnimationManager
 
 
 class BaseEntity:
@@ -165,7 +165,7 @@ class BaseEntity:
         self._current_sprite = None  # Subclasses set initial state
         self._sprite_config = {}  # Subclasses populate state→image/color mapping
 
-        self.anim = AnimationController()
+        self.anim_manager = AnimationManager(self)
 
     # ===========================================================
     # Spatial Synchronization
