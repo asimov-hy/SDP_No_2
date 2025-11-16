@@ -1,10 +1,10 @@
 {
   "straight": {
     "image": "assets/images/characters/enemies/missile.png",
+    "scale": 0.1,
     "hp": 1,
     "speed": 200,
     "exp": 50,
-    "size": 48,
     "hitbox": {
       "scale": 0.85
     }
