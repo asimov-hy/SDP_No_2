@@ -58,7 +58,7 @@ class AnimationManager:
         self.context = {}
 
         # Debug: Log available animations for this entity
-        tag = getattr(entity, "collision_tag", "unknown")
+        tag = getattr(entity, "category", "unknown")
         anims = get_animations_for_entity(tag)
         if anims:
             DebugLogger.init(
@@ -194,7 +194,7 @@ class AnimationManager:
             self.entity.anim_context = self.context
 
             # Lookup animation function from registry
-            anim_func = get_animation(self.entity.collision_tag, self.active_type)
+            anim_func = get_animation(self.entity.category, self.active_type)
 
             if anim_func:
                 anim_func(self.entity, t)

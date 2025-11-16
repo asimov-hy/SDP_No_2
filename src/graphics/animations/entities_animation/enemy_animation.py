@@ -35,7 +35,7 @@ def death_enemy(entity, t):
 # Damage Animations
 # ============================================================
 
-@register("enemy", "death")
+@register("enemy", "damage")
 def damage_enemy(entity, t):
     """
     Standard enemy damage: blink effect.
