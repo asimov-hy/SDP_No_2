@@ -179,7 +179,7 @@ class DebugHUD:
         surface = element.render_surface()
 
         # Queue for drawing
-        print(f"[DEBUG] Drawing button at layer {Layers.DEBUG}")
+        # print(f"[DEBUG] Drawing button at layer {Layers.DEBUG}")
         draw_manager.queue_draw(surface, element.rect, Layers.DEBUG)
 
         # Draw children
@@ -198,7 +198,7 @@ class DebugHUD:
         bg_surface = pygame.Surface((panel_width, panel_height), pygame.SRCALPHA)
         bg_surface.fill((20, 20, 20, 180))  # Dark translucent
         bg_rect = pygame.Rect(panel_x, panel_y, panel_width, panel_height)
-        print(f"[DEBUG] Drawing metrics panel at layer {Layers.DEBUG}")
+        # print(f"[DEBUG] Drawing metrics panel at layer {Layers.DEBUG}")
         draw_manager.queue_draw(bg_surface, bg_rect, Layers.DEBUG)
 
         # Metrics text

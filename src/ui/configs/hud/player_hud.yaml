@@ -20,7 +20,7 @@ player_hud:
       border: 2
       border_color: [200, 200, 200]
       border_radius: 3
-      layer: 150
+      layer: Layers.UI
 
     # Health text
     - type: label
@@ -33,7 +33,7 @@ player_hud:
       font_size: 18
       color: [255, 255, 255]
       align: center
-      layer: 151
+      layer: Layers.UI
 
     # Score label
     - type: label
@@ -46,7 +46,7 @@ player_hud:
       font_size: 24
       color: [255, 255, 255]
       align: right
-      layer: 150
+      layer: Layers.UI
 
     # Ammo counter
     - type: label
@@ -59,4 +59,4 @@ player_hud:
       font_size: 20
       color: [255, 255, 255]
       align: center
-      layer: 150
+      layer: Layers.UI

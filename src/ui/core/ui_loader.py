@@ -7,6 +7,8 @@ Loads ui configurations from YAML files and instantiates element trees.
 import yaml
 from pathlib import Path
 from typing import Dict, Any, Optional
+from src.core.runtime.game_settings import Layers
+from src.core.debug.debug_logger import DebugLogger
 
 from .ui_element import UIElement
 
@@ -103,6 +105,9 @@ class UILoader:
         if self.theme_manager and 'style' in element_config:
             element_config = self.theme_manager.apply_style(element_config.copy())
 
+        # Resolve layer names to values
+        element_config = self._resolve_layer_names(element_config)
+
         # Get element type
         element_type = element_config.get('type', 'element')
 
@@ -151,6 +156,62 @@ class UILoader:
         # Fallback
         return UIElement
 
+    def _resolve_layer_names(self, config: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Convert layer name strings to numeric values with expression support.
+
+        Supports:
+        - "Layers.UI" → 9
+        - "Layers.DEBUG" → 10
+        - "Layers.UI + 1" → 10
+        - "Layers.DEBUG - 1" → 9
+        - 9 → 9 (passthrough)
+
+        Args:
+            config: Element configuration dictionary
+
+        Returns:
+            Config with resolved layer values
+        """
+        if 'layer' not in config:
+            return config
+
+        layer_value = config['layer']
+
+        # Already a number - return as-is
+        if isinstance(layer_value, (int, float)):
+            return config
+
+        # String - needs resolution
+        if isinstance(layer_value, str):
+            from src.core.runtime.game_settings import Layers
+            from src.core.debug.debug_logger import DebugLogger
+
+            layer_str = layer_value.strip()
+
+            # Build safe evaluation namespace with only Layers constants
+            safe_namespace = {
+                'Layers': Layers,
+                '__builtins__': {}  # Block all built-in functions for safety
+            }
+
+            try:
+                # Evaluate the expression safely
+                result = eval(layer_str, safe_namespace)
+
+                if isinstance(result, (int, float)):
+                    config['layer'] = int(result)
+                    DebugLogger.trace(f"Resolved '{layer_str}' -> {config['layer']}", category="ui")
+                else:
+                    DebugLogger.warn(f"Layer expression '{layer_str}' didn't return a number, using Layers.UI",
+                                     category="ui")
+                    config['layer'] = Layers.UI
+
+            except Exception as e:
+                DebugLogger.warn(f"Failed to parse layer '{layer_str}': {e}, using Layers.UI", category="ui")
+                config['layer'] = Layers.UI
+
+        return config
 
 
 # Register base element type

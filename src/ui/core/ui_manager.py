@@ -319,7 +319,7 @@ class UIManager:
         surface = element.render_surface()
 
         # Queue for drawing
-        print(f"[UI] Drawing {element.type or 'element'} at layer {element.layer}")
+        # print(f"[UI] Drawing {element.type or 'element'} at layer {element.layer}")
         draw_manager.queue_draw(surface, element.rect, element.layer)
 
         # Draw children
