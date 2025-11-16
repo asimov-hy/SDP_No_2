@@ -140,7 +140,6 @@ class Player(BaseEntity):
         # ========================================
         # 7. Global Ref & Status
         # ========================================
-        STATE.player_ref = self
         self.state_manager = StateManager(self, cfg["state_effects"])
 
         DebugLogger.init_entry("Player Initialized")

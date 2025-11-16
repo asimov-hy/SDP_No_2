@@ -211,7 +211,13 @@ class GameLoop:
         # Profile: Debug HUD Draw
         # -------------------------------------------------------
         t_hud = time.perf_counter()
-        self.debug_hud.draw(self.draw_manager)
+        player = None
+        if hasattr(self.scenes, '_active_instance'):
+            scene = self.scenes._active_instance
+            if hasattr(scene, 'player'):
+                player = scene.player
+
+        self.debug_hud.draw(self.draw_manager, player)
         hud_time = (time.perf_counter() - t_hud) * 1000
 
         # -------------------------------------------------------

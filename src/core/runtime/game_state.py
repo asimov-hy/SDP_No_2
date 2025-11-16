@@ -4,17 +4,6 @@ class GameState:
         self.current_scene = "start"
         self.previous_scene = None
 
-        # Player & gameplay
-        self.score = 0
-        self.lives = 3
-        self.level = 1
-        self.player_ref = None
-
-        # Flags
-        self.is_paused = False
-        self.is_game_over = False
-        self.is_victory = False
-
         # Session statistics (isolated data container)
         self.stats = {
             "score": 0,

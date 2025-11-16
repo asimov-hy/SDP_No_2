@@ -150,12 +150,13 @@ class DebugHUD:
 
         return action
 
-    def draw(self, draw_manager):
+    def draw(self, draw_manager, player=None):
         """
         Render debug HUD (only when visible).
 
         Args:
             draw_manager: DrawManager instance
+            player: Optional player reference for debug info
         """
         if not self.visible:
             return
@@ -165,7 +166,7 @@ class DebugHUD:
             self._draw_element_tree(self.root_element, draw_manager)
 
         # Draw metrics (direct rendering for performance)
-        self._draw_metrics(draw_manager)
+        self._draw_metrics(draw_manager, player)
 
     def _draw_element_tree(self, element, draw_manager, parent=None):
         """Recursively draw element tree."""
@@ -187,7 +188,7 @@ class DebugHUD:
             for child in element.children:
                 self._draw_element_tree(child, draw_manager, parent=element)
 
-    def _draw_metrics(self, draw_manager):
+    def _draw_metrics(self, draw_manager, player=None):
         """Draw performance metrics with translucent background."""
         # Background panel (translucent dark)
         panel_width = 280
@@ -207,7 +208,6 @@ class DebugHUD:
         line_height = 16
 
         # Player info (if exists)
-        player = STATE.player_ref
         if player:
             self._draw_text(f"Pos: ({player.rect.x:.0f}, {player.rect.y:.0f})",
                            x_offset, y_offset, (150, 255, 150), draw_manager)
