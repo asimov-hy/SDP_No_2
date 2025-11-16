@@ -24,10 +24,6 @@ class UIController(SceneController):
         """Render UI elements."""
         self.ui.draw(draw_manager)
 
-    def handle_event(self, event):
-        """Forward events to UI system."""
-        self.ui.handle_event(event)
-
     def on_pause(self):
         """Show pause menu when game pauses."""
         self.ui.show_screen("pause")
@@ -35,3 +31,17 @@ class UIController(SceneController):
     def on_resume(self):
         """Hide pause menu when game resumes."""
         self.ui.hide_screen("pause")
+
+    def handle_event(self, event):
+        """Forward events to UI system and handle pause menu actions."""
+        import pygame
+
+        # Let UI system handle the event
+        self.ui.handle_event(event)
+
+        # Check if pause menu "Resume" button was clicked
+        from src.core.runtime.scene_state import SceneState
+        if self.scene.state == SceneState.PAUSED:
+            # UI system will have already handled button clicks
+            # The scene_manager's ESC handler will call resume
+            pass

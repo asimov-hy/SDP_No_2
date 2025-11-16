@@ -212,7 +212,7 @@ class GameLoop:
         # Profile: Debug HUD Draw
         # -------------------------------------------------------
         t_hud = time.perf_counter()
-        player = STATE.get("player", None)
+        player = STATE.get_entity("player")
 
         self.debug_hud.draw(self.draw_manager, player)
         hud_time = (time.perf_counter() - t_hud) * 1000

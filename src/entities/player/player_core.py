@@ -25,6 +25,7 @@ from src.entities.base_entity import BaseEntity
 from src.entities.state_manager import StateManager
 from src.entities.entity_state import LifecycleState, InteractionState
 from src.entities.entity_types import CollisionTags, EntityCategory
+from .player_movement import update_movement
 
 
 class Player(BaseEntity):
@@ -221,8 +222,8 @@ class Player(BaseEntity):
         self.input_manager.update()
 
         # 3. Movement and physics
-        from .player_movement import update_movement
-        move_vec = getattr(self, "move_vec", pygame.Vector2(0, 0))
+        # from .player_movement import update_movement
+        move_vec = self.input_manager.get_normalized_move()
         update_movement(self, dt, move_vec)
 
         # 4. Combat logic

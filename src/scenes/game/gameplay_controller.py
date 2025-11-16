@@ -6,6 +6,7 @@ Developer A's responsibility.
 """
 
 from src.core.runtime.scene_controller import SceneController
+from src.core.runtime.scene_state import SceneState
 from src.core.debug.debug_logger import DebugLogger
 
 
@@ -19,7 +20,12 @@ class GameplayController(SceneController):
 
     def update(self, dt: float):
         """Just call existing systems in order."""
-        self.player.update(dt)  # Player already handles input internally
+
+        # Only update if scene is active (not paused)
+        if self.scene.state != SceneState.ACTIVE:
+            return
+
+        self.player.update(dt)
         self.collision_manager.update()
         self.collision_manager.detect()
 
