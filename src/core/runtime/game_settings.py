@@ -24,18 +24,36 @@ class Physics:
     MAX_FRAME_TIME = 0.1  # Prevent frame spiral
 
 
+class Bounds:
+    """Margin values for entity lifecycle management"""
+    # Enemies
+    ENEMY_DAMAGE_MARGIN = 50  # Must enter screen this far to be hittable
+    ENEMY_CLEANUP_MARGIN = 200  # Auto-cleanup when this far offscreen
+
+    # Bullets
+    BULLET_PLAYER_MARGIN = 50  # Player bullets travel slightly offscreen
+    BULLET_ENEMY_MARGIN = 100  # Enemy bullets travel further
+
+    # Items
+    ITEM_CLEANUP_MARGIN = 50
+
+    # Environment entities (for future use)
+    ENV_DAMAGE_MARGIN = 0  # Hittable immediately
+    ENV_CLEANUP_MARGIN = 300
+
+
 # ===========================================================
 # Rendering Layers
 # ===========================================================
 class Layers:
     BACKGROUND = 0
     ENEMIES = 1
-    BULLETS = 2
-    PLAYER = 3
-    PARTICLES = 4
-    EFFECTS = 5
-    DEBUG = 9
-    UI = 10  # Always on top
+    PICKUPS = 2
+    BULLETS = 3
+    PLAYER = 4
+    PARTICLES = 5
+    UI = 9
+    DEBUG = 10   # Always on top
 
 
 # ===========================================================
@@ -103,6 +121,8 @@ class LoggerConfig:
         "bullet": True,              # BulletManager creation and pooling
         "animation_effects": False,            # Visual/particle effect creation and cleanup
         "animation": True,           # AnimationManager initialization and updates
+        "event": True,
+        "item": True,
 
         # ---------------------------------------------------
         # Rendering & Drawing

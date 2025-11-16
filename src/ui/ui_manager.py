@@ -114,18 +114,22 @@ class UIManager:
     # ===========================================================
     # Frame Updates
     # ===========================================================
-    def update(self, mouse_pos):
+
+    def update(self, mouse_pos, game_data: dict = None):
         """Update all visible elements in the active group and components."""
-        # Update standalone elements in current active group
+
         for elem in self.groups[self.active_group]:
             if elem.visible:
                 elem.update(mouse_pos)
 
-        # Update attached sub-managers (HUDs, menus, debug)
-        for subsystem in self.subsystems.values():
-            subsystem.update(mouse_pos)
+        # 2. Update attached sub-managers
+        for name, subsystem in self.subsystems.items():
+            if hasattr(subsystem, "update"):
+                subsystem.update(mouse_pos)
 
         # DebugLogger.state(f"Updated group '{self.active_group}' and components")
+            if game_data and name == "hud" and hasattr(subsystem, "update_values"):
+                subsystem.update_values(game_data)
 
     # ===========================================================
     # Input Handling
@@ -139,10 +143,11 @@ class UIManager:
         """
         # Route to components first (so menus/debug can intercept)
         for subsystem in self.subsystems.values():
-            action = subsystem.handle_event(event)
-            if action:
-                # DebugLogger.action(f"Subsystem action triggered: {action}")
-                return action
+            if hasattr(subsystem, "handle_event"):
+                action = subsystem.handle_event(event)
+                if action:
+                    DebugLogger.action(f"Subsystem action triggered: {action}")
+                    return action
 
         # Then route to active group
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -161,7 +166,20 @@ class UIManager:
         """Render all active UI elements and visible components."""
         # Draw components (HUDs, debug overlays)
         for subsystem in self.subsystems.values():
-            subsystem.draw(draw_manager)
+
+            # Case 1: Subsystem has get_elements() (ex) HUDManager
+            if hasattr(subsystem, "get_elements"):
+                for elem in subsystem.get_elements():
+                    if elem.visible:
+                        try:
+                            surface = elem.render_surface()
+                            draw_manager.queue_draw(surface, elem.rect, elem.layer)
+                        except Exception as e:
+                            DebugLogger.warn(f"Failed to render elem {type(elem)}: {e}")
+
+            # Case 2: Subsystem has its own draw() (ex) DebugHUD
+            elif hasattr(subsystem, "draw"):
+                subsystem.draw(draw_manager)
 
         # Draw group-level elements
         for elem in self.groups[self.active_group]:

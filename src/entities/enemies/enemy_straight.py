@@ -12,17 +12,21 @@ Responsibilities
 
 import pygame
 from src.entities.enemies.base_enemy import BaseEnemy
+from src.entities.entity_types import EntityCategory
 from src.core.debug.debug_logger import DebugLogger
 
 
 class EnemyStraight(BaseEnemy):
     """Simple enemy that moves vertically downward and disappears when off-screen."""
 
+    __registry_category__ = EntityCategory.ENEMY
+    __registry_name__ = "straight"
+
     # ===========================================================
     # Initialization
     # ===========================================================
     def __init__(self, x, y, direction=(0, 1), speed=200, health=1,
-                 size=50, color=(255, 0, 0), draw_manager=None, score=10):
+                 size=50, color=(255, 0, 0), draw_manager=None, score=10, **kwargs):
         """
         Args:
             x, y: Spawn position
@@ -37,13 +41,24 @@ class EnemyStraight(BaseEnemy):
         if draw_manager is None:
             raise ValueError("EnemyStraight requires draw_manager for triangle creation")
 
-        triangle_image = draw_manager.create_triangle(size, color, pointing="up")
+        norm_size = (size, size) if isinstance(size, int) else size
 
-        # Initialize base enemy
-        super().__init__(x, y, triangle_image, speed, health, score)
-
-        # Set velocity from direction
-        self.velocity = pygame.Vector2(direction).normalize() * self.speed
+        shape_data = {
+            "type": "triangle",
+            "size": norm_size,
+            "color": color,
+            "kwargs": {"pointing": "up", "equilateral": True}
+        }
+        super().__init__(
+            x, y,
+            shape_data=shape_data,
+            draw_manager=draw_manager,
+            speed=speed,
+            health=health,
+            direction=direction,
+            spawn_edge=kwargs.get("spawn_edge", None),
+            score=score
+        )
 
         DebugLogger.init(
             f"Spawned EnemyStraight at ({x}, {y}) | Speed={speed}",
@@ -63,25 +78,32 @@ class EnemyStraight(BaseEnemy):
         super().update(dt)
 
     def reset(self, x, y, direction=(0, 1), speed=200, health=1, size=50, color=(255, 0, 0), **kwargs):
-        """Reset straight enemy with new parameters."""
-        super().reset(x, y, **kwargs)
+        # Only regenerate if visuals changed
+        norm_size = (size, size) if isinstance(size, int) else size
 
-        # Regenerate sprite if size/color changed (optional optimization: only if different)
-        if self.draw_manager:
-            self._base_image = self.draw_manager.create_triangle(size, color, pointing="up")
-            self.image = self._base_image.copy()
+        # Initialize shape_data if first use, or check if regeneration needed
+        needs_regeneration = (
+                not hasattr(self, 'shape_data') or
+                norm_size != self.shape_data.get("size") or
+                color != self.shape_data.get("color")
+        )
 
-        # Reset physics
-        self.speed = speed
-        self.health = health
-        self.max_health = health
-        self.velocity = pygame.Vector2(direction).normalize() * speed
+        if needs_regeneration:
+            self.shape_data = {
+                "type": "triangle",
+                "size": norm_size,
+                "color": color,
+                "kwargs": {"pointing": "up", "equilateral": True}
+            }
+            if self.draw_manager:
+                self.refresh_sprite(new_color=color, shape_type="triangle", size=norm_size)
+                self._base_image = self.image
 
-        # Reset rotation state
-        self.rotation_angle = 0
-
-        # Force immediate rotation update to match velocity
-        self.update_rotation()
-
-from src.entities.entity_registry import EntityRegistry
-EntityRegistry.register("enemy", "straight", EnemyStraight)
+        # Call super ONCE at the end
+        super().reset(
+            x, y,
+            direction=direction,
+            speed=speed,
+            health=health,
+            spawn_edge=kwargs.get("spawn_edge")
+        )

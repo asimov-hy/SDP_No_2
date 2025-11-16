@@ -11,10 +11,14 @@ Responsibilities
 """
 
 from src.entities.bullets.base_bullet import BaseBullet
+from src.entities.entity_types import EntityCategory
 
 
 class StraightBullet(BaseBullet):
     """Simple bullet that travels in a straight line."""
+
+    __registry_category__ = EntityCategory.PROJECTILE
+    __registry_name__ = "straight"
 
     # ===========================================================
     # Initialization
@@ -54,7 +58,3 @@ class StraightBullet(BaseBullet):
         """
         super().draw(draw_manager)
         # Future: Add glow, flicker, or material animation_effects here.
-
-
-from src.entities.entity_registry import EntityRegistry
-EntityRegistry.register("bullet", "straight", StraightBullet)

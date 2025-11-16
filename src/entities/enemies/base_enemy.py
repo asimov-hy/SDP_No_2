@@ -11,38 +11,89 @@ Responsibilities
 """
 
 import pygame
+import random
 from src.core.runtime.game_settings import Display, Layers
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
-from src.entities.entity_state import CollisionTags, LifecycleState, EntityCategory
+from src.entities.entity_state import LifecycleState
+from src.entities.entity_types import CollisionTags, EntityCategory
+from src.entities.entity_registry import EntityRegistry
 from src.graphics.animations.animation_effects.death_animation import death_fade
+from src.core.services.event_manager import EVENTS, EnemyDiedEvent
+from src.ui.effects.effect_manager import effect_manager
 from src.core.runtime.game_state import STATE
-
 
 class BaseEnemy(BaseEntity):
     """Base class providing shared logic for all enemy entities_animation."""
 
+    @staticmethod
+    def _classify_zone(normalized_pos: float) -> str:
+        """Classify position into corner/edge/center zones."""
+        if normalized_pos < 0.25 or normalized_pos > 0.75:
+            return "corner"
+        elif normalized_pos < 0.40 or normalized_pos > 0.60:
+            return "edge"
+        else:
+            return "center"
+
+    # Direction lookup table (computed once at class load)
+    _DIRECTION_MAP = {
+        "top": {
+            "corner_top": [(1, 1)],  # DOWN_RIGHT
+            "edge_top": [(0, 1), (1, 1)],  # DOWN, DOWN_RIGHT
+            "center": [(0, 1), (-1, 1), (1, 1)],  # DOWN, DOWN_LEFT, DOWN_RIGHT
+            "edge_bottom": [(0, 1), (-1, 1)],  # DOWN, DOWN_LEFT
+            "corner_bottom": [(-1, 1)]  # DOWN_LEFT
+        },
+        "bottom": {
+            "corner_top": [(1, -1)],  # UP_RIGHT
+            "edge_top": [(0, -1), (1, -1)],  # UP, UP_RIGHT
+            "center": [(0, -1), (-1, -1), (1, -1)],  # UP, UP_LEFT, UP_RIGHT
+            "edge_bottom": [(0, -1), (-1, -1)],  # UP, UP_LEFT
+            "corner_bottom": [(-1, -1)]  # UP_LEFT
+        },
+        "left": {
+            "corner_top": [(1, 1)],  # DOWN_RIGHT
+            "edge_top": [(1, 0), (1, 1)],  # RIGHT, DOWN_RIGHT
+            "center": [(1, 0), (1, -1), (1, 1)],  # RIGHT, UP_RIGHT, DOWN_RIGHT
+            "edge_bottom": [(1, 0), (1, -1)],  # RIGHT, UP_RIGHT
+            "corner_bottom": [(1, -1)]  # UP_RIGHT
+        },
+        "right": {
+            "corner_top": [(-1, 1)],  # DOWN_LEFT
+            "edge_top": [(-1, 0), (-1, 1)],  # LEFT, DOWN_LEFT
+            "center": [(-1, 0), (-1, -1), (-1, 1)],  # LEFT, UP_LEFT, DOWN_LEFT
+            "edge_bottom": [(-1, 0), (-1, -1)],  # LEFT, UP_LEFT
+            "corner_bottom": [(-1, -1)]  # UP_LEFT
+        }
+    }
+
+
+    def __init_subclass__(cls, **kwargs):
+        """Auto-register enemy subclasses when they're defined."""
+        super().__init_subclass__(**kwargs)
+        EntityRegistry.auto_register(cls)
+
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(self, x, y, image, speed=100, health=None, score=1):
+    def __init__(self, x, y, image=None, shape_data=None, draw_manager=None,
+                 speed=100, health=None, direction=None, spawn_edge=None, score=1, **kwargs):
         """
-        Initialize a base enemy entity.
-
         Args:
-            x (float): Spawn X position.
-            y (float): Spawn Y position.
-            image (pygame.Surface): Enemy sprite image.
-            speed (float, optional): Movement speed (pixels per second).
-            health (int, optional): HP before destruction. Defaults to HealthPresets.ENEMY_NORMAL.
+            x, y: Position
+            image: Pre-made sprite (image mode)
+            shape_data: Shape definition (shape mode)
+            draw_manager: Required for shape mode
+            speed: Movement speed
+            health: HP
         """
-        super().__init__(x, y, image)
+        super().__init__(x, y, image=image, shape_data=shape_data, draw_manager=draw_manager)
         self.speed = speed
         self.health = health if health is not None else 1
         self.max_health = self.health
 
-        self._base_image = image
-        self.rotation_angle = 0  # Degrees, 0 = pointing right
+        self._rotation_enabled = True
         self.score = score
 
         # Collision setup
@@ -53,8 +104,16 @@ class BaseEnemy(BaseEntity):
         # hitbox scale
         self._hitbox_scale = 0.9
 
-        # Default movement vector (downward)
-        self.velocity = pygame.Vector2(0, 0)
+        if direction is None:
+            self.velocity = self._auto_direction_from_edge(spawn_edge)
+        else:
+            self.velocity = pygame.Vector2(direction)
+
+        # Normalize and apply speed
+        if self.velocity.length_squared() > 0:
+            self.velocity = self.velocity.normalize() * self.speed
+
+        self.update_rotation()
 
     # ===========================================================
     # Damage and State Handling
@@ -84,7 +143,7 @@ class BaseEnemy(BaseEntity):
         self.update_rotation()
 
         # Mark dead if off-screen
-        if self.rect.top > Display.HEIGHT:
+        if self.is_offscreen():
             self.mark_dead(immediate=True)
 
     def take_damage(self, amount: int, source: str = "unknown"):
@@ -92,7 +151,7 @@ class BaseEnemy(BaseEntity):
         Reduce health by the given amount and handle death.
         Calls on_damage() and on_death() hooks as needed.
         """
-        if self.death_state >= LifecycleState.DEAD:
+        if self.death_state != LifecycleState.ALIVE:
             return
 
         self.health = max(0, self.health - amount)
@@ -105,10 +164,34 @@ class BaseEnemy(BaseEntity):
             self.on_death(source)
 
     def on_death(self, source):
-        self.anim.play(death_fade, duration=0.5)
+
+        from src.core.runtime.game_state import STATE  # Avoid circular import
+
+        exp_amount = self.get_exp_reward()
+        STATE.exp_manager.exp_up(exp_amount)
+
+        self.anim.play(death_fade, duration=0.2)
+        random_effect_type = effect_manager.get_random_explosion()
+
+        effect_manager.create_explosion(
+            position=(self.rect.centerx, self.rect.centery),
+            effect_type=random_effect_type,
+            layer=self.layer + 1
+        )
+
+        EVENTS.dispatch(EnemyDiedEvent(
+            position=(self.rect.centerx, self.rect.centery),
+            enemy_type_tag=self.__class__.__name__
+        ))
+
         before_score = STATE.score
         STATE.score += self.score
         DebugLogger.state(f"[score] {before_score} + {self.score} -> {STATE.score}")
+
+    def get_exp_reward(self):
+        """Return EXP reward for this enemy."""
+        return getattr(self, "base_exp", 20)  # default EXP = 20
+
 
     # ===========================================================
     # Rendering
@@ -116,25 +199,6 @@ class BaseEnemy(BaseEntity):
     def draw(self, draw_manager):
         """Render the enemy sprite to the screen."""
         draw_manager.draw_entity(self, layer=self.layer)
-
-    def update_rotation(self):
-        """
-        Rotate image to match velocity direction.
-        Only rotates if velocity changed (optimization).
-        """
-        if self._base_image is None or self.velocity.length_squared() == 0:
-            return
-
-        # Calculate angle from velocity (-90 because base triangle points up)
-        target_angle = -self.velocity.as_polar()[1] - 90
-
-        # Only rotate if angle changed (avoid unnecessary rotations)
-        if abs(target_angle - self.rotation_angle) > 0.1:
-            self.rotation_angle = target_angle
-            self.image = pygame.transform.rotate(self._base_image, self.rotation_angle)
-            # Update rect to match new rotated size
-            old_center = self.rect.center
-            self.rect = self.image.get_rect(center=old_center)
 
     # ===========================================================
     # Collision Handling
@@ -152,3 +216,79 @@ class BaseEnemy(BaseEntity):
 
         else:
             DebugLogger.trace(f"[CollisionIgnored] {type(self).__name__} vs {tag}")
+
+    def _auto_direction_from_edge(self, edge):
+        """Auto-calculate direction based on spawn edge and position."""
+
+        # Validate/detect edge
+        if edge is None:
+            if self.pos.x < 0:
+                edge = "left"
+            elif self.pos.x > Display.WIDTH:
+                edge = "right"
+            elif self.pos.y < 0:
+                edge = "top"
+            elif self.pos.y > Display.HEIGHT:
+                edge = "bottom"
+            else:
+                edge = "top"  # fallback
+
+        edge = edge.lower()
+
+        # Calculate normalized position on relevant axis
+        width = Display.WIDTH
+        height = Display.HEIGHT
+
+        if edge in ["top", "bottom"]:
+            norm_pos = self.pos.x / width
+        else:  # left or right
+            norm_pos = self.pos.y / height
+
+        # Clamp to [0, 1]
+        norm_pos = max(0.0, min(1.0, norm_pos))
+
+        # Classify zone
+        zone_type = self._classify_zone(norm_pos)
+
+        # Determine lookup key
+        if zone_type == "corner":
+            sub_zone = "top" if norm_pos < 0.5 else "bottom"
+            lookup_key = f"corner_{sub_zone}"
+        elif zone_type == "edge":
+            sub_zone = "top" if norm_pos < 0.5 else "bottom"
+            lookup_key = f"edge_{sub_zone}"
+        else:  # center
+            lookup_key = "center"
+
+        # Lookup directions
+        options = self._DIRECTION_MAP.get(edge, {}).get(lookup_key, [(0, 1)])
+
+        # Choose and return
+        chosen = random.choice(options)
+
+        # Optional debug (commented out)
+        # DebugLogger.trace(
+        #     f"Auto-direction: edge={edge}, pos={norm_pos:.2f}, "
+        #     f"zone={zone_type}, chosen={chosen}"
+        # )
+
+        return pygame.Vector2(chosen)
+
+    def reset(self, x, y, direction=None, speed=None, health=None, spawn_edge=None, **kwargs):
+        super().reset(x, y)
+
+        if speed is not None:
+            self.speed = speed
+        if health is not None:
+            self.health = health
+            self.max_health = health
+
+        if direction is None:
+            self.velocity = self._auto_direction_from_edge(spawn_edge)
+        else:
+            self.velocity = pygame.Vector2(direction)
+
+        if self.velocity.length_squared() > 0:
+            self.velocity = self.velocity.normalize() * self.speed
+
+        self.update_rotation()
