@@ -17,6 +17,7 @@ import pygame
 # Core Systems
 from src.core.debug.debug_logger import DebugLogger
 from src.core.runtime.game_settings import Debug, Display
+from src.core.runtime.gameplay_scene import GameplayScene
 
 # Player Entity
 from src.entities.player.player_core import Player
@@ -37,7 +38,7 @@ from src.systems.level.level_registry import LevelRegistry
 from src.systems.items.item_manager import ItemManager
 
 
-class GameScene:
+class GameScene(GameplayScene):
     """Handles all gameplay entities_animation, logic, and ui systems."""
 
     # ===========================================================
@@ -51,9 +52,9 @@ class GameScene:
             scene_manager: Reference to SceneManager for access to display,
                            input, and draw subsystems.
         """
+        super().__init__(scene_manager)  # Call parent GameplayScene.__init__
         DebugLogger.section("Initializing Scene: GameScene")
 
-        self.scene_manager = scene_manager
         self.display = scene_manager.display
         self.input_manager = scene_manager.input_manager
         self.draw_manager = scene_manager.draw_manager

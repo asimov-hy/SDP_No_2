@@ -12,7 +12,7 @@ Responsibilities
 
 from src.core.debug.debug_logger import DebugLogger
 from src.scenes.start_scene import StartScene
-from src.scenes.game_scene import GameScene
+from src.scenes.game.game_scene import GameScene
 
 
 class SceneManager:
@@ -57,25 +57,29 @@ class SceneManager:
         self.scenes[name] = scene_class
         DebugLogger.state(f"Registered scene '{name}'")
 
-    def set_scene(self, name: str):
+    def set_scene(self, name: str, **scene_data):
         """
-        Switch to another scene by name.
+        Switch to another scene by name with proper lifecycle management.
 
         Args:
-            name (str): Name of the target scene (e.g., "StartScene").
-
-        Notes:
-            Logs scene transitions and ignores invalid scene requests.
+            name: Scene name
+            **scene_data: Data to pass to on_load() hook
         """
+        from src.core.runtime.scene_state import SceneState
 
         prev = getattr(self, "active_scene", None)
-        self.active_scene = name
 
         if name not in self.scenes:
             DebugLogger.warn(f"Unknown scene: '{name}'")
             return
 
-        # Transition formatting
+        # === STEP 1: Exit old scene ===
+        if self._active_instance and hasattr(self._active_instance, "on_exit"):
+            DebugLogger.state(f"Exiting {self._active_instance.__class__.__name__}")
+            self._active_instance.state = SceneState.EXITING
+            self._active_instance.on_exit()
+
+        # Transition logging
         prev_class = self._get_scene_name(prev)
         next_class = self._get_scene_name(name) or name
 
@@ -84,20 +88,60 @@ class SceneManager:
         else:
             DebugLogger.system(f"Loading Initial Scene: [{next_class}]")
 
-        # Create or retrieve scene instance
+        # === STEP 2: Create/retrieve instance ===
         if isinstance(self.scenes[name], type):
             scene_class = self.scenes[name]
             self.scenes[name] = scene_class(self)
 
         self._active_instance = self.scenes[name]
+        self.active_scene = name
 
-        # Log the current active scene
+        # === STEP 3: Load new scene ===
+        self._active_instance.state = SceneState.LOADING
+        if hasattr(self._active_instance, "on_load"):
+            DebugLogger.state(f"Loading {next_class}")
+            self._active_instance.on_load(**scene_data)
+
+        # === STEP 4: Activate scene ===
+        self._active_instance.state = SceneState.ACTIVE
         DebugLogger.section(f"Active Scene: {next_class}")
 
-        # Trigger enter hook after switching
+        # === STEP 5: Enter scene ===
         if hasattr(self._active_instance, "on_enter"):
-            DebugLogger.state(f"Entering scene: {self._active_instance.__class__.__name__}")
+            DebugLogger.state(f"Entering {next_class}")
             self._active_instance.on_enter()
+
+    def pause_active_scene(self):
+        """Pause the currently active scene."""
+        from src.core.runtime.scene_state import SceneState
+
+        if not self._active_instance:
+            return
+
+        if self._active_instance.state != SceneState.ACTIVE:
+            return
+
+        DebugLogger.state(f"Pausing {self._active_instance.__class__.__name__}")
+        self._active_instance.state = SceneState.PAUSED
+
+        if hasattr(self._active_instance, "on_pause"):
+            self._active_instance.on_pause()
+
+    def resume_active_scene(self):
+        """Resume the currently paused scene."""
+        from src.core.runtime.scene_state import SceneState
+
+        if not self._active_instance:
+            return
+
+        if self._active_instance.state != SceneState.PAUSED:
+            return
+
+        DebugLogger.state(f"Resuming {self._active_instance.__class__.__name__}")
+        self._active_instance.state = SceneState.ACTIVE
+
+        if hasattr(self._active_instance, "on_resume"):
+            self._active_instance.on_resume()
 
     # ===========================================================
     # Event, Update, Draw Delegation
@@ -114,12 +158,14 @@ class SceneManager:
 
     def update(self, dt: float):
         """
-        Update the currently active scene.
+        Update the currently active scene (only if ACTIVE).
 
         Args:
             dt (float): Delta time (in seconds) since the last frame.
         """
-        if self._active_instance:
+        from src.core.runtime.scene_state import SceneState
+
+        if self._active_instance and self._active_instance.state == SceneState.ACTIVE:
             self._active_instance.update(dt)
 
     def draw(self, draw_manager):

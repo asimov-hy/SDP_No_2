@@ -14,17 +14,17 @@ Responsibilities
 import pygame
 
 from src.core.debug.debug_logger import DebugLogger
+from src.core.runtime.menu_scene import MenuScene
 
-
-class StartScene:
+class StartScene(MenuScene):
     """Temporary start scene that auto-transitions to GameScene."""
 
     # ===========================================================
     # Initialization
     # ===========================================================
     def __init__(self, scene_manager):
+        super().__init__(scene_manager)  # Call parent MenuScene.__init__
         DebugLogger.section("Initializing Scene: StartScene")
-        self.scene_manager = scene_manager
         self.timer = 0.0
         DebugLogger.section("- Finished Initialization", only_title=True)
         DebugLogger.section("─"*59+"\n", only_title=True)

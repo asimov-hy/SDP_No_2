@@ -17,6 +17,7 @@ import time
 
 # Core runtime configurations
 from src.core.runtime.game_settings import Display, Physics, Debug
+from src.core.runtime.game_state import STATE
 
 # Core service managers
 from src.core.services.input_manager import InputManager
@@ -211,11 +212,7 @@ class GameLoop:
         # Profile: Debug HUD Draw
         # -------------------------------------------------------
         t_hud = time.perf_counter()
-        player = None
-        if hasattr(self.scenes, '_active_instance'):
-            scene = self.scenes._active_instance
-            if hasattr(scene, 'player'):
-                player = scene.player
+        player = STATE.get("player", None)
 
         self.debug_hud.draw(self.draw_manager, player)
         hud_time = (time.perf_counter() - t_hud) * 1000
