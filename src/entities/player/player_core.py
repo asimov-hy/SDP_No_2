@@ -20,6 +20,7 @@ from src.core.runtime.game_settings import Display, Layers
 from src.core.runtime.game_state import STATE
 from src.core.debug.debug_logger import DebugLogger
 from src.core.services.config_manager import load_config
+from src.core.services.event_manager import EVENTS, EnemyDiedEvent
 
 from src.entities.base_entity import BaseEntity
 from src.entities.state_manager import StateManager
@@ -85,6 +86,11 @@ class Player(BaseEntity):
         self.health = core["health"]
         self.max_health = self.health
 
+        # Player stats
+        self.exp = 0
+        self.level = 1
+        self.exp_required = 30
+
         self.visible = True
         self.layer = Layers.PLAYER
         self.collision_tag = CollisionTags.PLAYER
@@ -142,6 +148,8 @@ class Player(BaseEntity):
         # 7. Global Ref & Status
         # ========================================
         self.state_manager = StateManager(self, cfg["state_effects"])
+
+        EVENTS.subscribe(EnemyDiedEvent, self._on_enemy_died)
 
         DebugLogger.init_entry("Player Initialized")
         DebugLogger.init_sub(f"Location: ({x:.1f}, {y:.1f})")
@@ -248,6 +256,33 @@ class Player(BaseEntity):
         if tag in (CollisionTags.ENEMY, CollisionTags.ENEMY_BULLET):
             from .player_logic import damage_collision
             damage_collision(self, other)
+
+    # ===========================================================
+    # EXP HANDLING
+    # ===========================================================
+    def _on_enemy_died(self, event):
+        """Receive EXP from dead enemies."""
+        self.exp += event.exp
+
+        DebugLogger.state(
+            f"Experience: {event.exp} ({self.exp}/{self.exp_required})",
+            category="exp"
+        )
+
+        if self.exp >= self.exp_required:
+            self._level_up()
+
+    def _level_up(self):
+        self.level += 1
+        self.exp = 0
+
+        # Smooth EXP curve
+        self.exp_required = int(30 * (1.15 ** (self.level - 1)))
+
+        DebugLogger.state(
+            f"Level: {self.level}, Next={self.exp_required}",
+            category="exp"
+        )
 
     # ===========================================================
     # Stat Properties (with modifiers applied)

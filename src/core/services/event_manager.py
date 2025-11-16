@@ -23,6 +23,7 @@ class EnemyDiedEvent(BaseEvent):
     """Dispatched when an enemy dies."""
     position: tuple  # (x, y)
     enemy_type_tag: str  # Class name for filtering
+    exp: int
 
 
 @dataclass(frozen=True)

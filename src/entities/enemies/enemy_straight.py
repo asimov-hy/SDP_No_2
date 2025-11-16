@@ -43,21 +43,34 @@ class EnemyStraight(BaseEnemy):
 
         norm_size = (size, size) if isinstance(size, int) else size
 
-        shape_data = {
-            "type": "triangle",
-            "size": norm_size,
-            "color": color,
-            "kwargs": {"pointing": "up", "equilateral": True}
-        }
+        img = pygame.image.load("assets/images/characters/enemies/missile.png").convert_alpha()
+        img = pygame.transform.scale(img, (48, 48))
+
         super().__init__(
             x, y,
-            shape_data=shape_data,
+            image=img,
             draw_manager=draw_manager,
             speed=speed,
             health=health,
             direction=direction,
             spawn_edge=kwargs.get("spawn_edge", None)
         )
+
+        # shape_data = {
+        #     "type": "triangle",
+        #     "size": norm_size,
+        #     "color": color,
+        #     "kwargs": {"pointing": "up", "equilateral": True}
+        # }
+        # super().__init__(
+        #     x, y,
+        #     shape_data=shape_data,
+        #     draw_manager=draw_manager,
+        #     speed=speed,
+        #     health=health,
+        #     direction=direction,
+        #     spawn_edge=kwargs.get("spawn_edge", None)
+        # )
 
         DebugLogger.init(
             f"Spawned EnemyStraight at ({x}, {y}) | Speed={speed}",

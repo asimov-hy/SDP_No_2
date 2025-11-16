@@ -124,6 +124,7 @@ class LoggerConfig:
         "event": True,
         "item": True,
         "level": False,
+        "exp": True,
 
         # ---------------------------------------------------
         # Rendering & Drawing

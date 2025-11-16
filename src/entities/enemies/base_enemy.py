@@ -90,6 +90,8 @@ class BaseEnemy(BaseEntity):
         self.health = health if health is not None else 1
         self.max_health = self.health
 
+        self.base_exp = 20
+
         self._rotation_enabled = True
 
         # Collision setup
@@ -171,7 +173,8 @@ class BaseEnemy(BaseEntity):
 
         EVENTS.dispatch(EnemyDiedEvent(
             position=(self.rect.centerx, self.rect.centery),
-            enemy_type_tag=self.__class__.__name__
+            enemy_type_tag=self.__class__.__name__,
+            exp=self.base_exp
         ))
 
     # ===========================================================
