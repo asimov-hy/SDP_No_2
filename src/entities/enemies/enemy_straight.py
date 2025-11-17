@@ -11,9 +11,12 @@ Responsibilities
 """
 
 import pygame
+import os
 from src.entities.enemies.base_enemy import BaseEnemy
+from src.entities.base_entity import BaseEntity
 from src.entities.entity_types import EntityCategory
 from src.core.debug.debug_logger import DebugLogger
+from src.entities.entity_registry import EntityRegistry
 
 
 class EnemyStraight(BaseEnemy):
@@ -25,39 +28,49 @@ class EnemyStraight(BaseEnemy):
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(self, x, y, direction=(0, 1), speed=200, health=1,
-                 size=50, color=(255, 0, 0), draw_manager=None, **kwargs):
+    def __init__(self, x, y, direction=(0, 1), speed=None, health=None,
+                 scale=None, draw_manager=None, **kwargs):
         """
         Args:
             x, y: Spawn position
             direction: Tuple (dx, dy) for movement direction
-            speed: Pixels per second
-            health: HP before death
-            size: Triangle size (equilateral if int, else (w, h))
-            color: RGB tuple
-            draw_manager: Required for triangle creation
+            speed: Pixels per second (override, or use JSON default)
+            health: HP before death (override, or use JSON default)
+            size: Size override (or use JSON default)
+            draw_manager: Required for sprite loading
         """
-        # Create triangle sprite
+
+        # Load defaults from JSON
+        defaults = EntityRegistry.get_data("enemy", "straight")
+
+        # Apply overrides or use defaults
+        speed = speed if speed is not None else defaults.get("speed", 200)
+        health = health if health is not None else defaults.get("hp", 1)
+        scale = scale if scale is not None else defaults.get("scale", 1.0)
+
+        image_path = defaults.get("image", "assets/images/sprites/enemies/missile.png")
+        hitbox_config = defaults.get("hitbox", {})
+
+        # Create sprite
         if draw_manager is None:
-            raise ValueError("EnemyStraight requires draw_manager for triangle creation")
+            raise ValueError("EnemyStraight requires draw_manager for sprite loading")
 
-        norm_size = (size, size) if isinstance(size, int) else size
+        # Load and scale image using helper
+        img = BaseEntity.load_and_scale_image(image_path, scale)
 
-        shape_data = {
-            "type": "triangle",
-            "size": norm_size,
-            "color": color,
-            "kwargs": {"pointing": "up", "equilateral": True}
-        }
         super().__init__(
             x, y,
-            shape_data=shape_data,
+            image=img,
             draw_manager=draw_manager,
             speed=speed,
             health=health,
             direction=direction,
-            spawn_edge=kwargs.get("spawn_edge", None)
+            spawn_edge=kwargs.get("spawn_edge", None),
+            hitbox_config=hitbox_config
         )
+
+        # Store exp value for when enemy dies
+        self.exp_value = defaults.get("exp", 0)
 
         DebugLogger.init(
             f"Spawned EnemyStraight at ({x}, {y}) | Speed={speed}",
@@ -76,33 +89,41 @@ class EnemyStraight(BaseEnemy):
         """
         super().update(dt)
 
-    def reset(self, x, y, direction=(0, 1), speed=200, health=1, size=50, color=(255, 0, 0), **kwargs):
-        # Only regenerate if visuals changed
-        norm_size = (size, size) if isinstance(size, int) else size
+    def reset(self, x, y, direction=(0, 1), speed=None, health=None, scale=None, **kwargs):
+        # Load defaults from JSON (same as __init__)
+        defaults = EntityRegistry.get_data("enemy", "straight")
 
-        # Initialize shape_data if first use, or check if regeneration needed
-        needs_regeneration = (
-                not hasattr(self, 'shape_data') or
-                norm_size != self.shape_data.get("size") or
-                color != self.shape_data.get("color")
-        )
+        speed = speed if speed is not None else defaults.get("speed", 200)
+        health = health if health is not None else defaults.get("hp", 1)
+        scale = scale if scale is not None else defaults.get("scale", 1.0)
+        image_path = defaults.get("image")
+        hitbox_scale = defaults.get("hitbox", {}).get("scale", 0.85)
 
-        if needs_regeneration:
-            self.shape_data = {
-                "type": "triangle",
-                "size": norm_size,
-                "color": color,
-                "kwargs": {"pointing": "up", "equilateral": True}
-            }
-            if self.draw_manager:
-                self.refresh_sprite(new_color=color, shape_type="triangle", size=norm_size)
-                self._base_image = self.image
+        # Reload and rescale image if using image mode
+        if image_path and os.path.exists(image_path):
+            img = pygame.image.load(image_path).convert_alpha()
 
-        # Call super ONCE at the end
+            # Apply scale
+            if isinstance(scale, (int, float)):
+                new_size = (int(img.get_width() * scale), int(img.get_height() * scale))
+            elif isinstance(scale, (list, tuple)) and len(scale) == 2:
+                new_size = (int(img.get_width() * scale[0]), int(img.get_height() * scale[1]))
+            else:
+                new_size = img.get_size()
+
+            self.image = pygame.transform.scale(img, new_size)
+            self.rect = self.image.get_rect(center=(x, y))
+            self._base_image = self.image
+
+        # Update exp value in case it changed
+        self.exp_value = defaults.get("exp", 0)
+
+        # Call super to reset position/state
         super().reset(
             x, y,
             direction=direction,
             speed=speed,
             health=health,
-            spawn_edge=kwargs.get("spawn_edge")
+            spawn_edge=kwargs.get("spawn_edge"),
+            hitbox_scale=hitbox_scale
         )

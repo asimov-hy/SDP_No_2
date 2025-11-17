@@ -52,9 +52,8 @@ class Layers:
     BULLETS = 3
     PLAYER = 4
     PARTICLES = 5
-    EFFECTS = 6
-    DEBUG = 9
-    UI = 10  # Always on top
+    UI = 9
+    DEBUG = 150   # Always on top
 
 
 # ===========================================================
@@ -120,10 +119,12 @@ class LoggerConfig:
         "entity_cleanup": False,     # Entity removal or offscreen cleanup
         "collision": False,          # CollisionManager, hit detection traces
         "bullet": True,              # BulletManager creation and pooling
-        "animation_effects": False,            # Visual/particle effect creation and cleanup
+        "animation_effects": False,            # Visual/particle effects creation and cleanup
         "animation": True,           # AnimationManager initialization and updates
         "event": True,
         "item": True,
+        "level": False,
+        "exp": True,
 
         # ---------------------------------------------------
         # Rendering & Drawing
@@ -134,7 +135,7 @@ class LoggerConfig:
         # ---------------------------------------------------
         # User / Interaction
         # ---------------------------------------------------
-        "user_action": False,        # Player input, UI interactions
+        "user_action": False,        # Player input, ui interactions
         "ui": True,                  # UIManager, button states, and transitions
 
         # ---------------------------------------------------

@@ -4,17 +4,6 @@ class GameState:
         self.current_scene = "start"
         self.previous_scene = None
 
-        # Player & gameplay
-        self.score = 0
-        self.lives = 3
-        self.level = 1
-        self.player_ref = None
-
-        # Flags
-        self.is_paused = False
-        self.is_game_over = False
-        self.is_victory = False
-
         # Session statistics (isolated data container)
         self.stats = {
             "score": 0,
@@ -24,6 +13,10 @@ class GameState:
             "items_collected": 0,
             "run_time": 0.0,
         }
+
+        # Global entity registry for cross-system access
+        # Used by debug systems, analytics, etc.
+        self.entities = {}
 
     # ===========================================================
     # Stats Accessors
@@ -51,7 +44,44 @@ class GameState:
 
     def reset(self):
         """Reset state to defaults when starting a new game."""
-        self.__init__()
+        # Clear entity registry without reinitializing entire object
+        self.entities.clear()
+        self.stats = {
+            "score": 0,
+            "high_score": 0,
+            "total_score": 0,
+            "enemies_killed": 0,
+            "items_collected": 0,
+            "run_time": 0.0,
+        }
+
+    # ===========================================================
+    # Entity Registry
+    # ===========================================================
+    def register_entity(self, key, entity):
+        """
+        Register an entity for global access.
+
+        Args:
+            key: String identifier (e.g., "player", "boss")
+            entity: Entity reference
+        """
+        self.entities[key] = entity
+
+    def get_entity(self, key, default=None):
+        """
+        Retrieve a registered entity safely.
+
+        Args:
+            key: String identifier
+            default: Value to return if key not found
+        """
+        return self.entities.get(key, default)
+
+    def unregister_entity(self, key):
+        """Remove an entity from registry."""
+        if key in self.entities:
+            del self.entities[key]
 
 
 # Global singleton instance for shared access

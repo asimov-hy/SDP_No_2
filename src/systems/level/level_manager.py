@@ -376,7 +376,7 @@ class LevelManager:
 
             DebugLogger.state(
                 f"Wave: {entity_type} x{count} | Pattern: {pattern}",
-                category="stage"
+                category="level"
             )
 
     # ===========================================================

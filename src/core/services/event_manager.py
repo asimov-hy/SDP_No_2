@@ -23,12 +23,13 @@ class EnemyDiedEvent(BaseEvent):
     """Dispatched when an enemy dies."""
     position: tuple  # (x, y)
     enemy_type_tag: str  # Class name for filtering
+    exp: int
 
 
 @dataclass(frozen=True)
 class ItemCollectedEvent(BaseEvent):
     """Dispatched when player collects an item."""
-    effects: list  # List of effect dicts from item data
+    effects: list  # List of effects dicts from item data
 
 
 @dataclass(frozen=True)
@@ -61,16 +62,8 @@ class EventManager:
             self._subscribers[event_type] = []
 
         self._subscribers[event_type].append(callback)
-        # Safely get callback name for logging
-        callback_name = getattr(callback, '__name__', None)
-        if callback_name is None:
-            # Handle functools.partial and other callables
-            if hasattr(callback, 'func'):
-                callback_name = f"partial({getattr(callback.func, '__name__', repr(callback.func))})"
-            else:
-                callback_name = repr(callback)
-
-        DebugLogger.state(
+        callback_name = getattr(callback, '__name__', repr(callback))
+        DebugLogger.init_sub(
             f"Subscribed '{callback_name}' to '{event_type.__name__}'"
         )
 
@@ -91,8 +84,9 @@ class EventManager:
                 try:
                     callback(event)
                 except Exception as e:
-                    DebugLogger.error(
-                        f"Error in event callback {callback.__name__}: {e}"
+                    callback_name = getattr(callback, '__name__', repr(callback))
+                    DebugLogger.warn(
+                        f"Error in event callback {callback_name}: {e}"
                     )
 
 

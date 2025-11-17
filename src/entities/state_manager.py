@@ -1,13 +1,13 @@
 """
 state_manager.py
 -----------------
-Generic effect management system for entities_animation.
+Generic effects management system for entities_animation.
 
 Responsibilities
 ----------------
 - Track active temporary animation_effects with timers
 - Merge interaction states from multiple animation_effects
-- Update effect durations each frame
+- Update effects durations each frame
 - Provide queries for active animation_effects
 """
 
@@ -114,7 +114,7 @@ class StateManager:
         """
         Args:
             entity: Entity instance (Player, Enemy, etc.)
-            config: Effect config dict from entity config
+            config: effects config dict from entity config
         """
         self.entity = entity
         self.state_config = config
@@ -126,7 +126,7 @@ class StateManager:
         if effect == PlayerEffectState.NONE:
             return False
 
-        # Get config for this effect
+        # Get config for this effects
         effect_name = effect.name.lower()
         if effect_name not in self.state_config:
             return False
@@ -158,7 +158,7 @@ class StateManager:
         if effect == PlayerEffectState.NONE:
             return False
 
-        # Get config for this effect
+        # Get config for this effects
         effect_name = effect.name.lower()
         if effect_name not in self.state_config:
             return False
@@ -200,7 +200,7 @@ class StateManager:
 
     def update(self, dt: float):
         """
-        Update all active effect timers and remove expired ones.
+        Update all active effects timers and remove expired ones.
 
         Args:
             dt: Delta time in seconds
@@ -229,17 +229,17 @@ class StateManager:
             self._update_entity_state()
 
     def clear_state(self, effect: PlayerEffectState):
-        """Manually remove an effect."""
+        """Manually remove an effects."""
         if effect in self.active_states:
             del self.active_states[effect]
             self._update_entity_state()
 
     def has_state(self, effect: PlayerEffectState) -> bool:
-        """Check if specific effect is active."""
+        """Check if specific effects is active."""
         return effect in self.active_states
 
     def has_any_effect(self) -> bool:
-        """Check if any effect is active."""
+        """Check if any effects is active."""
         return len(self.active_states) > 0
 
     def get_active_effects(self) -> list:

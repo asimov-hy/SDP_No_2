@@ -1,7 +1,7 @@
 """
 player_logic.py
 ---------------
-Player-specific behavior hooks and effect management.
+Player-specific behavior hooks and effects management.
 
 These functions are called by entity_logic.py or directly by player systems.
 They handle player-exclusive logic like i-frames, death cleanup, and visuals.
@@ -12,7 +12,6 @@ from src.core.services.event_manager import PlayerHealthEvent, FireRateEvent
 from src.entities.entity_state import LifecycleState
 from src.entities.entity_state import InteractionState
 from src.entities.player.player_state import PlayerEffectState
-from src.graphics.animations.entities_animation.player_animation import damage_player, death_player
 
 
 # ===========================================================
@@ -24,7 +23,7 @@ def damage_collision(player, other):
 
     Flow:
         - Skip if player is invincible, intangible, or already dead
-        - Skip if any temporary effect (e.g., iframe) is active
+        - Skip if any temporary effects (e.g., iframe) is active
         - Retrieve damage value from collided entity
         - Apply damage and trigger IFRAME via EffectManager
     """
@@ -72,8 +71,8 @@ def damage_collision(player, other):
         category="animation"
     )
 
-    player.anim.play(
-        damage_player,
+    player.anim_manager.play(
+        "damage",  # Use string name, not function
         duration=iframe_time,
         blink_interval=0.1,
         previous_state=previous_state,
@@ -93,85 +92,10 @@ def on_death(player):
     DebugLogger.state("Player death triggered", category="player")
 
     # Start the death animation
-    player.anim.play(death_player, duration=1.0)
+    player.anim_manager.play("death", duration=1.0)
 
     # Enter DYING state (BaseEntity handles this)
     player.mark_dead()
 
     # Disable collisions during death animation
     player.collision_tag = "neutral"
-
-# ===========================================================
-# Event Handle Logic
-# ===========================================================
-def change_player_health(player, event: PlayerHealthEvent):
-    """
-    Handles the PlayerHealthEvent to change the player's current health.
-
-    Args:
-        player (Player): The player instance whose health should be changed.
-        event (PlayerHealthEvent): The event containing the amount to change.
-    """
-    if player.death_state != LifecycleState.ALIVE:
-        return
-
-    previous_health = player.health
-    player.health = min(player.max_health, player.health + event.amount)
-
-    if previous_health != player.health:
-        DebugLogger.action(
-            f"Player health changed by {event.amount}. "
-            f"({previous_health} -> {player.health})",
-            category="player"
-        )
-
-def change_fire_rate(player, event: FireRateEvent):
-    """
-    Handles the FireRateEvent to change the player's fire rate.
-
-    Args:
-        player (Player): The player instance whose fire rate should be changed.
-        event (FireRateEvent): The event containing the multiplier.
-    """
-    if player.death_state != LifecycleState.ALIVE:
-        return
-
-    previous_cooldown = player.shoot_cooldown
-    # A multiplier greater than 1 increases the fire rate (decreases cooldown)
-    player.shoot_cooldown = max(0.05, player.shoot_cooldown / event.multiplier)
-
-    if previous_cooldown != player.shoot_cooldown:
-        DebugLogger.action(
-            f"Player fire rate changed. "
-            f"Cooldown: {previous_cooldown:.3f}s -> {player.shoot_cooldown:.3f}s",
-            category="player"
-        )
-
-
-# ===========================================================
-# Visual Update Hook
-# ===========================================================
-# def update_visual_state(player):
-#     """Update player visuals based on health thresholds from config."""
-#     health = player.health
-#     if health == player._cached_health:
-#         return
-#
-#     player._cached_health = health
-#
-#     # Determine state
-#     if health <= player._threshold_critical:
-#         state_key = "damaged_critical"
-#     elif health <= player._threshold_moderate:
-#         state_key = "damaged_moderate"
-#     else:
-#         state_key = "normal"
-#
-#     player._current_visual_state = state_key
-#
-#     if player.render_mode == "shape":
-#         player.refresh_visual(new_color=player.get_target_color(state_key))
-#     else:
-#         new_image = player.get_target_image(state_key)
-#         if new_image:
-#             player.refresh_visual(new_image=new_image)

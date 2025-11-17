@@ -12,12 +12,14 @@ Responsibilities
 
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.entity_types import EntityCategory
+from src.core.services.config_manager import load_config
 
 
 class EntityRegistry:
     """Global registry and factory for creating entities dynamically."""
 
     _registry = {}  # {category: {type_name: class}}
+    _entity_data = {}  # {category: {type_name: data_dict}}
 
     # ===========================================================
     # Registration
@@ -107,6 +109,49 @@ class EntityRegistry:
 
         # All validations passed - register
         cls.register(category, name, entity_class)
+
+    @classmethod
+    def load_entity_data(cls, config_path: str):
+        """
+        Load entity definitions from JSON.
+
+        Args:
+            config_path: Path to entity JSON (e.g., "entities/enemies.json")
+        """
+
+        data = load_config(config_path, default_dict={})
+
+        # Determine category from filename
+        # enemies.json -> "enemy"
+        # bullets.json -> "projectile"
+        filename = config_path.split('/')[-1].replace('.json', '')
+        category_map = {
+            "enemies": "enemy",
+            "bullets": "projectile",
+            "items": "pickup",
+            "obstacles": "obstacle",
+            "hazards": "hazard"
+        }
+        category = category_map.get(filename, filename)
+
+        if category not in cls._entity_data:
+            cls._entity_data[category] = {}
+
+        cls._entity_data[category].update(data)
+
+        DebugLogger.init_sub(
+            f"Loaded {len(data)} {category} definitions"
+        )
+
+    @classmethod
+    def get_data(cls, category: str, name: str) -> dict:
+        """
+        Retrieve entity data by category and name.
+
+        Returns:
+            dict: Entity data or empty dict if not found
+        """
+        return cls._entity_data.get(category, {}).get(name, {})
 
     @classmethod
     def get(cls, category: str, name: str):

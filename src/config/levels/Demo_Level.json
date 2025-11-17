@@ -1,648 +1,171 @@
 {
   "phases": [
     {
-      "name": "Demo Level - Extended",
+      "name": "Demo Level - Clockwork Pattern",
       "exit_trigger": "all_waves_cleared",
       "waves": [
         {
           "time": 0.0,
           "enemy": "straight",
           "spawn_edge": "top",
+          "spawn_position": 0.1,
+          "spawn_offset_y": -100,
+          "count": 1,
+          "enemy_params": { "speed": 240, "size": 32, "direction": [0, 1] },
+          "movement": { "type": "straight" }
+        },
+        {
+          "time": 0.0,
+          "enemy": "straight",
+          "spawn_edge": "right",
+          "spawn_position": 0.1,
+          "spawn_offset_x": 100,
+          "count": 1,
+          "enemy_params": { "speed": 240, "size": 32, "direction": [-1, 0] },
+          "movement": { "type": "straight" }
+        },
+        {
+          "time": 0.0,
+          "enemy": "straight",
+          "spawn_edge": "bottom",
+          "spawn_position": 0.9,
+          "spawn_offset_y": 100,
+          "count": 1,
+          "enemy_params": { "speed": 240, "size": 32, "direction": [0, -1] },
+          "movement": { "type": "straight" }
+        },
+        {
+          "time": 0.0,
+          "enemy": "straight",
+          "spawn_edge": "left",
+          "spawn_position": 0.9,
+          "spawn_offset_x": -100,
+          "count": 1,
+          "enemy_params": { "speed": 240, "size": 32, "direction": [1, 0] },
+          "movement": { "type": "straight" }
+        },
+
+        {
+          "time": 0.5,
+          "enemy": "straight",
+          "spawn_edge": "top",
           "spawn_position": 0.2,
           "spawn_offset_y": -100,
           "count": 1,
-          "enemy_params": {
-            "speed": 220,
-            "size": 35,
-            "direction": [0, 1]
-          },
-          "movement": {
-            "type": "straight"
-          }
+          "enemy_params": { "speed": 260, "size": 30, "direction": [0, 1] },
+          "movement": { "type": "straight" }
         },
         {
           "time": 0.5,
           "enemy": "straight",
           "spawn_edge": "right",
-          "spawn_position": 0.7,
+          "spawn_position": 0.2,
           "spawn_offset_x": 100,
           "count": 1,
-          "enemy_params": {
-            "speed": 240,
-            "size": 30,
-            "direction": [-1, 0]
-          },
-          "movement": {
-            "type": "straight"
-          }
+          "enemy_params": { "speed": 260, "size": 30, "direction": [-1, 0] },
+          "movement": { "type": "straight" }
+        },
+        {
+          "time": 0.5,
+          "enemy": "straight",
+          "spawn_edge": "bottom",
+          "spawn_position": 0.8,
+          "spawn_offset_y": 100,
+          "count": 1,
+          "enemy_params": { "speed": 260, "size": 30, "direction": [0, -1] },
+          "movement": { "type": "straight" }
+        },
+        {
+          "time": 0.5,
+          "enemy": "straight",
+          "spawn_edge": "left",
+          "spawn_position": 0.8,
+          "spawn_offset_x": -100,
+          "count": 1,
+          "enemy_params": { "speed": 260, "size": 30, "direction": [1, 0] },
+          "movement": { "type": "straight" }
+        },
+
+        {
+          "time": 1.0,
+          "enemy": "straight",
+          "spawn_edge": "top",
+          "spawn_position": 0.3,
+          "spawn_offset_y": -100,
+          "count": 1,
+          "enemy_params": { "speed": 280, "size": 28, "direction": [0, 1] },
+          "movement": { "type": "straight" }
+        },
+        {
+          "time": 1.0,
+          "enemy": "straight",
+          "spawn_edge": "right",
+          "spawn_position": 0.3,
+          "spawn_offset_x": 100,
+          "count": 1,
+          "enemy_params": { "speed": 280, "size": 28, "direction": [-1, 0] },
+          "movement": { "type": "straight" }
+        },
+        {
+          "time": 1.0,
+          "enemy": "straight",
+          "spawn_edge": "bottom",
+          "spawn_position": 0.7,
+          "spawn_offset_y": 100,
+          "count": 1,
+          "enemy_params": { "speed": 280, "size": 28, "direction": [0, -1] },
+          "movement": { "type": "straight" }
         },
         {
           "time": 1.0,
           "enemy": "straight",
           "spawn_edge": "left",
-          "spawn_position": 0.4,
+          "spawn_position": 0.7,
           "spawn_offset_x": -100,
           "count": 1,
-          "enemy_params": {
-            "speed": 260,
-            "size": 28,
-            "direction": [1, 0]
-          },
-          "movement": {
-            "type": "straight"
-          }
+          "enemy_params": { "speed": 280, "size": 28, "direction": [1, 0] },
+          "movement": { "type": "straight" }
+        },
+
+        {
+          "time": 1.5,
+          "enemy": "straight",
+          "spawn_edge": "top",
+          "spawn_position": 0.4,
+          "spawn_offset_y": -100,
+          "count": 1,
+          "enemy_params": { "speed": 300, "size": 26, "direction": [0, 1] },
+          "movement": { "type": "straight" }
+        },
+        {
+          "time": 1.5,
+          "enemy": "straight",
+          "spawn_edge": "right",
+          "spawn_position": 0.4,
+          "spawn_offset_x": 100,
+          "count": 1,
+          "enemy_params": { "speed": 300, "size": 26, "direction": [-1, 0] },
+          "movement": { "type": "straight" }
         },
         {
           "time": 1.5,
           "enemy": "straight",
           "spawn_edge": "bottom",
-          "spawn_position": 0.8,
+          "spawn_position": 0.6,
           "spawn_offset_y": 100,
           "count": 1,
-          "enemy_params": {
-            "speed": 230,
-            "size": 32,
-            "direction": [0, -1]
-          },
-          "movement": {
-            "type": "straight"
-          }
+          "enemy_params": { "speed": 300, "size": 26, "direction": [0, -1] },
+          "movement": { "type": "straight" }
         },
         {
-          "time": 2.0,
-          "enemy": "straight",
-          "spawn_edge": "top",
-          "spawn_position": 0.5,
-          "spawn_offset_y": -100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 250,
-            "size": 34,
-            "direction": [0, 1]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 2.5,
-          "enemy": "straight",
-          "spawn_edge": "right",
-          "spawn_position": 0.3,
-          "spawn_offset_x": 100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 270,
-            "size": 29,
-            "direction": [-1, 0]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 3.0,
+          "time": 1.5,
           "enemy": "straight",
           "spawn_edge": "left",
           "spawn_position": 0.6,
           "spawn_offset_x": -100,
           "count": 1,
-          "enemy_params": {
-            "speed": 220,
-            "size": 36,
-            "direction": [1, 0]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 3.5,
-          "enemy": "straight",
-          "spawn_edge": "top",
-          "spawn_position": 0.9,
-          "spawn_offset_y": -100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 240,
-            "size": 31,
-            "direction": [0, 1]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 4.0,
-          "enemy": "straight",
-          "spawn_edge": "bottom",
-          "spawn_position": 0.2,
-          "spawn_offset_y": 100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 280,
-            "size": 27,
-            "direction": [0, -1]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 4.5,
-          "enemy": "straight",
-          "spawn_edge": "right",
-          "spawn_position": 0.5,
-          "spawn_offset_x": 100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 260,
-            "size": 33,
-            "direction": [-1, 0]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 5.0,
-          "enemy": "straight",
-          "spawn_edge": "left",
-          "spawn_position": 0.8,
-          "spawn_offset_x": -100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 230,
-            "size": 35,
-            "direction": [1, 0]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 5.5,
-          "enemy": "straight",
-          "spawn_edge": "top",
-          "spawn_position": 0.4,
-          "spawn_offset_y": -100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 250,
-            "size": 30,
-            "direction": [0, 1]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 6.0,
-          "enemy": "straight",
-          "spawn_edge": "bottom",
-          "spawn_position": 0.6,
-          "spawn_offset_y": 100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 270,
-            "size": 28,
-            "direction": [0, -1]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 6.5,
-          "enemy": "straight",
-          "spawn_edge": "right",
-          "spawn_position": 0.9,
-          "spawn_offset_x": 100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 240,
-            "size": 32,
-            "direction": [-1, 0]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 7.0,
-          "enemy": "straight",
-          "spawn_edge": "left",
-          "spawn_position": 0.3,
-          "spawn_offset_x": -100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 220,
-            "size": 34,
-            "direction": [1, 0]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 7.5,
-          "enemy": "straight",
-          "spawn_edge": "top",
-          "spawn_position": 0.7,
-          "spawn_offset_y": -100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 260,
-            "size": 29,
-            "direction": [0, 1]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 8.0,
-          "enemy": "straight",
-          "spawn_edge": "bottom",
-          "spawn_position": 0.5,
-          "spawn_offset_y": 100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 280,
-            "size": 31,
-            "direction": [0, -1]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 8.5,
-          "enemy": "straight",
-          "spawn_edge": "right",
-          "spawn_position": 0.2,
-          "spawn_offset_x": 100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 250,
-            "size": 27,
-            "direction": [-1, 0]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 9.0,
-          "enemy": "straight",
-          "spawn_edge": "left",
-          "spawn_position": 0.7,
-          "spawn_offset_x": -100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 230,
-            "size": 36,
-            "direction": [1, 0]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 9.5,
-          "enemy": "straight",
-          "spawn_edge": "top",
-          "spawn_position": 0.1,
-          "spawn_offset_y": -100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 240,
-            "size": 33,
-            "direction": [0, 1]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 10.0,
-          "enemy": "straight",
-          "spawn_edge": "bottom",
-          "spawn_position": 0.9,
-          "spawn_offset_y": 100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 270,
-            "size": 30,
-            "direction": [0, -1]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 10.5,
-          "enemy": "straight",
-          "spawn_edge": "right",
-          "spawn_position": 0.4,
-          "spawn_offset_x": 100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 260,
-            "size": 28,
-            "direction": [-1, 0]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 11.0,
-          "enemy": "straight",
-          "spawn_edge": "left",
-          "spawn_position": 0.5,
-          "spawn_offset_x": -100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 220,
-            "size": 35,
-            "direction": [1, 0]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 11.5,
-          "enemy": "straight",
-          "spawn_edge": "top",
-          "spawn_position": 0.8,
-          "spawn_offset_y": -100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 250,
-            "size": 32,
-            "direction": [0, 1]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 12.0,
-          "enemy": "straight",
-          "spawn_edge": "bottom",
-          "spawn_position": 0.3,
-          "spawn_offset_y": 100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 280,
-            "size": 29,
-            "direction": [0, -1]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 12.5,
-          "enemy": "straight",
-          "spawn_edge": "right",
-          "spawn_position": 0.6,
-          "spawn_offset_x": 100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 240,
-            "size": 31,
-            "direction": [-1, 0]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 13.0,
-          "enemy": "straight",
-          "spawn_edge": "left",
-          "spawn_position": 0.2,
-          "spawn_offset_x": -100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 230,
-            "size": 34,
-            "direction": [1, 0]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 13.5,
-          "enemy": "straight",
-          "spawn_edge": "top",
-          "spawn_position": 0.6,
-          "spawn_offset_y": -100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 270,
-            "size": 27,
-            "direction": [0, 1]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 14.0,
-          "enemy": "straight",
-          "spawn_edge": "bottom",
-          "spawn_position": 0.7,
-          "spawn_offset_y": 100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 260,
-            "size": 36,
-            "direction": [0, -1]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 14.5,
-          "enemy": "straight",
-          "spawn_edge": "right",
-          "spawn_position": 0.8,
-          "spawn_offset_x": 100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 250,
-            "size": 30,
-            "direction": [-1, 0]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 15.0,
-          "enemy": "straight",
-          "spawn_edge": "left",
-          "spawn_position": 0.9,
-          "spawn_offset_x": -100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 220,
-            "size": 33,
-            "direction": [1, 0]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 15.5,
-          "enemy": "straight",
-          "spawn_edge": "top",
-          "spawn_position": 0.3,
-          "spawn_offset_y": -100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 240,
-            "size": 28,
-            "direction": [0, 1]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 16.0,
-          "enemy": "straight",
-          "spawn_edge": "bottom",
-          "spawn_position": 0.4,
-          "spawn_offset_y": 100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 280,
-            "size": 35,
-            "direction": [0, -1]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 16.5,
-          "enemy": "straight",
-          "spawn_edge": "right",
-          "spawn_position": 0.1,
-          "spawn_offset_x": 100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 270,
-            "size": 32,
-            "direction": [-1, 0]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 17.0,
-          "enemy": "straight",
-          "spawn_edge": "left",
-          "spawn_position": 0.4,
-          "spawn_offset_x": -100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 260,
-            "size": 29,
-            "direction": [1, 0]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 17.5,
-          "enemy": "straight",
-          "spawn_edge": "top",
-          "spawn_position": 0.5,
-          "spawn_offset_y": -100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 230,
-            "size": 31,
-            "direction": [0, 1]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 18.0,
-          "enemy": "straight",
-          "spawn_edge": "bottom",
-          "spawn_position": 0.8,
-          "spawn_offset_y": 100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 250,
-            "size": 34,
-            "direction": [0, -1]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 18.5,
-          "enemy": "straight",
-          "spawn_edge": "right",
-          "spawn_position": 0.5,
-          "spawn_offset_x": 100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 240,
-            "size": 27,
-            "direction": [-1, 0]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 19.0,
-          "enemy": "straight",
-          "spawn_edge": "left",
-          "spawn_position": 0.6,
-          "spawn_offset_x": -100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 220,
-            "size": 36,
-            "direction": [1, 0]
-          },
-          "movement": {
-            "type": "straight"
-          }
-        },
-        {
-          "time": 19.5,
-          "enemy": "straight",
-          "spawn_edge": "top",
-          "spawn_position": 0.9,
-          "spawn_offset_y": -100,
-          "count": 1,
-          "enemy_params": {
-            "speed": 280,
-            "size": 30,
-            "direction": [0, 1]
-          },
-          "movement": {
-            "type": "straight"
-          }
+          "enemy_params": { "speed": 300, "size": 26, "direction": [1, 0] },
+          "movement": { "type": "straight" }
         }
       ]
     }

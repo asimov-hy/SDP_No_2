@@ -1,0 +1,68 @@
+pause_menu:
+  type: container
+  layout: vertical
+  anchor: center
+  offset: [0, -50]
+  size: [300, 400]
+  spacing: 15
+  padding: 30
+  background: [0, 0, 0, 220]
+  border: 3
+  border_color: [100, 100, 200]
+  border_radius: 10
+  layer: 200
+
+  children:
+    # Title
+    - type: label
+      text: "PAUSED"
+      size: [240, 60]
+      font_size: 48
+      color: [200, 200, 255]
+      align: center
+      margin_bottom: 20
+
+    # Resume button
+    - type: button
+      text: "Resume"
+      size: [240, 50]
+      action: resume
+      color: [60, 60, 120]
+      hover:
+        color: [80, 80, 160]
+      border: 2
+      border_color: [150, 150, 200]
+
+    # Settings button
+    - type: button
+      text: "Settings"
+      size: [240, 50]
+      action: settings
+      color: [60, 60, 120]
+      hover:
+        color: [80, 80, 160]
+      border: 2
+      border_color: [150, 150, 200]
+
+    # Main Menu button
+    - type: button
+      text: "Main Menu"
+      size: [240, 50]
+      action: main_menu
+      color: [60, 60, 120]
+      hover:
+        color: [80, 80, 160]
+      border: 2
+      border_color: [150, 150, 200]
+
+    # Quit button
+    - type: button
+      text: "Quit"
+      size: [240, 50]
+      action: quit
+      color: [120, 40, 40]
+      hover:
+        color: [160, 60, 60]
+      border: 2
+      border_color: [200, 100, 100]
+      margin_top: 20

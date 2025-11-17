@@ -12,8 +12,10 @@ Responsibilities
 
 import pygame
 from src.entities.enemies.base_enemy import BaseEnemy
+from src.entities.base_entity import BaseEntity
 from src.entities.entity_types import EntityCategory
 from src.core.debug.debug_logger import DebugLogger
+from src.entities.entity_registry import EntityRegistry
 
 
 class EnemyHoming(BaseEnemy):
@@ -25,45 +27,59 @@ class EnemyHoming(BaseEnemy):
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(self, x, y, direction=(0, 1), speed=200, health=1,
-                 size=50, color=(0, 128, 255), draw_manager=None,
-                 homing=False, turn_rate=180, player_ref=None, **kwargs):
+    def __init__(self, x, y, direction=(0, 1), speed=None, health=None,
+                 scale=None, draw_manager=None,
+                 homing=False, turn_rate=None, player_ref=None, **kwargs):
         """
         Args:
             x, y: Spawn position
             direction: Tuple (dx, dy) for movement direction
-            speed: Pixels per second
-            health: HP before death
-            size: Triangle size (equilateral if int, else (w, h))
-            color: RGB tuple
-            draw_manager: Required for triangle creation
+            speed: Pixels per second (override, or use JSON default)
+            health: HP before death (override, or use JSON default)
+            size: Size override (or use JSON default)
+            draw_manager: Required for sprite loading
             homing: False, True (continuous), or "snapshot"
-            turn_rate: Degrees per second for continuous homing
+            turn_rate: Degrees per second for continuous homing (override, or use JSON default)
             player_ref: Reference to player for homing calculations
         """
+        # Load defaults from JSON
+        defaults = EntityRegistry.get_data("enemy", "homing")
+
+        # Apply overrides or use defaults
+        speed = speed if speed is not None else defaults.get("speed", 150)
+        health = health if health is not None else defaults.get("hp", 1)
+        scale = scale if scale is not None else defaults.get("scale", 1.0)
+
+        turn_rate = turn_rate if turn_rate is not None else defaults.get("turn_rate", 180)
+        image_path = defaults.get("image")
+        hitbox_config = defaults.get("hitbox", {})
+
         if draw_manager is None:
-            raise ValueError("EnemyHoming requires draw_manager for circle creation")
+            raise ValueError("EnemyHoming requires draw_manager")
 
-        # Normalize size: ensure tuple for circle
-        norm_size = (size, size) if isinstance(size, int) else size
-
-        shape_data = {
-            "type": "circle",
-            "size": norm_size,
-            "color": color
-        }
+        # Load and scale image using helper
+        img = BaseEntity.load_and_scale_image(image_path, scale)
 
         super().__init__(
             x, y,
-            shape_data=shape_data,
+            image=img,
             draw_manager=draw_manager,
             speed=speed,
             health=health,
             direction=direction,
-            spawn_edge=kwargs.get("spawn_edge")
+            spawn_edge=kwargs.get("spawn_edge"),
+            hitbox_config=hitbox_config
         )
 
-        # NEW: Homing support
+        # Homing support
+        self.homing = homing
+        self.turn_rate = turn_rate if homing else 0
+        self.player_ref = player_ref if homing else None
+
+        # Store exp value
+        self.exp_value = defaults.get("exp", 0)
+
+        # Homing support
         self.homing = homing
         self.turn_rate = turn_rate if homing else 0
         self.player_ref = player_ref if homing else None
