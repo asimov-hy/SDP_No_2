@@ -1,0 +1,77 @@
+# ===================================================================
+# Main Menu Scene Configuration
+# ===================================================================
+scene:
+  type: container
+  width: 1280
+  height: 720
+  anchor: center
+  layer: Layers.UI
+  bg_color: [20, 20, 30]
+
+  children:
+    # Title
+    - type: label
+      text: "202X"
+      font_size: 72
+      text_color: [255, 255, 255]
+      anchor: center_top
+      offset_y: 150
+      layer: Layers.UI
+
+    # Button container
+    - type: container
+      layout: vertical
+      spacing: 20
+      anchor: center
+      auto_size: true
+      layer: Layers.UI
+
+      children:
+        # Start button
+        - type: button
+          text: "START GAME"
+          width: 300
+          height: 60
+          font_size: 28
+          text_color: [255, 255, 255]
+          bg_color: [60, 60, 80]
+          hover_color: [80, 80, 120]
+          on_click: "scene:GameScene"
+          layer: Layers.UI
+
+        # Campaign select button
+        - type: button
+          text: "CAMPAIGN SELECT"
+          width: 300
+          height: 60
+          font_size: 28
+          text_color: [255, 255, 255]
+          bg_color: [60, 60, 80]
+          hover_color: [80, 80, 120]
+          on_click: "scene:CampaignSelectScene"
+          layer: Layers.UI
+
+        # Settings button
+        - type: button
+          text: "SETTINGS"
+          width: 300
+          height: 60
+          font_size: 28
+          text_color: [255, 255, 255]
+          bg_color: [60, 60, 80]
+          hover_color: [80, 80, 120]
+          on_click: "scene:SettingsScene"
+          layer: Layers.UI
+
+        # Exit button
+        - type: button
+          text: "EXIT"
+          width: 300
+          height: 60
+          font_size: 28
+          text_color: [255, 255, 255]
+          bg_color: [80, 40, 40]
+          hover_color: [120, 50, 50]
+          on_click: "action:quit"
+          layer: Layers.UI

@@ -1,0 +1,233 @@
+# ===================================================================
+# Settings Scene Configuration
+# ===================================================================
+scene:
+  type: container
+  width: 1280
+  height: 720
+  anchor: center
+  layer: Layers.UI
+  bg_color: [20, 20, 30]
+
+  children:
+    # Title
+    - type: label
+      text: "SETTINGS"
+      font_size: 48
+      text_color: [255, 255, 255]
+      anchor: center_top
+      offset_y: 80
+      layer: Layers.UI
+
+    # Settings container
+    - type: container
+      layout: vertical
+      spacing: 30
+      anchor: center
+      offset_y: -50
+      auto_size: true
+      layer: Layers.UI
+
+      children:
+        # Audio section
+        - type: container
+          layout: vertical
+          spacing: 15
+          auto_size: true
+          layer: Layers.UI
+
+          children:
+            - type: label
+              text: "AUDIO"
+              font_size: 32
+              text_color: [200, 200, 255]
+              align: left
+              layer: Layers.UI
+
+            # Master volume
+            - type: container
+              layout: horizontal
+              spacing: 20
+              auto_size: true
+              layer: Layers.UI
+
+              children:
+                - type: label
+                  text: "Master Volume:"
+                  font_size: 24
+                  text_color: [255, 255, 255]
+                  width: 200
+                  align: left
+                  layer: Layers.UI
+
+                - type: bar
+                  width: 300
+                  height: 30
+                  bg_color: [40, 40, 60]
+                  fill_color: [80, 120, 255]
+                  bind: "settings.volume.master"
+                  min_value: 0
+                  max_value: 100
+                  interactive: true
+                  layer: Layers.UI
+
+                - type: label
+                  format: "{:.0f}%"
+                  bind: "settings.volume.master"
+                  font_size: 24
+                  text_color: [255, 255, 255]
+                  width: 60
+                  layer: Layers.UI
+
+            # Music volume
+            - type: container
+              layout: horizontal
+              spacing: 20
+              auto_size: true
+              layer: Layers.UI
+
+              children:
+                - type: label
+                  text: "Music Volume:"
+                  font_size: 24
+                  text_color: [255, 255, 255]
+                  width: 200
+                  align: left
+                  layer: Layers.UI
+
+                - type: bar
+                  width: 300
+                  height: 30
+                  bg_color: [40, 40, 60]
+                  fill_color: [80, 120, 255]
+                  bind: "settings.volume.music"
+                  min_value: 0
+                  max_value: 100
+                  interactive: true
+                  layer: Layers.UI
+
+                - type: label
+                  format: "{:.0f}%"
+                  bind: "settings.volume.music"
+                  font_size: 24
+                  text_color: [255, 255, 255]
+                  width: 60
+                  layer: Layers.UI
+
+            # SFX volume
+            - type: container
+              layout: horizontal
+              spacing: 20
+              auto_size: true
+              layer: Layers.UI
+
+              children:
+                - type: label
+                  text: "SFX Volume:"
+                  font_size: 24
+                  text_color: [255, 255, 255]
+                  width: 200
+                  align: left
+                  layer: Layers.UI
+
+                - type: bar
+                  width: 300
+                  height: 30
+                  bg_color: [40, 40, 60]
+                  fill_color: [80, 120, 255]
+                  bind: "settings.volume.sfx"
+                  min_value: 0
+                  max_value: 100
+                  interactive: true
+                  layer: Layers.UI
+
+                - type: label
+                  format: "{:.0f}%"
+                  bind: "settings.volume.sfx"
+                  font_size: 24
+                  text_color: [255, 255, 255]
+                  width: 60
+                  layer: Layers.UI
+
+        # Video section
+        - type: container
+          layout: vertical
+          spacing: 15
+          auto_size: true
+          layer: Layers.UI
+
+          children:
+            - type: label
+              text: "VIDEO"
+              font_size: 32
+              text_color: [200, 200, 255]
+              align: left
+              layer: Layers.UI
+
+            # Fullscreen toggle
+            - type: container
+              layout: horizontal
+              spacing: 20
+              auto_size: true
+              layer: Layers.UI
+
+              children:
+                - type: label
+                  text: "Fullscreen:"
+                  font_size: 24
+                  text_color: [255, 255, 255]
+                  width: 200
+                  align: left
+                  layer: Layers.UI
+
+                - type: button
+                  text: "TOGGLE"
+                  width: 150
+                  height: 40
+                  font_size: 20
+                  text_color: [255, 255, 255]
+                  bg_color: [60, 60, 80]
+                  hover_color: [80, 80, 120]
+                  on_click: "action:toggle_fullscreen"
+                  layer: Layers.UI
+
+            # VSync toggle
+            - type: container
+              layout: horizontal
+              spacing: 20
+              auto_size: true
+              layer: Layers.UI
+
+              children:
+                - type: label
+                  text: "VSync:"
+                  font_size: 24
+                  text_color: [255, 255, 255]
+                  width: 200
+                  align: left
+                  layer: Layers.UI
+
+                - type: button
+                  text: "TOGGLE"
+                  width: 150
+                  height: 40
+                  font_size: 20
+                  text_color: [255, 255, 255]
+                  bg_color: [60, 60, 80]
+                  hover_color: [80, 80, 120]
+                  on_click: "action:toggle_vsync"
+                  layer: Layers.UI
+
+    # Back button
+    - type: button
+      text: "BACK"
+      width: 200
+      height: 50
+      font_size: 24
+      text_color: [255, 255, 255]
+      bg_color: [60, 60, 80]
+      hover_color: [80, 80, 120]
+      anchor: bottom_center
+      offset_y: -50
+      on_click: "scene:StartScene"
+      layer: Layers.UI
