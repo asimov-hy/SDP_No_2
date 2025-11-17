@@ -43,7 +43,8 @@ class CollisionHitbox:
         "_manual_size",
         "shape", "shape_params",
         "_shape_width", "_shape_height", "_shape_radius",
-        "_rotation"  # Cached entity rotation
+        "_rotation",  # Cached entity rotation
+        "use_obb", "_obb_corners"  # OBB support
     )
 
     # ===========================================================
@@ -75,7 +76,9 @@ class CollisionHitbox:
         self._shape_radius = None
 
         # Rotation tracking
-        self._rotation = 0.0  # NEW: Cached rotation in degrees
+        self._rotation = 0.0  # Cached rotation in degrees
+        self.use_obb = False  # Enable OBB for non-axis-aligned rotation
+        self._obb_corners = None  # Cached OBB corner points
 
         # Core attributes
         self.rect = pygame.Rect(0, 0, 0, 0)
@@ -231,8 +234,14 @@ class CollisionHitbox:
             DebugLogger.warn(f"[Hitbox] {type(self.owner).__name__} lost rect reference")
             return
 
-        # Update rotation from entity
+        # Update rotation from entity and check if OBB needed
+        old_rotation = self._rotation
         self._rotation = getattr(self.owner, 'rotation_angle', 0.0)
+
+        # Detect rotation change and update OBB state
+        if abs(self._rotation - old_rotation) > 0.1:
+            self.use_obb = (self._rotation % 90 != 0)
+            self._obb_corners = None  # Invalidate cache
 
         # Only recalculate size if in automatic mode
         if not self._manual_size:
@@ -277,6 +286,67 @@ class CollisionHitbox:
         if (diameter, diameter) != self._size_cache:
             self.rect.size = (diameter, diameter)
             self._size_cache = (diameter, diameter)
+
+    def get_center(self):
+        """
+        Get the center point of the hitbox.
+
+        Returns:
+            tuple: (center_x, center_y)
+        """
+        return (self.rect.centerx, self.rect.centery)
+
+    def get_obb_corners(self):
+        """
+        Calculate and return the 4 corner points of the oriented bounding box.
+        Uses cached corners if rotation hasn't changed.
+
+        Returns:
+            list: [(x1, y1), (x2, y2), (x3, y3), (x4, y4)] - four corner points
+        """
+        # Return cached corners if valid
+        if self._obb_corners is not None:
+            return self._obb_corners
+
+        # Get center and half-dimensions
+        cx, cy = self.get_center()
+        half_w = self.rect.width / 2
+        half_h = self.rect.height / 2
+
+        # If no rotation or axis-aligned, return AABB corners
+        if self._rotation % 90 == 0:
+            self._obb_corners = [
+                (cx - half_w, cy - half_h),  # Top-left
+                (cx + half_w, cy - half_h),  # Top-right
+                (cx + half_w, cy + half_h),  # Bottom-right
+                (cx - half_w, cy + half_h)  # Bottom-left
+            ]
+            return self._obb_corners
+
+        # Calculate rotated corners
+        import math
+        radians = math.radians(self._rotation)
+        cos_a = math.cos(radians)
+        sin_a = math.sin(radians)
+
+        # Local corner offsets (unrotated)
+        local_corners = [
+            (-half_w, -half_h),  # Top-left
+            (half_w, -half_h),  # Top-right
+            (half_w, half_h),  # Bottom-right
+            (-half_w, half_h)  # Bottom-left
+        ]
+
+        # Rotate each corner and translate to world space
+        self._obb_corners = []
+        for lx, ly in local_corners:
+            # Apply rotation matrix
+            rx = lx * cos_a - ly * sin_a
+            ry = lx * sin_a + ly * cos_a
+            # Translate to world position
+            self._obb_corners.append((cx + rx, cy + ry))
+
+        return self._obb_corners
 
     # ===========================================================
     # Dynamic Hitbox Control
@@ -397,21 +467,27 @@ class CollisionHitbox:
     def draw_debug(self, surface):
         """
         Render a visible outline of the hitbox for debugging.
+        Shows AABB (green/colored) and OBB (red) when rotation is active.
 
         Args:
-            surface (pygame.Surface): The rendering surface to draw onto.
+            surface (pygame.Surface or DrawManager): The rendering surface to draw onto.
         """
         if not Debug.HITBOX_VISIBLE:
             return
 
-        # DrawManager integration (preferred)
+        # Draw AABB - use DrawManager queue if available
         if hasattr(surface, "queue_hitbox"):
             surface.queue_hitbox(self.rect, color=self._color_cache, width=Debug.HITBOX_LINE_WIDTH)
-            return
-
-        # Case 2: Fallback — direct draw to pygame.Surface
-        if isinstance(surface, pygame.Surface):
+            # Draw OBB directly to DrawManager's surface if available
+            if self.use_obb and hasattr(surface, 'surface') and surface.surface:
+                corners = self.get_obb_corners()
+                pygame.draw.lines(surface.surface, (255, 0, 0), True, corners, 2)
+        # Fallback — direct draw to pygame.Surface
+        elif isinstance(surface, pygame.Surface):
             pygame.draw.rect(surface, self._color_cache, self.rect, Debug.HITBOX_LINE_WIDTH)
+            # Draw OBB
+            if self.use_obb:
+                corners = self.get_obb_corners()
+                pygame.draw.lines(surface, (255, 0, 0), True, corners, 2)
         else:
             DebugLogger.warn(f"Invalid debug hitbox draw: {type(surface).__name__}")
-
