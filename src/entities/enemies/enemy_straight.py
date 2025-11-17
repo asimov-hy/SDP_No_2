@@ -13,6 +13,7 @@ Responsibilities
 import pygame
 import os
 from src.entities.enemies.base_enemy import BaseEnemy
+from src.entities.base_entity import BaseEntity
 from src.entities.entity_types import EntityCategory
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.entity_registry import EntityRegistry
@@ -46,25 +47,16 @@ class EnemyStraight(BaseEnemy):
         speed = speed if speed is not None else defaults.get("speed", 200)
         health = health if health is not None else defaults.get("hp", 1)
         scale = scale if scale is not None else defaults.get("scale", 1.0)
+
         image_path = defaults.get("image", "assets/images/characters/enemies/missile.png")
-        hitbox_scale = defaults.get("hitbox", {}).get("scale", 0.85)
+        hitbox_config = defaults.get("hitbox", {})
 
         # Create sprite
         if draw_manager is None:
             raise ValueError("EnemyStraight requires draw_manager for sprite loading")
 
-        # Load image or use fallback shape
-        img = pygame.image.load(image_path).convert_alpha()
-
-        # Apply scale
-        if isinstance(scale, (int, float)):
-            new_size = (int(img.get_width() * scale), int(img.get_height() * scale))
-        elif isinstance(scale, (list, tuple)) and len(scale) == 2:
-            new_size = (int(img.get_width() * scale[0]), int(img.get_height() * scale[1]))
-        else:
-            new_size = img.get_size()
-
-        img = pygame.transform.scale(img, new_size)
+        # Load and scale image using helper
+        img = BaseEntity.load_and_scale_image(image_path, scale)
 
         super().__init__(
             x, y,
@@ -74,9 +66,8 @@ class EnemyStraight(BaseEnemy):
             health=health,
             direction=direction,
             spawn_edge=kwargs.get("spawn_edge", None),
-            hitbox_scale=hitbox_scale
+            hitbox_config=hitbox_config
         )
-
 
         # Store exp value for when enemy dies
         self.exp_value = defaults.get("exp", 0)

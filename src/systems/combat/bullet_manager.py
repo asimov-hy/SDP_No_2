@@ -229,10 +229,7 @@ class BulletManager:
         """Register bullet hitbox if collision manager is available."""
 
         if self.collision_manager:
-            self.collision_manager.register_hitbox(
-                bullet,
-                scale=getattr(bullet, "hitbox_scale", 1.0)
-            )
+            self.collision_manager.register_hitbox(bullet)
 
     def _unregister_hitbox(self, bullet):
         """Remove bullet from collision tracking."""

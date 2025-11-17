@@ -68,29 +68,25 @@ class CollisionManager:
     # ===========================================================
     # Hitbox Lifecycle Management
     # ===========================================================
-    def register_hitbox(self, entity, scale=1.0, size=None, offset=(0, 0)):
+    def register_hitbox(self, entity, scale=None, offset=(0, 0)):
         """
         Create and register a hitbox for an entity.
 
         Args:
             entity: The entity to create a hitbox for.
-            scale: Scale factor relative to entity.rect (default: 1.0).
-            size: Explicit (width, height) tuple, overrides scale if provided.
+            scale: Scale factor override (uses entity.hitbox_scale if None).
             offset: (x, y) offset from entity center in pixels.
 
         Returns:
             CollisionHitbox: The created hitbox instance.
         """
+        # Extract from entity if not provided (allows overrides)
+        scale = scale if scale is not None else getattr(entity, 'hitbox_scale', 1.0)
 
-        # Create hitbox with scale
         hitbox = CollisionHitbox(entity, scale=scale, offset=offset)
 
-        # Override with explicit size if provided (switches to manual mode)
-        if size:
-            hitbox.set_size(*size)
-
-        # Register in centralized registry
         self.hitboxes[id(entity)] = hitbox
+        entity.hitbox = hitbox  # Store back-reference
 
         DebugLogger.trace(f"Registered hitbox for {type(entity).__name__}")
         return hitbox

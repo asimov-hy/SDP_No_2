@@ -116,10 +116,7 @@ class GameScene(GameplayScene):
         self.bullet_manager.collision_manager = self.collision_manager
         DebugLogger.init_sub("Bound [CollisionManager] to [BulletManager]")
 
-        self.player.hitbox = self.collision_manager.register_hitbox(
-            self.player,
-            scale=self.player.hitbox_scale
-        )
+        self.collision_manager.register_hitbox(self.player)
         DebugLogger.init_sub("Registered [Player] with [CollisionManager]")
 
     def _init_spawning(self):

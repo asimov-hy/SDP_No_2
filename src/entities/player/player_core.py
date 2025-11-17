@@ -55,8 +55,18 @@ class Player(BaseEntity):
         default_state = render["default_shape"]
 
         if self.render_mode == "image":
-            image = self._load_sprite(render, image)
-            image = self._apply_scaling(size, image)
+            if image is None:
+                sprite_path = render.get("sprite", {}).get("path")
+                scale = (size[0], size[1])  # tuple scale for target dimensions
+                # Calculate scale factor from original image size
+                if sprite_path and os.path.exists(sprite_path):
+                    temp_img = pygame.image.load(sprite_path).convert_alpha()
+                    scale = (size[0] / temp_img.get_width(), size[1] / temp_img.get_height())
+                    image = BaseEntity.load_and_scale_image(sprite_path, scale)
+                else:
+                    DebugLogger.warn(f"Missing sprite: {sprite_path}, using fallback.")
+                    image = pygame.Surface(size)
+                    image.fill((255, 50, 50))
             shape_data = None
         else:
             image = None
@@ -73,7 +83,11 @@ class Player(BaseEntity):
         # ========================================
         # 3. Base Entity Init
         # ========================================
-        super().__init__(x, y, image=image, shape_data=shape_data, draw_manager=draw_manager)
+        # Build hitbox config from player config
+        hitbox_config = {'scale': core["hitbox_scale"]}
+
+        super().__init__(x, y, image=image, shape_data=shape_data,
+                         draw_manager=draw_manager, hitbox_config=hitbox_config)
 
         if self.render_mode == "shape":
             self.shape_data = shape_data
@@ -124,7 +138,6 @@ class Player(BaseEntity):
         # ========================================
         # 6. Collision & Combat
         # ========================================
-        self.hitbox_scale = core["hitbox_scale"]
 
         if input_manager is not None:
             self.input_manager = input_manager
@@ -135,10 +148,11 @@ class Player(BaseEntity):
         # ========================================
         # Load Player Bullet Sprite
         # ========================================
-        bullet_path = "assets/images/sprites/bullets/100H.png"
-        if os.path.exists(bullet_path):
-            self.bullet_image = pygame.image.load(bullet_path).convert_alpha()
-            self.bullet_image = pygame.transform.scale(self.bullet_image, (16, 32))
+        bullet_path = "assets/projectiles/100H.png"
+        temp_img = pygame.image.load(bullet_path).convert_alpha() if os.path.exists(bullet_path) else None
+        if temp_img:
+            scale = (16 / temp_img.get_width(), 32 / temp_img.get_height())
+            self.bullet_image = BaseEntity.load_and_scale_image(bullet_path, scale)
         else:
             DebugLogger.warn(f"Missing bullet sprite: {bullet_path}")
             self.bullet_image = pygame.Surface((8, 16), pygame.SRCALPHA)
@@ -159,31 +173,6 @@ class Player(BaseEntity):
     # Helper Methods
     # ===========================================================
     @staticmethod
-    def _load_sprite(render_cfg, image):
-        """Load player sprite from disk or fallback."""
-        if image:
-            return image
-
-        sprite_path = render_cfg.get("sprite", {}).get("path")
-
-        if not sprite_path or not os.path.exists(sprite_path):
-            DebugLogger.warn(f"Missing sprite: {sprite_path}, using fallback.")
-            placeholder = pygame.Surface((64, 64))
-            placeholder.fill((255, 50, 50))
-            return placeholder
-
-        image = pygame.image.load(sprite_path).convert_alpha()
-        DebugLogger.state(f"Loaded sprite from {sprite_path}")
-        return image
-
-    @staticmethod
-    def _apply_scaling(size, image):
-        """Scale sprite to configured size."""
-        if not image:
-            return image
-        return pygame.transform.scale(image, size)
-
-    @staticmethod
     def _compute_spawn_position(x, y, size, image):
         """Compute initial spawn position."""
         if image:
@@ -202,8 +191,9 @@ class Player(BaseEntity):
     @staticmethod
     def _load_and_scale(path, size):
         """Load and scale a single image state."""
-        img = pygame.image.load(path).convert_alpha()
-        return pygame.transform.scale(img, size)
+        temp_img = pygame.image.load(path).convert_alpha()
+        scale = (size[0] / temp_img.get_width(), size[1] / temp_img.get_height())
+        return BaseEntity.load_and_scale_image(path, scale)
 
     # ===========================================================
     # Frame Cycle

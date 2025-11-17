@@ -12,6 +12,7 @@ Responsibilities
 
 import pygame
 from src.entities.enemies.base_enemy import BaseEnemy
+from src.entities.base_entity import BaseEntity
 from src.entities.entity_types import EntityCategory
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.entity_registry import EntityRegistry
@@ -48,25 +49,16 @@ class EnemyHoming(BaseEnemy):
         speed = speed if speed is not None else defaults.get("speed", 150)
         health = health if health is not None else defaults.get("hp", 1)
         scale = scale if scale is not None else defaults.get("scale", 1.0)
+
         turn_rate = turn_rate if turn_rate is not None else defaults.get("turn_rate", 180)
         image_path = defaults.get("image")
-        hitbox_scale = defaults.get("hitbox", {}).get("scale", 0.9)
+        hitbox_config = defaults.get("hitbox", {})
 
         if draw_manager is None:
             raise ValueError("EnemyHoming requires draw_manager")
 
-        # Try loading image, fallback to shape
-        img = pygame.image.load(image_path).convert_alpha()
-
-        # Apply scale
-        if isinstance(scale, (int, float)):
-            new_size = (int(img.get_width() * scale), int(img.get_height() * scale))
-        elif isinstance(scale, (list, tuple)) and len(scale) == 2:
-            new_size = (int(img.get_width() * scale[0]), int(img.get_height() * scale[1]))
-        else:
-            new_size = img.get_size()
-
-        img = pygame.transform.scale(img, new_size)
+        # Load and scale image using helper
+        img = BaseEntity.load_and_scale_image(image_path, scale)
 
         super().__init__(
             x, y,
@@ -76,9 +68,8 @@ class EnemyHoming(BaseEnemy):
             health=health,
             direction=direction,
             spawn_edge=kwargs.get("spawn_edge"),
-            hitbox_scale=hitbox_scale
+            hitbox_config=hitbox_config
         )
-
 
         # Homing support
         self.homing = homing

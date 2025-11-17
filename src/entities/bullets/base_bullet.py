@@ -57,7 +57,7 @@ class BaseBullet(BaseEntity):
         damage = damage if damage is not None else defaults.get("damage", 1)
         radius = radius if radius is not None else defaults.get("radius", 3)
         color = tuple(color) if color is not None else tuple(defaults.get("color", [255, 255, 255]))
-        hitbox_scale = hitbox_scale if hitbox_scale is not None else defaults.get("hitbox", {}).get("scale", 0.9)
+        hitbox_config = defaults.get("hitbox", {})
 
         radius = max(1, radius)
         size = (radius * 2, radius * 2)
@@ -76,7 +76,8 @@ class BaseBullet(BaseEntity):
             y=pos[1],
             image=image,
             shape_data=shape_data,
-            draw_manager=draw_manager
+            draw_manager=draw_manager,
+            hitbox_config=hitbox_config
         )
 
         # Core attributes
@@ -90,8 +91,6 @@ class BaseBullet(BaseEntity):
         # Collision setup
         self.collision_tag = f"{owner}_bullet"
         self.category = EntityCategory.PROJECTILE
-        self.hitbox_scale = hitbox_scale  # ADD THIS LINE
-        self._hitbox_scale = hitbox_scale  # ADD THIS LINE (for spawn_manager compatibility)
         self.layer = game_settings.Layers.BULLETS
 
     # ===========================================================

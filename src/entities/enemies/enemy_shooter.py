@@ -13,6 +13,7 @@ Responsibilities
 
 import pygame
 from src.entities.enemies.base_enemy import BaseEnemy
+from src.entities.base_entity import BaseEntity
 from src.entities.entity_types import EntityCategory
 from src.core.debug.debug_logger import DebugLogger
 
@@ -59,15 +60,17 @@ class EnemyShooter(BaseEnemy):
         aim_at_player = aim_at_player if aim_at_player is not None else defaults.get("aim_at_player", True)
 
         image_path = defaults.get("image", "assets/images/characters/enemies/shooter.png")
-        hitbox_scale = defaults.get("hitbox", {}).get("scale", 0.85)
+        hitbox_config = defaults.get("hitbox", {})
 
         norm_size = (size, size) if isinstance(size, int) else size
 
         # ============================
         # Load sprite
         # ============================
-        img = pygame.image.load(image_path).convert_alpha()
-        img = pygame.transform.scale(img, norm_size)
+        # Calculate scale from target size
+        temp_img = pygame.image.load(image_path).convert_alpha()
+        scale = (norm_size[0] / temp_img.get_width(), norm_size[1] / temp_img.get_height())
+        img = BaseEntity.load_and_scale_image(image_path, scale)
 
         super().__init__(
             x, y,
@@ -75,7 +78,8 @@ class EnemyShooter(BaseEnemy):
             draw_manager=draw_manager,
             speed=speed,
             health=health,
-            spawn_edge=kwargs.get("spawn_edge", None)
+            spawn_edge=kwargs.get("spawn_edge", None),
+            hitbox_config=hitbox_config
         )
 
         # Store EXP from JSON

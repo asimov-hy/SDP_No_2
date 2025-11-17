@@ -85,7 +85,11 @@ class BaseEnemy(BaseEntity):
             speed: Movement speed
             health: HP
         """
-        super().__init__(x, y, image=image, shape_data=shape_data, draw_manager=draw_manager)
+        # Extract hitbox config from kwargs
+        hitbox_config = kwargs.get('hitbox_config', {})
+
+        super().__init__(x, y, image=image, shape_data=shape_data,
+                         draw_manager=draw_manager, hitbox_config=hitbox_config)
         self.speed = speed
         self.health = health if health is not None else 1
         self.max_health = self.health
@@ -98,9 +102,6 @@ class BaseEnemy(BaseEntity):
         self.collision_tag = CollisionTags.ENEMY
         self.category = EntityCategory.ENEMY
         self.layer = Layers.ENEMIES
-
-        # hitbox scale
-        self._hitbox_scale = kwargs.get('hitbox_scale', 0.9)
 
         if direction is None:
             self.velocity = self._auto_direction_from_edge(spawn_edge)

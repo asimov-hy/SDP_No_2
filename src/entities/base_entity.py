@@ -31,6 +31,7 @@ Responsibilities
 - Serve as the parent class for specialized gameplay entities_animation.
 """
 
+import os
 import pygame
 from typing import Optional
 from src.core.runtime.game_settings import Layers, Bounds, Display
@@ -55,17 +56,51 @@ class BaseEntity:
     - Should set appropriate layer in __init__ (e.g., Layers.PLAYER)
     """
 
+    @staticmethod
+    def load_and_scale_image(image_path, scale=1.0, fallback_color=(255, 0, 255)):
+        """
+        Load image from path and apply scaling.
+
+        Args:
+            image_path: Path to image file
+            scale: Float or (width_scale, height_scale) tuple
+            fallback_color: Color for placeholder if load fails
+
+        Returns:
+            pygame.Surface or None if path is None
+        """
+        if image_path is None:
+            return None
+
+        if not os.path.exists(image_path):
+            DebugLogger.warn(f"Image not found: {image_path}")
+            return None
+
+        try:
+            img = pygame.image.load(image_path).convert_alpha()
+
+            # Apply scaling
+            if isinstance(scale, (int, float)):
+                new_size = (int(img.get_width() * scale),
+                            int(img.get_height() * scale))
+            elif isinstance(scale, (list, tuple)) and len(scale) == 2:
+                new_size = (int(img.get_width() * scale[0]),
+                            int(img.get_height() * scale[1]))
+            else:
+                return img
+
+            return pygame.transform.scale(img, new_size)
+
+        except Exception as e:
+            DebugLogger.fail(f"Failed loading {image_path}: {e}")
+            return None
+
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(
-        self,
-        x: float,
-        y: float,
-        image: Optional[pygame.Surface] = None,
-        shape_data: Optional[dict] = None,
-        draw_manager: Optional = None,
-    ):
+    def __init__(self, x: float, y: float, image: Optional[pygame.Surface] = None,
+                 shape_data: Optional[dict] = None, draw_manager: Optional = None,
+                 hitbox_config: Optional[dict] = None,):
         """
         Initialize entity with flexible rendering options.
 
@@ -166,6 +201,23 @@ class BaseEntity:
         self._sprite_config = {}  # Subclasses populate state→image/color mapping
 
         self.anim_manager = AnimationManager(self)
+
+        # -------------------------------------------------------
+        # Hitbox Configuration
+        # -------------------------------------------------------
+        self._setup_hitbox_config(hitbox_config)
+
+    def _setup_hitbox_config(self, hitbox_config):
+        """Initialize hitbox configuration from JSON data."""
+        if hitbox_config is None:
+            hitbox_config = {}
+
+        # Standardized attribute names (no underscore prefix)
+        self.hitbox_scale = hitbox_config.get('scale', 0.9)
+        self.hitbox_shape = hitbox_config.get('shape', 'rect')
+        self.hitbox_params = {k: v for k, v in hitbox_config.items()
+                              if k not in ('scale', 'shape')}
+        self.hitbox = None  # Populated by collision_manager
 
     # ===========================================================
     # Spatial Synchronization

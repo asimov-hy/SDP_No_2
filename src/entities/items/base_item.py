@@ -47,7 +47,15 @@ class BaseItem(BaseEntity):
             speed (float): Downward movement speed (pixels/second).
             despawn_y (float, optional): Y coordinate to despawn at. Defaults to screen height.
         """
-        super().__init__(x, y, image=image, shape_data=shape_data, draw_manager=draw_manager)
+        # Extract hitbox config from item_data
+        hitbox_config = {}
+        if item_data and 'hitbox' in item_data:
+            hitbox_config = item_data['hitbox']
+        else:
+            hitbox_config = {'scale': 0.8}  # Default for items
+
+        super().__init__(x, y, image=image, shape_data=shape_data,
+                         draw_manager=draw_manager, hitbox_config=hitbox_config)
 
         self.speed = speed
         self.despawn_y = despawn_y if despawn_y is not None else Display.HEIGHT
@@ -56,11 +64,6 @@ class BaseItem(BaseEntity):
         self.collision_tag = CollisionTags.PICKUP
         self.category = EntityCategory.PICKUP
         self.layer = Layers.PICKUPS  # Same layer as enemies for now
-
-        # Hitbox scale (smaller than visual for easier collection)
-        self._hitbox_scale = 0.8  # Can be overridden in item_data
-        if item_data and 'hitbox' in item_data:
-            self._hitbox_scale = item_data['hitbox'].get('scale', 0.8)
 
         # Movement
         self.velocity = pygame.Vector2(0, self.speed)
