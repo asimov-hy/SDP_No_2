@@ -4,7 +4,7 @@
   "core_attributes": {
     "_notes": "Defines base physics and behavior values.",
     "scale": 1.0,
-    "health": 6,
+    "health": 2,
     "hitbox_scale": 0.85,
 
     "speed": 300,
@@ -19,7 +19,7 @@
     "size": [64, 64],
 
     "sprite": {
-      "path": "assets/images/sprites/players/robot_Garda.png"
+      "path": "assets/images/sprites/player/robot_Garda.png"
     },
 
     "default_shape": {
@@ -36,9 +36,9 @@
     },
 
     "image_states": {
-      "normal": "assets/images/sprites/players/robot_Garda.png",
-      "damaged_moderate": "assets/images/sprites/players/robot_Garda.png",
-      "damaged_critical": "assets/images/sprites/players/robot_Garda.png"
+      "normal": "assets/images/sprites/player/robot_Garda.png",
+      "damaged_moderate": "assets/images/sprites/player/robot_Garda.png",
+      "damaged_critical": "assets/images/sprites/player/robot_Garda.png"
     },
 
     "color_states": {

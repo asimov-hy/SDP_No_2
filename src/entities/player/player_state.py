@@ -1,7 +1,7 @@
 """
 player_state.py
 ---------------
-Defines player-exclusive effect states and constants.
+Defines player-exclusive effects states and constants.
 
 Responsibilities
 ----------------

@@ -32,22 +32,33 @@ class BaseBullet(BaseEntity):
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(self, pos, vel, image=None, color=(255, 255, 255),
-                 radius=3, owner="player", damage=1, hitbox_scale=0.9, draw_manager=None):
+    def __init__(self, pos, vel, image=None, color=None,
+                 radius=None, owner="player", damage=None, hitbox_scale=None, draw_manager=None):
         """
         Initialize the base bullet entity.
 
         Args:
             pos (tuple[float, float]): Starting position.
             vel (tuple[float, float]): Velocity vector.
-            image (pygame.Surface): Optional sprite image.
-            color (tuple[int, int, int]): RGB color (used if no image).
-            radius (int): Circle radius when using shape rendering.
+            image (pygame.Surface): Optional sprite image (overrides JSON).
+            color (tuple[int, int, int]): RGB color (override, or use JSON default).
+            radius (int): Circle radius (override, or use JSON default).
             owner (str): Bullet origin ('player' or 'enemy').
-            damage (int): Damage value applied on collision.
-            hitbox_scale (float): Scale factor for hitbox relative to sprite.
+            damage (int): Damage value (override, or use JSON default).
+            hitbox_scale (float): Hitbox scale (override, or use JSON default).
             draw_manager: Optional DrawManager for shape prebaking.
         """
+        from src.entities.entity_registry import EntityRegistry
+
+        # Load defaults from JSON
+        defaults = EntityRegistry.get_data("projectile", "straight")
+
+        # Apply overrides or use defaults
+        damage = damage if damage is not None else defaults.get("damage", 1)
+        radius = radius if radius is not None else defaults.get("radius", 3)
+        color = tuple(color) if color is not None else tuple(defaults.get("color", [255, 255, 255]))
+        hitbox_config = defaults.get("hitbox", {})
+
         radius = max(1, radius)
         size = (radius * 2, radius * 2)
 
@@ -65,7 +76,8 @@ class BaseBullet(BaseEntity):
             y=pos[1],
             image=image,
             shape_data=shape_data,
-            draw_manager=draw_manager
+            draw_manager=draw_manager,
+            hitbox_config=hitbox_config
         )
 
         # Core attributes
@@ -79,7 +91,6 @@ class BaseBullet(BaseEntity):
         # Collision setup
         self.collision_tag = f"{owner}_bullet"
         self.category = EntityCategory.PROJECTILE
-        self.hitbox_scale = hitbox_scale
         self.layer = game_settings.Layers.BULLETS
 
     # ===========================================================

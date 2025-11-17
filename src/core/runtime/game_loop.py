@@ -17,6 +17,7 @@ import time
 
 # Core runtime configurations
 from src.core.runtime.game_settings import Display, Physics, Debug
+from src.core.runtime.game_state import STATE
 
 # Core service managers
 from src.core.services.input_manager import InputManager
@@ -62,7 +63,7 @@ class GameLoop:
         # -------------------------------------------------------
         # Global Debug HUD (independent of scenes)
         # -------------------------------------------------------
-        self.debug_hud = DebugHUD(self.display)
+        self.debug_hud = DebugHUD(self.display, self.draw_manager)
         DebugLogger.init_sub("Bound [DisplayManager] dependency", level=1)
         self.debug_hud.draw_manager = self.draw_manager
         DebugLogger.init_sub("Bound [DrawManager] dependency", level=1)
@@ -125,7 +126,7 @@ class GameLoop:
             # ---------------------------------------------------
             # Debug HUD and rendering pass
             # ---------------------------------------------------
-            self.debug_hud.update(pygame.mouse.get_pos())
+            self.debug_hud.update(fixed_dt, pygame.mouse.get_pos())
             self._draw()
 
         # -------------------------------------------------------
@@ -157,7 +158,7 @@ class GameLoop:
             - Handle quit requests and window resizing.
             - Route all keyboard input (system-level and contextual)
               through InputManager.
-            - Delegate UI and scene-specific input events.
+            - Delegate ui and scene-specific input events.
         """
         events = pygame.event.get()
         for event in events:
@@ -211,7 +212,9 @@ class GameLoop:
         # Profile: Debug HUD Draw
         # -------------------------------------------------------
         t_hud = time.perf_counter()
-        self.debug_hud.draw(self.draw_manager)
+        player = STATE.get_entity("player")
+
+        self.debug_hud.draw(self.draw_manager, player)
         hud_time = (time.perf_counter() - t_hud) * 1000
 
         # -------------------------------------------------------
@@ -229,7 +232,6 @@ class GameLoop:
         frame_time_ms = (time.perf_counter() - start_total) * 1000
 
         fps = 1000.0 / frame_time_ms if frame_time_ms > 0 else 0.0
-        self.debug_hud.current_fps = fps
 
         # NEW: Timing breakdown for DebugHUD
         self.debug_hud.frame_time = frame_time_ms

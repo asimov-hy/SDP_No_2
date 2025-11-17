@@ -18,9 +18,8 @@ from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import LifecycleState
 from src.entities.entity_types import CollisionTags, EntityCategory
 from src.entities.entity_registry import EntityRegistry
-from src.graphics.animations.animation_effects.death_animation import death_fade
 from src.core.services.event_manager import EVENTS, EnemyDiedEvent
-from src.ui.effects.effect_manager import effect_manager
+
 
 class BaseEnemy(BaseEntity):
     """Base class providing shared logic for all enemy entities_animation."""
@@ -67,7 +66,6 @@ class BaseEnemy(BaseEntity):
         }
     }
 
-
     def __init_subclass__(cls, **kwargs):
         """Auto-register enemy subclasses when they're defined."""
         super().__init_subclass__(**kwargs)
@@ -87,10 +85,16 @@ class BaseEnemy(BaseEntity):
             speed: Movement speed
             health: HP
         """
-        super().__init__(x, y, image=image, shape_data=shape_data, draw_manager=draw_manager)
+        # Extract hitbox config from kwargs
+        hitbox_config = kwargs.get('hitbox_config', {})
+
+        super().__init__(x, y, image=image, shape_data=shape_data,
+                         draw_manager=draw_manager, hitbox_config=hitbox_config)
         self.speed = speed
         self.health = health if health is not None else 1
         self.max_health = self.health
+
+        self.exp_value = 0
 
         self._rotation_enabled = True
 
@@ -98,9 +102,6 @@ class BaseEnemy(BaseEntity):
         self.collision_tag = CollisionTags.ENEMY
         self.category = EntityCategory.ENEMY
         self.layer = Layers.ENEMIES
-
-        # hitbox scale
-        self._hitbox_scale = 0.9
 
         if direction is None:
             self.velocity = self._auto_direction_from_edge(spawn_edge)
@@ -129,7 +130,7 @@ class BaseEnemy(BaseEntity):
     def update(self, dt: float):
         """Default downward movement for enemies."""
         if self.death_state == LifecycleState.DYING:
-            if self.anim.update(self, dt):
+            if self.anim_manager.update(dt):
                 self.mark_dead(immediate=True)
             return
 
@@ -162,30 +163,20 @@ class BaseEnemy(BaseEntity):
             self.on_death(source)
 
     def on_death(self, source):
-
-        from src.core.runtime.game_state import STATE  # Avoid circular import
-
-        exp_amount = self.get_exp_reward()
-        STATE.exp_manager.exp_up(exp_amount)
-
-        self.anim.play(death_fade, duration=0.2)
-        random_effect_type = effect_manager.get_random_explosion()
-
-        effect_manager.create_explosion(
-            position=(self.rect.centerx, self.rect.centery),
-            effect_type=random_effect_type,
-            layer=self.layer + 1
-        )
+        self.anim_manager.play("death", duration=0.2)
+        # random_effect_type = effect_manager.get_random_explosion()
+        #
+        # effect_manager.create_explosion(
+        #     position=(self.rect.centerx, self.rect.centery),
+        #     effect_type=random_effect_type,
+        #     layer=self.layer + 1
+        # )
 
         EVENTS.dispatch(EnemyDiedEvent(
             position=(self.rect.centerx, self.rect.centery),
-            enemy_type_tag=self.__class__.__name__
+            enemy_type_tag=self.__class__.__name__,
+            exp=self.exp_value
         ))
-
-    def get_exp_reward(self):
-        """Return EXP reward for this enemy."""
-        return getattr(self, "base_exp", 20)  # default EXP = 20
-
 
     # ===========================================================
     # Rendering

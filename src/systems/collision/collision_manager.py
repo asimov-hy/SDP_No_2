@@ -68,29 +68,30 @@ class CollisionManager:
     # ===========================================================
     # Hitbox Lifecycle Management
     # ===========================================================
-    def register_hitbox(self, entity, scale=1.0, size=None, offset=(0, 0)):
+    def register_hitbox(self, entity, scale=None, offset=(0, 0), shape=None, shape_params=None):
         """
         Create and register a hitbox for an entity.
 
         Args:
             entity: The entity to create a hitbox for.
-            scale: Scale factor relative to entity.rect (default: 1.0).
-            size: Explicit (width, height) tuple, overrides scale if provided.
+            scale: Scale factor override (uses entity.hitbox_scale if None).
             offset: (x, y) offset from entity center in pixels.
+            shape: Shape type override (uses entity.hitbox_shape if None).
+            shape_params: Shape parameters override (uses entity.hitbox_params if None).
 
         Returns:
             CollisionHitbox: The created hitbox instance.
         """
+        # Extract from entity if not provided (allows overrides)
+        scale = scale if scale is not None else getattr(entity, 'hitbox_scale', 1.0)
+        shape = shape if shape is not None else getattr(entity, 'hitbox_shape', 'rect')
+        shape_params = shape_params if shape_params is not None else getattr(entity, 'hitbox_params', {})
 
-        # Create hitbox with scale
-        hitbox = CollisionHitbox(entity, scale=scale, offset=offset)
+        hitbox = CollisionHitbox(entity, scale=scale, offset=offset,
+                                 shape=shape, shape_params=shape_params)
 
-        # Override with explicit size if provided (switches to manual mode)
-        if size:
-            hitbox.set_size(*size)
-
-        # Register in centralized registry
         self.hitboxes[id(entity)] = hitbox
+        entity.hitbox = hitbox  # Store back-reference
 
         DebugLogger.trace(f"Registered hitbox for {type(entity).__name__}")
         return hitbox
@@ -259,7 +260,7 @@ class CollisionManager:
                             continue
 
                         # Overlap test
-                        if a_hitbox.rect.colliderect(b_hitbox.rect):
+                        if self._check_collision(a_hitbox, b_hitbox):
                             # Check if entities are in hittable zones before applying damage
                             a_hittable = not hasattr(a, "is_hittable") or a.is_hittable()
                             b_hittable = not hasattr(b, "is_hittable") or b.is_hittable()
@@ -307,6 +308,82 @@ class CollisionManager:
         # TODO (Tier 3): Add category-based routing
         # if entity_a.category == EntityCategory.HAZARD:
         #     self._apply_effect(entity_a, entity_b)
+
+    def _check_collision(self, hitbox_a, hitbox_b):
+        """
+        Check collision between two hitboxes using appropriate method.
+        Uses OBB collision if either hitbox is rotated, otherwise AABB.
+
+        Args:
+            hitbox_a: First hitbox
+            hitbox_b: Second hitbox
+
+        Returns:
+            bool: True if collision detected
+        """
+        # If both use AABB, use fast rect collision
+        if not hitbox_a.use_obb and not hitbox_b.use_obb:
+            return hitbox_a.rect.colliderect(hitbox_b.rect)
+
+        # At least one is rotated - use OBB collision (SAT)
+        return self._obb_collision(hitbox_a, hitbox_b)
+
+    def _obb_collision(self, hitbox_a, hitbox_b):
+        """
+        Oriented Bounding Box collision using Separating Axis Theorem (SAT).
+
+        Args:
+            hitbox_a: First hitbox
+            hitbox_b: Second hitbox
+
+        Returns:
+            bool: True if OBBs overlap
+        """
+        # Get corners for both hitboxes
+        corners_a = hitbox_a.get_obb_corners()
+        corners_b = hitbox_b.get_obb_corners()
+
+        # Get axes to test (perpendicular to each edge)
+        axes = []
+
+        # Axes from hitbox A
+        for i in range(len(corners_a)):
+            p1 = corners_a[i]
+            p2 = corners_a[(i + 1) % len(corners_a)]
+            edge = (p2[0] - p1[0], p2[1] - p1[1])
+            # Perpendicular axis (normal to edge)
+            axis = (-edge[1], edge[0])
+            # Normalize
+            length = (axis[0] ** 2 + axis[1] ** 2) ** 0.5
+            if length > 0:
+                axes.append((axis[0] / length, axis[1] / length))
+
+        # Axes from hitbox B
+        for i in range(len(corners_b)):
+            p1 = corners_b[i]
+            p2 = corners_b[(i + 1) % len(corners_b)]
+            edge = (p2[0] - p1[0], p2[1] - p1[1])
+            axis = (-edge[1], edge[0])
+            length = (axis[0] ** 2 + axis[1] ** 2) ** 0.5
+            if length > 0:
+                axes.append((axis[0] / length, axis[1] / length))
+
+        # Test each axis for separation
+        for axis in axes:
+            # Project A onto axis
+            proj_a = [corner[0] * axis[0] + corner[1] * axis[1] for corner in corners_a]
+            min_a, max_a = min(proj_a), max(proj_a)
+
+            # Project B onto axis
+            proj_b = [corner[0] * axis[0] + corner[1] * axis[1] for corner in corners_b]
+            min_b, max_b = min(proj_b), max(proj_b)
+
+            # Check for separation on this axis
+            if max_a < min_b or max_b < min_a:
+                return False  # Separating axis found - no collision
+
+        # No separating axis found - collision detected
+        return True
 
     # ===========================================================
     # Debug Visualization
