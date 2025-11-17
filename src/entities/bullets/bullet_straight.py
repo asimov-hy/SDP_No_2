@@ -45,7 +45,7 @@ class StraightBullet(BaseBullet):
 
         # Future extensions:
         # - Add sprite rotation based on velocity vector.
-        # - Add glow/trail or hit effect emitters.
+        # - Add glow/trail or hit effects emitters.
 
     # ===========================================================
     # Rendering

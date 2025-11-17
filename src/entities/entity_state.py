@@ -14,7 +14,7 @@ class LifecycleState(IntEnum):
     Used for death animation control and cleanup timing.
     """
     ALIVE = 0
-    DYING = 1      # Playing death animation/effect
+    DYING = 1      # Playing death animation/effects
     DEAD = 2       # Ready for cleanup
 
 

@@ -6,10 +6,10 @@ and efficiently sending them to the main display surface.
 
 Responsibilities
 ----------------
-- Load and cache images used by entities_animation and UI.
+- Load and cache images used by entities_animation and ui.
 - Maintain a draw queue (layered rendering system).
 - Sort queued draw calls by layer each frame and render them.
-- Provide helper methods for entities_animation and UI elements to queue themselves.
+- Provide helper methods for entities_animation and ui elements to queue themselves.
 """
 
 import pygame
@@ -30,9 +30,13 @@ class DrawManager:
         self.layers = {}  # {layer: [(surface, rect), ...]}
         self._layer_keys_cache = []
         self._layers_dirty = False
-        self.surface = None  # Expose active surface for debug/hitbox draws
+
         self.background = None  # Cached background surface (optional)
+
         self.debug_hitboxes = []  # Persistent list for queued hitboxes
+        self.debug_obbs = []  # Persistent list for queued OBB lines
+        self.debug_hitboxes = []  # Persistent list for queued hitboxes
+
         DebugLogger.init_entry("DrawManager")
 
     # --------------------------------------------------------
@@ -66,7 +70,7 @@ class DrawManager:
 
     def load_icon(self, name, size=(24, 24)):
         """
-        Load or retrieve a cached UI icon.
+        Load or retrieve a cached ui icon.
 
         Args:
             name (str): Name of the icon file (without extension).
@@ -128,6 +132,9 @@ class DrawManager:
         if hasattr(self, "debug_hitboxes"):
             self.debug_hitboxes.clear()
 
+        if hasattr(self, "debug_obbs"):
+            self.debug_obbs.clear()
+
         self._layers_dirty = True
 
     def queue_draw(self, surface, rect, layer=0):
@@ -177,6 +184,21 @@ class DrawManager:
 
         # Store draw command for later rendering (no surface creation)
         self.debug_hitboxes.append((rect, color, width))
+
+    def queue_obb(self, corners, color=(255, 0, 0), width=2):
+        """
+        Queue OBB corner lines for rendering on the DEBUG layer.
+
+        Args:
+            corners (list): List of (x, y) corner points
+            color (tuple): RGB color for the lines
+            width (int): Line width
+        """
+        if not hasattr(self, "debug_obbs"):
+            self.debug_obbs = []
+
+        # Store draw command for later rendering
+        self.debug_obbs.append((corners, color, width))
 
     # ===========================================================
     # Shape Queueing
@@ -311,7 +333,7 @@ class DrawManager:
             DebugLogger.state(f"Rendered {draw_count} queued surfaces and shapes", category="drawing")
 
         # -------------------------------------------------------
-        # Optional debug overlay pass (hitboxes)
+        # Optional debug overlay pass (hitboxes + OBBs)
         # -------------------------------------------------------
         if hasattr(self, "debug_hitboxes") and self.debug_hitboxes:
             """
@@ -320,6 +342,14 @@ class DrawManager:
             """
             for rect, color, width in self.debug_hitboxes:
                 pygame.draw.rect(target_surface, color, rect, width)
+
+        if hasattr(self, "debug_obbs") and self.debug_obbs:
+            """
+            Draw OBB corner lines for rotated hitboxes.
+            Each tuple: (corners, color, width)
+            """
+            for corners, color, width in self.debug_obbs:
+                pygame.draw.lines(target_surface, color, True, corners, width)
 
     # ===========================================================
     # Shape Rendering Helper

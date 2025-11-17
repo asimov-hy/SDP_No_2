@@ -19,8 +19,7 @@ import os
 from src.core.services.event_manager import EVENTS, EnemyDiedEvent
 from src.core.services.config_manager import load_config
 from src.core.debug.debug_logger import DebugLogger
-from src.entities.entity_registry import EntityRegistry
-from src.entities.items.base_item import BaseItem
+from src.entities.base_entity import BaseEntity
 
 
 # ===========================================================
@@ -29,18 +28,11 @@ from src.entities.items.base_item import BaseItem
 
 class ItemType(Enum):
     """Enum for all available item types."""
-    MAX_HEALTH_UP = "max_health_up"
-    HEALTH_PACK_SMALL = "health_pack_small"
-    HEALTH_PACK_MEDIUM = "health_pack_medium"
-    HEALTH_PACK_LARGE = "health_pack_large"
-    SHIELD_PACK = "shield_pack"
-    QUICK_FIRE = "quick_fire"
     EXTRA_LIFE = "extra_life"
-    SCORE_MEDAL_SMALL = "score_medal_small"
-    SCORE_MEDAL_MEDIUM = "score_medal_medium"
-    SCORE_MEDAL_LARGE = "score_medal_large"
-    SPEED_UP = "speed_up"
-    POWER_UP = "power_up"
+    SCORE_BONUS_MEDAL = "score_bonus_medal"
+    HEALTH_PACK = "health_pack"
+    QUICK_FIRE = "quick_fire"
+    DUMMY = "dummy"
 
 
 # ===========================================================
@@ -58,7 +50,6 @@ class ItemManager:
             spawn_manager: Reference to SpawnManager for creating items
             item_data_path: Path to items.json configuration file
         """
-        EntityRegistry.register("pickup", "default", BaseItem)
         self.spawn_manager = spawn_manager
         self._item_definitions = {}
         self._loot_table_ids = []
@@ -80,9 +71,8 @@ class ItemManager:
         self._item_definitions = load_config(path, default_dict={})
 
         if self._item_definitions:
-            DebugLogger.trace(
-                f"Loaded {len(self._item_definitions)} item definitions",
-                category="item"
+            DebugLogger.init_sub(
+                f"Loaded {len(self._item_definitions)} item definitions"
             )
         else:
             DebugLogger.warn(f"No items loaded from {path}")
@@ -177,21 +167,15 @@ class ItemManager:
 
     def _load_item_image(self, item_id: str, asset_path: str) -> pygame.Surface:
         """Load and return item sprite image."""
-        if not os.path.exists(asset_path):
-            DebugLogger.warn(f"Item sprite not found: {asset_path}")
-            return None
+        # Get size from item data
+        item_data = self._item_definitions.get(item_id, {})
+        size = item_data.get("size")
 
-        try:
-            image = pygame.image.load(asset_path).convert_alpha()
+        # Calculate scale factor if size is specified
+        scale = 1.0
+        if size:
+            temp_img = pygame.image.load(asset_path).convert_alpha() if os.path.exists(asset_path) else None
+            if temp_img:
+                scale = (size[0] / temp_img.get_width(), size[1] / temp_img.get_height())
 
-            # Scale to size if specified in item data
-            item_data = self._item_definitions.get(item_id, {})
-            size = item_data.get("size")
-            if size:
-                image = pygame.transform.scale(image, tuple(size))
-
-            return image
-
-        except Exception as e:
-            DebugLogger.fail(f"Failed to load item image {asset_path}: {e}")
-            return None
+        return BaseEntity.load_and_scale_image(asset_path, scale)

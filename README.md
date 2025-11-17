@@ -49,10 +49,15 @@ This project demonstrates the use of:
 │  │   │
 │  │   ├─ runtime/
 │  │   │   ├─ __init__.py
+│  │   │   ├─ base_scene.py
 │  │   │   ├─ game_loop.py
-│  │   │   ├─ game_settings.py
 │  │   │   ├─ game_state.py
-│  │   │   └─ scene_manager.py
+│  │   │   ├─ gameplay_scene.py
+│  │   │   ├─ menu_scene.py
+│  │   │   ├─ scene_controller.py
+│  │   │   ├─ scene_manager.py
+│  │   │   ├─ scene_state.py
+│  │   │   └─ settings_manager.py
 │  │   │
 │  │   └─ services/
 │  │       ├─ __init__.py
@@ -149,25 +154,86 @@ This project demonstrates the use of:
 │  │
 │  └─ ui/
 │      ├─ __init__.py
-│      ├─ base_ui.py
-│      ├─ menu_manager.py (empty)
-│      ├─ ui_manager.py
 │      │
-│      ├─ components/
+│      ├─ configs/
+│      │   ├─ hud/
+│      │   │   ├─ debug_hud.yaml
+│      │   │   └─ player_hud.yaml
+│      │   │ 
+│      │   └─ screens/
+│      │       └─ pause_menu.yaml
+│      │
+│      ├─ core/
 │      │   ├─ __init__.py
-│      │   └─ ui_button.py
+│      │   ├─ anchor_resolver.py
+│      │   ├─ binding_system.py
+│      │   ├─ ui_element.py
+│      │   ├─ ui_loader.py
+│      │   └─ ui_manager.py
 │      │
-│      └─ effects/
+│      └─ elements/
 │          ├─ __init__.py
-│          ├─ ui_animation.py (empty)
-│          └─ ui_fade.py (empty)
+│          ├─ bay.py
+│          ├─ button.py
+│          ├─ container.py
+│          └─ label.py
 │
 └─ assets/
-   ├─ images/
-   │   ├─ player.png (unused)
+   ├─ audio/
+   │   ├─ bfx/
+   │   │   ├─ EnemyDestroy.wav
+   │   │   ├─ GameClear.wav
+   │   │   ├─ GameOver.wav
+   │   │   ├─ PlayerDestroy.wav
+   │   │   └─ PlayerShoot.wav
+   │   │
+   │   ├─ bgm/
+   │   │   ├─ IngameBGM.wav
+   │   │   ├─ IngameBGM2.wav
+   │   │   └─ MainMenuBGM.wav
    │   │
    │   └─ icons/
-   │       └─ 202X_icon.png
+   │       └─ switch.ogg
    │
-   └─ audio/
+   └─ images/
+       ├─ characters/
+       │   ├─ enemies/
+       │   │   └─ enemy_basic.png
+       │   │
+       │   └─ player/
+       │       └─ robot_Garda.png
+       │
+       ├─ effects/
+       │   └─ explosions/
+       │       ├─ explosion01.png
+       │       ├─ explosion02.png
+       │       └─ explosion03.png
+       │
+       ├─ icons/
+       │   └─ 202X_icon.png
+       │
+       ├─ items/
+       │   └─ dummy_item.png
+       │
+       ├─ maps/
+       │   ├─ battle_stage1.png
+       │   ├─ battle_stage2.png
+       │   ├─ battle_stage3.png
+       │   ├─ battle_stage4.png
+       │   └─ boss_stage.png
+       │
+       ├─ projectiles/
+       │   ├─ 100H.png
+       │   ├─ m107.png
+       │   └─ missile.png
+       │
+       └─ ui/
+           ├─ bars/
+           │   ├─ current_exp.png
+           │   ├─ exp_bar.png
+           │   └─ main_bar.png
+           │
+           └─ health/
+               ├─ health_guage.png
+               └─ health_needle.png
 ```

@@ -1,7 +1,7 @@
 """
 player_effects.py
 -----------------
-Item effect handlers for the player.
+Item effects handlers for the player.
 
 Responsibilities
 ----------------
@@ -17,7 +17,7 @@ EFFECT_HANDLERS = {}
 
 
 def effect_handler(effect_name: str):
-    """Decorator to auto-register effect handlers."""
+    """Decorator to auto-register effects handlers."""
     def decorator(func):
         EFFECT_HANDLERS[effect_name] = func
         return func
@@ -25,7 +25,7 @@ def effect_handler(effect_name: str):
 
 
 # ===========================================================
-# Effect Handlers
+# effects Handlers
 # ===========================================================
 @effect_handler("ADD_HEALTH")
 def handle_ADD_HEALTH(player, effect_data):
@@ -130,7 +130,7 @@ def handle_ADD_SCORE(player, effect_data):
 
 
 # ===========================================================
-# Effect Dispatcher
+# effects Dispatcher
 # ===========================================================
 def apply_item_effects(player, effects: list):
     """
@@ -138,7 +138,7 @@ def apply_item_effects(player, effects: list):
 
     Args:
         player: Player entity
-        effects: List of effect dicts from items.json
+        effects: List of effects dicts from items.json
     """
     if player.death_state != LifecycleState.ALIVE:
         return
@@ -150,4 +150,4 @@ def apply_item_effects(player, effects: list):
         if handler:
             handler(player, effect)
         else:
-            DebugLogger.warn(f"Unknown effect type: {effect_type}", category="item")
+            DebugLogger.warn(f"Unknown effects type: {effect_type}", category="item")

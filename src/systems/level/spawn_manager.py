@@ -100,8 +100,8 @@ class SpawnManager:
         self.entities.append(entity)
 
         # Register hitbox
-        if self.collision_manager and hasattr(entity, "_hitbox_scale"):
-            self.collision_manager.register_hitbox(entity, scale=entity._hitbox_scale)
+        if self.collision_manager:
+            self.collision_manager.register_hitbox(entity)
 
         return entity
 
