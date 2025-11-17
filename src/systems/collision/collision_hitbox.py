@@ -30,6 +30,7 @@ Directional attacks: hitbox.set_offset(8, 0) for forward extension
 """
 
 import pygame
+import math
 from src.core.debug.debug_logger import DebugLogger
 from src.core.runtime.game_settings import Debug
 
@@ -209,7 +210,6 @@ class CollisionHitbox:
         if angle_degrees == 0:
             return (x, y)
 
-        import math
         radians = math.radians(angle_degrees)
         cos_a = math.cos(radians)
         sin_a = math.sin(radians)
@@ -234,6 +234,9 @@ class CollisionHitbox:
             DebugLogger.warn(f"[Hitbox] {type(self.owner).__name__} lost rect reference")
             return
 
+        # Store old position for change detection
+        old_center = (self.rect.centerx, self.rect.centery)
+
         # Update rotation from entity and check if OBB needed
         old_rotation = self._rotation
         self._rotation = getattr(self.owner, 'rotation_angle', 0.0)
@@ -255,6 +258,11 @@ class CollisionHitbox:
         rotated_offset = self._rotate_offset(self.offset.x, self.offset.y, self._rotation)
         self.rect.centerx = rect.centerx + rotated_offset[0]
         self.rect.centery = rect.centery + rotated_offset[1]
+
+        # Invalidate OBB cache if position changed
+        new_center = (self.rect.centerx, self.rect.centery)
+        if old_center != new_center:
+            self._obb_corners = None
 
     def _update_rect_size(self, rect):
         """Recalculate rect hitbox size if entity rect changed."""
@@ -308,10 +316,18 @@ class CollisionHitbox:
         if self._obb_corners is not None:
             return self._obb_corners
 
-        # Get center and half-dimensions
+        # Get center
         cx, cy = self.get_center()
-        half_w = self.rect.width / 2
-        half_h = self.rect.height / 2
+
+        # Use base image dimensions if available (unrotated size)
+        # Otherwise fall back to current rect (which may be enlarged by rotation)
+        if hasattr(self.owner, '_base_image') and self.owner._base_image:
+            base_rect = self.owner._base_image.get_rect()
+            half_w = (base_rect.width * self.scale) / 2
+            half_h = (base_rect.height * self.scale) / 2
+        else:
+            half_w = self.rect.width / 2
+            half_h = self.rect.height / 2
 
         # If no rotation or axis-aligned, return AABB corners
         if self._rotation % 90 == 0:
@@ -325,7 +341,7 @@ class CollisionHitbox:
 
         # Calculate rotated corners
         import math
-        radians = math.radians(self._rotation)
+        radians = math.radians(-self._rotation)
         cos_a = math.cos(radians)
         sin_a = math.sin(radians)
 
@@ -478,11 +494,11 @@ class CollisionHitbox:
         # Draw AABB - use DrawManager queue if available
         if hasattr(surface, "queue_hitbox"):
             surface.queue_hitbox(self.rect, color=self._color_cache, width=Debug.HITBOX_LINE_WIDTH)
-            # Draw OBB directly to DrawManager's surface if available
-            if self.use_obb and hasattr(surface, 'surface') and surface.surface:
+            # Queue OBB lines through DrawManager
+            if self.use_obb:
                 corners = self.get_obb_corners()
-                pygame.draw.lines(surface.surface, (255, 0, 0), True, corners, 2)
-        # Fallback — direct draw to pygame.Surface
+                surface.queue_obb(corners, color=(255, 0, 0), width=2)
+        # Fallback – direct draw to pygame.Surface
         elif isinstance(surface, pygame.Surface):
             pygame.draw.rect(surface, self._color_cache, self.rect, Debug.HITBOX_LINE_WIDTH)
             # Draw OBB
