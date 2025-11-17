@@ -4,7 +4,7 @@ instant_transition.py
 Instant transition (no animation) - current behavior.
 """
 
-from src.core.runtime.transitions.i_transition import ITransition
+from src.scenes.transitions.i_transition import ITransition
 
 
 class InstantTransition(ITransition):

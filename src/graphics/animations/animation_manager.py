@@ -58,11 +58,11 @@ class AnimationManager:
         self.context = {}
 
         # Debug: Log available animations for this entity
-        tag = getattr(entity, "category", "unknown")
-        anims = get_animations_for_entity(tag)
+        category = getattr(entity, "category", "unknown")
+        anims = get_animations_for_entity(category)
         if anims:
             DebugLogger.init(
-                f"AnimationManager for {type(entity).__name__} (tag: {tag}) - {len(anims)} animations available",
+                f"AnimationManager for {type(entity).__name__} (category: {category}) - {len(anims)} animations available",
                 category="animation"
             )
         # else:
@@ -158,12 +158,12 @@ class AnimationManager:
                             self.entity.state_manager.timed_state(eff)
                         else:
                             DebugLogger.warn(
-                                f"[EffectSkip] {self.entity.collision_tag} has no effect_manager for '{eff}'",
+                                f"[EffectSkip] {self.entity.category} has no effect_manager for '{eff}'",
                                 category="animation_effects"
                             )
                 except Exception as e:
                     DebugLogger.warn(
-                        f"[EffectFail] {eff} on {self.entity.collision_tag} → {e}",
+                        f"[EffectFail] {eff} on {self.entity.category} → {e}",
                         category="animation_effects"
                     )
 
@@ -201,7 +201,7 @@ class AnimationManager:
                 self._check_effect_triggers(t)
             else:
                 DebugLogger.warn(
-                    f"{type(self.entity).__name__}: No animation '{self.active_type}' registered for tag '{self.entity.collision_tag}'",
+                    f"{type(self.entity).__name__}: No animation '{self.active_type}' registered for category '{self.entity.category}'",
                     category="animation"
                 )
                 self.stop()
@@ -233,4 +233,4 @@ class AnimationManager:
     # ===========================================================
     def has(self, anim_type: str) -> bool:
         """Return True if the entity supports the given animation."""
-        return get_animation(self.entity.collision_tag, anim_type) is not None
+        return get_animation(self.entity.category, anim_type) is not None

@@ -17,12 +17,11 @@ import time
 
 # Core runtime configurations
 from src.core.runtime.game_settings import Display, Physics, Debug
-from src.core.runtime.game_state import STATE
 
 # Core service managers
 from src.core.services.input_manager import InputManager
 from src.core.services.display_manager import DisplayManager
-from src.core.runtime.scene_manager import SceneManager
+from src.core.services.scene_manager import SceneManager
 
 # Core debugging utilities
 from src.core.debug.debug_logger import DebugLogger
@@ -80,9 +79,6 @@ class GameLoop:
         self.scenes = SceneManager(self.display, self.input_manager, self.draw_manager)
         # DebugLogger.init_sub("Linked [SceneManager] to [DisplayManager], [InputManager], [DrawManager]", level=1)
 
-        # Dependency Injection: Link SceneManager back into InputManager
-        self.input_manager.link_scene_manager(self.scenes)
-
     # ===========================================================
     # Core Runtime Loop
     # ===========================================================
@@ -126,7 +122,7 @@ class GameLoop:
             # ---------------------------------------------------
             # Debug HUD and rendering pass
             # ---------------------------------------------------
-            self.debug_hud.update(fixed_dt, pygame.mouse.get_pos())
+            self.debug_hud.update(frame_time, pygame.mouse.get_pos())
             self._draw()
 
         # -------------------------------------------------------
@@ -182,11 +178,9 @@ class GameLoop:
             # ---------------------------------------------------
             self.input_manager.handle_system_input(event, self.display, self.debug_hud)
 
-            # ---------------------------------------------------
-            # Scene-specific and debug HUD events
-            # ---------------------------------------------------
-            self.scenes.handle_event(event)
-            self.debug_hud.handle_event(event)
+            # Scene handles event (may consume it via pause)
+            if not self.scenes.handle_event(event):  # Returns True if consumed
+                self.debug_hud.handle_event(event)
 
     # ===========================================================
     # Rendering Pipeline (with profiling)
@@ -212,7 +206,7 @@ class GameLoop:
         # Profile: Debug HUD Draw
         # -------------------------------------------------------
         t_hud = time.perf_counter()
-        player = STATE.get_entity("player")
+        player = self.scenes.services.get_entity("player")
 
         self.debug_hud.draw(self.draw_manager, player)
         hud_time = (time.perf_counter() - t_hud) * 1000

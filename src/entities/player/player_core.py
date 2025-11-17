@@ -2,22 +2,12 @@
 player_core.py
 --------------
 Defines the minimal Player entity core used to coordinate all components.
-
-Responsibilities
-----------------
-- Initialize player sprite, hitbox, and configuration
-- Manage base attributes (position, speed, health placeholder)
-- Delegate updates to:
-    - Movement → player_movement.py
-    - Combat   → player_ability.py
-    - Logic    → player_logic.py (status_effects, animation_effects, visuals)
 """
 
 import pygame
 import os
 
 from src.core.runtime.game_settings import Display, Layers
-from src.core.runtime.game_state import STATE
 from src.core.debug.debug_logger import DebugLogger
 from src.core.services.config_manager import load_config
 from src.core.services.event_manager import EVENTS, EnemyDiedEvent
@@ -27,6 +17,33 @@ from src.entities.state_manager import StateManager
 from src.entities.entity_state import LifecycleState, InteractionState
 from src.entities.entity_types import CollisionTags, EntityCategory
 from .player_movement import update_movement
+from . import player_ability
+
+
+# ===========================================================
+# Action Query Wrapper
+# ===========================================================
+class PlayerInput:
+    """Wrapper to simplify action queries without explicit imports."""
+
+    def __init__(self, input_manager):
+        self.input_manager = input_manager
+
+    def pressed(self, action: str) -> bool:
+        """Check if action was just pressed."""
+        return self.input_manager.action_pressed(action)
+
+    def held(self, action: str) -> bool:
+        """Check if action is held."""
+        return self.input_manager.action_held(action)
+
+    def released(self, action: str) -> bool:
+        """Check if action was just released."""
+        return self.input_manager.action_released(action)
+
+    def move(self) -> pygame.Vector2:
+        """Get normalized movement vector."""
+        return self.input_manager.get_normalized_move()
 
 
 class Player(BaseEntity):
@@ -141,6 +158,10 @@ class Player(BaseEntity):
 
         if input_manager is not None:
             self.input_manager = input_manager
+            self.input = PlayerInput(input_manager)  # Wrapper for cleaner queries
+        else:
+            self.input = None
+
         self.bullet_manager = None
         self.base_shoot_cooldown = 0.1
         self.shoot_timer = 0.0
@@ -221,13 +242,10 @@ class Player(BaseEntity):
 
         # 3. Movement and physics
         # from .player_movement import update_movement
-        move_vec = self.input_manager.get_normalized_move()
-        update_movement(self, dt, move_vec)
+        update_movement(self, dt)
 
-        # 4. Combat logic
-        from .player_ability import update_shooting
-        attack_held = self.input_manager.is_action_held("attack")
-        update_shooting(self, dt, attack_held)
+        # 4. Ability logic
+        player_ability.update_shooting(self, dt)
 
     def draw(self, draw_manager):
         """Render player if visible."""

@@ -6,7 +6,7 @@ Defines the interface and common lifecycle management.
 """
 
 from abc import ABC, abstractmethod
-from src.core.runtime.scene_state import SceneState
+from src.scenes.scene_state import SceneState
 
 
 class BaseScene(ABC):
@@ -16,12 +16,25 @@ class BaseScene(ABC):
     Attributes:
         state: Current lifecycle state
         input_context: Which input context this scene uses ("gameplay" or "ui")
+        services: ServiceLocator for accessing managers and systems
     """
 
-    def __init__(self, scene_manager):
-        self.scene_manager = scene_manager
+    def __init__(self, services):
+        """
+        Initialize scene with service locator.
+
+        Args:
+            services: ServiceLocator instance for dependency injection
+        """
+        self.services = services
         self.state = SceneState.INACTIVE
         self.input_context = "ui"  # Default to UI, override in subclasses
+
+        # Convenience access to frequently used managers
+        self.scene_manager = services.scene_manager
+        self.display = services.display_manager
+        self.input_manager = services.input_manager
+        self.draw_manager = services.draw_manager
 
     # ===========================================================
     # Lifecycle Hooks (Override in subclasses)
