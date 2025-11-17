@@ -284,6 +284,12 @@ class BaseEntity:
         """
         self.pos.update(x, y)
         self.death_state = LifecycleState.ALIVE
+
+        # Clear cached rotation state for pooled entities
+        self.rotation_angle = 0
+        if hasattr(self, '_base_image') and self._base_image:
+            self.image = self._base_image
+
         self.sync_rect()
 
     # ===========================================================
