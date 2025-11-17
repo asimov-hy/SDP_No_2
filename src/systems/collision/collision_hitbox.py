@@ -41,8 +41,9 @@ class CollisionHitbox:
         "owner", "scale", "offset", "rect",
         "_size_cache", "_color_cache", "active",
         "_manual_size",
-        "shape", "shape_params",  # NEW: Shape configuration
-        "_shape_width", "_shape_height", "_shape_radius"  # NEW: Manual overrides
+        "shape", "shape_params",
+        "_shape_width", "_shape_height", "_shape_radius",
+        "_rotation"  # Cached entity rotation
     )
 
     # ===========================================================
@@ -72,6 +73,9 @@ class CollisionHitbox:
         self._shape_width = None
         self._shape_height = None
         self._shape_radius = None
+
+        # Rotation tracking
+        self._rotation = 0.0  # NEW: Cached rotation in degrees
 
         # Core attributes
         self.rect = pygame.Rect(0, 0, 0, 0)
@@ -186,6 +190,33 @@ class CollisionHitbox:
             return 60, 160, 255
         return 80, 255, 80
 
+    def _rotate_offset(self, x, y, angle_degrees):
+        """
+        Rotate offset vector by entity rotation.
+
+        Args:
+            x: X component of offset
+            y: Y component of offset
+            angle_degrees: Rotation angle in degrees
+
+        Returns:
+            tuple: (rotated_x, rotated_y)
+        """
+        # Early exit for no rotation
+        if angle_degrees == 0:
+            return (x, y)
+
+        import math
+        radians = math.radians(angle_degrees)
+        cos_a = math.cos(radians)
+        sin_a = math.sin(radians)
+
+        # Rotation matrix application
+        rotated_x = x * cos_a - y * sin_a
+        rotated_y = x * sin_a + y * cos_a
+
+        return (rotated_x, rotated_y)
+
     # ===========================================================
     # Update Cycle
     # ===========================================================
@@ -200,6 +231,9 @@ class CollisionHitbox:
             DebugLogger.warn(f"[Hitbox] {type(self.owner).__name__} lost rect reference")
             return
 
+        # Update rotation from entity
+        self._rotation = getattr(self.owner, 'rotation_angle', 0.0)
+
         # Only recalculate size if in automatic mode
         if not self._manual_size:
             if self.shape == 'rect':
@@ -208,9 +242,10 @@ class CollisionHitbox:
                 self._update_circle_size(rect)
             # Polygon doesn't auto-resize
 
-        # Always update position (offset follows entity center)
-        self.rect.centerx = rect.centerx + self.offset.x
-        self.rect.centery = rect.centery + self.offset.y
+        # Apply rotated offset to position
+        rotated_offset = self._rotate_offset(self.offset.x, self.offset.y, self._rotation)
+        self.rect.centerx = rect.centerx + rotated_offset[0]
+        self.rect.centery = rect.centery + rotated_offset[1]
 
     def _update_rect_size(self, rect):
         """Recalculate rect hitbox size if entity rect changed."""
@@ -279,9 +314,11 @@ class CollisionHitbox:
         self.offset.x = x
         self.offset.y = y
 
+        # Apply rotation to new offset
+        rotated_offset = self._rotate_offset(self.offset.x, self.offset.y, self._rotation)
         self.rect.center = (
-            self.owner.rect.centerx + self.offset.x,
-            self.owner.rect.centery + self.offset.y
+            self.owner.rect.centerx + rotated_offset[0],
+            self.owner.rect.centery + rotated_offset[1]
         )
 
     def set_scale(self, scale: float):
