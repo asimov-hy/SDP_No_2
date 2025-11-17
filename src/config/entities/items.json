@@ -1,7 +1,7 @@
 {
   "score_bonus_medal": {
     "name": "Bonus Medal",
-    "asset_path": "assets/images/items/dummy_item.png",
+    "asset_path": "assets/images/sprites/items/dummy_item.png",
     "drop_weight": 100,
     "physics": {
       "velo_x": 0,
@@ -17,7 +17,7 @@
   },
   "health_pack": {
     "name": "Health Pack",
-    "asset_path": "assets/images/items/dummy_item.png",
+    "asset_path": "assets/images/sprites/items/dummy_item.png",
     "drop_weight": 10000,
     "effects": [
       {
@@ -28,7 +28,7 @@
   },
   "quick_fire": {
     "name": "Quick Fire",
-    "asset_path": "assets/images/items/dummy_item.png",
+    "asset_path": "assets/images/sprites/items/dummy_item.png",
     "drop_weight": 1000,
     "effects": [
       {
@@ -40,7 +40,7 @@
   },
   "dummy": {
     "name": "Bonus Medal",
-    "asset_path": "assets/images/items/dummy_item.png",
+    "asset_path": "assets/images/sprites/items/dummy_item.png",
     "drop_weight": 100,
     "effects": [
       {

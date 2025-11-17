@@ -48,7 +48,7 @@ class EnemyStraight(BaseEnemy):
         health = health if health is not None else defaults.get("hp", 1)
         scale = scale if scale is not None else defaults.get("scale", 1.0)
 
-        image_path = defaults.get("image", "assets/images/characters/enemies/missile.png")
+        image_path = defaults.get("image", "assets/images/sprites/enemies/missile.png")
         hitbox_config = defaults.get("hitbox", {})
 
         # Create sprite

@@ -1,6 +1,6 @@
 {
   "straight": {
-    "image": "assets/images/characters/enemies/missile.png",
+    "image": "assets/images/sprites/enemies/missile.png",
     "scale": 0.1,
     "hp": 1,
     "speed": 200,

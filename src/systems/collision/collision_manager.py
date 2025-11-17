@@ -68,7 +68,7 @@ class CollisionManager:
     # ===========================================================
     # Hitbox Lifecycle Management
     # ===========================================================
-    def register_hitbox(self, entity, scale=None, offset=(0, 0)):
+    def register_hitbox(self, entity, scale=None, offset=(0, 0), shape=None, shape_params=None):
         """
         Create and register a hitbox for an entity.
 
@@ -76,14 +76,19 @@ class CollisionManager:
             entity: The entity to create a hitbox for.
             scale: Scale factor override (uses entity.hitbox_scale if None).
             offset: (x, y) offset from entity center in pixels.
+            shape: Shape type override (uses entity.hitbox_shape if None).
+            shape_params: Shape parameters override (uses entity.hitbox_params if None).
 
         Returns:
             CollisionHitbox: The created hitbox instance.
         """
         # Extract from entity if not provided (allows overrides)
         scale = scale if scale is not None else getattr(entity, 'hitbox_scale', 1.0)
+        shape = shape if shape is not None else getattr(entity, 'hitbox_shape', 'rect')
+        shape_params = shape_params if shape_params is not None else getattr(entity, 'hitbox_params', {})
 
-        hitbox = CollisionHitbox(entity, scale=scale, offset=offset)
+        hitbox = CollisionHitbox(entity, scale=scale, offset=offset,
+                                 shape=shape, shape_params=shape_params)
 
         self.hitboxes[id(entity)] = hitbox
         entity.hitbox = hitbox  # Store back-reference

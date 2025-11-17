@@ -59,7 +59,7 @@ class EnemyShooter(BaseEnemy):
 
         aim_at_player = aim_at_player if aim_at_player is not None else defaults.get("aim_at_player", True)
 
-        image_path = defaults.get("image", "assets/images/characters/enemies/shooter.png")
+        image_path = defaults.get("image", "assets/images/sprites/enemies/shooter.png")
         hitbox_config = defaults.get("hitbox", {})
 
         norm_size = (size, size) if isinstance(size, int) else size

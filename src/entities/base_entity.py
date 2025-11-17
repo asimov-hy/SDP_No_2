@@ -215,8 +215,9 @@ class BaseEntity:
         # Standardized attribute names (no underscore prefix)
         self.hitbox_scale = hitbox_config.get('scale', 0.9)
         self.hitbox_shape = hitbox_config.get('shape', 'rect')
+        self.hitbox_offset = hitbox_config.get('offset', (0, 0))  # NEW
         self.hitbox_params = {k: v for k, v in hitbox_config.items()
-                              if k not in ('scale', 'shape')}
+                              if k not in ('scale', 'shape', 'offset')}
         self.hitbox = None  # Populated by collision_manager
 
     # ===========================================================

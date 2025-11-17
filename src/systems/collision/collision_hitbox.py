@@ -40,13 +40,15 @@ class CollisionHitbox:
     __slots__ = (
         "owner", "scale", "offset", "rect",
         "_size_cache", "_color_cache", "active",
-        "_manual_size"
+        "_manual_size",
+        "shape", "shape_params",  # NEW: Shape configuration
+        "_shape_width", "_shape_height", "_shape_radius"  # NEW: Manual overrides
     )
 
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(self, owner, scale: float = 1.0, offset=(0, 0)):
+    def __init__(self, owner, scale: float = 1.0, offset=(0, 0), shape='rect', shape_params=None):
         """
         Initialize a hitbox for the given entity.
 
@@ -54,11 +56,22 @@ class CollisionHitbox:
             owner: The parent entity this hitbox belongs to.
             scale: Proportional size relative to owner sprite (0.0-1.0+).
             offset: (x, y) offset from owner center in pixels.
+            shape: Hitbox shape type ('rect', 'circle', 'polygon').
+            shape_params: Dict with shape-specific overrides (width, height, radius, points).
         """
         # Basic setup
         self.owner = owner
         self.scale = scale
         self.offset = pygame.Vector2(offset)
+
+        # Shape configuration
+        self.shape = shape
+        self.shape_params = shape_params or {}
+
+        # Shape-specific overrides
+        self._shape_width = None
+        self._shape_height = None
+        self._shape_radius = None
 
         # Core attributes
         self.rect = pygame.Rect(0, 0, 0, 0)
@@ -80,12 +93,89 @@ class CollisionHitbox:
     # Internal Setup
     # ===========================================================
     def _initialize_from_owner(self):
-        """Initialize hitbox dimensions based on the owner's sprite rect."""
+        """Initialize hitbox dimensions based on shape type."""
         rect = self.owner.rect
-        scaled_size = (int(rect.width * self.scale), int(rect.height * self.scale))
-        self.rect.size = scaled_size
+
+        if self.shape == 'rect':
+            self._init_rect_hitbox(rect)
+        elif self.shape == 'circle':
+            self._init_circle_hitbox(rect)
+        elif self.shape == 'polygon':
+            self._init_polygon_hitbox(rect)
+        else:
+            DebugLogger.warn(f"Unknown hitbox shape '{self.shape}', defaulting to rect")
+            self._init_rect_hitbox(rect)
+
+    def _init_rect_hitbox(self, rect):
+        """Initialize rectangular hitbox with manual width/height override support."""
+        # Manual overrides take priority over scale
+        w = self.shape_params.get('width')
+        h = self.shape_params.get('height')
+
+        if w is not None and h is not None:
+            # Both manual dimensions provided
+            self._shape_width = w
+            self._shape_height = h
+            self._manual_size = True
+        elif w is not None:
+            # Only width manual, scale height
+            self._shape_width = w
+            self._shape_height = int(rect.height * self.scale)
+            self._manual_size = True
+        elif h is not None:
+            # Only height manual, scale width
+            self._shape_width = int(rect.width * self.scale)
+            self._shape_height = h
+            self._manual_size = True
+        else:
+            # No manual overrides, use scale
+            self._shape_width = int(rect.width * self.scale)
+            self._shape_height = int(rect.height * self.scale)
+
+        self.rect.size = (self._shape_width, self._shape_height)
         self.rect.center = (rect.centerx + self.offset.x, rect.centery + self.offset.y)
-        self._size_cache = scaled_size
+        self._size_cache = (self._shape_width, self._shape_height)
+
+    def _init_circle_hitbox(self, rect):
+        """Initialize circular hitbox (stored as bounding rect)."""
+        # Manual radius or auto-calculate from smallest dimension
+        radius = self.shape_params.get('radius')
+
+        if radius is not None:
+            self._shape_radius = radius
+            self._manual_size = True
+        else:
+            # Auto-scale from smallest entity dimension
+            self._shape_radius = int(min(rect.width, rect.height) * self.scale / 2)
+
+        diameter = self._shape_radius * 2
+        self.rect.size = (diameter, diameter)
+        self.rect.center = (rect.centerx + self.offset.x, rect.centery + self.offset.y)
+        self._size_cache = (diameter, diameter)
+
+    def _init_polygon_hitbox(self, rect):
+        """Initialize polygon hitbox (bounding box for now)."""
+        points = self.shape_params.get('points', [])
+
+        if not points:
+            DebugLogger.warn("Polygon hitbox missing 'points', falling back to rect")
+            self._init_rect_hitbox(rect)
+            return
+
+        # Calculate bounding box from points
+        xs = [p[0] for p in points]
+        ys = [p[1] for p in points]
+        bbox_w = max(xs) - min(xs)
+        bbox_h = max(ys) - min(ys)
+
+        # Apply scale to bounding box
+        self._shape_width = int(bbox_w * self.scale)
+        self._shape_height = int(bbox_h * self.scale)
+        self._manual_size = True
+
+        self.rect.size = (self._shape_width, self._shape_height)
+        self.rect.center = (rect.centerx + self.offset.x, rect.centery + self.offset.y)
+        self._size_cache = (self._shape_width, self._shape_height)
 
     def _cache_color(self):
         """Cache debug color based on entity tag for faster draw calls."""
@@ -112,14 +202,46 @@ class CollisionHitbox:
 
         # Only recalculate size if in automatic mode
         if not self._manual_size:
-            scaled_w, scaled_h = int(rect.width * self.scale), int(rect.height * self.scale)
-            if (scaled_w, scaled_h) != self._size_cache:
-                self.rect.size = (scaled_w, scaled_h)
-                self._size_cache = (scaled_w, scaled_h)
+            if self.shape == 'rect':
+                self._update_rect_size(rect)
+            elif self.shape == 'circle':
+                self._update_circle_size(rect)
+            # Polygon doesn't auto-resize
 
-        # Always update position
+        # Always update position (offset follows entity center)
         self.rect.centerx = rect.centerx + self.offset.x
         self.rect.centery = rect.centery + self.offset.y
+
+    def _update_rect_size(self, rect):
+        """Recalculate rect hitbox size if entity rect changed."""
+        # Only recalculate if no manual overrides
+        if self._shape_width is None:
+            w = int(rect.width * self.scale)
+        else:
+            w = self._shape_width
+
+        if self._shape_height is None:
+            h = int(rect.height * self.scale)
+        else:
+            h = self._shape_height
+
+        if (w, h) != self._size_cache:
+            self.rect.size = (w, h)
+            self._size_cache = (w, h)
+
+    def _update_circle_size(self, rect):
+        """Recalculate circle hitbox size if entity rect changed."""
+        if self._shape_radius is None:
+            # Auto-recalculate from entity size
+            radius = int(min(rect.width, rect.height) * self.scale / 2)
+        else:
+            # Use manual radius
+            radius = self._shape_radius
+
+        diameter = radius * 2
+        if (diameter, diameter) != self._size_cache:
+            self.rect.size = (diameter, diameter)
+            self._size_cache = (diameter, diameter)
 
     # ===========================================================
     # Dynamic Hitbox Control
