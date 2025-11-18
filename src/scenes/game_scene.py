@@ -10,6 +10,9 @@ from src.systems.game_system_initializer import GameSystemInitializer
 from src.core.runtime.game_settings import Debug
 from src.systems.level.level_registry import LevelRegistry
 from src.core.debug.debug_logger import DebugLogger
+from src.entities.entity_state import LifecycleState
+from src.core.runtime.session_stats import SESSION_STATS
+from src.core.services.event_manager import EVENTS, EnemyDiedEvent
 
 
 class GameScene(BaseScene):
@@ -36,6 +39,13 @@ class GameScene(BaseScene):
         self.campaign = None
         self.current_level_idx = 0
         self.selected_level_id = None
+
+        # Game over state
+        self.game_over_shown = False
+
+        # Set callbacks
+        self.level_manager.on_level_complete = self._on_level_complete
+        EVENTS.subscribe(EnemyDiedEvent, self._on_enemy_died_stats)
 
         DebugLogger.section("GameScene Initialized")
 
@@ -64,6 +74,13 @@ class GameScene(BaseScene):
         """Start first level when scene becomes active."""
         # Load HUD
         self.ui.load_hud("hud/gameplay_hud.yaml")
+
+        # Load game over overlay (hidden by default)
+        self.ui.load_screen("game_over", "hud/game_over.yaml")
+
+        # Reset game state
+        self.game_over_shown = False
+        SESSION_STATS.reset()
 
         # Start specific level if selected
         if self.selected_level_id:
@@ -100,6 +117,27 @@ class GameScene(BaseScene):
 
     def update(self, dt: float):
         """Update all game systems."""
+        # Check for player death
+        if not self.game_over_shown and self.player.death_state == LifecycleState.DEAD:
+            self._show_game_over(victory=False)
+            return
+
+        # Don't update gameplay if game over is shown
+        if self.game_over_shown:
+            mouse_pos = self.input_manager.get_mouse_pos()
+            self.ui.update(dt, mouse_pos)
+            return
+
+        # Don't update gameplay or track time if paused
+        from src.scenes.scene_state import SceneState
+        if self.state == SceneState.PAUSED:
+            mouse_pos = self.input_manager.get_mouse_pos()
+            self.ui.update(dt, mouse_pos)
+            return
+
+        # Track play time (only during active gameplay)
+        SESSION_STATS.add_time(dt)
+
         # Core gameplay updates
         self.player.update(dt)
         self.spawn_manager.update(dt)
@@ -139,3 +177,140 @@ class GameScene(BaseScene):
             self.scene_manager.resume_active_scene()
         elif action == "quit":
             self.scene_manager.set_scene("MainMenu")
+        elif action == "return_to_menu":
+            self.scene_manager.set_scene("MainMenu")
+
+    def _on_level_complete(self):
+        """Called when level is completed."""
+        if not self.game_over_shown:
+            self._show_game_over(victory=True)
+
+    def _show_game_over(self, victory: bool):
+        """Show game over overlay with stats."""
+
+        self.game_over_shown = True
+
+        # Get overlay root element
+        overlay = self.ui.screens.get("game_over")
+        if not overlay:
+            DebugLogger.warn("Game over overlay not loaded")
+            return
+
+        # Update title
+        title_elem = self._find_element_by_id(overlay, "title_label")
+        if title_elem:
+            if victory:
+                title_elem.text = "MISSION ACCOMPLISHED"
+                title_elem.config['style']['color'] = [100, 255, 100]
+            else:
+                title_elem.text = "GAME OVER"
+                title_elem.config['style']['color'] = [255, 100, 100]
+
+        # Update stats
+        score_elem = self._find_element_by_id(overlay, "score_label")
+        if score_elem:
+            score_elem.text = f"Score: {SESSION_STATS.score}"
+
+        kills_elem = self._find_element_by_id(overlay, "kills_label")
+        if kills_elem:
+            kills_elem.text = f"Enemies Killed: {SESSION_STATS.enemies_killed}"
+
+        items_elem = self._find_element_by_id(overlay, "items_label")
+        if items_elem:
+            items_elem.text = f"Items Collected: {SESSION_STATS.items_collected}"
+
+        time_elem = self._find_element_by_id(overlay, "time_label")
+        if time_elem:
+            minutes = int(SESSION_STATS.run_time // 60)
+            seconds = int(SESSION_STATS.run_time % 60)
+            time_elem.text = f"Time: {minutes}:{seconds:02d}"
+
+        # Show overlay
+        self.ui.show_screen("game_over", modal=True)
+
+        DebugLogger.state(f"Game over shown (victory={victory})", category="game")
+
+    def _find_element_by_id(self, root, element_id):
+        """Recursively find element by id."""
+        if hasattr(root, 'config') and root.config.get('id') == element_id:
+            return root
+
+        if hasattr(root, 'children'):
+            for child in root.children:
+                result = self._find_element_by_id(child, element_id)
+                if result:
+                    return result
+
+        return None
+
+    def _on_level_complete(self):
+        """Called when level is completed."""
+        if not self.game_over_shown:
+            self._show_game_over(victory=True)
+
+    def _on_enemy_died_stats(self, event):
+        """Track enemy kills in session stats."""
+        SESSION_STATS.add_kill()
+        SESSION_STATS.add_score(10)  # Base score per kill
+
+    def _show_game_over(self, victory: bool):
+        """Show game over overlay with stats."""
+        self.game_over_shown = True
+
+        # Get overlay root element
+        overlay = self.ui.screens.get("game_over")
+        if not overlay:
+            DebugLogger.warn("Game over overlay not loaded")
+            return
+
+        # Update title
+        title_elem = self._find_element_by_id(overlay, "title_label")
+        if title_elem:
+            if victory:
+                title_elem.text = "MISSION ACCOMPLISHED"
+                title_elem.text_color = (100, 255, 100)
+            else:
+                title_elem.text = "GAME OVER"
+                title_elem.text_color = (255, 100, 100)
+            title_elem.mark_dirty()
+
+        # Update stats
+        score_elem = self._find_element_by_id(overlay, "score_label")
+        if score_elem:
+            score_elem.text = f"Score: {SESSION_STATS.score}"
+            score_elem.mark_dirty()
+
+        kills_elem = self._find_element_by_id(overlay, "kills_label")
+        if kills_elem:
+            kills_elem.text = f"Enemies Killed: {SESSION_STATS.enemies_killed}"
+            kills_elem.mark_dirty()
+
+        items_elem = self._find_element_by_id(overlay, "items_label")
+        if items_elem:
+            items_elem.text = f"Items Collected: {SESSION_STATS.items_collected}"
+            items_elem.mark_dirty()
+
+        time_elem = self._find_element_by_id(overlay, "time_label")
+        if time_elem:
+            minutes = int(SESSION_STATS.run_time // 60)
+            seconds = int(SESSION_STATS.run_time % 60)
+            time_elem.text = f"Time: {minutes}:{seconds:02d}"
+            time_elem.mark_dirty()
+
+        # Show overlay
+        self.ui.show_screen("game_over", modal=True)
+
+        DebugLogger.state(f"Game over shown (victory={victory})", category="game")
+
+    def _find_element_by_id(self, root, element_id):
+        """Recursively find element by id."""
+        if hasattr(root, 'config') and root.config.get('id') == element_id:
+            return root
+
+        if hasattr(root, 'children'):
+            for child in root.children:
+                result = self._find_element_by_id(child, element_id)
+                if result:
+                    return result
+
+        return None

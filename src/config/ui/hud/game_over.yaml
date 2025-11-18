@@ -1,0 +1,82 @@
+game_over:
+  type: container
+  anchor: center
+  size: [600, 400]
+  layer: Layers.UI + 1
+  style:
+    background_color: [20, 20, 20, 230]
+    border_color: [200, 200, 200]
+    border_width: 2
+  children:
+    # Title (GAME OVER or MISSION ACCOMPLISHED)
+    - type: label
+      id: title_label
+      anchor: top_center
+      offset: [0, 40]
+      text: "GAME OVER"
+      style:
+        font_size: 48
+        color: [255, 100, 100]
+        font_bold: true
+
+    # Stats container
+    - type: container
+      anchor: center
+      offset: [0, 20]
+      size: [500, 200]
+      style:
+        background_color: [30, 30, 30, 180]
+      children:
+        # Score
+        - type: label
+          id: score_label
+          anchor: top_center
+          offset: [0, 20]
+          text: "Score: 0"
+          style:
+            font_size: 24
+            color: [255, 255, 100]
+
+        # Enemies Killed
+        - type: label
+          id: kills_label
+          anchor: top_center
+          offset: [0, 60]
+          text: "Enemies Killed: 0"
+          style:
+            font_size: 20
+            color: [200, 200, 200]
+
+        # Items Collected
+        - type: label
+          id: items_label
+          anchor: top_center
+          offset: [0, 90]
+          text: "Items Collected: 0"
+          style:
+            font_size: 20
+            color: [200, 200, 200]
+
+        # Time
+        - type: label
+          id: time_label
+          anchor: top_center
+          offset: [0, 120]
+          text: "Time: 0:00"
+          style:
+            font_size: 20
+            color: [200, 200, 200]
+
+    # Return button
+    - type: button
+      id: return_button
+      anchor: bottom_center
+      offset: [0, -40]
+      size: [200, 50]
+      text: "Return to Menu"
+      action: return_to_menu
+      style:
+        font_size: 20
+        color: [255, 255, 255]
+        background_color: [60, 60, 80]
+        hover_color: [80, 80, 100]
