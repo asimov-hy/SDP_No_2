@@ -35,11 +35,15 @@ class GameScene(BaseScene):
         # Campaign tracking
         self.campaign = None
         self.current_level_idx = 0
+        self.selected_level_id = None
 
         DebugLogger.section("GameScene Initialized")
 
-    def on_load(self, campaign_name=None, **scene_data):
+    def on_load(self, campaign_name=None, level_id=None, **scene_data):
         """Load campaign when scene is created."""
+        # Store specific level to load
+        self.selected_level_id = level_id
+
         # Load campaign from registry
         if campaign_name:
             self.campaign = LevelRegistry.get_campaign(campaign_name)
@@ -61,7 +65,15 @@ class GameScene(BaseScene):
         # Load HUD
         self.ui.load_hud("hud/gameplay_hud.yaml")
 
-        # Start level
+        # Start specific level if selected
+        if self.selected_level_id:
+            level_config = LevelRegistry.get(self.selected_level_id)
+            if level_config:
+                DebugLogger.state(f"Starting level: {level_config.name}")
+                self.level_manager.load(level_config.path)
+                return
+
+        # Otherwise start first level in campaign
         if self.campaign and len(self.campaign) > 0:
             first_level = self.campaign[0]
             DebugLogger.state(f"Starting level: {first_level.name}")

@@ -40,6 +40,10 @@ class SceneManager:
         self.services.register_global("level_registry", LevelRegistry)
         DebugLogger.init_sub("Registered global systems")
 
+        # Load level registry config at startup
+        LevelRegistry.load_config("campaigns.json")
+        DebugLogger.init_sub("Level registry loaded")
+
         # Scene registry - map names to classes
         self.scene_classes = {
             "MainMenu": MainMenuScene,
