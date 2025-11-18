@@ -42,6 +42,13 @@ class UIElement:
         if size:
             self.width, self.height = size
 
+        # Image properties
+        self.image_path = config.get('image')
+        self.image_scale = config.get('image_scale', 1.0)
+        self.image_tint = self._parse_color(config.get('image_tint')) if config.get('image_tint') else None
+        self._loaded_image = None  # Cached loaded image
+        self._draw_manager_ref = None  # Injected by UIManager
+
         # Spacing (for layout children)
         self.margin = config.get('margin', 0)
         self.margin_top = config.get('margin_top', self.margin)
@@ -118,10 +125,49 @@ class UIElement:
         return tuple(color)
 
     def _parse_alpha(self, alpha) -> int:
-        """Parse alpha from float (0.0-1.0) or int (0-255)."""
-        if isinstance(alpha, float) and alpha <= 1.0:
-            return int(alpha * 255)
-        return int(alpha)
+        """Parse alpha value."""
+        if isinstance(alpha, (int, float)):
+            return int(max(0, min(255, alpha)))
+        return 255
+
+    def set_draw_manager(self, draw_manager):
+        """Store reference to DrawManager for image loading."""
+        self._draw_manager_ref = draw_manager
+
+    def _load_image(self):
+        """
+        Load and cache image from DrawManager.
+
+        Returns:
+            pygame.Surface or None
+        """
+        if not self.image_path or not self._draw_manager_ref:
+            return None
+
+        # Return cached if already loaded
+        if self._loaded_image:
+            return self._loaded_image
+
+        # Check if already in DrawManager cache
+        if self.image_path not in self._draw_manager_ref.images:
+            # Load with relative path from assets/images/
+            full_path = f"assets/images/{self.image_path}"
+            self._draw_manager_ref.load_image(self.image_path, full_path, scale=self.image_scale)
+
+        image = self._draw_manager_ref.images.get(self.image_path)
+
+        if not image:
+            return None
+
+        # Scale to element dimensions
+        scaled = pygame.transform.scale(image, (self.width, self.height))
+
+        # Apply tint if specified
+        if self.image_tint:
+            scaled.fill(self.image_tint, special_flags=pygame.BLEND_RGB_MULT)
+
+        self._loaded_image = scaled
+        return self._loaded_image
 
     def update(self, dt: float, mouse_pos: Tuple[int, int], binding_system=None):
         """
@@ -174,18 +220,15 @@ class UIElement:
         return self._surface_cache
 
     def _build_surface(self) -> pygame.Surface:
-        """
-        Build the visual surface. Override in subclasses.
-
-        Returns:
-            Rendered surface
-        """
+        """Build element surface. Override in subclasses for custom rendering."""
         surf = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
 
-        # Background
-        if self.background:
-            bg_color = (*self.background[:3], self.alpha if len(self.background) == 3 else self.background[3])
-            surf.fill(bg_color)
+        # Background - image takes priority over color
+        image = self._load_image()
+        if image:
+            surf.blit(image, (0, 0))
+        elif self.background:
+            surf.fill(self.background)
 
         # Border
         if self.border > 0:

@@ -95,11 +95,19 @@ class UIButton(UIElement):
         elif self.is_pressed:
             color = self.pressed_color
         else:
-            # Interpolate between normal and hover color
             color = self._lerp_color(self.color, self.hover_color, self.hover_t)
 
-        # Background
-        if self.background:
+        # Background - image takes priority
+        image = self._load_image()
+        if image:
+            surf.blit(image, (0, 0))
+            # Apply color tint over image for hover/press states
+            if self.hover_t > 0.01 or self.is_pressed:
+                tint_surf = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+                tint_alpha = int(30 * self.hover_t) if not self.is_pressed else 50
+                tint_surf.fill((*color, tint_alpha))
+                surf.blit(tint_surf, (0, 0))
+        elif self.background:
             surf.fill(self.background)
         else:
             surf.fill(color)

@@ -43,9 +43,19 @@ class UIManager:
         self.modal_stack: List[str] = []  # Stack of active modal screens
 
     # ===================================================================
-    # Screen Management
+    # DrawManager Integration
     # ===================================================================
 
+    def _inject_draw_manager_to_tree(self, element: UIElement):
+        """Recursively inject DrawManager reference to element tree."""
+        element.set_draw_manager(self.draw_manager)
+        if hasattr(element, 'children'):
+            for child in element.children:
+                self._inject_draw_manager_to_tree(child)
+
+    # ===================================================================
+    # Screen Management
+    # ===================================================================
     def register_screen(self, name: str, root_element: UIElement):
         """
         Register a ui screen.
@@ -55,6 +65,7 @@ class UIManager:
             root_element: Root element of the screen
         """
         self.screens[name] = root_element
+        self._inject_draw_manager_to_tree(root_element)
 
     def load_screen(self, name: str, filename: str):
         """
