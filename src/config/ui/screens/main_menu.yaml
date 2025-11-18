@@ -4,7 +4,6 @@ main_menu:
   height: 720
   anchor: center
   layer: Layers.UI
-
   children:
     # Title
     - type: label
@@ -17,7 +16,6 @@ main_menu:
       font_size: 64
       color: [255, 255, 255]
       layer: Layers.UI
-
     # Start button - anchored below title
     - type: button
       id: "start_button"
@@ -27,14 +25,13 @@ main_menu:
       height: 60
       anchor: "#title:bottom"
       align: top_center
-      offset: [0, 0]
+      offset: [0, 100]
       color: [60, 100, 180]
       border: 2
       border_color: [100, 140, 220]
       border_radius: 8
       font_size: 28
       layer: Layers.UI
-
     # Settings button - anchored below start button
     - type: button
       id: "settings_button"
@@ -51,7 +48,6 @@ main_menu:
       border_radius: 8
       font_size: 28
       layer: Layers.UI
-
     # Quit button - anchored below settings button
     - type: button
       id: "quit_button"

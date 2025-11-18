@@ -1,5 +1,8 @@
 player_hud:
   type: container
+  width: 1280
+  height: 720
+  layer: Layers.UI
 
   children:
     # Health bar
@@ -7,7 +10,8 @@ player_hud:
       id: health_bar
       anchor: top_left
       offset: [20, 20]
-      size: [200, 24]
+      width: 200
+      height: 24
       max_value: 100
       bind: player.health
       color: [0, 255, 0]
@@ -25,14 +29,15 @@ player_hud:
     # Health text
     - type: label
       id: health_text
-      anchor: [10%, 5%]
-      offset: [110, 11]
-      size: [80, 24]
+      anchor: "#health_bar:center"
+      align: center
+      width: 80
+      height: 24
       bind: player.health
       format: "{:.0f} HP"
       font_size: 18
       color: [255, 255, 255]
-      align: center
+      text_align: center
       layer: Layers.UI
 
     # Score label
@@ -40,12 +45,13 @@ player_hud:
       id: score
       anchor: top_right
       offset: [-20, 20]
-      size: [200, 30]
+      width: 200
+      height: 30
       bind: player.score
       format: "Score: {:,}"
       font_size: 24
       color: [255, 255, 255]
-      align: right
+      text_align: right
       layer: Layers.UI
 
     # Ammo counter
@@ -53,10 +59,11 @@ player_hud:
       id: ammo
       anchor: bottom_center
       offset: [0, -50]
-      size: [150, 30]
+      width: 150
+      height: 30
       bind: player.ammo
       format: "Ammo: {}"
       font_size: 20
       color: [255, 255, 255]
-      align: center
+      text_align: center
       layer: Layers.UI

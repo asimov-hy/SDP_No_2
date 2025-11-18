@@ -37,8 +37,7 @@ class CampaignSelectScene(BaseScene):
         """Handle input events."""
         action = self.ui.handle_event(event)
 
-        if action and action.startswith("start_campaign:"):
-            campaign_name = action.split(":")[1]
-            self.scene_manager.set_scene("Game", campaign_name=campaign_name)
+        if action == "start_game":
+            self.scene_manager.set_scene("Game")
         elif action == "back":
             self.scene_manager.set_scene("MainMenu")

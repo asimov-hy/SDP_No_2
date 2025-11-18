@@ -83,7 +83,7 @@ class GameSystemInitializer(SystemInitializer):
             game_width=Display.WIDTH,
             game_height=Display.HEIGHT
         )
-        ui.load_screen("pause", "screens/pause_menu.yaml")
+        ui.load_screen("pause", "hud/pause_hud.yaml")
         return ui
 
     def _init_player(self) -> Player:
