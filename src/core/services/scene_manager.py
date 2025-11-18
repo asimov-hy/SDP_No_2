@@ -192,9 +192,16 @@ class SceneManager:
                     self.input_manager.set_context(self._active_scene.input_context)
             return
 
-        # Handle pause in gameplay context (ADD THIS BLOCK)
-        if self.input_manager.context == "gameplay":
-            if self.input_manager.action_pressed("pause"):
+        # Handle pause toggle - only in Game scene
+        if self._active_name == "Game":
+            pause_pressed = False
+
+            if self.input_manager.context == "gameplay":
+                pause_pressed = self.input_manager.action_pressed("pause")
+            elif self.input_manager.context == "ui":
+                pause_pressed = self.input_manager.action_pressed("back")
+
+            if pause_pressed:
                 if self._active_scene.state == SceneState.ACTIVE:
                     self.pause_active_scene()
                     return

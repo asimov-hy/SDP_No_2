@@ -121,4 +121,10 @@ class GameScene(BaseScene):
 
     def handle_event(self, event):
         """Handle input events."""
-        self.ui.handle_event(event)
+        action = self.ui.handle_event(event)
+
+        # Handle pause menu actions
+        if action == "resume":
+            self.scene_manager.resume_active_scene()
+        elif action == "quit":
+            self.scene_manager.set_scene("MainMenu")
