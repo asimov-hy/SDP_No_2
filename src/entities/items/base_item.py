@@ -41,57 +41,46 @@ class BaseItem(BaseEntity):
         Args:
             x (float): Spawn X position.
             y (float): Spawn Y position.
+            item_data (dict): Item configuration from items.json
             image (pygame.Surface, optional): Item sprite.
             shape_data (dict, optional): Shape rendering config.
             draw_manager: Reference to draw manager for shape optimization.
             speed (float): Downward movement speed (pixels/second).
             despawn_y (float, optional): Y coordinate to despawn at. Defaults to screen height.
         """
-        # Extract hitbox config from item_data
-        hitbox_config = {}
-        if item_data and 'hitbox' in item_data:
-            hitbox_config = item_data['hitbox']
-        else:
-            hitbox_config = {'scale': 0.8}  # Default for items
+        # Store item data first
+        self.item_data = item_data or {}
+
+        # Extract physics config from item_data
+        physics = self.item_data.get("physics", {})
+        velo_x = physics.get("velo_x", 0)
+        velo_y = physics.get("velo_y", speed)
+        hitbox_scale = physics.get("hitbox_scale", 0.8)
+
+        # Build hitbox config
+        hitbox_config = {'scale': hitbox_scale}
 
         super().__init__(x, y, image=image, shape_data=shape_data,
                          draw_manager=draw_manager, hitbox_config=hitbox_config)
 
-        self.speed = speed
+        # Extract visual scale and apply to sprite
+        visual_scale = self.item_data.get("scale", 0.1)
+        if visual_scale != 1.0 and self.image:
+            new_size = (int(self.image.get_width() * visual_scale),
+                        int(self.image.get_height() * visual_scale))
+            self.image = pygame.transform.scale(self.image, new_size)
+            self.rect = self.image.get_rect(center=(x, y))
+
+        self.speed = velo_y
         self.despawn_y = despawn_y if despawn_y is not None else Display.HEIGHT
 
         # Collision setup
         self.collision_tag = CollisionTags.PICKUP
         self.category = EntityCategory.PICKUP
-        self.layer = Layers.PICKUPS  # Same layer as enemies for now
+        self.layer = Layers.PICKUPS
 
-        # Movement
-        self.velocity = pygame.Vector2(0, self.speed)
-
-        # Store item data
-        self.item_data = item_data or {}
-
-        # Extract movement config from item_data
-        self.movement_type = self.item_data.get("movement", "straight")
-        self.speed = self.item_data.get("speed", speed)
-
-        # If no image provided, build from item_data
-        if image is None and shape_data is None:
-            shape_data = {
-                "type": "circle",
-                "color": tuple(self.item_data.get("color", [0, 255, 100])),
-                "size": tuple(self.item_data.get("size", [24, 24])),
-                "kwargs": {}
-            }
-            # Rebuild the sprite using shape_data
-            if draw_manager:
-                self.image = draw_manager.prebake_shape(
-                    shape_data["type"],
-                    shape_data["size"],
-                    shape_data["color"]
-                )
-                self.rect = self.image.get_rect(center=(x, y))
-                self.shape_data = shape_data
+        # Movement - use physics data
+        self.velocity = pygame.Vector2(velo_x, velo_y)
 
     def update(self, dt: float):
         """Update item position and check for despawn."""

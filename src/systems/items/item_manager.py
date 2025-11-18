@@ -20,6 +20,7 @@ from src.core.services.event_manager import EVENTS, EnemyDiedEvent
 from src.core.services.config_manager import load_config
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
+from src.entities.items.base_item import BaseItem
 
 
 # ===========================================================
@@ -54,11 +55,13 @@ class ItemManager:
         self._item_definitions = {}
         self._loot_table_ids = []
         self._loot_table_weights = []
+        self._fallback_image = None
 
         # Load and build loot system
         self._load_item_definitions(item_data_path)
         self._build_loot_table()
         self._subscribe_to_events()
+        self._load_fallback_image()
 
         DebugLogger.init("ItemManager initialized")
 
@@ -98,6 +101,16 @@ class ItemManager:
     def _subscribe_to_events(self) -> None:
         """Subscribe to game events for item spawning."""
         EVENTS.subscribe(EnemyDiedEvent, self.on_enemy_died)
+
+    def _load_fallback_image(self) -> None:
+        """Load fallback dummy_item image."""
+        fallback_path = "assets/images/sprites/items/dummy_item.png"
+        if os.path.exists(fallback_path):
+            try:
+                self._fallback_image = pygame.image.load(fallback_path).convert_alpha()
+                DebugLogger.init_sub(f"Loaded fallback image")
+            except Exception as e:
+                DebugLogger.warn(f"Failed loading fallback: {e}")
 
     # ===========================================================
     # Event Handlers
@@ -166,16 +179,26 @@ class ItemManager:
         )
 
     def _load_item_image(self, item_id: str, asset_path: str) -> pygame.Surface:
-        """Load and return item sprite image."""
-        # Get size from item data
+        """Load item sprite with fallback support."""
         item_data = self._item_definitions.get(item_id, {})
         size = item_data.get("size")
 
-        # Calculate scale factor if size is specified
-        scale = 1.0
-        if size:
-            temp_img = pygame.image.load(asset_path).convert_alpha() if os.path.exists(asset_path) else None
-            if temp_img:
-                scale = (size[0] / temp_img.get_width(), size[1] / temp_img.get_height())
+        # Try loading specified path
+        if os.path.exists(asset_path):
+            try:
+                img = pygame.image.load(asset_path).convert_alpha()
+                if size:
+                    scale = (size[0] / img.get_width(), size[1] / img.get_height())
+                    return BaseEntity.load_and_scale_image(asset_path, scale)
+                return img
+            except Exception as e:
+                DebugLogger.warn(f"Failed loading {asset_path}: {e}")
 
-        return BaseEntity.load_and_scale_image(asset_path, scale)
+        # Use fallback
+        if self._fallback_image:
+            img = self._fallback_image.copy()
+            if size:
+                return pygame.transform.scale(img, tuple(size))
+            return img
+
+        return None
