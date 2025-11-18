@@ -10,7 +10,7 @@ from typing import Dict, Any, Optional
 from src.core.runtime.game_settings import Layers
 from src.core.debug.debug_logger import DebugLogger
 
-from .ui_element import UIElement
+from src.ui.core.ui_element import UIElement
 
 # Element type registry
 ELEMENT_REGISTRY = {}
@@ -40,14 +40,15 @@ class UILoader:
         self.ui_manager = ui_manager
         self.theme_manager = theme_manager
         self.cache: Dict[str, Dict] = {}
-        self.base_path = Path("src/ui/configs")
+        self.base_path = Path("src/config/ui")
 
     def load(self, filename: str) -> UIElement:
         """
         Load ui configuration from YAML file.
 
         Args:
-            filename: Path to YAML file relative to ui/configs/
+            filename: Path to YAML file relative to src/config/ui/
+                     Can include subdirectory: "screens/main_menu.yaml"
 
         Returns:
             Root UIElement
@@ -56,7 +57,7 @@ class UILoader:
         if filename in self.cache:
             return self._instantiate(self.cache[filename])
 
-        # Load file
+        # Load file - filename can include subdirectory path
         full_path = self.base_path / filename
 
         if not full_path.exists():

@@ -116,7 +116,7 @@ class UIButton(UIElement):
         if self.text:
             text_color = (255, 255, 255) if not self.enabled else (255, 255, 255)
             text_surf = self.font.render(self.text, True, text_color)
-            text_rect = text_surf.get_rect(center=surf.get_rect().center)
+            text_rect = self._get_text_position(text_surf, surf.get_rect())
             surf.blit(text_surf, text_rect)
 
         # Icon (if specified)

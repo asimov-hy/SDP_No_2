@@ -1,0 +1,67 @@
+campaign_select:
+  type: container
+  width: 1280
+  height: 720
+  anchor: center
+  layer: Layers.UI
+
+  children:
+    # Title
+    - type: label
+      id: "title"
+      text: "SELECT CAMPAIGN"
+      width: 600
+      height: 60
+      anchor: top_center
+      offset: [0, 100]
+      font_size: 48
+      color: [255, 255, 255]
+      layer: Layers.UI
+
+    # Test campaign button
+    - type: button
+      id: "test_campaign"
+      text: "Test Campaign"
+      action: "start_campaign:test"
+      width: 500
+      height: 70
+      anchor: "#title:bottom"
+      offset: [0, 80]
+      color: [80, 120, 80]
+      border: 2
+      border_color: [120, 160, 120]
+      border_radius: 8
+      font_size: 32
+      layer: Layers.UI
+
+    # Demo campaign button
+    - type: button
+      id: "demo_campaign"
+      text: "Demo Level"
+      action: "start_campaign:demo"
+      width: 500
+      height: 70
+      anchor: "#test_campaign:bottom"
+      offset: [0, 20]
+      color: [80, 120, 80]
+      border: 2
+      border_color: [120, 160, 120]
+      border_radius: 8
+      font_size: 32
+      layer: Layers.UI
+
+    # Back button
+    - type: button
+      id: "back_button"
+      text: "BACK"
+      action: "back"
+      width: 200
+      height: 50
+      anchor: bottom_center
+      offset: [0, -80]
+      color: [100, 100, 100]
+      border: 2
+      border_color: [140, 140, 140]
+      border_radius: 8
+      font_size: 24
+      layer: Layers.UI

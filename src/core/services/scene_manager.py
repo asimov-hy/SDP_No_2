@@ -22,11 +22,12 @@ from src.scenes.settings_scene import SettingsScene
 class SceneManager:
     """Coordinates scene transitions and delegates update/draw logic."""
 
-    def __init__(self, display_manager, input_manager, draw_manager):
+    def __init__(self, display_manager, input_manager, draw_manager, ui_manager):
         """Initialize scene manager with direct scene registration."""
         self.display = display_manager
         self.input_manager = input_manager
         self.draw_manager = draw_manager
+        self.ui_manager = ui_manager
         DebugLogger.init_entry("SceneManager")
 
         # Create service locator

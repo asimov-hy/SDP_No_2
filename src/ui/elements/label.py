@@ -36,9 +36,6 @@ class UILabel(UIElement):
         text_color = config.get('text_color') or config.get('color', [255, 255, 255])
         self.text_color = self._parse_color(text_color)
 
-        # Alignment
-        self.align = config.get('align', 'center')  # left, center, right
-
         # Dynamic text from binding
         self.current_value = None
         self._last_text = None
@@ -78,14 +75,8 @@ class UILabel(UIElement):
         if self.background:
             surf.fill(self.background)
 
-        # Position text based on alignment
-        if self.align == 'left':
-            text_rect = text_surf.get_rect(midleft=(5, self.height // 2))
-        elif self.align == 'right':
-            text_rect = text_surf.get_rect(midright=(self.width - 5, self.height // 2))
-        else:  # center
-            text_rect = text_surf.get_rect(center=(self.width // 2, self.height // 2))
-
+        # Position text using base class helper
+        text_rect = self._get_text_position(text_surf, surf.get_rect())
         surf.blit(text_surf, text_rect)
 
         # Border

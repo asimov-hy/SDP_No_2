@@ -26,7 +26,10 @@ class UIElement:
         # Position (resolved later by anchor system)
         self.anchor = config.get('anchor')
         self.offset = config.get('offset', [0, 0])
+        self.text_align = config.get('align', None)
         self.position_mode = config.get('position')  # 'absolute' or None
+
+        self.text_align = config.get('text_align', 'center')
 
         # Explicit position (for absolute mode)
         self.x = config.get('x', 0)
@@ -207,3 +210,23 @@ class UIElement:
     def _lerp_color(self, start: Tuple, end: Tuple, t: float) -> Tuple:
         """Linearly interpolate between two colors."""
         return tuple(int(s + (e - s) * t) for s, e in zip(start, end))
+
+    def _get_text_position(self, text_surf: pygame.Surface, container_rect: pygame.Rect) -> pygame.Rect:
+        """
+        Get text position based on text_align.
+
+        Args:
+            text_surf: Rendered text surface
+            container_rect: Container rectangle to align within
+
+        Returns:
+            Positioned text rect
+        """
+        padding = 10  # Padding from edges
+
+        if self.text_align == 'left':
+            return text_surf.get_rect(midleft=(padding, container_rect.height // 2))
+        elif self.text_align == 'right':
+            return text_surf.get_rect(midright=(container_rect.width - padding, container_rect.height // 2))
+        else:  # center (default)
+            return text_surf.get_rect(center=(container_rect.width // 2, container_rect.height // 2))

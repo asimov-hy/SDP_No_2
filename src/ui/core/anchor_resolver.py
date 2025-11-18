@@ -21,6 +21,15 @@ class AnchorResolver:
         """
         self.game_width = game_width
         self.game_height = game_height
+        self.element_registry = {}
+
+    def register_element(self, element_id: str, element):
+        """Register element for anchor references."""
+        self.element_registry[element_id] = element
+
+    def _find_element_by_id(self, element_id: str):
+        """Find element by ID."""
+        return self.element_registry.get(element_id)
 
     def resolve(self, element, parent=None) -> pygame.Rect:
         """
@@ -49,15 +58,76 @@ class AnchorResolver:
             final_x = element._layout_x
             final_y = element._layout_y
         else:
-            # Center element on anchor point by default
-            final_x = anchor_x + offset_x - element.width // 2
-            final_y = anchor_y + offset_y - element.height // 2
+            # Align element based on anchor type or explicit alignment
+            element_align = getattr(element, 'align', None)
+            align_x, align_y = self._get_element_alignment(
+                element.anchor,
+                element.width,
+                element.height,
+                element_align
+            )
+            final_x = anchor_x + offset_x - align_x
+            final_y = anchor_y + offset_y - align_y
 
         # Apply margins
         final_x += element.margin_left
         final_y += element.margin_top
 
         return pygame.Rect(int(final_x), int(final_y), element.width, element.height)
+
+    def _get_element_alignment(self, anchor, elem_width: int, elem_height: int, element_align: str = None) -> Tuple[
+        int, int]:
+        """
+        Get element alignment offset based on anchor type or explicit alignment.
+
+        This determines which point of the element aligns to the anchor.
+
+        Args:
+            anchor: Anchor specification
+            elem_width: Element width
+            elem_height: Element height
+            element_align: Optional explicit alignment override
+
+        Returns:
+            (x, y) offset from element's top-left to alignment point
+        """
+        if anchor is None:
+            return 0, 0
+
+        # Determine position string
+        if element_align and element_align != 'center':
+            # Use explicit alignment if provided
+            position = element_align
+        elif isinstance(anchor, str):
+            # Otherwise match anchor type
+            if anchor.startswith('#'):
+                parts = anchor[1:].split(':')
+                position = parts[1] if len(parts) > 1 else 'center'
+            else:
+                # Remove "parent_" prefix if present
+                position = anchor.replace('parent_', '')
+        else:
+            # Percentage anchors default to center alignment
+            return elem_width // 2, elem_height // 2
+
+        # Calculate alignment offset based on position
+        alignments = {
+            'top_left': (0, 0),
+            'top_center': (elem_width // 2, 0),
+            'top': (elem_width // 2, 0),
+            'top_right': (elem_width, 0),
+            'center_left': (0, elem_height // 2),
+            'left': (0, elem_height // 2),
+            'center': (elem_width // 2, elem_height // 2),
+            'center_right': (elem_width, elem_height // 2),
+            'right': (elem_width, elem_height // 2),
+            'bottom_left': (0, elem_height),
+            'bottom_center': (elem_width // 2, elem_height),
+            'bottom': (elem_width // 2, elem_height),
+            'bottom_right': (elem_width, elem_height),
+        }
+
+        return alignments.get(position, (elem_width // 2, elem_height // 2))
 
     def _get_anchor_point(self, anchor, parent, element) -> Tuple[int, int]:
         """
@@ -96,6 +166,18 @@ class AnchorResolver:
         Returns:
             (x, y) coordinates
         """
+
+        # Element ID reference (e.g., "#button_id:center")
+        if name.startswith('#'):
+            parts = name[1:].split(':')
+            element_id = parts[0]
+            position = parts[1] if len(parts) > 1 else 'center'
+
+            # Find element by ID (need to pass element registry)
+            target_element = self._find_element_by_id(element_id)
+            if target_element and target_element.rect:
+                return self._calculate_rect_anchor(target_element.rect, position)
+
         # Parent-relative anchors
         if name.startswith('parent_'):
             if not parent or not parent.rect:

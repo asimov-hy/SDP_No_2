@@ -22,6 +22,7 @@ from src.core.runtime.game_settings import Display, Physics, Debug
 from src.core.services.input_manager import InputManager
 from src.core.services.display_manager import DisplayManager
 from src.core.services.scene_manager import SceneManager
+from src.ui.core.ui_manager import UIManager
 
 # Core debugging utilities
 from src.core.debug.debug_logger import DebugLogger
@@ -59,6 +60,14 @@ class GameLoop:
         self.input_manager = InputManager()
         self.draw_manager = DrawManager()
 
+        self.ui_manager = UIManager(
+            self.display,
+            self.draw_manager,
+            game_width=Display.WIDTH,
+            game_height=Display.HEIGHT
+        )
+        DebugLogger.init_sub("UIManager initialized")
+
         # -------------------------------------------------------
         # Global Debug HUD (independent of scenes)
         # -------------------------------------------------------
@@ -76,7 +85,12 @@ class GameLoop:
         # -------------------------------------------------------
         # Scene Management
         # -------------------------------------------------------
-        self.scenes = SceneManager(self.display, self.input_manager, self.draw_manager)
+        self.scenes = SceneManager(
+            self.display,
+            self.input_manager,
+            self.draw_manager,
+            self.ui_manager
+        )
         # DebugLogger.init_sub("Linked [SceneManager] to [DisplayManager], [InputManager], [DrawManager]", level=1)
 
     # ===========================================================

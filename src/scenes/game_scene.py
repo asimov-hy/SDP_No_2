@@ -58,6 +58,10 @@ class GameScene(BaseScene):
 
     def on_enter(self):
         """Start first level when scene becomes active."""
+        # Load HUD
+        self.ui.load_hud("hud/gameplay_hud.yaml")
+
+        # Start level
         if self.campaign and len(self.campaign) > 0:
             first_level = self.campaign[0]
             DebugLogger.state(f"Starting level: {first_level.name}")
@@ -69,9 +73,14 @@ class GameScene(BaseScene):
                 DebugLogger.state(f"Starting level: {start_level.name}")
                 self.level_manager.load(start_level.path)
 
+    def on_exit(self):
+        """Clean up when leaving gameplay."""
+        # Clear HUD
+        self.ui.clear_hud()
+
     def on_pause(self):
         """Show pause overlay."""
-        self.ui.show_screen("pause")
+        self.ui.show_screen("pause", modal=True)
 
     def on_resume(self):
         """Hide pause overlay."""
@@ -93,7 +102,8 @@ class GameScene(BaseScene):
         self.spawn_manager.cleanup()
 
         # UI update
-        self.ui.update(dt, pygame.mouse.get_pos())
+        mouse_pos = self.input_manager.get_mouse_pos()
+        self.ui.update(dt, mouse_pos)
 
     def draw(self, draw_manager):
         """Render all game elements."""

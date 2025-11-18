@@ -23,6 +23,7 @@ class ServiceLocator:
         self.display_manager = scene_manager.display
         self.input_manager = scene_manager.input_manager
         self.draw_manager = scene_manager.draw_manager
+        self.ui_manager = scene_manager.ui_manager
 
         # Global systems (persist across scenes)
         self._global_systems = {}

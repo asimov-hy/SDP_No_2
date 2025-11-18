@@ -7,7 +7,7 @@ Manages ui screens, HUD elements, and rendering with the new system.
 import pygame
 from typing import Dict, List, Optional, Tuple
 
-from .anchor_resolver import AnchorResolver
+from src.ui.core.anchor_resolver import AnchorResolver
 from .binding_system import BindingSystem
 from .ui_loader import UILoader
 from .ui_element import UIElement
@@ -307,7 +307,8 @@ class UIManager:
             if screen:
                 self._draw_element_tree(screen, draw_manager)
 
-    def _draw_element_tree(self, element: UIElement, draw_manager, parent=None):
+
+    def _draw_element_tree(self, element, draw_manager, parent=None):
         """Recursively draw element and children."""
         if not element.visible:
             return
@@ -315,11 +316,14 @@ class UIManager:
         # Resolve position
         element.rect = self.anchor_resolver.resolve(element, parent)
 
+        # Register element if it has an ID (BEFORE children)
+        if element.id:
+            self.anchor_resolver.register_element(element.id, element)
+
         # Render surface
         surface = element.render_surface()
 
         # Queue for drawing
-        # print(f"[UI] Drawing {element.type or 'element'} at layer {element.layer}")
         draw_manager.queue_draw(surface, element.rect, element.layer)
 
         # Draw children

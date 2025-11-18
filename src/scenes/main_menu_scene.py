@@ -14,41 +14,33 @@ class MainMenuScene(BaseScene):
     def __init__(self, services):
         super().__init__(services)
         self.input_context = "ui"
-
-        # TODO: Load UI layout
-        # self.ui = services.ui_manager
-        # self.ui.load_screen("main_menu")
+        self.ui = services.ui_manager
 
     def on_enter(self):
         """Called when scene becomes active."""
-        pass
+        self.ui.load_screen("main_menu", "screens/main_menu.yaml")
+        self.ui.show_screen("main_menu")
+
+    def on_exit(self):
+        """Called when leaving scene."""
+        self.ui.hide_screen("main_menu")
 
     def update(self, dt: float):
         """Update menu logic."""
-        # TODO: Update UI
-        # self.ui.update(dt, pygame.mouse.get_pos())
-
-        # TEMP: Auto-skip to campaign select for testing
-        if self.input_manager.action_pressed("confirm"):
-            self.scene_manager.set_scene("CampaignSelect")
+        mouse_pos = self.input_manager.get_mouse_pos()
+        self.ui.update(dt, mouse_pos)
 
     def draw(self, draw_manager):
         """Render menu."""
-        # TODO: Draw UI
-        # self.ui.draw(draw_manager)
-
-        # TEMP: Placeholder visuals
-        surf = pygame.Surface((600, 100))  # Wider surface
-        surf.fill((50, 50, 100))
-
-        font = pygame.font.Font(None, 48)
-        text = font.render("MAIN MENU - Press SPACE", True, (255, 255, 255))
-        surf.blit(text, (50, 30))  # More padding
-
-        draw_manager.queue_draw(surf, surf.get_rect(center=(640, 360)), layer=0)
+        self.ui.draw(draw_manager)
 
     def handle_event(self, event):
         """Handle input events."""
-        # TODO: Forward to UI
-        # self.ui.handle_event(event)
-        pass
+        action = self.ui.handle_event(event)
+
+        if action == "start_game":
+            self.scene_manager.set_scene("CampaignSelect")
+        elif action == "settings":
+            self.scene_manager.set_scene("Settings", caller="MainMenu")
+        elif action == "quit":
+            pygame.event.post(pygame.event.Event(pygame.QUIT))

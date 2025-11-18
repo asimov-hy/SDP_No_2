@@ -373,3 +373,12 @@ class InputManager:
         if action not in context_dict:
             return False
         return any(keys[key] for key in context_dict[action])
+
+    def get_mouse_pos(self):
+        """
+        Get current mouse position.
+
+        Returns:
+            Tuple[int, int]: (x, y) mouse coordinates
+        """
+        return pygame.mouse.get_pos()

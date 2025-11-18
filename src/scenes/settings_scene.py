@@ -4,7 +4,6 @@ settings_scene.py
 Settings/options menu - controls, audio, display.
 """
 
-import pygame
 from src.scenes.base_scene import BaseScene
 
 
@@ -14,38 +13,42 @@ class SettingsScene(BaseScene):
     def __init__(self, services, caller_scene=None):
         super().__init__(services)
         self.input_context = "ui"
-        self.caller_scene = caller_scene  # Track where we came from
-
-        # TODO: Load settings UI
-        # self.ui = services.ui_manager
-        # self.ui.load_screen("settings")
+        self.caller_scene = caller_scene
+        self.ui = services.ui_manager
 
     def on_load(self, caller=None, **scene_data):
         """Remember which scene opened settings."""
         if caller:
             self.caller_scene = caller
 
+    def on_enter(self):
+        """Load settings UI."""
+        self.ui.load_screen("settings", "screens/settings.yaml")
+        self.ui.show_screen("settings")
+
+    def on_exit(self):
+        """Called when leaving scene."""
+        self.ui.hide_screen("settings")
+
     def update(self, dt: float):
         """Update settings UI."""
-        # TODO: Update UI
-
-        # Back to caller scene
-        if self.input_manager.action_pressed("back"):
-            target = self.caller_scene if self.caller_scene else "MainMenu"
-            self.scene_manager.set_scene(target)
+        mouse_pos = self.input_manager.get_mouse_pos()
+        self.ui.update(dt, mouse_pos)
 
     def draw(self, draw_manager):
         """Render settings menu."""
-        # TEMP: Placeholder
-        surf = pygame.Surface((400, 100))
-        surf.fill((50, 100, 50))
-
-        font = pygame.font.Font(None, 48)
-        text = font.render("SETTINGS - Press ESC", True, (255, 255, 255))
-        surf.blit(text, (20, 30))
-
-        draw_manager.queue_draw(surf, surf.get_rect(center=(640, 360)), layer=0)
+        self.ui.draw(draw_manager)
 
     def handle_event(self, event):
         """Handle input events."""
-        pass
+        action = self.ui.handle_event(event)
+
+        if action == "back":
+            target = self.caller_scene if self.caller_scene else "MainMenu"
+            self.scene_manager.set_scene(target)
+        elif action == "toggle_fullscreen":
+            # TODO: Implement fullscreen toggle via display manager
+            pass
+        elif action == "audio_master":
+            # TODO: Implement volume control
+            pass
