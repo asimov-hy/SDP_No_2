@@ -95,14 +95,15 @@ class AnchorResolver:
             return 0, 0
 
         # Determine position string
-        if element_align and element_align != 'center':
+        if element_align:
             # Use explicit alignment if provided
             position = element_align
         elif isinstance(anchor, str):
             # Otherwise match anchor type
             if anchor.startswith('#'):
-                parts = anchor[1:].split(':')
-                position = parts[1] if len(parts) > 1 else 'center'
+                # For element anchors, default to center alignment
+                # unless explicit alignment is provided
+                position = 'center'
             else:
                 # Remove "parent_" prefix if present
                 position = anchor.replace('parent_', '')
@@ -197,11 +198,15 @@ class AnchorResolver:
             'center': rect.center,
             'top_left': rect.topleft,
             'top_center': rect.midtop,
+            'top': rect.midtop,
             'top_right': rect.topright,
             'center_left': rect.midleft,
+            'left': rect.midleft,
             'center_right': rect.midright,
+            'right': rect.midright,
             'bottom_left': rect.bottomleft,
             'bottom_center': rect.midbottom,
+            'bottom': rect.midbottom,
             'bottom_right': rect.bottomright,
         }
 

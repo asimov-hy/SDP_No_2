@@ -26,7 +26,7 @@ class UIElement:
         # Position (resolved later by anchor system)
         self.anchor = config.get('anchor')
         self.offset = config.get('offset', [0, 0])
-        self.text_align = config.get('align', None)
+        self.align = config.get('align', None)
         self.position_mode = config.get('position')  # 'absolute' or None
 
         self.text_align = config.get('text_align', 'center')
