@@ -1,67 +1,135 @@
-campaign_select:
-  type: container
-  width: 1280
-  height: 720
-  anchor: center
-  layer: Layers.UI
+type: container
+id: settings_root
+size: [800, 600]
+anchor: center
+background: [20, 20, 30, 240]
+border: 2
+border_color: [100, 100, 120]
+border_radius: 10
 
-  children:
-    # Title
-    - type: label
-      id: "title"
-      text: "SELECT CAMPAIGN"
-      width: 600
-      height: 60
-      anchor: top_center
-      offset: [0, 100]
-      font_size: 48
-      color: [255, 255, 255]
-      layer: Layers.UI
+children:
+  # Title
+  - type: label
+    text: "SETTINGS"
+    size: [800, 80]
+    anchor: top_center
+    offset: [0, 20]
+    font_size: 48
+    text_color: [255, 255, 255]
 
-    # Test campaign button
-    - type: button
-      id: "test_campaign"
-      text: "Test Campaign"
-      action: "start_campaign:test"
-      width: 500
-      height: 70
-      anchor: "#title:bottom"
-      offset: [0, 80]
-      color: [80, 120, 80]
-      border: 2
-      border_color: [120, 160, 120]
-      border_radius: 8
-      font_size: 32
-      layer: Layers.UI
+  # Display Section
+  - type: container
+    size: [700, 200]
+    anchor: top_center
+    offset: [0, 120]
+    background: [30, 30, 40, 200]
+    border: 1
+    border_color: [80, 80, 100]
+    border_radius: 5
+    padding: 20
 
-    # Demo campaign button
-    - type: button
-      id: "demo_campaign"
-      text: "Demo Level"
-      action: "start_campaign:demo"
-      width: 500
-      height: 70
-      anchor: "#test_campaign:bottom"
-      offset: [0, 20]
-      color: [80, 120, 80]
-      border: 2
-      border_color: [120, 160, 120]
-      border_radius: 8
-      font_size: 32
-      layer: Layers.UI
+    children:
+      # Section Title
+      - type: label
+        text: "Display"
+        size: [700, 40]
+        anchor: top_left
+        font_size: 32
+        text_color: [200, 200, 255]
+        text_align: left
 
-    # Back button
-    - type: button
-      id: "back_button"
-      text: "BACK"
-      action: "back"
-      width: 200
-      height: 50
-      anchor: bottom_center
-      offset: [0, -80]
-      color: [100, 100, 100]
-      border: 2
-      border_color: [140, 140, 140]
-      border_radius: 8
-      font_size: 24
-      layer: Layers.UI
+      # Fullscreen Toggle Button
+      - type: button
+        id: fullscreen_button
+        text: "Window Mode"
+        action: "toggle_fullscreen"
+        size: [250, 50]
+        anchor: top_left
+        offset: [20, 60]
+        color: [60, 80, 120]
+        hover:
+          color: [80, 100, 140]
+        font_size: 24
+        border: 2
+        border_color: [100, 120, 160]
+        border_radius: 5
+
+      # Resolution Label
+      - type: label
+        text: "Resolution: 1280x720"
+        size: [250, 50]
+        anchor: top_left
+        offset: [290, 60]
+        font_size: 20
+        text_color: [180, 180, 180]
+        background: [40, 40, 50]
+        border: 1
+        border_color: [80, 80, 100]
+        border_radius: 5
+
+  # Audio Section
+  - type: container
+    size: [700, 150]
+    anchor: top_center
+    offset: [0, 340]
+    background: [30, 30, 40, 200]
+    border: 1
+    border_color: [80, 80, 100]
+    border_radius: 5
+    padding: 20
+
+    children:
+      # Section Title
+      - type: label
+        text: "Audio"
+        size: [700, 40]
+        anchor: top_left
+        font_size: 32
+        text_color: [200, 200, 255]
+        text_align: left
+
+      # Master Volume Label
+      - type: label
+        text: "Master Volume: 80%"
+        size: [250, 40]
+        anchor: top_left
+        offset: [20, 60]
+        font_size: 20
+        text_color: [180, 180, 180]
+
+  # Bottom Buttons
+  - type: container
+    size: [700, 60]
+    anchor: bottom_center
+    offset: [0, -20]
+
+    children:
+      # Apply Button
+      - type: button
+        text: "Apply"
+        action: "apply_settings"
+        size: [200, 50]
+        anchor: left
+        offset: [50, 0]
+        color: [80, 150, 80]
+        hover:
+          color: [100, 180, 100]
+        font_size: 24
+        border: 2
+        border_color: [100, 200, 100]
+        border_radius: 5
+
+      # Back Button
+      - type: button
+        text: "Back"
+        action: "back"
+        size: [200, 50]
+        anchor: right
+        offset: [-50, 0]
+        color: [150, 80, 80]
+        hover:
+          color: [180, 100, 100]
+        font_size: 24
+        border: 2
+        border_color: [200, 100, 100]
+        border_radius: 5

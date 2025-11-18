@@ -44,8 +44,14 @@ class SettingsScene(BaseScene):
         action = self.ui.handle_event(event)
 
         if action == "back":
-            target = self.caller_scene if self.caller_scene else "MainMenu"
-            self.scene_manager.set_scene(target)
+            if self.caller_scene == "Pause":
+                # Return to paused game
+                self.scene_manager.pop_scene()
+            else:
+                # Return to main menu
+                target = self.caller_scene if self.caller_scene else "MainMenu"
+                self.scene_manager.set_scene(target)
+
         elif action == "toggle_fullscreen":
             # TODO: Implement fullscreen toggle via display manager
             pass

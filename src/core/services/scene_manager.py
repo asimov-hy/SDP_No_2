@@ -56,6 +56,9 @@ class SceneManager:
         self._active_scene = None
         self._active_name = None
 
+        # Scene stack for pause/settings
+        self._scene_stack = []
+
         # Transition system
         self._active_transition = None
         self._transition_old_scene = None
@@ -147,6 +150,9 @@ class SceneManager:
 
         self.input_manager.set_context("ui")
 
+        if "back" in self.input_manager._actions:
+            self.input_manager._actions["back"]["pressed"] = False
+
     def resume_active_scene(self):
         """Resume the currently paused scene."""
         if not self._active_scene:
@@ -164,6 +170,57 @@ class SceneManager:
         # Restore scene's input context
         if hasattr(self._active_scene, "input_context"):
             self.input_manager.set_context(self._active_scene.input_context)
+
+        if "pause" in self.input_manager._actions:
+            self.input_manager._actions["pause"]["pressed"] = False
+    def push_scene(self, name: str, **scene_data):
+        """
+        Push current scene to stack and switch to new scene.
+        Used for Settings overlay while preserving Game state.
+        """
+        if self._active_scene:
+            # Save current scene to stack
+            self._scene_stack.append({
+                'scene': self._active_scene,
+                'name': self._active_name
+            })
+            DebugLogger.state(f"Pushed {self._active_name} to stack")
+
+        # Switch to new scene
+        self.set_scene(name, **scene_data)
+
+    # In scene_manager.py, modify pop_scene:
+
+    def pop_scene(self):
+        """Return to previous scene from stack."""
+        if not self._scene_stack:
+            DebugLogger.warn("No scene to pop from stack")
+            return
+
+        # Exit current scene
+        if self._active_scene:
+            self._active_scene.state = SceneState.EXITING
+            if hasattr(self._active_scene, "on_exit"):
+                self._active_scene.on_exit()
+
+        # Restore previous scene
+        prev = self._scene_stack.pop()
+        self._active_scene = prev['scene']
+        self._active_name = prev['name']
+
+        DebugLogger.state(f"Popped back to {self._active_name} (state: {self._active_scene.state})")
+
+        # CRITICAL: If returning to paused game, restore pause UI
+        if self._active_name == "Game" and self._active_scene.state == SceneState.PAUSED:
+            if hasattr(self._active_scene, "on_pause"):
+                self._active_scene.on_pause()  # Re-show pause overlay
+
+        # Restore input context
+        if hasattr(self._active_scene, "input_context"):
+            if self._active_scene.state == SceneState.PAUSED:
+                self.input_manager.set_context("ui")
+            else:
+                self.input_manager.set_context(self._active_scene.input_context)
 
     # ===========================================================
     # Event, Update, Draw Delegation
@@ -214,7 +271,7 @@ class SceneManager:
                     return
 
         # Normal scene update (only if ACTIVE)
-        if self._active_scene and self._active_scene.state == SceneState.ACTIVE:
+        if self._active_scene and self._active_scene.state in (SceneState.ACTIVE, SceneState.PAUSED):
             self._active_scene.update(dt)
 
     def draw(self, draw_manager):

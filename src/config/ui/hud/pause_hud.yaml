@@ -56,23 +56,6 @@ pause_menu:
           font_size: 28
           layer: Layers.UI
 
-        # Settings button
-        - type: button
-          id: "settings_button"
-          text: "SETTINGS"
-          action: "settings"
-          width: 300
-          height: 60
-          anchor: "#resume_button:bottom"
-          align: top_center
-          offset: [0, 20]
-          color: [60, 100, 180]
-          border: 2
-          border_color: [100, 140, 220]
-          border_radius: 8
-          font_size: 28
-          layer: Layers.UI
-
         # Main Menu button
         - type: button
           id: "main_menu_button"
@@ -80,7 +63,7 @@ pause_menu:
           action: "main_menu"
           width: 300
           height: 60
-          anchor: "#settings_button:bottom"
+          anchor: "#resume_button:bottom"
           align: top_center
           offset: [0, 20]
           color: [140, 60, 60]

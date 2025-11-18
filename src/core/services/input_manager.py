@@ -144,6 +144,18 @@ class InputManager:
         self.context = name
         self._active_lookup = self._key_to_action_cache[name]
         self._active_keys = self._context_keys[name]
+
+        # Reset edge states AND sync prev_held to current key state
+        # This prevents false rising edges when switching contexts
+        keys = pygame.key.get_pressed()
+        for action_name, action_state in self._actions.items():
+            action_state["pressed"] = False
+            action_state["released"] = False
+            # Sync prev_held to actual current key state to prevent false edges
+            is_currently_held = self._is_pressed(action_name, keys)
+            action_state["prev_held"] = is_currently_held
+            action_state["held"] = is_currently_held
+
         DebugLogger.state(f"Context switched to [{name.upper()}]")
 
     # ===========================================================
