@@ -46,7 +46,7 @@ class EnemyStraight(BaseEnemy):
         # Apply overrides or use defaults
         speed = speed if speed is not None else defaults.get("speed", 200)
         health = health if health is not None else defaults.get("hp", 1)
-        scale = scale if scale is not None else defaults.get("scale", 1.0)
+        scale = scale if scale is not None else defaults.get("scale", 0.1)
 
         image_path = defaults.get("image", "assets/images/sprites/enemies/missile.png")
         hitbox_config = defaults.get("hitbox", {})
@@ -68,6 +68,11 @@ class EnemyStraight(BaseEnemy):
             spawn_edge=kwargs.get("spawn_edge", None),
             hitbox_config=hitbox_config
         )
+
+        # Load death frames AFTER super().__init__ (BaseEntity sets up _death_frames)
+        death_frame_paths = defaults.get("death_frames", [])
+        if death_frame_paths:
+            self._death_frames = self.load_animation_frames(death_frame_paths, scale)
 
         # Store exp value for when enemy dies
         self.exp_value = defaults.get("exp", 0)
@@ -95,7 +100,7 @@ class EnemyStraight(BaseEnemy):
 
         speed = speed if speed is not None else defaults.get("speed", 200)
         health = health if health is not None else defaults.get("hp", 1)
-        scale = scale if scale is not None else defaults.get("scale", 1.0)
+        scale = scale if scale is not None else defaults.get("scale", 0.1)
         image_path = defaults.get("image")
         hitbox_scale = defaults.get("hitbox", {}).get("scale", 0.85)
 

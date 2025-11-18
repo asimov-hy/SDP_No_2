@@ -5,6 +5,11 @@
     "hp": 1,
     "speed": 200,
     "exp": 50,
+    "death_frames": [
+      "assets/images/effects/explosions/explosion01.png",
+      "assets/images/effects/explosions/explosion02.png",
+      "assets/images/effects/explosions/explosion03.png"
+    ],
     "hitbox": {
       "scale": 0.85
     }
@@ -17,6 +22,11 @@
     "size": 52,
     "color": [0, 128, 255],
     "turn_rate": 180,
+    "death_frames": [
+      "assets/images/effects/explosions/explosion01.png",
+      "assets/images/effects/explosions/explosion02.png",
+      "assets/images/effects/explosions/explosion03.png"
+    ],
     "hitbox": {
       "scale": 0.9
     }

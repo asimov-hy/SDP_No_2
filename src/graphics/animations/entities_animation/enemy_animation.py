@@ -7,10 +7,10 @@ All enemy animations centralized here for easy tuning.
 Enemies share common damage/death patterns but can be customized per type.
 """
 
-from src.graphics.animations.animation_effects.death_animation import death_fade
 from src.graphics.animations.animation_effects.common_animation import blink, fade_out
 from src.graphics.animations.animation_registry import register
 from src.core.debug.debug_logger import DebugLogger
+from src.graphics.animations.animation_effects.death_animation import death_fade, death_sprite_cycle  # Add death_sprite_cycle
 
 
 # ============================================================
@@ -28,7 +28,12 @@ def death_enemy(entity, t):
         entity: Enemy instance
         t: Normalized time (0.0 to 1.0)
     """
-    return death_fade(entity, t)
+    ctx = getattr(entity, 'anim_context', {})
+
+    if ctx.get('death_frames'):
+        death_sprite_cycle(entity, t)
+    else:
+        death_fade(entity, t)
 
 
 # ============================================================

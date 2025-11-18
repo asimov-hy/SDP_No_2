@@ -207,6 +207,10 @@ class BaseEntity:
         # -------------------------------------------------------
         self._setup_hitbox_config(hitbox_config)
 
+        # Animation frame storage (for sprite-cycling animations)
+        self._death_frames = []
+        self._damage_frames = []  # Future: damage flash sprites
+
     def _setup_hitbox_config(self, hitbox_config):
         """Initialize hitbox configuration from JSON data."""
         if hitbox_config is None:
@@ -571,3 +575,12 @@ class BaseEntity:
             # Update rect to match new rotated size
             old_center = self.rect.center
             self.rect = self.image.get_rect(center=old_center)
+
+    def load_animation_frames(self, frame_paths, scale=1.0):
+        """Load and scale animation frame sequence."""
+        frames = []
+        for path in frame_paths:
+            frame = self.load_and_scale_image(path, scale)
+            if frame:
+                frames.append(frame)
+        return frames

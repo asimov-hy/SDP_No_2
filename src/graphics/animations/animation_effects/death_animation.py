@@ -24,3 +24,19 @@ def death_spin_fade(entity, t):
     angle = t * 360
     entity.image = pygame.transform.rotate(entity._original_image, angle)
     entity.rect = entity.image.get_rect(center=entity.rect.center)
+
+
+# death_animation.py - Add new function
+def death_sprite_cycle(entity, t):
+    """Cycle through death sprite frames with even timing."""
+    ctx = getattr(entity, 'anim_context', {})
+    frames = ctx.get('death_frames', [])
+
+    if not frames:
+        # Fallback to fade if no frames
+        fade_out(entity, t)
+        return
+
+    # Even frame distribution
+    frame_idx = min(int(t * len(frames)), len(frames) - 1)
+    entity.image = frames[frame_idx]

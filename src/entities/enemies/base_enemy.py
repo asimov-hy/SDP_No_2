@@ -163,7 +163,7 @@ class BaseEnemy(BaseEntity):
             self.on_death(source)
 
     def on_death(self, source):
-        self.anim_manager.play("death", duration=0.2)
+        self.anim_manager.play("death", duration=1.0, death_frames=self._death_frames)
         # random_effect_type = effect_manager.get_random_explosion()
         #
         # effect_manager.create_explosion(
