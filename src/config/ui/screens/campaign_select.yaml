@@ -1,47 +1,60 @@
-campaign_select:
-  type: container
-  width: 1280
-  height: 720
-  anchor: center
-  layer: Layers.UI
+type: container
+width: 1280
+height: 720
+background: [20, 20, 30, 255]
+layout: vertical
+align: center
+padding: 40
 
-  children:
-    # Title
-    - type: label
-      id: "title"
-      text: "SELECT CAMPAIGN"
-      width: 600
-      height: 60
-      anchor: top_center
-      offset: [0, 100]
-      font_size: 48
-      color: [255, 255, 255]
-      layer: Layers.UI
+children:
+  # Title
+  - type: label
+    id: title
+    text: "SELECT LEVEL"
+    font_size: 48
+    color: [255, 255, 255, 255]
+    margin_bottom: 40
 
-    # Campaign list container (dynamically populated)
-    - type: container
-      id: "campaign_list"
-      width: 600
-      height: 400
-      anchor: "#title:bottom"
-      align: top_center
-      offset: [0, 60]
-      layout: vertical
-      spacing: 15
-      layer: Layers.UI
+  # Level list container
+  - type: container
+    id: level_list
+    width: 500
+    height: 480
+    layout: vertical
+    spacing: 10
+    children:
+      # Demo Level
+      - type: button
+        id: btn_demo_level
+        width: 500
+        height: 70
+        text: "Demo Level"
+        action: "select_level_demo_level"
+        enabled: true
+        
+      # Test Straight
+      - type: button
+        id: btn_test_straight
+        width: 500
+        height: 70
+        text: "Test: Straight Enemy"
+        action: "select_level_test_straight"
+        enabled: true
+        
+      # Test Homing
+      - type: button
+        id: btn_test_homing
+        width: 500
+        height: 70
+        text: "Test: Homing Enemy"
+        action: "select_level_test_homing"
+        enabled: true
 
-    # Back button
-    - type: button
-      id: "back_button"
-      text: "BACK"
-      action: "back"
-      width: 200
-      height: 50
-      anchor: bottom_center
-      offset: [0, -80]
-      color: [100, 100, 100]
-      border: 2
-      border_color: [140, 140, 140]
-      border_radius: 8
-      font_size: 24
-      layer: Layers.UI
+  # Back button
+  - type: button
+    id: btn_back
+    width: 300
+    height: 60
+    text: "BACK"
+    action: "back"
+    margin_top: 20
