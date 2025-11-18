@@ -18,21 +18,16 @@ campaign_select:
       color: [255, 255, 255]
       layer: Layers.UI
 
-    # Start Game button
-    - type: button
-      id: "start_game"
-      text: "START GAME"
-      action: "start_game"
-      width: 500
-      height: 70
+    # Campaign list container (dynamically populated)
+    - type: container
+      id: "campaign_list"
+      width: 600
+      height: 400
       anchor: "#title:bottom"
       align: top_center
-      offset: [0, 80]
-      color: [80, 120, 80]
-      border: 2
-      border_color: [120, 160, 120]
-      border_radius: 8
-      font_size: 32
+      offset: [0, 60]
+      layout: vertical
+      spacing: 15
       layer: Layers.UI
 
     # Back button
