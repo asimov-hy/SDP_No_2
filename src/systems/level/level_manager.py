@@ -63,6 +63,7 @@ class LevelManager:
         self.data = None
         self.phases = []
         self.current_phase_idx = 0
+        self.total_time = 0.0
         self.phase_timer = 0.0
         self._waiting_for_clear = False
         self._remaining_enemies = 0
@@ -157,6 +158,10 @@ class LevelManager:
         # Load events (sorted by time)
         self.events = sorted(phase.get("events", []), key=lambda e: e.get("time", 0))
         self.event_idx = 0
+
+        # total time
+        self.total_time += self.phase_timer
+        DebugLogger.init_sub(f"Total Time: {self.total_time:.2f}s")
 
         # Reset phase timer
         self.phase_timer = 0.0

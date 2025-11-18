@@ -29,7 +29,7 @@ class EnemyStraight(BaseEnemy):
     # Initialization
     # ===========================================================
     def __init__(self, x, y, direction=(0, 1), speed=None, health=None,
-                 scale=None, draw_manager=None, score=10, **kwargs):
+                 scale=None, draw_manager=None, score=None, **kwargs):
         """
         Args:
             x, y: Spawn position
@@ -47,6 +47,7 @@ class EnemyStraight(BaseEnemy):
         speed = speed if speed is not None else defaults.get("speed", 200)
         health = health if health is not None else defaults.get("hp", 1)
         scale = scale if scale is not None else defaults.get("scale", 1.0)
+        score = score if score is not None else defaults.get("score", 10)
 
         image_path = defaults.get("image", "assets/images/sprites/enemies/missile.png")
         hitbox_config = defaults.get("hitbox", {})
@@ -74,8 +75,8 @@ class EnemyStraight(BaseEnemy):
         self.exp_value = defaults.get("exp", 0)
 
         DebugLogger.init(
-            f"Spawned EnemyStraight at ({x}, {y}) | Speed={speed}",
-            category="animation_effects"
+            f"Spawned EnemyStraight at ({x}, {y}) | Speed={speed} | direction={direction}",
+            category="entity_spawn"
         )
 
     # ===========================================================
@@ -90,7 +91,7 @@ class EnemyStraight(BaseEnemy):
         """
         super().update(dt)
 
-    def reset(self, x, y, direction=(0, 1), speed=None, health=None, scale=None, **kwargs):
+    def reset(self, x, y, direction=(0, 1), speed=None, health=None, scale=None, score=None, **kwargs):
         # Load defaults from JSON (same as __init__)
         defaults = EntityRegistry.get_data("enemy", "straight")
 
@@ -99,6 +100,7 @@ class EnemyStraight(BaseEnemy):
         scale = scale if scale is not None else defaults.get("scale", 1.0)
         image_path = defaults.get("image")
         hitbox_scale = defaults.get("hitbox", {}).get("scale", 0.85)
+        score = score if score is not None else defaults.get("score", 10)
 
         # Reload and rescale image if using image mode
         if image_path and os.path.exists(image_path):
@@ -126,5 +128,11 @@ class EnemyStraight(BaseEnemy):
             speed=speed,
             health=health,
             spawn_edge=kwargs.get("spawn_edge"),
-            hitbox_scale=hitbox_scale
+            hitbox_scale=hitbox_scale,
+            score=score
+        )
+
+        DebugLogger.system(
+            f"reset EnemyStraight at ({x}, {y}) | Speed={speed}",
+            category="entity_spawn"
         )

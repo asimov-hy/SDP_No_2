@@ -10,6 +10,8 @@ Responsibilities
 - Support waypoint-based movement (moves between positions)
 - Calculate aim direction toward player or fixed direction
 """
+import random
+import time
 
 import pygame
 from src.entities.enemies.base_enemy import BaseEnemy
@@ -29,7 +31,7 @@ class EnemyShooter(BaseEnemy):
     # ===========================================================
     def __init__(self, x, y, speed=None, health=None, size=None, draw_manager=None, movement_type=None,
                  waypoints=None, waypoint_speed=None, shoot_interval=None, bullet_speed=None, bullet_color=None,
-                 bullet_radius=None, aim_at_player=None, player_ref=None, bullet_manager=None, **kwargs):
+                 bullet_radius=None, aim_at_player=None, player_ref=None, bullet_manager=None, score=None, **kwargs):
         """
         JSON-driven shooter enemy with optional overrides.
         """
@@ -47,6 +49,7 @@ class EnemyShooter(BaseEnemy):
         speed = speed if speed is not None else defaults.get("speed", 100)
         health = health if health is not None else defaults.get("hp", 2)
         size = size if size is not None else defaults.get("size", 60)
+        score = score if score is not None else defaults.get("score", 50)
 
         movement_type = movement_type if movement_type is not None else defaults.get("movement_type", "linear")
         waypoint_speed = waypoint_speed if waypoint_speed is not None else defaults.get("waypoint_speed", 120)
@@ -79,7 +82,8 @@ class EnemyShooter(BaseEnemy):
             speed=speed,
             health=health,
             spawn_edge=kwargs.get("spawn_edge", None),
-            hitbox_config=hitbox_config
+            hitbox_config=hitbox_config,
+            score=score
         )
 
         # Store EXP from JSON

@@ -3,11 +3,20 @@
   "campaigns": {
     "test": {
       "name": "Test Suite",
-      "start_level": "demo_level",
-      "levels": ["demo_level", "test_straight", "test_homing"]
+      "start_level": "level1",
+      "levels": ["level1"]
     }
   },
   "levels": {
+    "level1": {
+      "path": "levels/Level1.json",
+      "name": "level1",
+      "description": "level1",
+      "unlocked": true,
+      "campaign": "test",
+      "difficulty": "test",
+      "duration": 60.0
+    },
     "demo_level": {
       "path": "levels/Demo_Level.json",
       "name": "Demo Level",

@@ -115,7 +115,7 @@ class LoggerConfig:
         # ---------------------------------------------------
         "entity_core": True,         # BaseEntity initialization, IDs, and registration
         "entity_logic": True,        # Common entity behavior and updates
-        "entity_spawn": False,       # SpawnManager activity and enemy waves
+        "entity_spawn": True,       # SpawnManager activity and enemy waves
         "entity_cleanup": False,     # Entity removal or offscreen cleanup
         "collision": False,          # CollisionManager, hit detection traces
         "bullet": True,              # BulletManager creation and pooling

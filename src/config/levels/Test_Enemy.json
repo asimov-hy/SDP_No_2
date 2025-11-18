@@ -1,0 +1,39 @@
+{
+  "phases": [
+    {
+      "name": "SPEED",
+      "exit_trigger": "all_waves_cleared",
+      "waves": [
+        { "time": 0.00, "enemy": "speed", "spawn_edge": "top", "spawn_position": 0.10, "spawn_offset_y": -100, "enemy_params": { "size": 40 } },
+        { "time": 0.25, "enemy": "speed", "spawn_edge": "top", "spawn_position": 0.30, "spawn_offset_y": -100, "enemy_params": { "size": 40 } },
+        { "time": 0.50, "enemy": "speed", "spawn_edge": "top", "spawn_position": 0.50, "spawn_offset_y": -100, "enemy_params": { "size": 40 } },
+        { "time": 0.75, "enemy": "speed", "spawn_edge": "top", "spawn_position": 0.70, "spawn_offset_y": -100, "enemy_params": { "size": 40 } },
+        { "time": 1.00, "enemy": "speed", "spawn_edge": "top", "spawn_position": 0.90, "spawn_offset_y": -100, "enemy_params": { "size": 40 } }
+      ]
+    },
+
+    {
+      "name": "RUSH",
+      "exit_trigger": "all_waves_cleared",
+      "waves": [
+        { "time": 0.00, "enemy": "rush", "spawn_edge": "right", "spawn_position": 0.10, "spawn_offset_x": 100, "enemy_params": { "size": 40 } },
+        { "time": 0.25, "enemy": "rush", "spawn_edge": "right", "spawn_position": 0.30, "spawn_offset_x": 100, "enemy_params": { "size": 40 } },
+        { "time": 0.50, "enemy": "rush", "spawn_edge": "right", "spawn_position": 0.50, "spawn_offset_x": 100, "enemy_params": { "size": 40 } },
+        { "time": 0.75, "enemy": "rush", "spawn_edge": "right", "spawn_position": 0.70, "spawn_offset_x": 100, "enemy_params": { "size": 40 } },
+        { "time": 1.00, "enemy": "rush", "spawn_edge": "right", "spawn_position": 0.90, "spawn_offset_x": 100, "enemy_params": { "size": 40 } }
+      ]
+    },
+
+    {
+      "name": "SHOOTER",
+      "exit_trigger": "all_waves_cleared",
+      "waves": [
+        { "time": 0.00, "enemy": "shooter", "spawn_edge": "bottom", "spawn_position": 0.10, "spawn_offset_y": 100, "enemy_params": {  "size": 40 } },
+        { "time": 0.25, "enemy": "shooter", "spawn_edge": "bottom", "spawn_position": 0.30, "spawn_offset_y": 100, "enemy_params": {  "size": 40 } },
+        { "time": 0.50, "enemy": "shooter", "spawn_edge": "bottom", "spawn_position": 0.50, "spawn_offset_y": 100, "enemy_params": {  "size": 40 } },
+        { "time": 0.75, "enemy": "shooter", "spawn_edge": "bottom", "spawn_position": 0.70, "spawn_offset_y": 100, "enemy_params": {  "size": 40 } },
+        { "time": 1.00, "enemy": "shooter", "spawn_edge": "bottom", "spawn_position": 0.90, "spawn_offset_y": 100, "enemy_params": {  "size": 40 } }
+      ]
+    }
+  ]
+}

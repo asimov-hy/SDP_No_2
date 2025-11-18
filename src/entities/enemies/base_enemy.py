@@ -75,7 +75,7 @@ class BaseEnemy(BaseEntity):
     # Initialization
     # ===========================================================
     def __init__(self, x, y, image=None, shape_data=None, draw_manager=None,
-                 speed=100, health=None, direction=None, spawn_edge=None, score=1, **kwargs):
+                 speed=100, health=None, direction=None, spawn_edge=None, score=None, **kwargs):
         """
         Args:
             x, y: Position
@@ -94,10 +94,10 @@ class BaseEnemy(BaseEntity):
         self.health = health if health is not None else 1
         self.max_health = self.health
 
+        self.score = score if score is not None else 1
         self.exp_value = 0
 
         self._rotation_enabled = True
-        self.score = score
 
         # Collision setup
         self.collision_tag = CollisionTags.ENEMY
@@ -179,9 +179,9 @@ class BaseEnemy(BaseEntity):
             exp=self.exp_value
         ))
 
-        before_score = STATE.score
-        STATE.score += self.score
-        DebugLogger.state(f"[score] {before_score} + {self.score} -> {STATE.score}")
+        before_score = STATE.get_stat("score")
+        STATE.add_stat("score", self.score)
+        DebugLogger.state(f"[score] {before_score} + {self.score} -> {STATE.get_stat("score")}")
 
     # ===========================================================
     # Rendering
@@ -264,7 +264,7 @@ class BaseEnemy(BaseEntity):
 
         return pygame.Vector2(chosen)
 
-    def reset(self, x, y, direction=None, speed=None, health=None, spawn_edge=None, **kwargs):
+    def reset(self, x, y, direction=None, speed=None, health=None, spawn_edge=None, score=None, **kwargs):
         super().reset(x, y)
 
         if speed is not None:
@@ -280,5 +280,8 @@ class BaseEnemy(BaseEntity):
 
         if self.velocity.length_squared() > 0:
             self.velocity = self.velocity.normalize() * self.speed
+
+        if score is not None:
+            self.score = score
 
         self.update_rotation()
