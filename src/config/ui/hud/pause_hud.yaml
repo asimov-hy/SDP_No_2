@@ -60,7 +60,7 @@ pause_menu:
         - type: button
           id: "main_menu_button"
           text: "MAIN MENU"
-          action: "main_menu"
+          action: "quit"
           width: 300
           height: 60
           anchor: "#resume_button:bottom"
