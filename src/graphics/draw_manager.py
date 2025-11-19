@@ -26,8 +26,9 @@ class DrawManager:
     # ===========================================================
     def __init__(self):
         self.images = {}
-        # Layer buckets instead of flat queue
-        self.layers = {}  # {layer: [(surface, rect), ...]}
+        # Separate layer buckets for surfaces and shapes (avoids isinstance checks)
+        self.surface_layers = {}  # {layer: [(surface, rect), ...]}
+        self.shape_layers = {}  # {layer: [shape_data, ...]}
         self._layer_keys_cache = []
         self._layers_dirty = False
 
@@ -35,7 +36,6 @@ class DrawManager:
 
         self.debug_hitboxes = []  # Persistent list for queued hitboxes
         self.debug_obbs = []  # Persistent list for queued OBB lines
-        self.debug_hitboxes = []  # Persistent list for queued hitboxes
 
         DebugLogger.init_entry("DrawManager")
 
@@ -126,7 +126,10 @@ class DrawManager:
         Simply clears existing layer lists to reduce
         Python-level allocations and GC churn.
         """
-        for layer_items in self.layers.values():
+        for layer_items in self.surface_layers.values():
+            layer_items.clear()
+
+        for layer_items in self.shape_layers.values():
             layer_items.clear()
 
         if hasattr(self, "debug_hitboxes"):
@@ -134,8 +137,6 @@ class DrawManager:
 
         if hasattr(self, "debug_obbs"):
             self.debug_obbs.clear()
-
-        self._layers_dirty = True
 
     def queue_draw(self, surface, rect, layer=0):
         """
@@ -150,11 +151,11 @@ class DrawManager:
             DebugLogger.warn(f"Skipped invalid draw call at layer {layer}")
             return
 
-        if layer not in self.layers:
-            self.layers[layer] = []
+        if layer not in self.surface_layers:
+            self.surface_layers[layer] = []
             self._layers_dirty = True
 
-        self.layers[layer].append((surface, rect))
+        self.surface_layers[layer].append((surface, rect))
 
     def draw_entity(self, entity, layer=0):
         """
@@ -214,12 +215,12 @@ class DrawManager:
             layer (int): Rendering layer (lower values draw first).
             **kwargs: Additional shape-specific parameters (e.g., width, points).
         """
-        if layer not in self.layers:
-            self.layers[layer] = []
+        if layer not in self.shape_layers:
+            self.shape_layers[layer] = []
             self._layers_dirty = True
 
-        # Add tagged shape command for later rendering
-        self.layers[layer].append(("shape", shape_type, rect, color, kwargs))
+        # Add shape command for later rendering
+        self.shape_layers[layer].append((shape_type, rect, color, kwargs))
 
     # ===========================================================
     # Shape Prebaking (Optimization)
@@ -299,57 +300,31 @@ class DrawManager:
 
         # Cache sorted layer keys to avoid sorting every frame
         if self._layers_dirty:
-            self._layer_keys_cache = sorted(self.layers.keys())
+            # Combine all unique layers from both dictionaries
+            all_layers = set(self.surface_layers.keys()) | set(self.shape_layers.keys())
+            self._layer_keys_cache = sorted(all_layers)
             self._layers_dirty = False
 
         # -------------------------------------------------------
-        # Render each layer (surfaces + shapes)
+        # Render each layer (surfaces then shapes)
         # -------------------------------------------------------
         for layer in self._layer_keys_cache:
-            items = self.layers[layer]
-            if not items:
-                continue
+            # Batch blit all surfaces in this layer
+            if layer in self.surface_layers:
+                surface_items = self.surface_layers[layer]
+                if surface_items:
+                    target_surface.blits(surface_items)
 
-            # Detect if layer contains shape commands
-            shape_items = []
-            surface_items = []
-            for item in items:
-                if isinstance(item[0], str):
-                    shape_items.append(item)
-                elif isinstance(item[0], pygame.Surface):
-                    surface_items.append(item)
-
-            # Batch blit all standard surfaces in one call
-            if surface_items:
-                target_surface.blits(surface_items)
-
-            # Draw primitive shapes (rects, circles, etc.)
-            for item in shape_items:
-                _, shape_type, rect, color, kwargs = item
-                self._draw_shape(target_surface, shape_type, rect, color, **kwargs)
+            # Draw all shapes in this layer
+            if layer in self.shape_layers:
+                shape_items = self.shape_layers[layer]
+                for shape_type, rect, color, kwargs in shape_items:
+                    self._draw_shape(target_surface, shape_type, rect, color, **kwargs)
 
         if debug:
-            draw_count = sum(len(items) for items in self.layers.values())
-            DebugLogger.state(f"Rendered {draw_count} queued surfaces and shapes", category="drawing")
-
-        # -------------------------------------------------------
-        # Optional debug overlay pass (hitboxes + OBBs)
-        # -------------------------------------------------------
-        if hasattr(self, "debug_hitboxes") and self.debug_hitboxes:
-            """
-            Directly draw debug hitboxes to avoid temporary surface allocation.
-            Each tuple: (rect, color, width)
-            """
-            for rect, color, width in self.debug_hitboxes:
-                pygame.draw.rect(target_surface, color, rect, width)
-
-        if hasattr(self, "debug_obbs") and self.debug_obbs:
-            """
-            Draw OBB corner lines for rotated hitboxes.
-            Each tuple: (corners, color, width)
-            """
-            for corners, color, width in self.debug_obbs:
-                pygame.draw.lines(target_surface, color, True, corners, width)
+            surface_count = sum(len(items) for items in self.surface_layers.values())
+            shape_count = sum(len(items) for items in self.shape_layers.values())
+            DebugLogger.state(f"Rendered {surface_count} surfaces and {shape_count} shapes", category="drawing")
 
     # ===========================================================
     # Shape Rendering Helper

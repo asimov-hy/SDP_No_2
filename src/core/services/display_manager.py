@@ -58,6 +58,9 @@ class DisplayManager:
         # Render Caches
         self.last_scaled_size = None
         self.letterbox_bars = None
+        self.scaled_surface_cache = None
+        self.cached_subsurface_rect = None
+        self.display_dirty = True
 
     # ===========================================================
     # Window Creation and Scaling
@@ -118,6 +121,7 @@ class DisplayManager:
         self._create_letterbox_bars()
 
         self.scaled_size = (scaled_width, scaled_height)
+        self.display_dirty = True  # Mark for rescaling
         DebugLogger.trace(f"Scale={self.scale:.3f}, Offset=({self.offset_x},{self.offset_y})", category="display")
 
     # ===========================================================
@@ -165,13 +169,16 @@ class DisplayManager:
         else:
             self.window.fill((0, 0, 0))
 
-        # Define target rect on window
-        target_rect = pygame.Rect(self.offset_x, self.offset_y,
-                                  self.scaled_size[0], self.scaled_size[1])
+        # Only rescale if display settings changed
+        if self.display_dirty:
+            self.cached_subsurface_rect = pygame.Rect(self.offset_x, self.offset_y,
+                                                      self.scaled_size[0], self.scaled_size[1])
+            self.scaled_surface_cache = self.window.subsurface(self.cached_subsurface_rect)
+            self.display_dirty = False
 
-        # Scale directly to window (no intermediate surface)
+        # Reuse cached subsurface and scale
         pygame.transform.scale(self.game_surface, self.scaled_size,
-                               dest_surface=self.window.subsurface(target_rect))
+                               dest_surface=self.scaled_surface_cache)
 
         pygame.display.flip()
 
@@ -239,3 +246,7 @@ class DisplayManager:
                 surf.fill((0, 0, 0))
         else:
             self.letterbox_bars = None
+
+    def mark_dirty(self):
+        """Mark display as dirty to force rescaling on next render."""
+        self.display_dirty = True
