@@ -45,6 +45,12 @@ class FireRateEvent(BaseEvent):
     duration: float  # Seconds (0 = permanent)
 
 
+@dataclass(frozen=True)
+class BombUsedEvent(BaseEvent):
+    """Dispatched when player uses a bomb item."""
+    pass
+
+
 # ============================================================
 # Event Manager
 # ============================================================

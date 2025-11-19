@@ -51,8 +51,78 @@
       }
     ]
   },
-  "dummy": {
-    "name": "Dummy Item",
+  "shield": {
+    "name": "Shield",
+    "asset_path": "assets/images/sprites/items/dummy_item.png",
+    "scale": 0.1,
+    "drop_weight": 800,
+    "physics": {
+      "velo_x": 0,
+      "velo_y": 160,
+      "hitbox_scale": 0.85
+    },
+    "effects": [
+      {
+        "type": "GRANT_SHIELD",
+        "duration": 5
+      }
+    ]
+  },
+  "speed_boost": {
+    "name": "Speed Boost",
+    "asset_path": "assets/images/sprites/items/dummy_item.png",
+    "scale": 0.1,
+    "drop_weight": 800,
+    "physics": {
+      "velo_x": 0,
+      "velo_y": 160,
+      "hitbox_scale": 0.85
+    },
+    "effects": [
+      {
+        "type": "MULTIPLY_SPEED",
+        "multiplier": 1.5,
+        "duration": 5
+      }
+    ]
+  },
+  "damage_boost": {
+    "name": "Damage Boost",
+    "asset_path": "assets/images/sprites/items/dummy_item.png",
+    "scale": 0.1,
+    "drop_weight": 700,
+    "physics": {
+      "velo_x": 0,
+      "velo_y": 160,
+      "hitbox_scale": 0.85
+    },
+    "effects": [
+      {
+        "type": "ADD_DAMAGE",
+        "amount": 1,
+        "duration": 8
+      }
+    ]
+  },
+  "max_health_upgrade": {
+    "name": "Max Health Upgrade",
+    "asset_path": "assets/images/sprites/items/dummy_item.png",
+    "scale": 0.1,
+    "drop_weight": 200,
+    "physics": {
+      "velo_x": 0,
+      "velo_y": 160,
+      "hitbox_scale": 0.85
+    },
+    "effects": [
+      {
+        "type": "ADD_MAX_HEALTH",
+        "amount": 1
+      }
+    ]
+  },
+  "full_heal": {
+    "name": "Full Heal",
     "asset_path": "assets/images/sprites/items/dummy_item.png",
     "scale": 0.1,
     "drop_weight": 100,
@@ -63,8 +133,40 @@
     },
     "effects": [
       {
+        "type": "FULL_HEAL"
+      }
+    ]
+  },
+  "bomb": {
+    "name": "Bomb",
+    "asset_path": "assets/images/sprites/items/dummy_item.png",
+    "scale": 0.1,
+    "drop_weight": 500,
+    "physics": {
+      "velo_x": 0,
+      "velo_y": 160,
+      "hitbox_scale": 0.85
+    },
+    "effects": [
+      {
+        "type": "USE_BOMB"
+      }
+    ]
+  },
+  "dummy": {
+    "name": "Dummy Item",
+    "asset_path": "assets/images/sprites/items/dummy_item.png",
+    "scale": 0.1,
+    "drop_weight": 0,
+    "physics": {
+      "velo_x": 0,
+      "velo_y": 160,
+      "hitbox_scale": 0.85
+    },
+    "effects": [
+      {
         "type": "ADD_SCORE",
-        "amount": 500
+        "amount": 5000
       }
     ]
   }
