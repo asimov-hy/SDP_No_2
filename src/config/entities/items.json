@@ -166,7 +166,7 @@
     "effects": [
       {
         "type": "ADD_SCORE",
-        "amount": 500
+        "amount": 5000
       }
     ]
   }
