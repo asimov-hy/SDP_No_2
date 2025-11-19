@@ -18,7 +18,7 @@ from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import LifecycleState
 from src.entities.entity_types import CollisionTags, EntityCategory
 from src.entities.entity_registry import EntityRegistry
-from src.core.services.event_manager import EVENTS, EnemyDiedEvent
+from src.core.services.event_manager import EVENTS, EnemyDiedEvent, BombUsedEvent
 
 
 class BaseEnemy(BaseEntity):
@@ -114,6 +114,9 @@ class BaseEnemy(BaseEntity):
 
         self.update_rotation()
 
+        # Subscribe Evets
+        EVENTS.subscribe(BombUsedEvent, self.on_bomb_used)
+
     # ===========================================================
     # Damage and State Handling
     # ===========================================================
@@ -161,6 +164,9 @@ class BaseEnemy(BaseEntity):
         if self.health <= 0:
             self.mark_dead(immediate=False)
             self.on_death(source)
+
+    def on_bomb_used(self, event: BombUsedEvent):
+        self.take_damage(self.max_health+1, source="player")
 
     def on_death(self, source):
         self.anim_manager.play("death", duration=1.0, death_frames=self._death_frames)
