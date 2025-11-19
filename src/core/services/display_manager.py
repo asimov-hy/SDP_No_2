@@ -25,7 +25,7 @@ class DisplayManager:
     # Initialization
     # ===========================================================
 
-    def __init__(self, game_width=1280, game_height=720):
+    def __init__(self, game_width=1280, game_height=720, window_size="small"):
         """
         Initialize window, scaling values, and render surface.
 
@@ -38,6 +38,7 @@ class DisplayManager:
         # Core Setup
         self.game_width = game_width
         self.game_height = game_height
+        self.window_size_preset = window_size
         self.game_surface = pygame.Surface((game_width, game_height))
 
         # Initial state flags
@@ -66,32 +67,25 @@ class DisplayManager:
     # Window Creation and Scaling
     # ===========================================================
     def _create_window(self, fullscreen=False, silent=False):
-        """
-        Create or recreate the display window.
-
-        Args:
-            fullscreen (bool): If True, enter borderless fullscreen mode.
-            silent (bool): Suppress debug output during initialization.
-        """
         if fullscreen:
-            # True fullscreen - fills entire screen
             self.window = pygame.display.set_mode(
                 (0, 0),
                 pygame.FULLSCREEN | pygame.DOUBLEBUF | pygame.HWSURFACE
             )
             self.is_fullscreen = True
-            if not silent:
-                DebugLogger.state("Switched to FULLSCREEN mode", category="display")
         else:
-            # Default windowed size
+            # Get window size from preset
+            from src.core.runtime.game_settings import Display
+            window_w, window_h = Display.WINDOW_SIZES.get(
+                self.window_size_preset,
+                (self.game_width, self.game_height)
+            )
+
             self.window = pygame.display.set_mode(
-                (self.game_width, self.game_height),
-                pygame.RESIZABLE | pygame.DOUBLEBUF | pygame.HWSURFACE
+                (window_w, window_h),
+                pygame.DOUBLEBUF | pygame.HWSURFACE  # No RESIZABLE
             )
             self.is_fullscreen = False
-            if not silent:
-                DebugLogger.state(f"Switched to WINDOWED mode ({self.game_width}x{self.game_height})",
-                                  category="display")
 
         self._calculate_scale()
 
@@ -162,21 +156,21 @@ class DisplayManager:
 
     def render(self):
         """Scale and render the game surface to the actual window with letterboxing."""
-        # Clear window with black bars
-        if self.letterbox_bars:
-            for surf, pos in self.letterbox_bars:
-                self.window.blit(surf, pos)
-        else:
-            self.window.fill((0, 0, 0))
-
-        # Only rescale if display settings changed
+        # Clear window with black bars (only if needed)
         if self.display_dirty:
+            if self.letterbox_bars:
+                for surf, pos in self.letterbox_bars:
+                    self.window.blit(surf, pos)
+            else:
+                self.window.fill((0, 0, 0))
+
             self.cached_subsurface_rect = pygame.Rect(self.offset_x, self.offset_y,
                                                       self.scaled_size[0], self.scaled_size[1])
             self.scaled_surface_cache = self.window.subsurface(self.cached_subsurface_rect)
             self.display_dirty = False
 
-        # Reuse cached subsurface and scale
+        # CRITICAL: Scale game surface to window
+        # This is expensive but necessary every frame since game_surface changes
         pygame.transform.scale(self.game_surface, self.scaled_size,
                                dest_surface=self.scaled_surface_cache)
 
@@ -250,3 +244,29 @@ class DisplayManager:
     def mark_dirty(self):
         """Mark display as dirty to force rescaling on next render."""
         self.display_dirty = True
+
+    def set_window_size(self, size_preset):
+        """
+        Change window size to preset.
+
+        Args:
+            size_preset: "small", "medium", or "large"
+        """
+        if self.is_fullscreen:
+            return  # Can't resize in fullscreen
+
+        from src.core.runtime.game_settings import Display
+        if size_preset not in Display.WINDOW_SIZES:
+            DebugLogger.warn(f"Unknown window size: {size_preset}")
+            return
+
+        self.window_size_preset = size_preset
+        window_w, window_h = Display.WINDOW_SIZES[size_preset]
+
+        self.window = pygame.display.set_mode(
+            (window_w, window_h),
+            pygame.DOUBLEBUF | pygame.HWSURFACE
+        )
+        self._calculate_scale()
+
+        DebugLogger.state(f"Window size changed to {size_preset}: {window_w}x{window_h}")

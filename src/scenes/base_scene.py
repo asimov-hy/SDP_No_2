@@ -32,9 +32,14 @@ class BaseScene(ABC):
 
         # Convenience access to frequently used managers
         self.scene_manager = services.scene_manager
-        self.display = services.display_manager
+        # self.display is now a property (see below)
         self.input_manager = services.input_manager
         self.draw_manager = services.draw_manager
+
+    @property
+    def display(self):
+        """Access display manager."""
+        return self.services.display_manager
 
     # ===========================================================
     # Lifecycle Hooks (Override in subclasses)

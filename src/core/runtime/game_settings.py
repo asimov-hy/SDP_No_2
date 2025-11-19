@@ -14,6 +14,14 @@ class Display:
     FPS = 60
     CAPTION = "202X"
 
+    # Window size presets
+    WINDOW_SIZES = {
+        "small": (1280, 720),  # 1x - 720p
+        "medium": (1920, 1080),  # 1.5x - 1080p
+        "large": (2560, 1440),  # 2x - 1440p
+    }
+    DEFAULT_WINDOW_SIZE = "small"
+
 
 # ===========================================================
 # Physics & Timing

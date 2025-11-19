@@ -56,7 +56,7 @@ class GameLoop:
         # -------------------------------------------------------
         # Core Systems
         # -------------------------------------------------------
-        self.display = DisplayManager(Display.WIDTH, Display.HEIGHT)
+        self.display = DisplayManager(Display.WIDTH, Display.HEIGHT, Display.DEFAULT_WINDOW_SIZE)
         self.input_manager = InputManager()
         self.draw_manager = DrawManager()
 
@@ -283,3 +283,4 @@ class GameLoop:
                 f"Perf ⚠️ SLOW FRAME: {frame_time_ms:.2f} ms "
                 f"(Scene={scene_time:.2f} | HUD={hud_time:.2f} | Render={render_time:.2f})"
             )
+            

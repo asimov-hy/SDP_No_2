@@ -318,14 +318,18 @@ class UIManager:
             if screen:
                 self._draw_element_tree(screen, draw_manager)
 
-
     def _draw_element_tree(self, element, draw_manager, parent=None):
         """Recursively draw element and children."""
         if not element.visible:
             return
 
-        # Resolve position
-        element.rect = self.anchor_resolver.resolve(element, parent)
+        # NEW: Only resolve position if cache is invalid
+        # Parent invalidation cascades to children since their anchors may be relative
+        parent_invalid = parent and not getattr(parent, '_position_cache_valid', True)
+
+        if not element._position_cache_valid or parent_invalid:
+            element.rect = self.anchor_resolver.resolve(element, parent)
+            element._position_cache_valid = True
 
         # Register element if it has an ID (BEFORE children)
         if element.id:

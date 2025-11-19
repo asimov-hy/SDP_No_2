@@ -19,7 +19,7 @@ children:
 
   # Display Section
   - type: container
-    size: [700, 200]
+    size: [700, 280]
     anchor: top_center
     offset: [0, 120]
     background: [30, 30, 40, 200]
@@ -41,7 +41,7 @@ children:
       # Fullscreen Toggle Button
       - type: button
         id: fullscreen_button
-        text: "Window Mode"
+        text: "Toggle Fullscreen"
         action: "toggle_fullscreen"
         size: [250, 50]
         anchor: top_left
@@ -54,24 +54,79 @@ children:
         border_color: [100, 120, 160]
         border_radius: 5
 
-      # Resolution Label
+      # Window Size Label
       - type: label
-        text: "Resolution: 1280x720"
-        size: [250, 50]
+        text: "Window Size:"
+        size: [150, 40]
         anchor: top_left
-        offset: [290, 60]
+        offset: [20, 130]
         font_size: 20
-        text_color: [180, 180, 180]
-        background: [40, 40, 50]
-        border: 1
-        border_color: [80, 80, 100]
+        text_color: [200, 200, 200]
+        text_align: left
+
+      # Small Window Button (720p)
+      - type: button
+        id: window_size_small
+        text: "720p"
+        action: "window_size_small"
+        size: [120, 45]
+        anchor: top_left
+        offset: [20, 175]
+        color: [60, 80, 120]
+        hover:
+          color: [80, 100, 140]
+        font_size: 20
+        border: 2
+        border_color: [100, 120, 160]
         border_radius: 5
+
+      # Medium Window Button (1080p)
+      - type: button
+        id: window_size_medium
+        text: "1080p"
+        action: "window_size_medium"
+        size: [120, 45]
+        anchor: top_left
+        offset: [155, 175]
+        color: [60, 80, 120]
+        hover:
+          color: [80, 100, 140]
+        font_size: 20
+        border: 2
+        border_color: [100, 120, 160]
+        border_radius: 5
+
+      # Large Window Button (1440p)
+      - type: button
+        id: window_size_large
+        text: "1440p"
+        action: "window_size_large"
+        size: [120, 45]
+        anchor: top_left
+        offset: [290, 175]
+        color: [60, 80, 120]
+        hover:
+          color: [80, 100, 140]
+        font_size: 20
+        border: 2
+        border_color: [100, 120, 160]
+        border_radius: 5
+
+      # Window Size Info
+      - type: label
+        text: "(Changes apply immediately)"
+        size: [300, 30]
+        anchor: top_left
+        offset: [425, 185]
+        font_size: 14
+        text_color: [150, 150, 150]
+        text_align: left
 
   # Audio Section
   - type: container
     size: [700, 150]
     anchor: top_center
-    offset: [0, 340]
+    offset: [0, 420]
     background: [30, 30, 40, 200]
     border: 1
     border_color: [80, 80, 100]
@@ -97,6 +152,15 @@ children:
         font_size: 20
         text_color: [180, 180, 180]
 
+      # Volume Info
+      - type: label
+        text: "(Coming soon)"
+        size: [200, 30]
+        anchor: top_left
+        offset: [280, 65]
+        font_size: 14
+        text_color: [120, 120, 120]
+
   # Bottom Buttons
   - type: container
     size: [700, 60]
@@ -104,32 +168,16 @@ children:
     offset: [0, -20]
 
     children:
-      # Apply Button
-      - type: button
-        text: "Apply"
-        action: "apply_settings"
-        size: [200, 50]
-        anchor: left
-        offset: [50, 0]
-        color: [80, 150, 80]
-        hover:
-          color: [100, 180, 100]
-        font_size: 24
-        border: 2
-        border_color: [100, 200, 100]
-        border_radius: 5
-
-      # Back Button
+      # Back Button (centered)
       - type: button
         text: "Back"
         action: "back"
         size: [200, 50]
-        anchor: right
-        offset: [-50, 0]
-        color: [150, 80, 80]
+        anchor: center
+        color: [80, 100, 140]
         hover:
-          color: [180, 100, 100]
+          color: [100, 120, 160]
         font_size: 24
         border: 2
-        border_color: [200, 100, 100]
+        border_color: [120, 140, 180]
         border_radius: 5

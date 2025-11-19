@@ -171,8 +171,12 @@ class DebugHUD:
         if not element.visible:
             return
 
-        # Resolve position
-        element.rect = self.anchor_resolver.resolve(element, parent)
+        # NEW: Only resolve position if cache is invalid
+        parent_invalid = parent and not getattr(parent, '_position_cache_valid', True)
+
+        if not getattr(element, '_position_cache_valid', False) or parent_invalid:
+            element.rect = self.anchor_resolver.resolve(element, parent)
+            element._position_cache_valid = True
 
         # Render surface
         surface = element.render_surface()

@@ -296,7 +296,11 @@ class DrawManager:
         if hasattr(self, "background") and self.background is not None:
             target_surface.blit(self.background, (0, 0))
         else:
-            target_surface.fill((50, 50, 100))  # fallback solid color
+            # Create cached background on first use
+            if not hasattr(self, "_bg_cache") or self._bg_cache is None:
+                self._bg_cache = pygame.Surface(target_surface.get_size())
+                self._bg_cache.fill((50, 50, 100))
+            target_surface.blit(self._bg_cache, (0, 0))
 
         # Cache sorted layer keys to avoid sorting every frame
         if self._layers_dirty:

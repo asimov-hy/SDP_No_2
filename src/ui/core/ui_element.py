@@ -87,6 +87,7 @@ class UIElement:
         self._surface_cache: Optional[pygame.Surface] = None
         self._dirty = True
         self.rect: Optional[pygame.Rect] = None
+        self._position_cache_valid = False  # Track if rect needs recalculation
 
         # Layout state (set by parent container)
         self._layout_x = 0
@@ -243,6 +244,7 @@ class UIElement:
     def mark_dirty(self):
         """Mark element as needing re-render."""
         self._dirty = True
+        self._position_cache_valid = False  # Invalidate position when content changes
 
     def set_visible(self, visible: bool):
         """Set visibility state."""

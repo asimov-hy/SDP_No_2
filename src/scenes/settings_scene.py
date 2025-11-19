@@ -53,8 +53,23 @@ class SettingsScene(BaseScene):
                 self.scene_manager.set_scene(target)
 
         elif action == "toggle_fullscreen":
-            # TODO: Implement fullscreen toggle via display manager
-            pass
+            # Toggle fullscreen via display manager
+            self.display.toggle_fullscreen()
+
+        elif action == "window_size_small":
+            self.display.set_window_size("small")
+
+        elif action == "window_size_medium":
+            self.display.set_window_size("medium")
+
+        elif action == "window_size_large":
+            self.display.set_window_size("large")
+
+        elif action == "apply_settings":
+            # Settings are applied immediately, just acknowledge
+            from src.core.debug.debug_logger import DebugLogger
+            DebugLogger.action("Settings applied")
+
         elif action == "audio_master":
             # TODO: Implement volume control
             pass

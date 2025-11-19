@@ -62,6 +62,7 @@ class CollisionManager:
 
         # Centralized hitbox registry
         self.hitboxes = {}  # {entity_id: CollisionHitbox}
+        self._checked_pairs = set()  # Reusable set for collision detection
 
         DebugLogger.init_entry("CollisionManager Initialized")
 
@@ -125,15 +126,20 @@ class CollisionManager:
         Update all registered hitboxes to match entity positions.
         Automatically cleans up hitboxes for dead entities_animation.
         """
-        for entity_id, hitbox in list(self.hitboxes.items()):
+        to_delete = []
+        for entity_id, hitbox in self.hitboxes.items():
             # Clean up hitboxes for dead entities_animation
             entity = hitbox.owner
             if getattr(entity, "death_state", 0) >= LifecycleState.DEAD:
-                del self.hitboxes[entity_id]
+                to_delete.append(entity_id)
                 continue
 
             # Update hitbox position/size
             hitbox.update()
+
+        # Cleanup dead entities
+        for entity_id in to_delete:
+            del self.hitboxes[entity_id]
 
     # ===========================================================
     # Utility: Grid Assignment
@@ -175,17 +181,18 @@ class CollisionManager:
         """
 
         collisions = []
+        DEAD = LifecycleState.DEAD
 
         # Pre-filter active objects
         active_bullets = [
             b for b in getattr(self.bullet_manager, "active", [])
-            if getattr(b, "death_state", 0) < LifecycleState.DEAD
+            if getattr(b, "death_state", 0) < DEAD
         ]
         active_entities = [
             e for e in getattr(self.spawn_manager, "entities", [])
-            if getattr(e, "death_state", 0) < LifecycleState.DEAD
+            if getattr(e, "death_state", 0) < DEAD
         ]
-        player = self.player if getattr(self.player, "death_state", 0) < LifecycleState.DEAD else None
+        player = self.player if getattr(self.player, "death_state", 0) < DEAD else None
 
         total_entities = len(active_bullets) + len(active_entities) + (1 if player else 0)
         if total_entities == 0:
@@ -215,48 +222,58 @@ class CollisionManager:
             add_to_grid(grid, bullet)
 
         # Localized Collision Checks (per cell + neighbors)
-        checked_pairs = set()
+        checked_pairs = self._checked_pairs
+        checked_pairs.clear()
+
         append_collision = collisions.append
         get_hitbox = self.hitboxes.get
 
         for cell_key, cell_objects in grid.items():
+            cx, cy = cell_key
             for dx, dy in self.NEIGHBOR_OFFSETS:
-                neighbor_key = (cell_key[0] + dx, cell_key[1] + dy)
-                neighbor_objs = grid.get(neighbor_key)
-                if not neighbor_objs:
+                neighbor_key = (cx + dx, cy + dy)
+                try:
+                    neighbor_objs = grid[neighbor_key]
+                except KeyError:
                     continue
 
                 for a in cell_objects:
-                    a_hitbox = get_hitbox(id(a))
+                    a_id = id(a)
+                    a_hitbox = get_hitbox(a_id)
                     if not a_hitbox or not getattr(a_hitbox, "active", True):
                         continue
+
+                    a_death = a.death_state
+                    a_tag = getattr(a, "collision_tag", None)
+                    a_state = getattr(a, "state", 0)
 
                     for b in neighbor_objs:
                         if a is b:
                             continue
 
-                        b_hitbox = get_hitbox(id(b))
+                        b_id = id(b)
+                        b_hitbox = get_hitbox(b_id)
                         if not b_hitbox or not getattr(b_hitbox, "active", True):
                             continue
 
                         # Avoid redundant duplicate checks
-                        pair_key = tuple(sorted((id(a), id(b))))
+                        pair_key = (a_id, b_id) if a_id < b_id else (b_id, a_id)
                         if pair_key in checked_pairs:
                             continue
                         checked_pairs.add(pair_key)
 
                         # Skip destroyed entities_animation mid-frame
-                        if a.death_state >= LifecycleState.DEAD or b.death_state >= LifecycleState.DEAD:
+                        b_death = b.death_state
+                        if a_death >= DEAD or b_death >= DEAD:
                             continue
 
                         # Tag-based collision filtering
-                        tag_a = getattr(a, "collision_tag", None)
-                        tag_b = getattr(b, "collision_tag", None)
-                        if (tag_a, tag_b) not in self.rules and (tag_b, tag_a) not in self.rules:
+                        b_tag = getattr(b, "collision_tag", None)
+                        if (a_tag, b_tag) not in self.rules and (b_tag, a_tag) not in self.rules:
                             continue
 
-                        if (getattr(a, "state", 0) >= InteractionState.INTANGIBLE or
-                                getattr(b, "state", 0) >= InteractionState.INTANGIBLE):
+                        b_state = getattr(b, "state", 0)
+                        if a_state >= InteractionState.INTANGIBLE or b_state >= InteractionState.INTANGIBLE:
                             continue
 
                         # Overlap test
@@ -271,7 +288,7 @@ class CollisionManager:
 
                             append_collision((a, b))
                             DebugLogger.state(
-                                f"Collision: {type(a).__name__} ({tag_a}) <-> {type(b).__name__} ({tag_b})",
+                                f"Collision: {type(a).__name__} ({a_tag}) <-> {type(b).__name__} ({b_tag})",
                                 category="collision",
                             )
 
