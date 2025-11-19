@@ -29,10 +29,15 @@ from src.entities.items.base_item import BaseItem
 
 class ItemType(Enum):
     """Enum for all available item types."""
-    EXTRA_LIFE = "extra_life"
     SCORE_BONUS_MEDAL = "score_bonus_medal"
     HEALTH_PACK = "health_pack"
     QUICK_FIRE = "quick_fire"
+    SHIELD = "shield"
+    SPEED_BOOST = "speed_boost"
+    DAMAGE_BOOST = "damage_boost"
+    MAX_HEALTH_UPGRADE = "max_health_upgrade"
+    FULL_HEAL = "full_heal"
+    BOMB = "bomb"
     DUMMY = "dummy"
 
 

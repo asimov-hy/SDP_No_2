@@ -18,7 +18,7 @@ from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import LifecycleState, InteractionState
 from src.entities.entity_types import CollisionTags, EntityCategory
 from src.entities.entity_registry import EntityRegistry
-from src.core.services.event_manager import EVENTS, EnemyDiedEvent
+from src.core.services.event_manager import EVENTS, EnemyDiedEvent, BombUsedEvent
 
 
 class BaseEnemy(BaseEntity):
@@ -120,6 +120,8 @@ class BaseEnemy(BaseEntity):
             self.velocity *= self.speed
 
         self.update_rotation()
+        # Event subscriptions
+        EVENTS.subscribe(BombUsedEvent, self.on_bomb_used)
 
     # ===========================================================
     # Damage and State Handling
@@ -136,6 +138,11 @@ class BaseEnemy(BaseEntity):
         if anim_name == "damage":
             # Reset state to default so we can collide again
             self.state = InteractionState.DEFAULT
+
+    def on_bomb_used(self, event: BombUsedEvent):
+        """Handle bomb event, taking massive damage if alive."""
+        if self.death_state == LifecycleState.ALIVE:
+            self.take_damage(self.max_health + 1, source="bomb")
 
     # ===========================================================
     # Update Logic
