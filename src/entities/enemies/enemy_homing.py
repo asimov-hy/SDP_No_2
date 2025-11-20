@@ -140,7 +140,6 @@ class EnemyHoming(BaseEnemy):
         # Rebuild image if draw_manager available
         if self.draw_manager:
             self.refresh_sprite(new_color=color, size=norm_size)
-            self._base_image = self.image
 
         # Update homing mode if pool respawn passes new params
         if "homing" in kwargs:
