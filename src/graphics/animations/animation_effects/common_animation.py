@@ -79,3 +79,25 @@ def fade_color(entity, t, start_color=(255, 0, 0), end_color=(0, 0, 0)):
     current_alpha = entity.image.get_alpha()
     entity.image = flash
     entity.image.set_alpha(current_alpha)
+
+
+def sprite_cycle(entity, t, frame_key='death_frames'):
+    """
+    Generic frame cycling - works for any animation type.
+
+    Args:
+        entity: Entity with anim_context containing frames
+        t: Normalized time 0..1
+        frame_key: Key in anim_context dict (e.g., 'death_frames', 'attack_frames')
+    """
+    ctx = getattr(entity, 'anim_context', {})
+    frames = ctx.get(frame_key, [])
+
+    if not frames:
+        # Fallback to fade if no frames provided
+        fade_out(entity, t)
+        return
+
+    # Calculate frame index with even distribution
+    frame_idx = min(int(t * len(frames)), len(frames) - 1)
+    entity.image = frames[frame_idx]

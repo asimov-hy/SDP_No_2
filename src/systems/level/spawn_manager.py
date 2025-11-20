@@ -200,6 +200,8 @@ class SpawnManager:
         Render all active enemies using the global DrawManager.
         """
         for e in self.entities:
+            if e.death_state == LifecycleState.DEAD:
+                continue
             e.draw(self.draw_manager)
 
     # ===========================================================

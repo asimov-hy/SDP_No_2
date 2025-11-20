@@ -62,7 +62,7 @@ class BaseEntity:
 
         # Sprite/animation
         '_current_sprite', '_sprite_config', 'anim_manager',
-        '_death_frames', '_damage_frames',
+        '_death_frames', '_damage_frames', 'anim_context',
 
         # Hitbox configuration
         'hitbox_scale', 'hitbox_shape', 'hitbox_offset', 'hitbox_params', 'hitbox',
@@ -221,6 +221,7 @@ class BaseEntity:
         # Animation frame storage (for sprite-cycling animations)
         self._death_frames = []
         self._damage_frames = []
+        self.anim_context = {}
 
     def _setup_hitbox_config(self, hitbox_config):
         """Initialize hitbox configuration from JSON data."""
