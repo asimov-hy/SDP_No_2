@@ -1,24 +1,7 @@
 {
-  "score_bonus_medal": {
-    "name": "Bonus Medal",
-    "asset_path": "assets/images/sprites/items/dummy_item.png",
-    "scale": 0.1,
-    "drop_weight": 100,
-    "physics": {
-      "velo_x": 0,
-      "velo_y": 160,
-      "hitbox_scale": 0.85
-    },
-    "effects": [
-      {
-        "type": "ADD_SCORE",
-        "amount": 500
-      }
-    ]
-  },
-  "health_pack": {
+  "heal": {
     "name": "Health Pack",
-    "asset_path": "assets/images/sprites/items/dummy_item.png",
+    "asset_path": "health_pack.png",
     "scale": 0.1,
     "drop_weight": 10000,
     "physics": {
@@ -35,7 +18,7 @@
   },
   "quick_fire": {
     "name": "Quick Fire",
-    "asset_path": "assets/images/sprites/items/dummy_item.png",
+    "asset_path": "quick_fire.png",
     "scale": 0.1,
     "drop_weight": 1000,
     "physics": {
@@ -51,26 +34,25 @@
       }
     ]
   },
-  "shield": {
-    "name": "Shield",
-    "asset_path": "assets/images/sprites/items/dummy_item.png",
+  "nuke": {
+    "name": "Nuke",
+    "asset_path": "nuke.png",
     "scale": 0.1,
-    "drop_weight": 800,
+    "drop_weight": 500,
     "physics": {
       "velo_x": 0,
-      "velo_y": 160,
+      "velo_y": 120,
       "hitbox_scale": 0.85
     },
     "effects": [
       {
-        "type": "GRANT_SHIELD",
-        "duration": 5
+        "type": "USE_NUKE"
       }
     ]
   },
   "speed_boost": {
     "name": "Speed Boost",
-    "asset_path": "assets/images/sprites/items/dummy_item.png",
+    "asset_path": "speed_boost.png",
     "scale": 0.1,
     "drop_weight": 800,
     "physics": {
@@ -83,106 +65,6 @@
         "type": "MULTIPLY_SPEED",
         "multiplier": 1.5,
         "duration": 5
-      }
-    ]
-  },
-  "damage_boost": {
-    "name": "Damage Boost",
-    "asset_path": "assets/images/sprites/items/dummy_item.png",
-    "scale": 0.1,
-    "drop_weight": 700,
-    "physics": {
-      "velo_x": 0,
-      "velo_y": 160,
-      "hitbox_scale": 0.85
-    },
-    "effects": [
-      {
-        "type": "ADD_DAMAGE",
-        "amount": 1,
-        "duration": 8
-      }
-    ]
-  },
-  "max_health_upgrade": {
-    "name": "Max Health Upgrade",
-    "asset_path": "assets/images/sprites/items/dummy_item.png",
-    "scale": 0.1,
-    "drop_weight": 200,
-    "physics": {
-      "velo_x": 0,
-      "velo_y": 160,
-      "hitbox_scale": 0.85
-    },
-    "effects": [
-      {
-        "type": "ADD_MAX_HEALTH",
-        "amount": 1
-      }
-    ]
-  },
-  "full_heal": {
-    "name": "Full Heal",
-    "asset_path": "assets/images/sprites/items/dummy_item.png",
-    "scale": 0.1,
-    "drop_weight": 100,
-    "physics": {
-      "velo_x": 0,
-      "velo_y": 160,
-      "hitbox_scale": 0.85
-    },
-    "effects": [
-      {
-        "type": "FULL_HEAL"
-      }
-    ]
-  },
-  "bomb": {
-    "name": "Bomb",
-    "asset_path": "assets/images/sprites/items/dummy_item.png",
-    "scale": 0.1,
-    "drop_weight": 500,
-    "physics": {
-      "velo_x": 0,
-      "velo_y": 160,
-      "hitbox_scale": 0.85
-    },
-    "effects": [
-      {
-        "type": "USE_BOMB"
-      }
-    ]
-  },
-  "dummy": {
-    "name": "Dummy Item",
-    "asset_path": "assets/images/sprites/items/dummy_item.png",
-    "scale": 0.1,
-    "drop_weight": 0,
-    "physics": {
-      "velo_x": 0,
-      "velo_y": 160,
-      "hitbox_scale": 0.85
-    },
-    "effects": [
-      {
-        "type": "ADD_SCORE",
-        "amount": 5000
-      }
-    ]
-  },
-  "bomb": {
-    "name": "Nuke Bomb",
-    "asset_path": "assets/images/sprites/items/dummy_item.png",
-    "scale": 0.1,
-    "drop_weight": 500,
-    "physics": {
-      "velo_x": 0,
-      "velo_y": 120,
-      "hitbox_scale": 0.85
-    },
-    "effects": [
-      {
-        "type": "USE_BOMB"
       }
     ]
   }

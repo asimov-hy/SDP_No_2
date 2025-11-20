@@ -45,15 +45,9 @@ class FireRateEvent(BaseEvent):
     duration: float  # Seconds (0 = permanent)
 
 @dataclass(frozen=True)
-class BombUsedEvent(BaseEvent):
+class NukeUsedEvent(BaseEvent):
     """Dispatched when a bomb is used to clear the screen."""
     damage: int = 9999
-
-
-@dataclass(frozen=True)
-class BombUsedEvent(BaseEvent):
-    """Dispatched when player uses a bomb item."""
-    pass
 
 
 # ============================================================

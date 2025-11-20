@@ -22,7 +22,9 @@ from src.core.debug.debug_logger import DebugLogger
 class EnemyShooter(BaseEnemy):
     """Enemy that shoots bullets while moving."""
 
-    __slots__ = ()
+    __slots__ = ('movement_type', 'base_speed', 'waypoints', 'waypoint_speed', 'current_waypoint_index',
+                 'shoot_interval', 'shoot_timer', 'bullet_speed', 'bullet_color', 'bullet_radius',
+                 'aim_at_player', 'player_ref', 'bullet_manager')
 
     __registry_category__ = EntityCategory.ENEMY
     __registry_name__ = "shooter"

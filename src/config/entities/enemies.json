@@ -30,5 +30,28 @@
     "hitbox": {
       "scale": 0.9
     }
+  },
+  "shooter": {
+    "image": null,
+    "hp": 3,
+    "speed": 100,
+    "size": 60,
+    "color": [255, 128, 0],
+    "exp": 100,
+    "movement_type": "linear",
+    "waypoint_speed": 120,
+    "shoot_interval": 1.25,
+    "bullet_speed": 300,
+    "bullet_color": [255, 200, 0],
+    "bullet_radius": 5,
+    "aim_at_player": true,
+    "death_frames": [
+      "assets/images/effects/explosions/explosion01.png",
+      "assets/images/effects/explosions/explosion02.png",
+      "assets/images/effects/explosions/explosion03.png"
+    ],
+    "hitbox": {
+      "scale": 0.9
+    }
   }
 }

@@ -18,7 +18,7 @@ from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import LifecycleState, InteractionState
 from src.entities.entity_types import CollisionTags, EntityCategory
 from src.entities.entity_registry import EntityRegistry
-from src.core.services.event_manager import EVENTS, EnemyDiedEvent, BombUsedEvent
+from src.core.services.event_manager import EVENTS, EnemyDiedEvent, NukeUsedEvent
 
 
 class BaseEnemy(BaseEntity):
@@ -26,7 +26,7 @@ class BaseEnemy(BaseEntity):
 
     __slots__ = (
         'speed', 'health', 'max_health', 'exp_value',
-        'velocity', '_last_rot_velocity', 'state'
+        'velocity', '_last_rot_velocity', 'state', '_nuke_subscribed'
     )
 
     @staticmethod
@@ -126,7 +126,9 @@ class BaseEnemy(BaseEntity):
 
         self.update_rotation()
 
-        EVENTS.subscribe(BombUsedEvent, self.on_bomb_used)
+        if not hasattr(self, '_nuke_subscribed'):
+            EVENTS.subscribe(NukeUsedEvent, self.on_nuke_used)
+            self._nuke_subscribed = True
 
     # ===========================================================
     # Damage and State Handling
@@ -303,9 +305,16 @@ class BaseEnemy(BaseEntity):
 
         self.update_rotation()
 
+        if not hasattr(self, '_nuke_subscribed') or not self._nuke_subscribed:
+            EVENTS.subscribe(NukeUsedEvent, self.on_nuke_used)
+            self._nuke_subscribed = True
+
     def cleanup(self):
         """Explicitly unsubscribe to prevent zombie processing."""
-        EVENTS.unsubscribe(BombUsedEvent, self.on_bomb_used)
+        if hasattr(self, '_nuke_subscribed') and self._nuke_subscribed:
+            EVENTS.unsubscribe(NukeUsedEvent, self.on_nuke_used)
+            self._nuke_subscribed = False
 
-    def on_bomb_used(self, event: BombUsedEvent):
-        self.take_damage(self.max_health + 1, source="player")
+    def on_nuke_used(self, event: NukeUsedEvent):
+        """Kill enemy instantly when nuke is used."""
+        self.take_damage(self.max_health + 1, source="nuke")

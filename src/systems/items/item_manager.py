@@ -29,12 +29,10 @@ from src.entities.items.base_item import BaseItem
 
 class ItemType(Enum):
     """Enum for all available item types."""
-    DUMMY = "dummy"
-    EXTRA_LIFE = "extra_life"
-    SCORE_BONUS_MEDAL = "score_bonus_medal"
-    HEALTH_PACK = "health_pack"
+    HEAL = "heal"
     QUICK_FIRE = "quick_fire"
-    BOMB = "bomb"
+    NUKE = "nuke"
+    SPEED_BOOST = "speed_boost"
 
 
 # ===========================================================
@@ -43,6 +41,8 @@ class ItemType(Enum):
 
 class ItemManager:
     """Manages item definitions and spawning logic."""
+
+    ASSET_BASE_PATH = "assets/images/sprites/items/"
 
     def __init__(self, spawn_manager, item_data_path: str):
         """
@@ -106,7 +106,7 @@ class ItemManager:
 
     def _load_fallback_image(self) -> None:
         """Load fallback dummy_item image."""
-        fallback_path = "assets/images/sprites/items/dummy_item.png"
+        fallback_path = "assets/images/null.png"
         if os.path.exists(fallback_path):
             try:
                 self._fallback_image = pygame.image.load(fallback_path).convert_alpha()
@@ -161,9 +161,10 @@ class ItemManager:
 
         # Load image if asset path exists
         image = None
-        asset_path = item_data.get("asset_path")
-        if asset_path:
-            image = self._load_item_image(item_id.value, asset_path)
+        asset_filename = item_data.get("asset_path")
+        if asset_filename:
+            full_path = os.path.join(self.ASSET_BASE_PATH, asset_filename)
+            image = self._load_item_image(item_id.value, full_path)
 
         # Spawn via SpawnManager
         x, y = position
@@ -182,8 +183,6 @@ class ItemManager:
 
     def _load_item_image(self, item_id: str, asset_path: str) -> pygame.Surface:
         """Load item sprite with fallback support."""
-        item_data = self._item_definitions.get(item_id, {})
-        size = item_data.get("size")
 
         if asset_path in self._image_cache:
             return self._image_cache[asset_path]
