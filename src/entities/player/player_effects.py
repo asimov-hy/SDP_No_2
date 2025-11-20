@@ -40,8 +40,8 @@ def handle_ADD_HEALTH(player, effect_data):
         category="item"
     )
 
-@effect_handler("MULTIPLY_SPEED")
-def handle_MULTIPLY_SPEED(player, effect_data):
+@effect_handler("SPEED_BOOST")
+def handle_SPEED_BOOST(player, effect_data):
     """Temporarily multiply player movement speed."""
     multiplier = effect_data.get("multiplier", 1.0)
     duration = effect_data.get("duration", 5.0)

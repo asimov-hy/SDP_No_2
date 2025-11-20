@@ -62,7 +62,7 @@
     },
     "effects": [
       {
-        "type": "MULTIPLY_SPEED",
+        "type": "SPEED_BOOST",
         "multiplier": 1.5,
         "duration": 5
       }
