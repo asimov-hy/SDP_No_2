@@ -12,6 +12,7 @@ Responsibilities
 """
 
 import pygame
+import math
 from src.entities.enemies.base_enemy import BaseEnemy
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_types import EntityCategory
@@ -140,26 +141,42 @@ class EnemyShooter(BaseEnemy):
         if not self.waypoints or len(self.waypoints) == 0:
             return
 
-        target = pygame.Vector2(self.waypoints[self.current_waypoint_index])
-        direction = target - self.pos
-        distance = direction.length()
+        target = self.waypoints[self.current_waypoint_index]
 
-        # Reached waypoint threshold
-        if distance < 5:
+        # Optimization: Use raw x,y instead of Vector2 subtraction
+        dx = target[0] - self.pos.x
+        dy = target[1] - self.pos.y
+
+        # distance squared
+        dist_sq = dx*dx + dy*dy
+
+        # Reached waypoint threshold (5px -> 25px squared)
+        if dist_sq < 25:
             self.current_waypoint_index = (self.current_waypoint_index + 1) % len(self.waypoints)
             self._update_waypoint_velocity()
-        elif distance > 0:
-            self.velocity = direction.normalize() * self.waypoint_speed
+        elif dist_sq > 0:
+            # Manually normalize and apply speed
+            dist = math.sqrt(dist_sq)
+            self.velocity.x = (dx / dist) * self.waypoint_speed
+            self.velocity.y = (dy / dist) * self.waypoint_speed
 
     def _update_waypoint_velocity(self):
         """Calculate velocity toward next waypoint."""
         if not self.waypoints:
             return
 
-        target = pygame.Vector2(self.waypoints[self.current_waypoint_index])
-        direction = target - self.pos
-        if direction.length() > 0:
-            self.velocity = direction.normalize() * self.waypoint_speed
+        target = self.waypoints[self.current_waypoint_index]
+
+        # Direct assignment
+        dx = target[0] - self.pos.x
+        dy = target[1] - self.pos.y
+
+        dist_sq = dx*dx + dy*dy
+
+        if dist_sq > 0:
+            dist = math.sqrt(dist_sq)
+            self.velocity.x = (dx / dist) * self.waypoint_speed
+            self.velocity.y = (dy / dist) * self.waypoint_speed
 
     # ===========================================================
     # Shooting
@@ -171,25 +188,31 @@ class EnemyShooter(BaseEnemy):
 
         # Calculate bullet direction
         if self.aim_at_player and self.player_ref:
-            target_pos = pygame.Vector2(self.player_ref.pos)
-            direction = target_pos - self.pos
-            if direction.length() > 0:
-                direction = direction.normalize()
+            # Optimization: Direct component access
+            dx = self.player_ref.pos.x - self.pos.x
+            dy = self.player_ref.pos.y - self.pos.y
+
+            dist_sq = dx*dx + dy*dy
+            if dist_sq > 0:
+                inv_dist = 1.0 / math.sqrt(dist_sq)
+                dir_x = dx * inv_dist
+                dir_y = dy * inv_dist
             else:
-                direction = pygame.Vector2(0, 1)
+                dir_x, dir_y = 0.0, 1.0
         else:
             # Shoot in velocity direction, or downward if stationary
-            if self.velocity.length() > 0:
-                direction = self.velocity.normalize()
+            vel_sq = self.velocity.length_squared()
+            if vel_sq > 0:
+                inv_vel = 1.0 / math.sqrt(vel_sq)
+                dir_x = self.velocity.x * inv_vel
+                dir_y = self.velocity.y * inv_vel
             else:
-                direction = pygame.Vector2(0, 1)
+                dir_x, dir_y = 0.0, 1.0
 
-        bullet_vel = direction * self.bullet_speed
-
-        # Spawn bullet via bullet_manager
+        # Spawn bullet via bullet_manager (passing tuple for vel)
         self.bullet_manager.spawn(
-            pos=self.pos,
-            vel=bullet_vel,
+            pos=(self.pos.x, self.pos.y),
+            vel=(dir_x * self.bullet_speed, dir_y * self.bullet_speed),
             color=self.bullet_color,
             radius=self.bullet_radius,
             owner="enemy",
@@ -205,18 +228,9 @@ class EnemyShooter(BaseEnemy):
               bullet_color=(255, 200, 0), bullet_radius=5, aim_at_player=False,
               player_ref=None, **kwargs):
         """Reset shooter enemy parameters for pooling."""
-        # Rebake shape if size or color changed
-        if size != self.size or color != self.color:
-            self.size = size
-            self.color = color
-            self.image = self.draw_manager.prebake_shape(
-                type="rect",
-                size=(size, size),
-                color=color
-            )
-            self.rect = self.image.get_rect(center=(x, y))
 
-        # Reset base properties
+        # 1. Reset Base Properties FIRST (Updates pos, rect, and restores base image)
+        # CRITICAL: This must run first so self.pos is correct for refresh_sprite
         super().reset(
             x, y,
             direction=direction,
@@ -225,11 +239,22 @@ class EnemyShooter(BaseEnemy):
             spawn_edge=kwargs.get("spawn_edge")
         )
 
+        # 2. Update Visuals if needed (using correct pos from super)
+        # Use getattr to safely handle first-time reset where vars might not exist
+        if size != getattr(self, 'size', None) or color != getattr(self, 'color', None):
+            self.size = size
+            self.color = color
+            # Use refresh_sprite() to update _base_image, clear cache, and center rect
+            self.refresh_sprite(
+                new_color=color,
+                size=(size, size),
+                shape_type="rect"
+            )
+
         self.base_speed = speed
 
         self.movement_type = movement_type
         if movement_type == "linear":
-            # BaseEnemy.reset already assigned correct velocity
             pass
         elif movement_type == "waypoint":
             self.waypoints = waypoints or [(x, y)]
@@ -246,4 +271,4 @@ class EnemyShooter(BaseEnemy):
         self.aim_at_player = aim_at_player
         self.player_ref = player_ref
 
-        self.sync_rect()
+        # self.sync_rect() -> Removed: Redundant (handled by super().reset and refresh_sprite)

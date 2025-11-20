@@ -14,7 +14,6 @@ from src.core.debug.debug_logger import DebugLogger
 from src.entities.entity_state import LifecycleState
 from src.core.services.event_manager import EVENTS, BombUsedEvent
 
-
 EFFECT_HANDLERS = {}
 
 
@@ -131,14 +130,11 @@ def handle_ADD_SCORE(player, effect_data):
         category="item"
     )
 
-
 @effect_handler("USE_BOMB")
 def handle_USE_BOMB(player, effect_data):
-    """Dispatch event to destroy all enemies."""
+    """Trigger a screen-clearing bomb."""
     EVENTS.dispatch(BombUsedEvent())
-    DebugLogger.action("Bomb used!", category="item")
-
-
+    DebugLogger.action("BOMB ACTIVATED! Clearing screen...", category="item")
 
 
 # ===========================================================

@@ -44,6 +44,11 @@ class FireRateEvent(BaseEvent):
     multiplier: float  # e.g., 2.0 = double fire rate
     duration: float  # Seconds (0 = permanent)
 
+@dataclass(frozen=True)
+class BombUsedEvent(BaseEvent):
+    """Dispatched when a bomb is used to clear the screen."""
+    damage: int = 9999
+
 
 @dataclass(frozen=True)
 class BombUsedEvent(BaseEvent):
