@@ -4,12 +4,11 @@ scene_manager.py
 Simplified scene coordinator - direct class registration.
 """
 
-import pygame
 from src.core.debug.debug_logger import DebugLogger
 from src.scenes.scene_state import SceneState
 from src.core.services.service_locator import ServiceLocator
 from src.core.runtime.session_stats import SESSION_STATS
-from src.entities.entity_registry import EntityRegistry
+from src.systems.spawning.entity_registry import EntityRegistry
 from src.systems.level.level_registry import LevelRegistry
 
 # Import scene classes

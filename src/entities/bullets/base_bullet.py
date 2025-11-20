@@ -18,7 +18,7 @@ from src.core.debug.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import LifecycleState
 from src.entities.entity_types import EntityCategory
-from src.entities.entity_registry import EntityRegistry
+from src.systems.spawning.entity_registry import EntityRegistry
 
 
 class BaseBullet(BaseEntity):
@@ -51,7 +51,7 @@ class BaseBullet(BaseEntity):
             hitbox_scale (float): Hitbox scale (override, or use JSON default).
             draw_manager: Optional DrawManager for shape prebaking.
         """
-        from src.entities.entity_registry import EntityRegistry
+        from src.systems.spawning.entity_registry import EntityRegistry
 
         # Load defaults from JSON
         defaults = EntityRegistry.get_data("projectile", "straight")

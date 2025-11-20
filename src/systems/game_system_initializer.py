@@ -14,15 +14,13 @@ from src.entities.player.player_core import Player
 from src.ui.core.ui_manager import UIManager
 from src.systems.combat.bullet_manager import BulletManager
 from src.systems.collision.collision_manager import CollisionManager
-from src.systems.level.spawn_manager import SpawnManager
+from src.systems.spawning.spawn_manager import SpawnManager
 from src.systems.level.level_manager import LevelManager
 from src.systems.level.level_registry import LevelRegistry
 from src.systems.items.item_manager import ItemManager
-from src.entities.entity_registry import EntityRegistry
+from src.systems.spawning.entity_registry import EntityRegistry
 
 # Animation registration
-from src.graphics.animations.entities_animation import enemy_animation
-from src.graphics.animations.entities_animation import player_animation
 
 class GameSystemInitializer(SystemInitializer):
     """

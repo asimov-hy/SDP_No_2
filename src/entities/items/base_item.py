@@ -13,11 +13,10 @@ Responsibilities
 
 import pygame
 from src.core.runtime.game_settings import Display, Layers
-from src.core.debug.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import LifecycleState
 from src.entities.entity_types import CollisionTags, EntityCategory
-from src.entities.entity_registry import EntityRegistry
+from src.systems.spawning.entity_registry import EntityRegistry
 from src.core.services.event_manager import EVENTS, ItemCollectedEvent
 from src.entities.player.player_effects import apply_item_effects
 

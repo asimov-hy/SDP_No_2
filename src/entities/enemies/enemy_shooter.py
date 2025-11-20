@@ -11,12 +11,10 @@ Responsibilities
 - Calculate aim direction toward player or fixed direction
 """
 
-import pygame
 import math
 from src.entities.enemies.base_enemy import BaseEnemy
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_types import EntityCategory
-from src.core.debug.debug_logger import DebugLogger
 
 
 class EnemyShooter(BaseEnemy):
@@ -39,7 +37,7 @@ class EnemyShooter(BaseEnemy):
         JSON-driven shooter enemy with optional overrides.
         """
         import pygame
-        from src.entities.entity_registry import EntityRegistry
+        from src.systems.spawning.entity_registry import EntityRegistry
 
         if draw_manager is None:
             raise ValueError("EnemyShooter requires draw_manager")
