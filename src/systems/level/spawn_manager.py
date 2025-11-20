@@ -224,9 +224,12 @@ class SpawnManager:
                 self.entities[i] = e
                 i += 1
             else:
-                # Try to return to pool
                 if self.on_entity_destroyed:
                     self.on_entity_destroyed(e)
+
+                # [FIX] Call cleanup before pooling/destroying
+                if hasattr(e, 'cleanup'):
+                    e.cleanup()
 
                 if self._return_to_pool(e):
                     returned_to_pool += 1

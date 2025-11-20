@@ -29,11 +29,12 @@ from src.entities.items.base_item import BaseItem
 
 class ItemType(Enum):
     """Enum for all available item types."""
+    DUMMY = "dummy"
     EXTRA_LIFE = "extra_life"
     SCORE_BONUS_MEDAL = "score_bonus_medal"
     HEALTH_PACK = "health_pack"
     QUICK_FIRE = "quick_fire"
-    DUMMY = "dummy"
+    BOMB = "bomb"
 
 
 # ===========================================================
@@ -61,6 +62,7 @@ class ItemManager:
         self._load_item_definitions(item_data_path)
         self._build_loot_table()
         self._subscribe_to_events()
+        self._image_cache = {}
         self._load_fallback_image()
 
         DebugLogger.init("ItemManager initialized")
@@ -183,13 +185,24 @@ class ItemManager:
         item_data = self._item_definitions.get(item_id, {})
         size = item_data.get("size")
 
-        # Try loading specified path
+        if asset_path in self._image_cache:
+            return self._image_cache[asset_path]
+
+        item_data = self._item_definitions.get(item_id, {})
+        size = item_data.get("size")
+
         if os.path.exists(asset_path):
             try:
+                # [FIX] Load once, cache, and return
                 img = pygame.image.load(asset_path).convert_alpha()
+
                 if size:
-                    scale = (size[0] / img.get_width(), size[1] / img.get_height())
-                    return BaseEntity.load_and_scale_image(asset_path, scale)
+                    # Scale manually here to cache the FINAL result if desired,
+                    # or cache the raw and scale copy. For simplicity, we cache raw.
+                    # (Optimized: Cache the scaled version if size is constant per ID)
+                    img = pygame.transform.scale(img, size)
+
+                self._image_cache[asset_path] = img  # Store in RAM
                 return img
             except Exception as e:
                 DebugLogger.warn(f"Failed loading {asset_path}: {e}")
