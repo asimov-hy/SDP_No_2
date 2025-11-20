@@ -69,10 +69,14 @@ class EnemyStraight(BaseEnemy):
             hitbox_config=hitbox_config
         )
 
-        # Load death frames AFTER super().__init__ (BaseEntity sets up _death_frames)
+        # Load death frames AFTER super().__init__
         death_frame_paths = defaults.get("death_frames", [])
+
+        # FIX: Use a specific 'death_scale' if provided, otherwise default to
+        death_scale = defaults.get("death_scale", scale * 1.5)
+
         if death_frame_paths:
-            self._death_frames = self.load_animation_frames(death_frame_paths, scale)
+            self._death_frames = self.load_animation_frames(death_frame_paths, death_scale)
 
         # Store exp value for when enemy dies
         self.exp_value = defaults.get("exp", 0)

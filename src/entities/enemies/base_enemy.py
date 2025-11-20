@@ -194,7 +194,9 @@ class BaseEnemy(BaseEntity):
             self.on_death(source)
 
     def on_death(self, source):
-        self.anim_manager.play("death", duration=1.0, death_frames=self._death_frames)
+        duration = getattr(self, "death_duration", 0.45)
+        self.anim_manager.play("death", duration=duration, death_frames=self._death_frames)
+        self.collision_tag = CollisionTags.NEUTRAL
 
         EVENTS.dispatch(EnemyDiedEvent(
             position=(self.rect.centerx, self.rect.centery),

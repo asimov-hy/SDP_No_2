@@ -169,7 +169,7 @@ class Player(BaseEntity):
         # ========================================
         # Load Player Bullet Sprite
         # ========================================
-        bullet_path = "assets/projectiles/100H.png"
+        bullet_path = "assets/images/sprites/projectiles/100H.png"
         temp_img = pygame.image.load(bullet_path).convert_alpha() if os.path.exists(bullet_path) else None
         if temp_img:
             scale = (16 / temp_img.get_width(), 32 / temp_img.get_height())
