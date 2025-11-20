@@ -20,6 +20,8 @@ class StraightBullet(BaseBullet):
     __registry_category__ = EntityCategory.PROJECTILE
     __registry_name__ = "straight"
 
+    __slots__ = ()
+
     # ===========================================================
     # Initialization
     # ===========================================================

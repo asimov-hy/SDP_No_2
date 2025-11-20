@@ -26,44 +26,35 @@ from src.core.runtime.game_settings import Display
 class CollisionManager:
     """Detects collisions but lets objects decide what happens."""
 
-    # ===========================================================
-    # Configuration
-    # ===========================================================
     BASE_CELL_SIZE = 64
     NEIGHBOR_OFFSETS = [
         (0, 0), (1, 0), (-1, 0), (0, 1), (0, -1),
         (1, 1), (-1, 1), (1, -1), (-1, -1)
     ]
 
-    # ===========================================================
-    # Initialization
-    # ===========================================================
     def __init__(self, player, bullet_manager, spawn_manager):
-        """
-        Initialize the collision manager and register key systems.
-        """
         self.player = player
         self.bullet_manager = bullet_manager
         self.spawn_manager = spawn_manager
         self.CELL_SIZE = self.BASE_CELL_SIZE
 
-        # Collision rules
         self.rules = {
             ("player", "enemy"),
             ("player", "pickup"),
             ("player_bullet", "enemy"),
             ("enemy_bullet", "player"),
             ("player_bullet", "enemy_bullet"),
-            ("player", "pickup")
         }
 
-        # Centralized hitbox registry
-        self.hitboxes = {}  # {entity_id: CollisionHitbox}
-
-        # Reuse structures
+        self.hitboxes = {}
         self._collisions = []
-        self._grid = {}
         self._checked_pairs = set()
+
+        # [OPTIMIZATION] Pre-allocated 1D spatial grid
+        self.GRID_COLS = (Display.WIDTH + self.CELL_SIZE * 2) // self.CELL_SIZE + 1
+        self.GRID_ROWS = (Display.HEIGHT + self.CELL_SIZE * 2) // self.CELL_SIZE + 1
+        self.TOTAL_CELLS = self.GRID_COLS * self.GRID_ROWS
+        self._grid = [[] for _ in range(self.TOTAL_CELLS)]
 
         DebugLogger.init_entry("CollisionManager Initialized")
 
@@ -115,37 +106,50 @@ class CollisionManager:
     # ===========================================================
     # Utility: Grid Assignment
     # ===========================================================
-    def _add_to_grid(self, grid, obj):
-        """Assign an entity to a grid cell based on its hitbox."""
+    def _add_to_grid(self, obj):
+        """
+        [OPTIMIZATION] Assign entity to 1D grid using offset coordinates.
+
+        Grid coordinate system:
+        - Logical grid origin is at (-CELL_SIZE, -CELL_SIZE)
+        - This allows entities at negative positions (off-screen spawns)
+        - Adding CELL_SIZE shifts coordinates into positive range
+        """
         hitbox = self.hitboxes.get(id(obj))
         if not hitbox:
             return
 
         rect = hitbox.rect
-        start_x = int(rect.left // self.CELL_SIZE)
-        end_x   = int(rect.right // self.CELL_SIZE)
-        start_y = int(rect.top // self.CELL_SIZE)
-        end_y   = int(rect.bottom // self.CELL_SIZE)
+
+        # [CRITICAL] Add CELL_SIZE offset to handle negative coordinates
+        start_x = int((rect.left + self.CELL_SIZE) // self.CELL_SIZE)
+        end_x = int((rect.right + self.CELL_SIZE) // self.CELL_SIZE)
+        start_y = int((rect.top + self.CELL_SIZE) // self.CELL_SIZE)
+        end_y = int((rect.bottom + self.CELL_SIZE) // self.CELL_SIZE)
+
+        max_col = self.GRID_COLS - 1
+        max_row = self.GRID_ROWS - 1
 
         for cx in range(start_x, end_x + 1):
             for cy in range(start_y, end_y + 1):
-                grid.setdefault((cx, cy), []).append(obj)
+                if 0 <= cx <= max_col and 0 <= cy <= max_row:
+                    index = cx + cy * self.GRID_COLS
+                    self._grid[index].append(obj)
 
     # ===========================================================
     # Optimized Collision Detection
     # ===========================================================
     def detect(self):
-        """
-        Optimized collision detection using spatial hashing with broad-phase culling.
-        """
-        # Reuse persistent structures
+        """[OPTIMIZED] Collision detection using fixed-array spatial hashing."""
         self._collisions.clear()
-        self._grid.clear()
+
+        # [OPTIMIZATION] Clear buckets without reallocation
+        for bucket in self._grid:
+            bucket.clear()
+
         self._checked_pairs.clear()
 
-        collisions = self._collisions
-
-        # Broad-phase culling bounds
+        # Broad-phase culling
         margin = 150
         collision_bounds = pygame.Rect(-margin, -margin,
                                        Display.WIDTH + margin * 2,
@@ -153,7 +157,7 @@ class CollisionManager:
 
         DEAD = LifecycleState.DEAD
 
-        # Single-pass filtering: Alive AND On-Screen
+        # Filter active entities
         active_bullets = [
             b for b in getattr(self.bullet_manager, "active", [])
             if getattr(b, "death_state", 0) < DEAD
@@ -170,42 +174,42 @@ class CollisionManager:
 
         total_entities = len(active_bullets) + len(active_entities) + (1 if player else 0)
         if total_entities == 0:
-            return collisions
+            return self._collisions
 
-        # Dynamic grid size adjustment
-        if total_entities > 800:
-            self.CELL_SIZE = 48
-        elif total_entities < 100:
-            self.CELL_SIZE = 96
-        else:
-            self.CELL_SIZE = self.BASE_CELL_SIZE
-
-        # Build Spatial Grid
+        # Build spatial grid
         add_to_grid = self._add_to_grid
-        grid = self._grid
 
         if player:
-            add_to_grid(grid, player)
+            add_to_grid(player)
         for entity in active_entities:
-            if entity is player:
-                continue
-            add_to_grid(grid, entity)
+            if entity is not player:
+                add_to_grid(entity)
         for bullet in active_bullets:
-            add_to_grid(grid, bullet)
+            add_to_grid(bullet)
 
-        # Localized Collision Checks
-        append_collision = collisions.append
+        # Collision detection
+        append_collision = self._collisions.append
         get_hitbox = self.hitboxes.get
         checked_pairs = self._checked_pairs
 
-        for cell_key, cell_objects in grid.items():
-            cx, cy = cell_key
+        for index in range(self.TOTAL_CELLS):
+            cell_objects = self._grid[index]
+            if not cell_objects:
+                continue
+
+            cx = index % self.GRID_COLS
+            cy = index // self.GRID_COLS
+
             for dx, dy in self.NEIGHBOR_OFFSETS:
-                neighbor_key = (cx + dx, cy + dy)
-                try:
-                    neighbor_objs = grid[neighbor_key]
-                except KeyError:
+                neighbor_x = cx + dx
+                neighbor_y = cy + dy
+
+                if not (0 <= neighbor_x < self.GRID_COLS and
+                        0 <= neighbor_y < self.GRID_ROWS):
                     continue
+
+                neighbor_index = neighbor_x + neighbor_y * self.GRID_COLS
+                neighbor_objs = self._grid[neighbor_index]
 
                 for a in cell_objects:
                     a_id = id(a)
@@ -220,12 +224,7 @@ class CollisionManager:
                             continue
 
                         b_id = id(b)
-
-                        # OPTIMIZATION: Use cached IDs for pair key
-                        if a_id < b_id:
-                            pair_key = (a_id, b_id)
-                        else:
-                            pair_key = (b_id, a_id)
+                        pair_key = (a_id, b_id) if a_id < b_id else (b_id, a_id)
 
                         if pair_key in checked_pairs:
                             continue
@@ -235,24 +234,19 @@ class CollisionManager:
                         if not b_hitbox or not getattr(b_hitbox, "active", True):
                             continue
 
-                        # Skip destroyed entities mid-frame
                         if a.death_state >= DEAD or b.death_state >= DEAD:
                             continue
 
-                        # Tag-based filtering
                         b_tag = getattr(b, "collision_tag", None)
                         if (a_tag, b_tag) not in self.rules and (b_tag, a_tag) not in self.rules:
                             continue
 
-                        # State checks (Intangible)
                         a_state = getattr(a, "state", 0)
                         b_state = getattr(b, "state", 0)
                         if a_state >= InteractionState.INTANGIBLE or b_state >= InteractionState.INTANGIBLE:
                             continue
 
-                        # Narrow Phase: Hitbox Overlap
                         if self._check_collision(a_hitbox, b_hitbox):
-                            # Hittable zone check
                             a_hittable = not hasattr(a, "is_hittable") or a.is_hittable()
                             b_hittable = not hasattr(b, "is_hittable") or b.is_hittable()
 
@@ -260,10 +254,9 @@ class CollisionManager:
                                 continue
 
                             append_collision((a, b))
-                            # process collision immediately
                             self._process_collision(a, b)
 
-        return collisions
+        return self._collisions
 
     # ===========================================================
     # Collision Processing

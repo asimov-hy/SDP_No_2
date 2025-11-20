@@ -24,6 +24,9 @@ from src.entities.entity_registry import EntityRegistry
 class BaseBullet(BaseEntity):
     """Base class for all bullet entities_animation."""
 
+    # Add slots for bullet-specific attributes
+    __slots__ = ('vel', 'owner', 'radius', 'damage')
+
     def __init_subclass__(cls, **kwargs):
         """Auto-register bullet subclasses when they're defined."""
         super().__init_subclass__(**kwargs)
@@ -108,9 +111,11 @@ class BaseBullet(BaseEntity):
         if self.death_state >= LifecycleState.DEAD:
             return
 
-        # Motion update
-        self.pos += self.vel * dt
-        self.rect.center = self.pos
+        self.pos.x += self.vel.x * dt
+        self.pos.y += self.vel.y * dt
+
+        # Sync its rect and hitbox using the inherited helper method
+        self.sync_rect()
 
     # ===========================================================
     # Collision Handling

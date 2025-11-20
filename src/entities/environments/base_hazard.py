@@ -23,6 +23,11 @@ class BaseHazard(BaseEntity):
     Examples: laser beams, AOE explosions, spike traps, etc.
     """
 
+    __slots__ = (
+        'hazard_state', 'state_timer',
+        'telegraph_time', 'active_time', 'fadeout_time'
+    )
+
     def __init__(self, x, y, telegraph_time=0.5, active_time=2.0, **kwargs):
         """
         Initialize hazard with state machine timing.

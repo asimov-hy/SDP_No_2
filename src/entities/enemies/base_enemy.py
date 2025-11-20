@@ -24,6 +24,11 @@ from src.core.services.event_manager import EVENTS, EnemyDiedEvent, BombUsedEven
 class BaseEnemy(BaseEntity):
     """Base class providing shared logic for all enemy entities_animation."""
 
+    __slots__ = (
+        'speed', 'health', 'max_health', 'exp_value',
+        'velocity', '_last_rot_velocity', 'state'
+    )
+
     @staticmethod
     def _classify_zone(normalized_pos: float) -> str:
         """Classify position into corner/edge/center zones."""
@@ -152,10 +157,11 @@ class BaseEnemy(BaseEntity):
         if self.death_state != LifecycleState.ALIVE:
             return
 
-        # FIX: Ensure animations (like damage blink) update while alive
+        # Ensure animations (like damage blink) update while alive
         self.anim_manager.update(dt)
 
-        self.pos += self.velocity * dt
+        self.pos.x += self.velocity.x * dt
+        self.pos.y += self.velocity.y * dt
         self.sync_rect()
 
         # Optimization: Only calculate rotation if velocity changed significantly

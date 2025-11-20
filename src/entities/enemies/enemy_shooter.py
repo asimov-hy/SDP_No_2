@@ -22,6 +22,8 @@ from src.core.debug.debug_logger import DebugLogger
 class EnemyShooter(BaseEnemy):
     """Enemy that shoots bullets while moving."""
 
+    __slots__ = ()
+
     __registry_category__ = EntityCategory.ENEMY
     __registry_name__ = "shooter"
 

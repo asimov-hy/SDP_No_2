@@ -48,6 +48,29 @@ class BaseEntity:
     This class should be subclassed by all game entities (Player, Enemy, Bullet, etc.).
     """
 
+    # Fixed memory slots for faster access and lower RAM usage
+    __slots__ = (
+        # Core spatial/visual
+        'pos', 'image', 'rect', 'draw_manager',
+
+        # Rotation system
+        'rotation_angle', '_rotation_enabled', '_base_image',
+        '_rotation_cache', '_cached_rotation_index',
+
+        # State management
+        'death_state', 'layer', 'category', 'collision_tag', 'tags',
+
+        # Sprite/animation
+        '_current_sprite', '_sprite_config', 'anim_manager',
+        '_death_frames', '_damage_frames',
+
+        # Hitbox configuration
+        'hitbox_scale', 'hitbox_shape', 'hitbox_offset', 'hitbox_params', 'hitbox',
+
+        # Shape rendering fallback
+        'shape_data'
+    )
+
     # ===========================================================
     # Rotation Configuration
     # ===========================================================

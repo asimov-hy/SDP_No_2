@@ -21,6 +21,8 @@ from src.entities.entity_registry import EntityRegistry
 class EnemyHoming(BaseEnemy):
     """Simple enemy that moves vertically downward and disappears when off-screen."""
 
+    __slots__ = ()
+
     __registry_category__ = EntityCategory.ENEMY
     __registry_name__ = "homing"
 

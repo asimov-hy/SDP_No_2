@@ -25,6 +25,10 @@ from src.entities.player.player_effects import apply_item_effects
 class BaseItem(BaseEntity):
     """Base class for all collectible items."""
 
+    __slots__ = (
+        'item_data', 'speed', 'despawn_y', 'velocity'
+    )
+
     __registry_category__ = "pickup"
     __registry_name__ = "default"
 
@@ -88,7 +92,8 @@ class BaseItem(BaseEntity):
             return
 
         # Move downward
-        self.pos += self.velocity * dt
+        self.pos.x += self.velocity.x * dt
+        self.pos.y += self.velocity.y * dt
         self.sync_rect()
 
         # Despawn if off-screen
