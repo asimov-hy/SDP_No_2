@@ -191,6 +191,8 @@ class Player(BaseEntity):
         # ========================================
         # 7. Global Ref & Status
         # ========================================
+        self._rotation_enabled = False  # Players don't rotate
+        self._death_frames = []  # No death animation frames for player
         self.state_manager = StateManager(self, cfg["state_effects"])
 
         EVENTS.subscribe(EnemyDiedEvent, self._on_enemy_died)

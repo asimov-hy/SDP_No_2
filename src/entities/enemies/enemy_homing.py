@@ -81,11 +81,6 @@ class EnemyHoming(BaseEnemy):
         # Store exp value
         self.exp_value = defaults.get("exp", 0)
 
-        # Homing support
-        self.homing = homing
-        self.turn_rate = turn_rate if homing else 0
-        self.player_ref = player_ref if homing else None
-
         # Snapshot homing state
         if homing in ("snapshot", "snapshot_axis"):
             self.lock_delay = kwargs.get("lock_delay", 0.5)

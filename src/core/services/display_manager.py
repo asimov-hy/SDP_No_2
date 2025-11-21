@@ -115,7 +115,7 @@ class DisplayManager:
 
             self.window = pygame.display.set_mode(
                 (window_w, window_h),
-                pygame.DOUBLEBUF | pygame.HWSURFACE | pygame.RESIZABLE  # Added RESIZABLE
+                pygame.DOUBLEBUF | pygame.HWSURFACE
             )
             self.is_fullscreen = False
 
@@ -217,28 +217,6 @@ class DisplayManager:
         state = "ON" if self.is_fullscreen else "OFF"
         DebugLogger.state(f"Toggled fullscreen → {state}", category="display")
 
-    def handle_resize(self, event):
-        """
-        Handle window resize events from user dragging corners.
-
-        With RESIZABLE flag enabled, this is called whenever:
-        - User drags window corners/edges
-        - OS automatically resizes window (e.g., maximize)
-
-        Args:
-            event (pygame.event.Event): The VIDEORESIZE event from pygame.
-        """
-        if event.type == pygame.VIDEORESIZE and not self.is_fullscreen:
-            # Recreate window with new dimensions
-            self.window = pygame.display.set_mode(
-                (event.w, event.h),
-                pygame.RESIZABLE | pygame.DOUBLEBUF | pygame.HWSURFACE
-            )
-            # Recalculate scaling factors for new window size
-            self._calculate_scale()
-
-            DebugLogger.state(f"Window resized → {event.w}x{event.h}", category="display")
-
     def set_window_size(self, size_preset):
         """
         Programmatically change window size to a preset.
@@ -267,7 +245,7 @@ class DisplayManager:
         # Recreate window with new size
         self.window = pygame.display.set_mode(
             (window_w, window_h),
-            pygame.DOUBLEBUF | pygame.HWSURFACE | pygame.RESIZABLE
+            pygame.DOUBLEBUF | pygame.HWSURFACE
         )
         self._calculate_scale()
 

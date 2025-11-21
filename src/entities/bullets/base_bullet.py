@@ -17,7 +17,7 @@ from src.core.runtime.game_settings import Bounds
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import LifecycleState
-from src.entities.entity_types import EntityCategory
+from src.entities.entity_types import EntityCategory, CollisionTags
 from src.systems.spawning.entity_registry import EntityRegistry
 
 
@@ -92,7 +92,7 @@ class BaseBullet(BaseEntity):
         self.damage = damage
 
         # Collision setup
-        self.collision_tag = f"{owner}_bullet"
+        self.collision_tag = CollisionTags.PLAYER_BULLET if owner == "player" else CollisionTags.ENEMY_BULLET
         self.category = EntityCategory.PROJECTILE
         self.layer = game_settings.Layers.BULLETS
 
@@ -198,7 +198,7 @@ class BaseBullet(BaseEntity):
         # Update owner if provided
         if owner is not None:
             self.owner = owner
-            self.collision_tag = f"{owner}_bullet"
+            self.collision_tag = CollisionTags.PLAYER_BULLET if owner == "player" else CollisionTags.ENEMY_BULLET
 
         # Update damage if provided
         if damage is not None:

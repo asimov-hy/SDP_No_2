@@ -181,12 +181,6 @@ class GameLoop:
                 break
 
             # ---------------------------------------------------
-            # Window resizing
-            # ---------------------------------------------------
-            if event.type == pygame.VIDEORESIZE:
-                self.display.handle_resize(event)
-
-            # ---------------------------------------------------
             # Global / system-level input (always active)
             # Delegates to InputManager to handle F3, F11, etc.
             # ---------------------------------------------------
