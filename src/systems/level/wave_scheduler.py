@@ -14,7 +14,7 @@ Responsibilities
 
 import pygame
 from src.core.debug.debug_logger import DebugLogger
-from src.entities.entity_registry import EntityRegistry
+from src.systems.spawning.entity_registry import EntityRegistry
 from src.entities.entity_types import EntityCategory
 from src.systems.level.pattern_registry import PatternRegistry
 
