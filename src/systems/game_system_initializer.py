@@ -21,6 +21,11 @@ from src.systems.items.item_manager import ItemManager
 from src.systems.spawning.entity_registry import EntityRegistry
 
 # Animation registration
+from src.graphics.animations.entities_animation import player_animation
+from src.graphics.animations.entities_animation import enemy_animation
+from src.graphics.animations.animation_effects import common_animation
+
+# Animation registration
 
 class GameSystemInitializer(SystemInitializer):
     """
