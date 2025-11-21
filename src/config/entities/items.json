@@ -2,7 +2,7 @@
   "heal": {
     "name": "Health Pack",
     "asset_path": "health_pack.png",
-    "scale": 0.1,
+    "scale": 1.0,
     "drop_weight": 10000,
     "physics": {
       "velo_x": 0,
@@ -19,7 +19,7 @@
   "quick_fire": {
     "name": "Quick Fire",
     "asset_path": "quick_fire.png",
-    "scale": 0.1,
+    "scale": 1.0,
     "drop_weight": 1000,
     "physics": {
       "velo_x": 0,
@@ -37,7 +37,7 @@
   "nuke": {
     "name": "Nuke",
     "asset_path": "nuke.png",
-    "scale": 0.1,
+    "scale": 1.0,
     "drop_weight": 500,
     "physics": {
       "velo_x": 0,
@@ -53,7 +53,7 @@
   "speed_boost": {
     "name": "Speed Boost",
     "asset_path": "speed_boost.png",
-    "scale": 0.1,
+    "scale": 1.0,
     "drop_weight": 800,
     "physics": {
       "velo_x": 0,

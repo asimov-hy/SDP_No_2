@@ -76,6 +76,15 @@ class ItemManager:
         self._item_definitions = load_config(path, default_dict={})
 
         if self._item_definitions:
+            # Auto-inject default size if missing explicit size or scale
+            for item_id, item_data in self._item_definitions.items():
+                if "size" not in item_data and "scale" not in item_data:
+                    item_data["size"] = self.DEFAULT_ITEM_SIZE
+                    DebugLogger.trace(
+                        f"Item '{item_id}' missing size/scale, auto-setting to {self.DEFAULT_ITEM_SIZE}",
+                        category="item"
+                    )
+
             DebugLogger.init_sub(
                 f"Loaded {len(self._item_definitions)} item definitions"
             )
@@ -192,16 +201,10 @@ class ItemManager:
 
         if os.path.exists(asset_path):
             try:
-                # [FIX] Load once, cache, and return
                 img = pygame.image.load(asset_path).convert_alpha()
 
-                if size:
-                    # Scale manually here to cache the FINAL result if desired,
-                    # or cache the raw and scale copy. For simplicity, we cache raw.
-                    # (Optimized: Cache the scaled version if size is constant per ID)
-                    img = pygame.transform.scale(img, size)
-
-                self._image_cache[asset_path] = img  # Store in RAM
+                # Do NOT scale here. Raw sprite only.
+                self._image_cache[asset_path] = img
                 return img
             except Exception as e:
                 DebugLogger.warn(f"Failed loading {asset_path}: {e}")

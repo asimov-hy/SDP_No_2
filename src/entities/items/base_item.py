@@ -69,11 +69,19 @@ class BaseItem(BaseEntity):
                          draw_manager=draw_manager, hitbox_config=hitbox_config)
 
         # Extract visual scale and apply to sprite
-        visual_scale = self.item_data.get("scale", 0.1)
-        if visual_scale != 1.0 and self.image:
-            new_size = (int(self.image.get_width() * visual_scale),
-                        int(self.image.get_height() * visual_scale))
-            self.image = pygame.transform.scale(self.image, new_size)
+        BASE_W, BASE_H = (48, 48)
+
+        if "size" in self.item_data:
+            # JSON explicit pixel size override
+            final_size = tuple(self.item_data["size"])
+        else:
+            # JSON scale or default scale (1.0 means 48x48)
+            scale = self.item_data.get("scale", 1.0)
+            final_size = (int(BASE_W * scale), int(BASE_H * scale))
+
+        # Apply scaling once, always from raw sprite
+        if self.image:
+            self.image = pygame.transform.scale(self.image, final_size)
             self.rect = self.image.get_rect(center=(x, y))
 
         self.speed = velo_y
