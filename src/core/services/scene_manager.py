@@ -149,9 +149,6 @@ class SceneManager:
 
         self.input_manager.set_context("ui")
 
-        if "back" in self.input_manager._actions:
-            self.input_manager._actions["back"]["pressed"] = False
-
     def resume_active_scene(self):
         """Resume the currently paused scene."""
         if not self._active_scene:
@@ -170,8 +167,6 @@ class SceneManager:
         if hasattr(self._active_scene, "input_context"):
             self.input_manager.set_context(self._active_scene.input_context)
 
-        if "pause" in self.input_manager._actions:
-            self.input_manager._actions["pause"]["pressed"] = False
     def push_scene(self, name: str, **scene_data):
         """
         Push current scene to stack and switch to new scene.

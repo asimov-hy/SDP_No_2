@@ -151,10 +151,15 @@ class InputManager:
         for action_name, action_state in self._actions.items():
             action_state["pressed"] = False
             action_state["released"] = False
-            # Sync prev_held to actual current key state to prevent false edges
-            is_currently_held = self._is_pressed(action_name, keys)
-            action_state["prev_held"] = is_currently_held
-            action_state["held"] = is_currently_held
+            # Only sync held state if action exists in new context
+            if action_name in self._active_lookup.values():
+                is_currently_held = self._is_pressed(action_name, keys)
+                action_state["prev_held"] = is_currently_held
+                action_state["held"] = is_currently_held
+            else:
+                # Action doesn't exist in new context - reset completely
+                action_state["prev_held"] = False
+                action_state["held"] = False
 
         DebugLogger.state(f"Context switched to [{name.upper()}]")
 
