@@ -63,7 +63,7 @@ def damage_collision(player, other):
     else:
         target_state = "normal"
 
-    iframe_time = player.state_manager.state_config["iframe"]["duration"]
+    iframe_time = player.state_manager.state_config.get("iframe", {}).get("duration", 1.0)
     previous_state = player._current_sprite  # Get OLD state before damage
 
     DebugLogger.state(

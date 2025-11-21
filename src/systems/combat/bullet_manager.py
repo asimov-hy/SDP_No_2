@@ -25,8 +25,9 @@ class BulletManager:
     # ===========================================================
     def __init__(self, draw_manager=None, collision_manager=None):
         self.draw_manager = draw_manager
+        self.collision_manager = collision_manager
         self.active = []  # Active bullets currently in flight
-        self.pool = []    # Inactive bullets available for reuse
+        self.pool = []   # Inactive bullets available for reuse
 
         # Only prewarm if draw_manager available
         if self.draw_manager:
@@ -227,7 +228,6 @@ class BulletManager:
     # ===========================================================
     def _register_hitbox(self, bullet):
         """Register bullet hitbox if collision manager is available."""
-
         if self.collision_manager:
             self.collision_manager.register_hitbox(bullet)
 

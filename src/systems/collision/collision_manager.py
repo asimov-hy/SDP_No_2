@@ -50,6 +50,8 @@ class CollisionManager:
         self._collisions = []
         self._checked_pairs = set()
 
+        self._entity_cache = {}
+
         # [OPTIMIZATION] Pre-allocated 1D spatial grid
         self.GRID_COLS = (Display.WIDTH + self.CELL_SIZE * 2) // self.CELL_SIZE + 1
         self.GRID_ROWS = (Display.HEIGHT + self.CELL_SIZE * 2) // self.CELL_SIZE + 1
@@ -74,6 +76,12 @@ class CollisionManager:
         self.hitboxes[id(entity)] = hitbox
         entity.hitbox = hitbox  # Store back-reference
 
+        # Cache frequently-accessed attributes for hot path optimization
+        entity_id = id(entity)
+        self._entity_cache[entity_id] = {
+            "collision_tag": getattr(entity, "collision_tag", None)
+        }
+
         DebugLogger.trace(f"Registered hitbox for {type(entity).__name__}")
         return hitbox
 
@@ -82,6 +90,8 @@ class CollisionManager:
         entity_id = id(entity)
         if entity_id in self.hitboxes:
             del self.hitboxes[entity_id]
+            # Clean cache entry
+            self._entity_cache.pop(entity_id, None)
             DebugLogger.trace(f"Unregistered hitbox for {type(entity).__name__}")
 
     def get_hitbox(self, entity):
@@ -93,13 +103,8 @@ class CollisionManager:
         Update all registered hitboxes to match entity positions.
         Automatically cleans up hitboxes for dead entities.
         """
-        for entity_id, hitbox in list(self.hitboxes.items()):
-            # Clean up hitboxes for dead entities
-            entity = hitbox.owner
-            if getattr(entity, "death_state", 0) >= LifecycleState.DEAD:
-                del self.hitboxes[entity_id]
-                continue
-
+        for hitbox in self.hitboxes.values():
+            # Trust that dead entities have been unregistered
             # Update hitbox position/size
             hitbox.update()
 
@@ -155,24 +160,24 @@ class CollisionManager:
                                        Display.WIDTH + margin * 2,
                                        Display.HEIGHT + margin * 2)
 
-        DEAD = LifecycleState.DEAD
-
         # Filter active entities
         active_bullets = [
-            b for b in getattr(self.bullet_manager, "active", [])
-            if getattr(b, "death_state", 0) < DEAD
-               and collision_bounds.collidepoint(b.pos)
+            b for b in self.bullet_manager.active
+            if collision_bounds.collidepoint(b.pos)
         ]
 
         active_entities = [
-            e for e in getattr(self.spawn_manager, "entities", [])
-            if getattr(e, "death_state", 0) < DEAD
-               and collision_bounds.collidepoint(e.pos)
+            e for e in self.spawn_manager.entities
+            if collision_bounds.collidepoint(e.pos)
         ]
 
-        player = self.player if getattr(self.player, "death_state", 0) < DEAD else None
+        # Cache player alive check
+        player = None
+        if self.player and self.player.death_state < LifecycleState.DEAD:
+            player = self.player
 
         total_entities = len(active_bullets) + len(active_entities) + (1 if player else 0)
+
         if total_entities == 0:
             return self._collisions
 
@@ -214,10 +219,11 @@ class CollisionManager:
                 for a in cell_objects:
                     a_id = id(a)
                     a_hitbox = get_hitbox(a_id)
-                    if not a_hitbox or not getattr(a_hitbox, "active", True):
+                    if not a_hitbox or not a_hitbox.active:
                         continue
 
-                    a_tag = getattr(a, "collision_tag", None)
+                    a_cache = self._entity_cache.get(a_id, {})
+                    a_tag = a_cache.get("collision_tag")
 
                     for b in neighbor_objs:
                         if a is b:
@@ -231,27 +237,23 @@ class CollisionManager:
                         checked_pairs.add(pair_key)
 
                         b_hitbox = get_hitbox(b_id)
-                        if not b_hitbox or not getattr(b_hitbox, "active", True):
+                        if not b_hitbox or not b_hitbox.active:
                             continue
 
-                        if a.death_state >= DEAD or b.death_state >= DEAD:
-                            continue
+                        b_cache = self._entity_cache.get(b_id, {})
+                        b_tag = b_cache.get("collision_tag")
 
-                        b_tag = getattr(b, "collision_tag", None)
                         if (a_tag, b_tag) not in self.rules and (b_tag, a_tag) not in self.rules:
                             continue
 
-                        a_state = getattr(a, "state", 0)
-                        b_state = getattr(b, "state", 0)
+                        # Check state if entities have it (some entities like items may not)
+                        a_state = getattr(a, 'state', InteractionState.DEFAULT)
+                        b_state = getattr(b, 'state', InteractionState.DEFAULT)
+
                         if a_state >= InteractionState.INTANGIBLE or b_state >= InteractionState.INTANGIBLE:
                             continue
 
                         if self._check_collision(a_hitbox, b_hitbox):
-                            a_hittable = not hasattr(a, "is_hittable") or a.is_hittable()
-                            b_hittable = not hasattr(b, "is_hittable") or b.is_hittable()
-
-                            if not (a_hittable and b_hittable):
-                                continue
 
                             append_collision((a, b))
                             self._process_collision(a, b)
@@ -330,5 +332,5 @@ class CollisionManager:
             return
 
         for hitbox in self.hitboxes.values():
-            if getattr(hitbox, "active", True):
+            if hitbox.active:
                 hitbox.draw_debug(surface)

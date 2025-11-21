@@ -39,7 +39,7 @@ class BaseItem(BaseEntity):
         EntityRegistry.auto_register(cls)
 
     def __init__(self, x, y, item_data=None, image=None, shape_data=None,
-                 draw_manager=None, speed=50, despawn_y=None, lifetime=5.0, bounce=False):
+                 draw_manager=None, speed=500, despawn_y=None, lifetime=5.0, bounce=True):
         """
         Initialize a base item entity.
 
@@ -60,7 +60,7 @@ class BaseItem(BaseEntity):
         physics = self.item_data.get("physics", {})
         velo_x = physics.get("velo_x", 0)
         velo_y = physics.get("velo_y", speed)
-        hitbox_scale = physics.get("hitbox_scale", 0.8)
+        hitbox_scale = physics.get("hitbox_scale", 0.5)
 
         # Build hitbox config
         hitbox_config = {'scale': hitbox_scale}

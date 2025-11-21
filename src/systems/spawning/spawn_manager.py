@@ -42,6 +42,7 @@ class SpawnManager:
         self.display = display
         self.collision_manager = collision_manager
         self.entities = []  # Active entities
+        self._alive_cache = []  # Cache for alive entities (updated per frame)
         self.on_entity_destroyed = None
 
         # Pooling system
@@ -313,22 +314,17 @@ class SpawnManager:
         Args:
             dt (float): Delta time since last frame (in seconds).
         """
-        if not self.entities:
-            return
+        self._alive_cache = [e for e in self.entities if e.death_state < LifecycleState.DEAD]
 
-        # Update all alive entities
-        for entity in self.entities:
-            if entity.death_state < LifecycleState.DEAD:
-                entity.update(dt)
+        for entity in self._alive_cache:
+            entity.update(dt)
 
     # ===========================================================
     # Rendering Pass
     # ===========================================================
     def draw(self):
         """Render all active entities using the global DrawManager."""
-        for entity in self.entities:
-            if entity.death_state == LifecycleState.DEAD:
-                continue
+        for entity in self._alive_cache:
             entity.draw(self.draw_manager)
 
     # ===========================================================

@@ -51,9 +51,8 @@ class PlayerInput:
 class Player(BaseEntity):
     """Represents the controllable player entity."""
 
-    def __init__(self, x: float | None = None, y: float | None = None,
-                 image: pygame.Surface | None = None, draw_manager=None,
-                 input_manager=None):
+    def __init__(self, x=None, y=None, image=None,
+                 draw_manager=None, input_manager=None):
         """Initialize the player entity."""
 
         # ========================================
@@ -61,6 +60,9 @@ class Player(BaseEntity):
         # ========================================
         cfg = load_config("player.json", {})
         self.cfg = cfg
+
+        if "core_attributes" not in cfg or "render" not in cfg or "health_states" not in cfg:
+            raise ValueError("Invalid player.json: missing required sections")
 
         core = cfg["core_attributes"]
         render = cfg["render"]
@@ -158,11 +160,14 @@ class Player(BaseEntity):
         # 6. Collision & Combat
         # ========================================
 
-        if input_manager is not None:
-            self.input_manager = input_manager
-            self.input = PlayerInput(input_manager)  # Wrapper for cleaner queries
-        else:
-            self.input = None
+        # Fail immediately if None passed
+        if input_manager is None:
+            raise ValueError("Player requires input_manager")
+        if draw_manager is None:
+            raise ValueError("Player requires draw_manager")
+
+        self.input_manager = input_manager
+        self.input = PlayerInput(input_manager)
 
         self.bullet_manager = None
         self.base_shoot_cooldown = 0.1
@@ -186,7 +191,7 @@ class Player(BaseEntity):
         # ========================================
         self._rotation_enabled = False  # Players don't rotate
         self._death_frames = []  # No death animation frames for player
-        self.state_manager = StateManager(self, cfg["state_effects"])
+        self.state_manager = StateManager(self, cfg.get("state_effects", {}))
 
         EVENTS.subscribe(EnemyDiedEvent, self._on_enemy_died)
 
@@ -238,18 +243,14 @@ class Player(BaseEntity):
             return
 
         self.anim_manager.update(dt)
-
-        # 1. Time-based status_effects and temporary states
         self.state_manager.update(dt)
-        # 2. Input collection
-        self.input_manager.update()
 
-        # 3. Movement and physics
-        # from .player_movement import update_movement
+        self.input_manager.update()
         update_movement(self, dt)
 
         # 4. Ability logic
-        player_ability.update_shooting(self, dt)
+        if self.bullet_manager:
+            player_ability.update_shooting(self, dt)
 
     def draw(self, draw_manager):
         """Render player if visible."""

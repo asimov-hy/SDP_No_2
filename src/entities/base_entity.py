@@ -114,8 +114,11 @@ class BaseEntity:
 
             return pygame.transform.scale(img, new_size)
 
-        except Exception as e:
-            DebugLogger.fail(f"Failed loading {image_path}: {e}")
+        except pygame.error as e:  # Catch specific Pygame errors for corrupted/unsupported files
+            DebugLogger.fail(f"Pygame failed to load or process {image_path}: {e}")
+            return None
+        except Exception as e:  # Catch all other exceptions (e.g., general OS error)
+            DebugLogger.fail(f"Failed loading/scaling {image_path}: {e}")
             return None
 
     # ===========================================================

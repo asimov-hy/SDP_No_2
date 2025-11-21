@@ -1,13 +1,13 @@
 """
-enemy_straight.py
+enemy_homing.py
 -----------------
-Defines a simple downward-moving enemy for early gameplay testing.
+Defines a homing enemy capable of tracking the player.
 
 Responsibilities
 ----------------
-- Move straight down the screen at a constant speed.
-- Destroy itself when off-screen.
-- Serve as a baseline template for other enemy types.
+- Implement continuous and snapshot homing behaviors.
+- Support waypoint-based movement.
+- Serves as a template for more complex moving enemies.
 """
 
 import pygame
@@ -19,7 +19,7 @@ from src.systems.spawning.entity_registry import EntityRegistry
 
 
 class EnemyHoming(BaseEnemy):
-    """Simple enemy that moves vertically downward and disappears when off-screen."""
+    """Enemy that tracks the player or a point on the screen edge."""
 
     __slots__ = ('homing', 'turn_rate', 'player_ref', 'lock_delay', 'lock_timer', 'locked', 'spawn_edge')
 
