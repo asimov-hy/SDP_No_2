@@ -147,21 +147,17 @@ class BaseEntity:
                 f"Shape will render per-frame (slow). Pass draw_manager for optimization."
             )
 
-        # AUTO-OPTIMIZATION: Convert shape to image at creation time
+        # Convert shape to image at creation time
         if image is None and shape_data and draw_manager:
-            kwargs = shape_data.get("kwargs", {})
-            kwargs = kwargs.copy()
             self.image = draw_manager.prebake_shape(
                 type=shape_data["type"],
                 size=shape_data["size"],
                 color=shape_data["color"],
-                **kwargs
+                **shape_data.get("kwargs", {})
             )
+            self.shape_data = shape_data
 
-            sd_copy = shape_data.copy()
-            if "kwargs" in shape_data:
-                sd_copy["kwargs"] = shape_data["kwargs"].copy()
-            self.shape_data = sd_copy
+            self.shape_data = shape_data
         else:
             self.image = image
 
@@ -211,17 +207,18 @@ class BaseEntity:
         self._current_sprite = None  # Subclasses set initial state
         self._sprite_config = {}  # Subclasses populate state→image/color mapping
 
+        # Animation frame storage (for sprite-cycling animations)
+        self._death_frames = []
+        self._damage_frames = []
+        self.anim_context = {}
+
+        # Initialize animation manager AFTER all attributes exist
         self.anim_manager = AnimationManager(self)
 
         # -------------------------------------------------------
         # Hitbox Configuration
         # -------------------------------------------------------
         self._setup_hitbox_config(hitbox_config)
-
-        # Animation frame storage (for sprite-cycling animations)
-        self._death_frames = []
-        self._damage_frames = []
-        self.anim_context = {}
 
     def _setup_hitbox_config(self, hitbox_config):
         """Initialize hitbox configuration from JSON data."""
@@ -399,7 +396,7 @@ class BaseEntity:
 
         # 1. Determine velocity
         vel = velocity if velocity is not None else getattr(self, 'velocity', None)
-        if vel is None or vel.length_squared() == 0:
+        if vel is None or vel.length_squared() < 0.01:
             return
 
         # 2. Calculate target angle (Assuming sprite faces UP: 0, -1)

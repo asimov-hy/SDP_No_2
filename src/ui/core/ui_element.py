@@ -95,6 +95,7 @@ class UIElement:
 
         # Parent reference
         self.parent: Optional['UIElement'] = None
+        self.current_value = None
 
     def _parse_color(self, color) -> Optional[Tuple[int, ...]]:
         """Parse color from various formats."""
@@ -161,7 +162,8 @@ class UIElement:
             return None
 
         # Scale to element dimensions
-        scaled = pygame.transform.scale(image, (self.width, self.height))
+        w, h = max(1, int(self.width)), max(1, int(self.height))
+        scaled = pygame.transform.scale(image, (w, h))
 
         # Apply tint if specified
         if self.image_tint:
@@ -188,10 +190,10 @@ class UIElement:
                     self.mark_dirty()
 
         # Update animations
-        for anim in self.animations[:]:
-            if anim.update(dt):
-                self.animations.remove(anim)
-                self.mark_dirty()
+        initial_count = len(self.animations)
+        self.animations = [anim for anim in self.animations if not anim.update(dt)]
+        if len(self.animations) < initial_count:
+            self.mark_dirty()
 
     def handle_click(self, mouse_pos: Tuple[int, int]) -> Optional[str]:
         """
