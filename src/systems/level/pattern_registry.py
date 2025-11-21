@@ -57,7 +57,7 @@ class PatternRegistry:
 
         if not pattern_func:
             DebugLogger.warn(f"Unknown pattern '{pattern_name}', using fallback")
-            return [(width / 2, -100)]
+            return [(width / 2, -100)] * count
 
         return pattern_func(count, width, height, config)
 

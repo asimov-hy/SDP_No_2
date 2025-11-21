@@ -21,6 +21,20 @@ class EntityRegistry:
     _registry = {}  # {category: {type_name: class}}
     _entity_data = {}  # {category: {type_name: data_dict}}
 
+    _CATEGORY_MAP = {
+        "enemies": "enemy",
+        "bullets": "projectile",
+        "items": "pickup",
+        "obstacles": "obstacle",
+        "hazards": "hazard"
+    }
+
+    _REQUIRED_FIELDS = {
+        'enemy': ['hp', 'speed', 'exp'],
+        'projectile': ['damage', 'radius'],
+        'pickup': ['effect_type', 'value']
+    }
+
     # ===========================================================
     # Registration
     # ===========================================================
@@ -130,26 +144,17 @@ class EntityRegistry:
         """
         data = load_config(config_path, default_dict={})
 
-        # Check if data was actually loaded
-        if not data:
-            DebugLogger.warn(
-                f"[Registry] No data loaded from {config_path}",
-                category="loading"
-            )
-            return
-
-        # Determine category from filename
-        # enemies.json -> "enemy"
-        # bullets.json -> "projectile"
         filename = config_path.split('/')[-1].replace('.json', '')
-        category_map = {
-            "enemies": "enemy",
-            "bullets": "projectile",
-            "items": "pickup",
-            "obstacles": "obstacle",
-            "hazards": "hazard"
-        }
-        category = category_map.get(filename, filename)
+        category = cls._CATEGORY_MAP.get(filename, filename)
+        required = cls._REQUIRED_FIELDS.get(category, [])
+
+        for name, entity_data in data.items():
+            missing = [f for f in required if f not in entity_data]
+            if missing:
+                DebugLogger.warn(
+                    f"[Registry] Entity '{name}' missing fields: {missing}",
+                    category="loading"
+                )
 
         if category not in cls._entity_data:
             cls._entity_data[category] = {}
