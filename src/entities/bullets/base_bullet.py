@@ -16,7 +16,7 @@ from src.core.runtime import game_settings
 from src.core.runtime.game_settings import Bounds
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
-from src.entities.entity_state import LifecycleState
+from src.entities.entity_state import LifecycleState, InteractionState
 from src.entities.entity_types import EntityCategory, CollisionTags
 from src.systems.spawning.entity_registry import EntityRegistry
 
@@ -25,7 +25,7 @@ class BaseBullet(BaseEntity):
     """Base class for all bullet entities_animation."""
 
     # Add slots for bullet-specific attributes
-    __slots__ = ('vel', 'owner', 'radius', 'damage')
+    __slots__ = ('vel', 'owner', 'radius', 'damage', 'state')
 
     def __init_subclass__(cls, **kwargs):
         """Auto-register bullet subclasses when they're defined."""
@@ -87,6 +87,7 @@ class BaseBullet(BaseEntity):
         self.pos = pygame.Vector2(pos)
         self.vel = pygame.Vector2(vel)
         self.death_state = LifecycleState.ALIVE
+        self.state = InteractionState.DEFAULT
         self.owner = owner
         self.radius = radius
         self.damage = damage

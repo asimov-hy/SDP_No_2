@@ -29,12 +29,6 @@ class StraightBullet(BaseBullet):
         """Initialize a straight-line bullet instance."""
         super().__init__(*args, **kwargs)
 
-        # Ensure consistent collision tag
-        self.collision_tag = f"{self.owner}_bullet"
-
-        # Optional debug trace
-        # DebugLogger.trace(f"[BulletInit] StraightBullet ({self.owner}) created")
-
     # ===========================================================
     # Update Logic
     # ===========================================================

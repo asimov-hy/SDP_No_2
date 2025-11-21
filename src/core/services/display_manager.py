@@ -10,7 +10,7 @@ Responsibilities
 - Maintain consistent scaling and letterboxing across resolutions.
 - Provide coordinate conversions (screen ↔ game space).
 - Handle render scaling and resizing behavior.
-- Support user-resizable windows.
+- Support preset window sizes (user resizing disabled).
 """
 
 import pygame
@@ -106,7 +106,7 @@ class DisplayManager:
             )
             self.is_fullscreen = True
         else:
-            # Windowed: Use preset size and allow user resizing
+            # Windowed: Use preset size (fixed - resizing disabled)
             from src.core.runtime.game_settings import Display
             window_w, window_h = Display.WINDOW_SIZES.get(
                 self.window_size_preset,

@@ -12,6 +12,7 @@ Responsibilities
 """
 
 import pygame
+import math
 from src.core.runtime.game_settings import Display, Layers
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import LifecycleState
@@ -25,7 +26,8 @@ class BaseItem(BaseEntity):
     """Base class for all collectible items."""
 
     __slots__ = (
-        'item_data', 'speed', 'despawn_y', 'velocity'
+        'item_data', 'speed', 'despawn_y', 'velocity',
+        'lifetime', 'lifetime_timer', 'bounce_enabled'
     )
 
     __registry_category__ = "pickup"
@@ -37,7 +39,7 @@ class BaseItem(BaseEntity):
         EntityRegistry.auto_register(cls)
 
     def __init__(self, x, y, item_data=None, image=None, shape_data=None,
-                 draw_manager=None, speed=50, despawn_y=None):
+                 draw_manager=None, speed=50, despawn_y=None, lifetime=5.0, bounce=False):
         """
         Initialize a base item entity.
 
@@ -85,19 +87,43 @@ class BaseItem(BaseEntity):
         # Movement - use physics data
         self.velocity = pygame.Vector2(velo_x, velo_y)
 
+        # Timer system
+        self.lifetime = lifetime
+        self.lifetime_timer = 0.0
+
+        # Bouncing
+        self.bounce_enabled = bounce
+        if bounce:
+            # Random initial direction
+            import random
+            angle = random.uniform(0, 360)
+            self.velocity = pygame.Vector2(
+                speed * math.cos(math.radians(angle)),
+                speed * math.sin(math.radians(angle))
+            )
+
     def update(self, dt: float):
-        """Update item position and check for despawn."""
         if self.death_state != LifecycleState.ALIVE:
             return
 
-        # Move downward
+        # Timer despawn
+        self.lifetime_timer += dt
+        if self.lifetime_timer >= self.lifetime:
+            self.mark_dead(immediate=True)
+            return
+
+        # Move
         self.pos.x += self.velocity.x * dt
         self.pos.y += self.velocity.y * dt
-        self.sync_rect()
 
-        # Despawn if off-screen
-        if self.rect.top > self.despawn_y:
-            self.mark_dead(immediate=True)
+        # Bounce off screen edges
+        if self.bounce_enabled:
+            if self.pos.x <= 0 or self.pos.x >= Display.WIDTH:
+                self.velocity.x *= -1  # Reflect X
+            if self.pos.y <= 0 or self.pos.y >= Display.HEIGHT:
+                self.velocity.y *= -1  # Reflect Y
+
+        self.sync_rect()
 
     def draw(self, draw_manager):
         """Render the item sprite."""
@@ -150,6 +176,9 @@ class BaseItem(BaseEntity):
         """
         # Reset base entity state
         super().reset(x, y, **kwargs)
+
+        # Reset timer
+        self.lifetime_timer = 0.0
 
         # Update speed if provided
         if speed is not None:

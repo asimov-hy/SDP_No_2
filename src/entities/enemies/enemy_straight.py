@@ -110,22 +110,6 @@ class EnemyStraight(BaseEnemy):
         image_path = defaults.get("image")
         hitbox_scale = defaults.get("hitbox", {}).get("scale", 0.85)
 
-        # Reload and rescale image if using image mode
-        if image_path and os.path.exists(image_path):
-            img = pygame.image.load(image_path).convert_alpha()
-
-            # Apply scale
-            if isinstance(scale, (int, float)):
-                new_size = (int(img.get_width() * scale), int(img.get_height() * scale))
-            elif isinstance(scale, (list, tuple)) and len(scale) == 2:
-                new_size = (int(img.get_width() * scale[0]), int(img.get_height() * scale[1]))
-            else:
-                new_size = img.get_size()
-
-            self.image = pygame.transform.scale(img, new_size)
-            self.rect = self.image.get_rect(center=(x, y))
-            self._base_image = self.image
-
         # Update exp value in case it changed
         self.exp_value = defaults.get("exp", 0)
 
@@ -138,3 +122,7 @@ class EnemyStraight(BaseEnemy):
             spawn_edge=kwargs.get("spawn_edge"),
             hitbox_scale=hitbox_scale
         )
+
+        # Reload and rescale image if using image mode
+        if image_path:
+            self._reload_image_cached(image_path, scale)

@@ -26,14 +26,7 @@ from . import player_ability
 class PlayerInput:
     """Wrapper to simplify action queries without explicit imports."""
 
-    __slots__ = (
-        'cfg', 'render_mode', 'velocity', 'base_speed', 'health', 'max_health',
-        'exp', 'level', 'exp_required', 'visible', 'state',
-        'health_thresholds', '_threshold_moderate', '_threshold_critical',
-        'input_manager', 'input', 'bullet_manager',
-        'base_shoot_cooldown', 'shoot_timer', 'bullet_image',
-        'state_manager'
-    )
+    __slots__ = ('input_manager',)
 
     def __init__(self, input_manager):
         self.input_manager = input_manager

@@ -101,7 +101,6 @@ class GameLoop:
         Main loop that runs until the game is closed.
 
         Responsibilities:
-            - Process input events.
             - Update active scene and debug systems.
             - Render all visual elements each frame.
         """

@@ -112,6 +112,7 @@ class BaseEnemy(BaseEntity):
 
         # Initialize velocity
         self.velocity = pygame.Vector2(0, 0)
+        self.state = InteractionState.DEFAULT
 
         if direction is None:
             dir_vec = self._auto_direction_from_edge(spawn_edge)
@@ -318,3 +319,15 @@ class BaseEnemy(BaseEntity):
     def on_nuke_used(self, event: NukeUsedEvent):
         """Kill enemy instantly when nuke is used."""
         self.take_damage(self.max_health + 1, source="nuke")
+
+    def _reload_image_cached(self, image_path, scale):
+        """Reload image only if not cached, or scale changed."""
+        if hasattr(self, '_base_image') and self._base_image:
+            # Reuse cached image
+            self.image = self._base_image
+            self.rect = self.image.get_rect(center=self.pos)
+        else:
+            # First load - cache it
+            self.image = BaseEntity.load_and_scale_image(image_path, scale)
+            self._base_image = self.image
+            self.rect = self.image.get_rect(center=self.pos)

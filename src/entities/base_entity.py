@@ -156,8 +156,6 @@ class BaseEntity:
                 **shape_data.get("kwargs", {})
             )
             self.shape_data = shape_data
-
-            self.shape_data = shape_data
         else:
             self.image = image
 
