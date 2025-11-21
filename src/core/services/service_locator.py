@@ -10,6 +10,10 @@ class ServiceLocator:
     Container for core game services.
     Provides domain-specific API for common access patterns.
     """
+    __slots__ = (
+        'scene_manager', 'display_manager', 'input_manager',
+        'draw_manager', 'ui_manager', '_global_systems', '_entities'
+    )
 
     def __init__(self, scene_manager):
         """
@@ -20,6 +24,13 @@ class ServiceLocator:
         """
         # Core managers (always available)
         self.scene_manager = scene_manager
+
+        # Validate required managers exist
+        required = ['display', 'input_manager', 'draw_manager', 'ui_manager']
+        for attr in required:
+            if not hasattr(scene_manager, attr):
+                raise ValueError(f"SceneManager missing required attribute: {attr}")
+
         self.display_manager = scene_manager.display
         self.input_manager = scene_manager.input_manager
         self.draw_manager = scene_manager.draw_manager
@@ -142,6 +153,10 @@ class ServiceLocator:
         Called automatically on scene exit.
         """
         self._entities.clear()
+
+    def clear_globals(self):
+        """Clear all global systems. Use with caution - typically only on full shutdown."""
+        self._global_systems.clear()
 
     # ===========================================================
     # Scene Transition Convenience

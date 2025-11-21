@@ -7,6 +7,7 @@ in a clean dotted diagnostic style.
 """
 
 import inspect
+import sys
 import os
 from datetime import datetime
 from src.core.runtime.game_settings import LoggerConfig
@@ -43,27 +44,23 @@ class DebugLogger:
         "fail": red,
     }
 
+    _LEVEL_VALUES = {"NONE": 0, "ERROR": 1, "WARN": 2, "INFO": 3, "VERBOSE": 4}
+
     # ===========================================================
     # Internal helpers
     # ===========================================================
     @staticmethod
     def _get_caller():
-        stack = inspect.stack()
-        for i, frame in enumerate(stack):
-            if frame.function in ("_log", "init"):
-                depth = i + 2
-                break
-        else:
-            depth = 2
-        frame = stack[depth]
-        module = inspect.getmodule(frame[0])
-        if "self" in frame.frame.f_locals:
-            return frame.frame.f_locals["self"].__class__.__name__
-        if "cls" in frame.frame.f_locals:
-            return frame.frame.f_locals["cls"].__name__
-        if module and hasattr(module, "__file__"):
-            return os.path.splitext(os.path.basename(module.__file__))[0]
-        return "Unknown"
+        """Fast caller detection using direct frame access"""
+        try:
+            frame = sys._getframe(3)
+            if 'self' in frame.f_locals:
+                return frame.f_locals['self'].__class__.__name__
+            if 'cls' in frame.f_locals:
+                return frame.f_locals['cls'].__name__
+            return frame.f_code.co_filename.split('/')[-1].replace('.py', '')
+        except:
+            return "Unknown"
 
     @staticmethod
     def _build_prefix(timestamp, source, tag, meta_mode):
@@ -89,10 +86,11 @@ class DebugLogger:
     def _should_log(category: str, level: str) -> bool:
         if not LoggerConfig.ENABLE_LOGGING:
             return False
-        if category not in LoggerConfig.CATEGORIES or not LoggerConfig.CATEGORIES[category]:
+        if not LoggerConfig.CATEGORIES.get(category, False):
             return False
-        order = ["NONE", "ERROR", "WARN", "INFO", "VERBOSE"]
-        return order.index(level) <= order.index(LoggerConfig.LOG_LEVEL)
+        level_val = DebugLogger._LEVEL_VALUES.get(level, 3)
+        config_val = DebugLogger._LEVEL_VALUES.get(LoggerConfig.LOG_LEVEL, 3)
+        return level_val <= config_val
 
     @staticmethod
     def _log(tag: str, message: str, color: str = "reset",

@@ -5,7 +5,7 @@ Defines runtime state enumerations for all entity types.
 Contains only states that change over time during gameplay.
 """
 
-from enum import IntEnum, auto
+from enum import IntEnum
 
 
 class LifecycleState(IntEnum):

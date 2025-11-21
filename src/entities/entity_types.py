@@ -22,7 +22,7 @@ class EntityCategory:
 
     # Valid categories for EntityRegistry registration
     # (PLAYER excluded - not spawnable via registry)
-    REGISTRY_VALID = {ENEMY, PROJECTILE, PICKUP, OBSTACLE, HAZARD, ENVIRONMENT, PARTICLE}
+    REGISTRY_VALID = frozenset({ENEMY, PROJECTILE, PICKUP, OBSTACLE, HAZARD, ENVIRONMENT, PARTICLE})
 
 
 # ===========================================================
