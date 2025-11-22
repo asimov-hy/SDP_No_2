@@ -174,6 +174,41 @@ class UIManager:
         self.hud_elements.clear()
 
     # ===================================================================
+    # Element Lookup
+    # ===================================================================
+
+    def find_element_by_id(self, screen_name: str, element_id: str):
+        """
+        Find element by id in a screen.
+
+        Args:
+            screen_name: Screen to search in
+            element_id: Element id to find
+
+        Returns:
+            UIElement or None
+        """
+        screen = self.screens.get(screen_name)
+        if not screen:
+            return None
+        return self._find_in_tree(screen, element_id)
+
+    def _find_in_tree(self, element, target_id: str):
+        """Recursive element search by id."""
+        # Check element.id attribute
+        if getattr(element, 'id', None) == target_id:
+            return element
+        # Check config dict id
+        if getattr(element, 'config', {}).get('id') == target_id:
+            return element
+        # Recurse children
+        for child in getattr(element, 'children', []):
+            result = self._find_in_tree(child, target_id)
+            if result:
+                return result
+        return None
+
+    # ===================================================================
     # Binding Management
     # ===================================================================
 

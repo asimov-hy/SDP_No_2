@@ -16,16 +16,13 @@ from src.systems.combat.bullet_manager import BulletManager
 from src.systems.collision.collision_manager import CollisionManager
 from src.systems.spawning.spawn_manager import SpawnManager
 from src.systems.level.level_manager import LevelManager
-from src.systems.level.level_registry import LevelRegistry
 from src.systems.items.item_manager import ItemManager
-from src.systems.spawning.entity_registry import EntityRegistry
 
 # Animation registration
 from src.graphics.animations.entities_animation import player_animation
 from src.graphics.animations.entities_animation import enemy_animation
 from src.graphics.animations.animation_effects import common_animation
 
-# Animation registration
 
 class GameSystemInitializer(SystemInitializer):
     """
@@ -43,9 +40,6 @@ class GameSystemInitializer(SystemInitializer):
         DebugLogger.init_entry("Initializing Game Systems")
 
         systems = {}
-
-        # Load entity configurations
-        self._load_entity_configs()
 
         # Initialize systems in dependency order
         systems['ui'] = self._init_ui()
@@ -71,13 +65,6 @@ class GameSystemInitializer(SystemInitializer):
     # ===========================================================
     # System Initialization Methods
     # ===========================================================
-
-    def _load_entity_configs(self):
-        """Load all entity JSON definitions."""
-        EntityRegistry.load_entity_data("entities/enemies.json")
-        # EntityRegistry.load_entity_data("entities/bullets.json")
-        EntityRegistry.load_entity_data("entities/items.json")
-
     def _init_ui(self) -> UIManager:
         """Initialize UI system."""
         ui = UIManager(

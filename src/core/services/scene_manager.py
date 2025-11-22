@@ -43,6 +43,11 @@ class SceneManager:
         LevelRegistry.load_config("campaigns.json")
         DebugLogger.init_sub("Level registry loaded")
 
+        # Pre-load entity configs once at startup
+        EntityRegistry.load_entity_data("entities/enemies.json")
+        EntityRegistry.load_entity_data("entities/items.json")
+        DebugLogger.init_sub("Entity configs pre-loaded")
+
         # Scene registry - map names to classes
         self.scene_classes = {
             "MainMenu": MainMenuScene,
@@ -88,8 +93,7 @@ class SceneManager:
         if self._active_scene:
             DebugLogger.state(f"Exiting {self._active_name}")
             self._active_scene.state = SceneState.EXITING
-            if hasattr(self._active_scene, "on_exit"):
-                self._active_scene.on_exit()
+            self._active_scene.on_exit()
 
             # Clear scene-local entities
             self.services.clear_entities()
@@ -107,9 +111,8 @@ class SceneManager:
 
         # === STEP 3: Load new scene ===
         new_scene.state = SceneState.LOADING
-        if hasattr(new_scene, "on_load"):
-            DebugLogger.state(f"Loading {name}")
-            new_scene.on_load(**scene_data)
+        DebugLogger.state(f"Loading {name}")
+        new_scene.on_load(**scene_data)
 
         # === STEP 4: Activate ===
         new_scene.state = SceneState.ACTIVE
@@ -125,13 +128,11 @@ class SceneManager:
             return
 
         # === STEP 6: Enter scene ===
-        if hasattr(new_scene, "on_enter"):
-            DebugLogger.state(f"Entering {name}")
-            new_scene.on_enter()
+        DebugLogger.state(f"Entering {name}")
+        new_scene.on_enter()
 
         # === STEP 7: Switch input context ===
-        if hasattr(new_scene, "input_context"):
-            self.input_manager.set_context(new_scene.input_context)
+        self.input_manager.set_context(new_scene.input_context)
 
     def pause_active_scene(self):
         """Pause the currently active scene."""
@@ -144,8 +145,7 @@ class SceneManager:
         DebugLogger.state(f"Pausing {self._active_name}")
         self._active_scene.state = SceneState.PAUSED
 
-        if hasattr(self._active_scene, "on_pause"):
-            self._active_scene.on_pause()
+        self._active_scene.on_pause()
 
         self.input_manager.set_context("ui")
 
@@ -160,12 +160,10 @@ class SceneManager:
         DebugLogger.state(f"Resuming {self._active_name}")
         self._active_scene.state = SceneState.ACTIVE
 
-        if hasattr(self._active_scene, "on_resume"):
-            self._active_scene.on_resume()
+        self._active_scene.on_resume()
 
         # Restore scene's input context
-        if hasattr(self._active_scene, "input_context"):
-            self.input_manager.set_context(self._active_scene.input_context)
+        self.input_manager.set_context(self._active_scene.input_context)
 
     def push_scene(self, name: str, **scene_data):
         """
@@ -194,8 +192,7 @@ class SceneManager:
         # Exit current scene
         if self._active_scene:
             self._active_scene.state = SceneState.EXITING
-            if hasattr(self._active_scene, "on_exit"):
-                self._active_scene.on_exit()
+            self._active_scene.on_exit()
 
         # Restore previous scene
         prev = self._scene_stack.pop()
@@ -206,15 +203,13 @@ class SceneManager:
 
         # CRITICAL: If returning to paused game, restore pause UI
         if self._active_name == "Game" and self._active_scene.state == SceneState.PAUSED:
-            if hasattr(self._active_scene, "on_pause"):
-                self._active_scene.on_pause()  # Re-show pause overlay
+            self._active_scene.on_pause()  # Re-show pause overlay
 
         # Restore input context
-        if hasattr(self._active_scene, "input_context"):
-            if self._active_scene.state == SceneState.PAUSED:
-                self.input_manager.set_context("ui")
-            else:
-                self.input_manager.set_context(self._active_scene.input_context)
+        if self._active_scene.state == SceneState.PAUSED:
+            self.input_manager.set_context("ui")
+        else:
+            self.input_manager.set_context(self._active_scene.input_context)
 
     # ===========================================================
     # Event, Update, Draw Delegation
@@ -239,12 +234,10 @@ class SceneManager:
 
                 # Activate and enter new scene
                 self._active_scene.state = SceneState.ACTIVE
-                if hasattr(self._active_scene, "on_enter"):
-                    self._active_scene.on_enter()
+                self._active_scene.on_enter()
 
                 # Switch input context
-                if hasattr(self._active_scene, "input_context"):
-                    self.input_manager.set_context(self._active_scene.input_context)
+                self.input_manager.set_context(self._active_scene.input_context)
             return
 
         # Handle pause toggle - only in Game scene

@@ -8,7 +8,6 @@ import pygame
 from src.scenes.base_scene import BaseScene
 from src.systems.game_system_initializer import GameSystemInitializer
 from src.core.runtime.game_settings import Debug
-from src.systems.level.level_registry import LevelRegistry
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.entity_state import LifecycleState
 from src.core.runtime.session_stats import update_session_stats
@@ -56,8 +55,10 @@ class GameScene(BaseScene):
         self.selected_level_id = level_id
 
         # Load campaign from registry
+        level_registry = self.services.get_global("level_registry")
+
         if campaign_name:
-            self.campaign = LevelRegistry.get_campaign(campaign_name)
+            self.campaign = level_registry.get_campaign(campaign_name)
             if self.campaign:
                 DebugLogger.init_sub(f"Loaded campaign: {campaign_name} ({len(self.campaign)} levels)")
             else:
@@ -65,7 +66,7 @@ class GameScene(BaseScene):
                 self.campaign = []
         else:
             # Default campaign
-            self.campaign = LevelRegistry.get_campaign("test")
+            self.campaign = level_registry.get_campaign("test")
             if self.campaign:
                 DebugLogger.init_sub(f"Loaded default campaign: test ({len(self.campaign)} levels)")
             else:
@@ -73,6 +74,8 @@ class GameScene(BaseScene):
 
     def on_enter(self):
         """Start first level when scene becomes active."""
+        level_registry = self.services.get_global("level_registry")
+
         # Load HUD
         self.ui.load_hud("hud/gameplay_hud.yaml")
 
@@ -85,7 +88,7 @@ class GameScene(BaseScene):
 
         # Start specific level if selected
         if self.selected_level_id:
-            level_config = LevelRegistry.get(self.selected_level_id)
+            level_config = level_registry.get(self.selected_level_id)
             if level_config:
                 DebugLogger.state(f"Starting level: {level_config.name}")
                 self.level_manager.load(level_config.path)
@@ -98,7 +101,7 @@ class GameScene(BaseScene):
             self.level_manager.load(first_level.path)
         else:
             # Fallback to default start level
-            start_level = LevelRegistry.get_default_start()
+            start_level = level_registry.get_default_start()
             if start_level:
                 DebugLogger.state(f"Starting level: {start_level.name}")
                 self.level_manager.load(start_level.path)
@@ -194,14 +197,8 @@ class GameScene(BaseScene):
         """Show game over overlay with stats."""
         self.game_over_shown = True
 
-        # Get overlay root element
-        overlay = self.ui.screens.get("game_over")
-        if not overlay:
-            DebugLogger.warn("Game over overlay not loaded")
-            return
-
         # Update title
-        title_elem = self._find_element_by_id(overlay, "title_label")
+        title_elem = self.ui.find_element_by_id("game_over", "title_label")
         if title_elem:
             if victory:
                 title_elem.text = "MISSION ACCOMPLISHED"
@@ -212,22 +209,22 @@ class GameScene(BaseScene):
             title_elem.mark_dirty()
 
         # Update stats
-        score_elem = self._find_element_by_id(overlay, "score_label")
+        score_elem = self.ui.find_element_by_id("game_over", "score_label")
         if score_elem:
             score_elem.text = f"Score: {update_session_stats().score}"
             score_elem.mark_dirty()
 
-        kills_elem = self._find_element_by_id(overlay, "kills_label")
+        kills_elem = self.ui.find_element_by_id("game_over", "kills_label")
         if kills_elem:
             kills_elem.text = f"Enemies Killed: {update_session_stats().enemies_killed}"
             kills_elem.mark_dirty()
 
-        items_elem = self._find_element_by_id(overlay, "items_label")
+        items_elem = self.ui.find_element_by_id("game_over", "items_label")
         if items_elem:
             items_elem.text = f"Items Collected: {update_session_stats().items_collected}"
             items_elem.mark_dirty()
 
-        time_elem = self._find_element_by_id(overlay, "time_label")
+        time_elem = self.ui.find_element_by_id("game_over", "time_label")
         if time_elem:
             minutes = int(update_session_stats().run_time // 60)
             seconds = int(update_session_stats().run_time % 60)
@@ -238,16 +235,3 @@ class GameScene(BaseScene):
         self.ui.show_screen("game_over", modal=True)
 
         DebugLogger.state(f"Game over shown (victory={victory})", category="game")
-
-    def _find_element_by_id(self, root, element_id):
-        """Recursively find element by id."""
-        if hasattr(root, 'config') and root.config.get('id') == element_id:
-            return root
-
-        if hasattr(root, 'children'):
-            for child in root.children:
-                result = self._find_element_by_id(child, element_id)
-                if result:
-                    return result
-
-        return None
