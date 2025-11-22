@@ -8,7 +8,80 @@ in a clean dotted diagnostic style.
 
 import sys
 from datetime import datetime
-from src.core.runtime.game_settings import LoggerConfig
+
+# ===========================================================
+# Logger Configuration (Textual / Console Logging)
+# ===========================================================
+class LoggerConfig:
+    """
+    Controls which components emit log messages and at what verbosity level.
+    Used by DebugLogger to decide what to print.
+    """
+
+    # Master Control
+    ENABLE_LOGGING = True
+    LOG_LEVEL = "INFO"  # NONE, ERROR, WARN, INFO, VERBOSE
+
+    # Category Filters (only current categories in use)
+    CATEGORIES = {
+        # ---------------------------------------------------
+        # Core Engine Systems
+        # ---------------------------------------------------
+        "loading": False,
+        "system": True,              # General runtime lifecycle and initialization
+        "display": True,             # DisplayManager, window creation, scaling
+        "scene": True,               # SceneManager, transitions, and active scene info
+        "input": True,               # InputManager events and key handling
+        "debug_hud": True,           # DebugHUD and HUD rendering
+
+        # ---------------------------------------------------
+        # Game Loop / State
+        # ---------------------------------------------------
+        "stage": True,               # StageManager, wave control, scene flow
+        "game_state": True,          # GameState transitions and mode tracking
+        "timing": False,             # Delta time, fixed step timing, frame stats
+
+        # ---------------------------------------------------
+        # Entity & Gameplay Systems
+        # ---------------------------------------------------
+        "entity_core": True,         # BaseEntity initialization, IDs, and registration
+        "entity_logic": True,        # Common entity behavior and updates
+        "entity_spawn": False,       # SpawnManager activity and enemy waves
+        "entity_cleanup": False,     # Entity removal or offscreen cleanup
+        "collision": False,          # CollisionManager, hit detection traces
+        "bullet": True,              # BulletManager creation and pooling
+        "animation_effects": False,            # Visual/particle effects creation and cleanup
+        "animation": True,           # AnimationManager initialization and updates
+        "event": True,
+        "item": True,
+        "level": False,
+        "exp": True,
+
+        # ---------------------------------------------------
+        # Rendering & Drawing
+        # ---------------------------------------------------
+        "drawing": False,             # DrawManager operations and layer sorting
+        "render": True,              # Display render pipeline and scaling logs
+
+        # ---------------------------------------------------
+        # User / Interaction
+        # ---------------------------------------------------
+        "user_action": False,        # Player input, ui interactions
+        "ui": True,                  # UIManager, button states, and transitions
+
+        # ---------------------------------------------------
+        # Optional / Experimental
+        # ---------------------------------------------------
+        "performance": False,        # FPS / frame time diagnostics
+        "audio": False               # SoundManager (placeholder)
+    }
+
+    # Output Style
+    SHOW_TIMESTAMP = True
+    SHOW_CATEGORY = True
+    SHOW_LEVEL = True
+    # Optional: SAVE_TO_FILE = False
+
 
 black = "\033[0m"
 white = "\033[97m"
@@ -18,6 +91,7 @@ cyan = "\033[96m"
 blue = "\033[94m"
 yellow = "\033[93m"
 red = "\033[91m"
+
 
 class DebugLogger:
     length = 59

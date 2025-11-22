@@ -185,8 +185,4 @@ class GameSystemInitializer(SystemInitializer):
             LevelManager instance
         """
         level_manager = LevelManager(spawn_manager, player_ref=player)
-
-        # Load campaign registry (configs only, not specific campaign)
-        LevelRegistry.load_config("campaigns.json")
-
         return level_manager

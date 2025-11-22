@@ -230,7 +230,6 @@ class CollisionHitbox:
         rect = getattr(self.owner, "rect", None)
 
         if not rect:
-            DebugLogger.warn(f"[Hitbox] {type(self.owner).__name__} lost rect reference")
             return
 
         # Store old position for change detection

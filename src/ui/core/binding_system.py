@@ -56,11 +56,8 @@ class BindingSystem:
 
         # Navigate path
         for part in parts[1:]:
-            try:
-                obj = getattr(obj, part, None)
-                if obj is None:
-                    return None
-            except AttributeError:
+            obj = getattr(obj, part, None)
+            if obj is None:
                 return None
 
         return obj
