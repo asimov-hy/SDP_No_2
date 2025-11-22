@@ -11,6 +11,13 @@ from typing import Tuple, Optional, Union, List
 class AnchorResolver:
     """Resolves ui element positions from various anchor modes."""
 
+    _ALIGNMENT_MULTIPLIERS = {
+        'top_left': (0, 0), 'top_center': (0.5, 0), 'top': (0.5, 0), 'top_right': (1, 0),
+        'center_left': (0, 0.5), 'left': (0, 0.5), 'center': (0.5, 0.5),
+        'center_right': (1, 0.5), 'right': (1, 0.5),
+        'bottom_left': (0, 1), 'bottom_center': (0.5, 1), 'bottom': (0.5, 1), 'bottom_right': (1, 1),
+    }
+
     def __init__(self, game_width: int, game_height: int):
         """
         Initialize resolver with game dimensions.
@@ -75,60 +82,10 @@ class AnchorResolver:
 
         return pygame.Rect(int(final_x), int(final_y), element.width, element.height)
 
-    def _get_element_alignment(self, anchor, elem_width: int, elem_height: int, element_align: str = None) -> Tuple[
-        int, int]:
-        """
-        Get element alignment offset based on anchor type or explicit alignment.
-
-        This determines which point of the element aligns to the anchor.
-
-        Args:
-            anchor: Anchor specification
-            elem_width: Element width
-            elem_height: Element height
-            element_align: Optional explicit alignment override
-
-        Returns:
-            (x, y) offset from element's top-left to alignment point
-        """
-        if anchor is None:
-            return 0, 0
-
-        # Determine position string
-        if element_align:
-            # Use explicit alignment if provided
-            position = element_align
-        elif isinstance(anchor, str):
-            # Otherwise match anchor type
-            if anchor.startswith('#'):
-                # For element anchors, default to center alignment
-                # unless explicit alignment is provided
-                position = 'center'
-            else:
-                # Remove "parent_" prefix if present
-                position = anchor.replace('parent_', '')
-        else:
-            # Percentage anchors default to center alignment
-            return elem_width // 2, elem_height // 2
-
-        # Calculate alignment offset based on position
-        alignments = {
-            'top_left': (0, 0),
-            'top_center': (elem_width // 2, 0),
-            'top': (elem_width // 2, 0),
-            'top_right': (elem_width, 0),
-            'center_left': (0, elem_height // 2),
-            'left': (0, elem_height // 2),
-            'center': (elem_width // 2, elem_height // 2),
-            'center_right': (elem_width, elem_height // 2),
-            'right': (elem_width, elem_height // 2),
-            'bottom_left': (0, elem_height),
-            'bottom_center': (elem_width // 2, elem_height),
-            'bottom': (elem_width // 2, elem_height),
-            'bottom_right': (elem_width, elem_height),
-        }
-
-        return alignments.get(position, (elem_width // 2, elem_height // 2))
+    def _calculate_rect_anchor(self, rect: pygame.Rect, position: str) -> Tuple[int, int]:
+        """Calculate anchor point on a rectangle."""
+        mult = self._ALIGNMENT_MULTIPLIERS.get(position, (0, 0))
+        return int(rect.x + rect.width * mult[0]), int(rect.y + rect.height * mult[1])
 
     def _get_anchor_point(self, anchor, parent, element) -> Tuple[int, int]:
         """
@@ -191,26 +148,6 @@ class AnchorResolver:
         # Screen-relative anchors
         screen_rect = pygame.Rect(0, 0, self.game_width, self.game_height)
         return self._calculate_rect_anchor(screen_rect, name)
-
-    def _calculate_rect_anchor(self, rect: pygame.Rect, position: str) -> Tuple[int, int]:
-        """Calculate anchor point on a rectangle."""
-        positions = {
-            'center': rect.center,
-            'top_left': rect.topleft,
-            'top_center': rect.midtop,
-            'top': rect.midtop,
-            'top_right': rect.topright,
-            'center_left': rect.midleft,
-            'left': rect.midleft,
-            'center_right': rect.midright,
-            'right': rect.midright,
-            'bottom_left': rect.bottomleft,
-            'bottom_center': rect.midbottom,
-            'bottom': rect.midbottom,
-            'bottom_right': rect.bottomright,
-        }
-
-        return positions.get(position, rect.topleft)
 
     def _get_percentage_anchor(self, anchor: Union[List, Tuple], parent) -> Tuple[int, int]:
         """
@@ -301,3 +238,36 @@ class AnchorResolver:
             y = int(y_offset)
 
         return x, y
+
+    def _get_element_alignment(self, anchor, elem_width: int, elem_height: int, element_align: str = None) -> Tuple[
+        int, int]:
+        """
+        Get element alignment offset based on anchor type or explicit alignment.
+
+        Args:
+            anchor: Anchor specification
+            elem_width: Element width
+            elem_height: Element height
+            element_align: Optional explicit alignment override
+
+        Returns:
+            (x, y) offset from element's top-left to alignment point
+        """
+        if anchor is None:
+            return 0, 0
+
+        # Determine position string
+        if element_align:
+            position = element_align
+        elif isinstance(anchor, str):
+            if anchor.startswith('#'):
+                position = 'center'
+            else:
+                position = anchor.replace('parent_', '')
+        else:
+            # Percentage anchors default to center
+            position = 'center'
+
+        # Use shared multipliers
+        mult = self._ALIGNMENT_MULTIPLIERS.get(position, (0.5, 0.5))
+        return int(elem_width * mult[0]), int(elem_height * mult[1])

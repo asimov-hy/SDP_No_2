@@ -265,3 +265,50 @@ class DebugHUD:
         self.visible = not self.visible
         state = "shown" if self.visible else "hidden"
         DebugLogger.action(f"DebugHUD {state}")
+
+    def record_frame_metrics(self, frame_time_ms: float, scene_time: float, render_time: float, fps: float):
+        """
+        Record all frame timing metrics. Called once per frame by GameLoop.
+
+        Args:
+            frame_time_ms: Total frame time in milliseconds
+            scene_time: Scene update time in milliseconds
+            render_time: Render pass time in milliseconds
+            fps: Current frames per second
+        """
+        # Core timing
+        self.frame_time = frame_time_ms
+        self.update_time = scene_time
+        self.render_time = render_time
+
+        # Frame time history (for graphs)
+        self.frame_time_history.append(frame_time_ms)
+        if len(self.frame_time_history) > self.frame_time_history_max:
+            self.frame_time_history.pop(0)
+
+        # FPS history (for graphs)
+        self.fps_history.append(fps)
+        if len(self.fps_history) > self.fps_history_max:
+            self.fps_history.pop(0)
+
+        # Smoothed FPS (exponential moving average)
+        self.smoothed_fps = (
+            self.smoothed_fps * 0.9 + fps * 0.1
+            if self.smoothed_fps > 0 else fps
+        )
+
+        # Recent average (rolling window)
+        self.recent_fps_sum += fps
+        self.recent_fps_count += 1
+        if self.recent_fps_count > 300:  # 5-second window decay
+            self.recent_fps_sum *= 0.5
+            self.recent_fps_count = int(self.recent_fps_count * 0.5)
+
+        # Min/Max tracking
+        if fps > self.max_fps:
+            self.max_fps = fps
+
+        if fps < self.min_fps:
+            import time
+            self.min_fps = fps
+            self.min_fps_time = time.strftime("%H:%M:%S")

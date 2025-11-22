@@ -35,6 +35,7 @@ class UIContainer(UIElement):
         # Auto-calculate size if not specified
         self.auto_size = config.get('auto_size', False)
 
+
     def add_child(self, child: UIElement):
         """
         Add a child element.
@@ -134,10 +135,6 @@ class UIContainer(UIElement):
     def update(self, dt: float, mouse_pos: Tuple[int, int], binding_system=None):
         """Update container and children."""
         super().update(dt, mouse_pos, binding_system)
-
-        # Re-layout if needed
-        if self._dirty:
-            self._layout_children()
 
     def _build_surface(self) -> pygame.Surface:
         """Build container surface."""

@@ -44,13 +44,6 @@ class UILabel(UIElement):
         """Update label state."""
         super().update(dt, mouse_pos, binding_system)
 
-        # Update text from binding
-        if self.bind_path and binding_system:
-            value = binding_system.resolve(self.bind_path)
-            if value is not None and value != self.current_value:
-                self.current_value = value
-                self.mark_dirty()
-
     def _get_display_text(self) -> str:
         """Get the text to display (static or formatted from binding)."""
         if self.current_value is not None:

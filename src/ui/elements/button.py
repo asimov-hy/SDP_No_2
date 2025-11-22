@@ -5,7 +5,7 @@ Interactive button element with hover effects.
 """
 
 import pygame
-from typing import Tuple, Optional
+from typing import Dict, Tuple, Optional
 
 from ..core.ui_element import UIElement
 from ..core.ui_loader import register_element
@@ -14,6 +14,8 @@ from ..core.ui_loader import register_element
 @register_element('button')
 class UIButton(UIElement):
     """Clickable button with hover and press states."""
+
+    _font_cache: Dict[int, pygame.font.Font] = {}
 
     def __init__(self, config):
         """
@@ -52,7 +54,14 @@ class UIButton(UIElement):
 
         # Font
         self.font_size = config.get('font_size', 24)
-        self.font = pygame.font.Font(None, self.font_size)
+        self.font = self._get_cached_font(self.font_size)
+
+    @classmethod
+    def _get_cached_font(cls, size: int) -> pygame.font.Font:
+        """Get or create cached font by size."""
+        if size not in cls._font_cache:
+            cls._font_cache[size] = pygame.font.Font(None, size)
+        return cls._font_cache[size]
 
     def update(self, dt: float, mouse_pos: Tuple[int, int], binding_system=None):
         """Update button state."""

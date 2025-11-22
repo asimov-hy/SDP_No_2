@@ -234,43 +234,10 @@ class GameLoop:
 
         fps = 1000.0 / frame_time_ms if frame_time_ms > 0 else 0.0
 
-        # NEW: Timing breakdown for DebugHUD
-        self.debug_hud.frame_time = frame_time_ms
-        self.debug_hud.update_time = scene_time
-        self.debug_hud.render_time = render_time
+        # Delegate all metrics tracking to DebugHUD
+        self.debug_hud.record_frame_metrics(frame_time_ms, scene_time, render_time, fps)
 
-        # NEW: Store frame time history for graphing
-        self.debug_hud.frame_time_history.append(frame_time_ms)
-        if len(self.debug_hud.frame_time_history) > self.debug_hud.frame_time_history_max:
-            self.debug_hud.frame_time_history.pop(0)
-
-        # Add FPS to history (for graph)
-        self.debug_hud.fps_history.append(fps)
-        if len(self.debug_hud.fps_history) > self.debug_hud.fps_history_max:
-            self.debug_hud.fps_history.pop(0)
-
-        # Smoothed
-        self.debug_hud.smoothed_fps = (
-            self.debug_hud.smoothed_fps * 0.9 + fps * 0.1
-            if self.debug_hud.smoothed_fps > 0 else fps
-        )
-
-        # Recent Average
-        self.debug_hud.recent_fps_sum += fps
-        self.debug_hud.recent_fps_count += 1
-
-        if self.debug_hud.recent_fps_count > 300:  # 5-second window
-            self.debug_hud.recent_fps_sum *= 0.5
-            self.debug_hud.recent_fps_count = int(self.debug_hud.recent_fps_count * 0.5)
-
-        # Max / Min tracking
-        if fps > self.debug_hud.max_fps:
-            self.debug_hud.max_fps = fps
-
-        if fps < self.debug_hud.min_fps:
-            self.debug_hud.min_fps = fps
-            self.debug_hud.min_fps_time = time.strftime("%H:%M:%S")
-
+        # Slow frame warning (stays in GameLoop - it's a runtime concern)
         if frame_time_ms > Debug.FRAME_TIME_WARNING:
             DebugLogger.warn(
                 f"Perf ⚠️ SLOW FRAME: {frame_time_ms:.2f} ms "

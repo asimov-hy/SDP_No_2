@@ -185,8 +185,6 @@ class UILoader:
 
         # String - needs resolution
         if isinstance(layer_value, str):
-            from src.core.runtime.game_settings import Layers
-            from src.core.debug.debug_logger import DebugLogger
 
             layer_str = layer_value.strip()
 

@@ -48,6 +48,7 @@ class UIElement:
         self.image_tint = self._parse_color(config.get('image_tint')) if config.get('image_tint') else None
         self._loaded_image = None  # Cached loaded image
         self._draw_manager_ref = None  # Injected by UIManager
+        self._image_load_attempted = False
 
         # Spacing (for layout children)
         self.margin = config.get('margin', 0)
@@ -143,8 +144,13 @@ class UIElement:
         Returns:
             pygame.Surface or None
         """
+        if self._image_load_attempted:
+            return self._loaded_image
+
         if not self.image_path or not self._draw_manager_ref:
             return None
+
+        self._image_load_attempted = True  # Mark as attempted
 
         # Return cached if already loaded
         if self._loaded_image:

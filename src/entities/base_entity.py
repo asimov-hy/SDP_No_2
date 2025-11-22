@@ -48,6 +48,18 @@ class BaseEntity:
     This class should be subclassed by all game entities (Player, Enemy, Bullet, etc.).
     """
 
+    _CLEANUP_MARGINS = {
+        EntityCategory.ENEMY: Bounds.ENEMY_CLEANUP_MARGIN,
+        EntityCategory.PROJECTILE: Bounds.BULLET_ENEMY_MARGIN,
+        EntityCategory.PICKUP: Bounds.ITEM_CLEANUP_MARGIN,
+        EntityCategory.ENVIRONMENT: Bounds.ENV_CLEANUP_MARGIN,
+    }
+
+    _DAMAGE_MARGINS = {
+        EntityCategory.ENEMY: Bounds.ENEMY_DAMAGE_MARGIN,
+        EntityCategory.ENVIRONMENT: Bounds.ENV_DAMAGE_MARGIN,
+    }
+
     # Fixed memory slots for faster access and lower RAM usage
     __slots__ = (
         # Core spatial/visual
@@ -434,20 +446,10 @@ class BaseEntity:
     # Bounds & Margin System
     # ===========================================================
     def get_cleanup_margin(self):
-        margin_map = {
-            EntityCategory.ENEMY: Bounds.ENEMY_CLEANUP_MARGIN,
-            EntityCategory.PROJECTILE: Bounds.BULLET_ENEMY_MARGIN,
-            EntityCategory.PICKUP: Bounds.ITEM_CLEANUP_MARGIN,
-            EntityCategory.ENVIRONMENT: Bounds.ENV_CLEANUP_MARGIN,
-        }
-        return margin_map.get(self.category, 200)
+        return self._CLEANUP_MARGINS.get(self.category, 200)
 
     def get_damage_margin(self):
-        margin_map = {
-            EntityCategory.ENEMY: Bounds.ENEMY_DAMAGE_MARGIN,
-            EntityCategory.ENVIRONMENT: Bounds.ENV_DAMAGE_MARGIN,
-        }
-        return margin_map.get(self.category, 0)
+        return self._DAMAGE_MARGINS.get(self.category, 0)
 
     def is_offscreen(self, margin=None):
         """
