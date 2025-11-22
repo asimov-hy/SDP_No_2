@@ -1,10 +1,9 @@
-main_menu:
-  type: container
-  width: 1280
-  height: 720
-  anchor: center
-  layer: Layers.UI
-  children:
+type: container
+width: 1280
+height: 720
+anchor: center
+layer: Layers.UI
+children:
     # Title
     - type: label
       id: "title"

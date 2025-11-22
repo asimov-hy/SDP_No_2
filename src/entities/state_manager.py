@@ -197,6 +197,18 @@ class StateManager:
         """
         return self.stat_modifiers.calculate(stat_name, base_value)
 
+    def add_modifier(self, stat: str, value: float, duration: float = -1, stack_type: str = "MULTIPLY"):
+        """
+        Add a stat modifier.
+
+        Args:
+            stat: Stat name ("speed", "fire_rate", "damage")
+            value: Modifier value (multiplier or additive)
+            duration: Duration in seconds (-1 = permanent)
+            stack_type: "MULTIPLY" or "ADD"
+        """
+        self.stat_modifiers.add(stat, value, duration, stack_type)
+
     def update(self, dt: float):
         """
         Update all active effects timers and remove expired ones.

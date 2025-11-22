@@ -249,7 +249,7 @@ class DebugLogger:
 
         # Each level adds four spaces of indentation
         indent = " " * (level * 4)
-        print(f"{indent}• {color}{detail}{reset}")
+        print(f"{indent}- {color}{detail}{reset}")
 
     # ===========================================================
     # Public Helper Methods

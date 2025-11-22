@@ -145,7 +145,7 @@ class DrawManager:
             layer (int): Rendering layer (lower values draw first).
         """
         if surface is None or rect is None:
-            DebugLogger.warn(f"Skipped invalid draw call at layer {layer}")
+            # DebugLogger.warn(f"Skipped invalid draw call at layer {layer}")
             return
 
         if layer not in self.surface_layers:

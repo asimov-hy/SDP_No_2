@@ -81,8 +81,11 @@ class SpawnManager:
             height = getattr(self.display, 'game_height', 720)
             SPAWN_MARGIN = 1000  # Allow offscreen but not too far
 
-            if (x < -SPAWN_MARGIN or x > width + SPAWN_MARGIN or
+            print(f"📍 SPAWNING: [{category}:{type_name}] at ({x:.1f}, {y:.1f}) - Screen: {width}x{height}")
+
+        if (x < -SPAWN_MARGIN or x > width + SPAWN_MARGIN or
                     y < -SPAWN_MARGIN or y > height + SPAWN_MARGIN):
+                print(f"⚠️ SPAWN POSITION EXTREME: [{category}:{type_name}] at ({x:.1f}, {y:.1f}) - Screen: {width}x{height}")
                 DebugLogger.warn(
                     f"Spawn position extreme: [{category}:{type_name}] at ({x:.1f}, {y:.1f})",
                     category="entity_spawn"

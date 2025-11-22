@@ -174,6 +174,15 @@ class BaseEnemy(BaseEntity):
 
         # Mark dead if off-screen
         if self.is_offscreen():
+            # Only give partial EXP for enemies that escape (50% penalty)
+            offscreen_exp = self.exp_value // 2  # Integer division for half EXP
+            DebugLogger.state(f"{self.__class__.__name__}[ID:{id(self)}] went offscreen at ({self.rect.centerx}, {self.rect.centery}), giving reduced exp: {offscreen_exp}/{self.exp_value}", category="exp")
+            # Give reduced EXP before dying offscreen
+            get_events().dispatch(EnemyDiedEvent(
+                position=(self.rect.centerx, self.rect.centery),
+                enemy_type_tag=self.__class__.__name__,
+                exp=offscreen_exp
+            ))
             self.mark_dead(immediate=True)
 
     def take_damage(self, amount: int, source: str = "unknown"):
@@ -182,9 +191,12 @@ class BaseEnemy(BaseEntity):
         Calls on_damage() and on_death() hooks as needed.
         """
         if self.death_state != LifecycleState.ALIVE:
+            DebugLogger.warn(f"{self.__class__.__name__}[ID:{id(self)}] already dead, ignoring damage from {source}")
             return
 
+        old_health = self.health
         self.health = max(0, self.health - amount)
+        DebugLogger.state(f"{self.__class__.__name__}[ID:{id(self)}] took {amount} damage from {source}, HP: {old_health}→{self.health}", category="damage")
 
         if self.health > 0:
             # FIX: Set INTANGIBLE during damage animation so we don't hurt player
@@ -207,6 +219,8 @@ class BaseEnemy(BaseEntity):
         self.anim_manager.play("death", duration=duration, death_frames=self._death_frames)
         self.collision_tag = CollisionTags.NEUTRAL
 
+        DebugLogger.state(f"{self.__class__.__name__}[ID:{id(self)}] dying at ({self.rect.centerx}, {self.rect.centery})", category="death")
+
         get_events().dispatch(EnemyDiedEvent(
             position=(self.rect.centerx, self.rect.centery),
             enemy_type_tag=self.__class__.__name__,
@@ -225,16 +239,23 @@ class BaseEnemy(BaseEntity):
     # ===========================================================
     def on_collision(self, other):
         """Default collision response for enemies."""
+        # CRITICAL FIX: Don't process collisions for dead or dying enemies
+        if self.death_state != LifecycleState.ALIVE:
+            DebugLogger.trace(f"[CollisionIgnored] {self.__class__.__name__}[ID:{id(self)}] is {self.death_state.name}, ignoring {getattr(other, 'collision_tag', 'unknown')}")
+            return
+
         tag = getattr(other, "collision_tag", "unknown")
 
         if tag == "player_bullet":
+            DebugLogger.state(f"{self.__class__.__name__}[ID:{id(self)}] hit by {tag} at ({self.rect.centerx}, {self.rect.centery})", category="collision")
             self.take_damage(1, source="player_bullet")
 
         elif tag == "player":
+            DebugLogger.state(f"{self.__class__.__name__}[ID:{id(self)}] hit by {tag} at ({self.rect.centerx}, {self.rect.centery})", category="collision")
             self.take_damage(1, source="player_contact")
 
         else:
-            DebugLogger.trace(f"[CollisionIgnored] {type(self).__name__} vs {tag}")
+            DebugLogger.trace(f"[CollisionIgnored] {type(self).__name__}[ID:{id(self)}] vs {tag}")
 
     def _auto_direction_from_edge(self, edge):
         """Auto-calculate direction based on spawn edge and position."""
@@ -283,10 +304,18 @@ class BaseEnemy(BaseEntity):
         return pygame.Vector2(chosen)
 
     def reset(self, x, y, direction=None, speed=None, health=None, spawn_edge=None, **kwargs):
+        print(f"🔄 RESETTING {self.__class__.__name__}[ID:{id(self)}] to ({x}, {y}) - was {self.death_state.name}")
         super().reset(x, y)
+
+        # CRITICAL FIX: Reset death state to ALIVE for pooled enemies
+        self.death_state = LifecycleState.ALIVE
+        print(f"✅ {self.__class__.__name__}[ID:{id(self)}] death_state reset to ALIVE")
 
         # Reset state to DEFAULT in case it was pooled while blinking
         self.state = InteractionState.DEFAULT
+
+        # Reset collision tag to ENEMY
+        self.collision_tag = CollisionTags.ENEMY
 
         if speed is not None:
             self.speed = speed

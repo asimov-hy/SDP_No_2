@@ -32,6 +32,8 @@ class EnemyHoming(BaseEnemy):
     def __init__(self, x, y, direction=(0, 1), speed=None, health=None,
                  scale=None, draw_manager=None,
                  homing=False, turn_rate=None, player_ref=None, **kwargs):
+        print(f"🔴 CRITICAL: EnemyHoming[ID:{id(self)}] __init__ called at ({x}, {y})")
+
         """
         Args:
             x, y: Spawn position
@@ -92,8 +94,8 @@ class EnemyHoming(BaseEnemy):
                 self.spawn_edge = kwargs.get("spawn_edge")
 
         DebugLogger.init(
-            f"Spawned EnemyHoming  at ({x}, {y}) | Speed={speed} | Homing={homing}",
-            category="animation_effects"
+            f"Spawned EnemyHoming[ID:{id(self)}] at ({x}, {y}) | Speed={speed} | Homing={homing}",
+            category="spawn"
         )
 
     # ===========================================================

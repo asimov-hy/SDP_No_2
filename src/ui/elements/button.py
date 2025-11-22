@@ -9,6 +9,7 @@ from typing import Tuple, Optional
 
 from ..core.ui_element import UIElement
 from ..core.ui_loader import register_element
+from src.core.debug.debug_logger import DebugLogger
 
 
 @register_element('button')
@@ -82,7 +83,9 @@ class UIButton(UIElement):
     def handle_click(self, mouse_pos: Tuple[int, int]) -> Optional[str]:
         """Handle click event."""
         if self.enabled and self.rect and self.rect.collidepoint(mouse_pos):
+            DebugLogger.state(f"Button clicked: {self.text} -> action: {self.action}", category="ui")
             return self.action
+        DebugLogger.state(f"Button not clicked: {self.text}, enabled: {self.enabled}, rect: {self.rect}, pos: {mouse_pos}", category="ui")
         return None
 
     def _build_surface(self) -> pygame.Surface:

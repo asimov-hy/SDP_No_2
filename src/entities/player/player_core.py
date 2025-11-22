@@ -281,19 +281,28 @@ class Player(BaseEntity):
     # ===========================================================
     def _on_enemy_died(self, event):
         """Receive EXP from dead enemies."""
+        DebugLogger.state(f"Enemy died: {event.enemy_type_tag}, exp: {event.exp}, position: {event.position}", category="exp")
         self.exp += event.exp
 
         DebugLogger.state(
-            f"Experience: {event.exp} ({self.exp}/{self.exp_required})",
+            f"Experience gained: +{event.exp}, total: {self.exp}/{self.exp_required}",
             category="exp"
         )
 
-        if self.exp >= self.exp_required:
+        # Check for multiple level-ups in case of large EXP gains
+        old_level = self.level
+        while self.exp >= self.exp_required:
             self._level_up()
+
+        # If we gained multiple levels in one frame, log it
+        if self.level > old_level + 1:
+            DebugLogger.state(f"⚠️ MULTIPLE LEVELS: {old_level} → {self.level} in one frame!", category="exp")
 
     def _level_up(self):
         self.level += 1
-        self.exp = 0
+
+        # Subtract current level requirement, keep excess EXP
+        self.exp -= self.exp_required
 
         # Smooth EXP curve
         self.exp_required = int(30 * (1.15 ** (self.level - 1)))
@@ -302,7 +311,7 @@ class Player(BaseEntity):
         get_events().dispatch(PlayerLevelUpEvent(level=self.level))
 
         DebugLogger.state(
-            f"Level: {self.level}, Next={self.exp_required}",
+            f"Level: {self.level}, EXP: {self.exp}/{self.exp_required}",
             category="exp"
         )
 
@@ -333,9 +342,9 @@ class Player(BaseEntity):
         DebugLogger.state(f"Upgrade applied: {upgrade_type}")
         
     def _apply_health_upgrade(self):
-        """Apply health upgrade: increase max health by 20% and heal that amount."""
+        """Apply health upgrade: increase max health by 1 and heal that amount."""
         old_max = self.max_health
-        health_increase = int(old_max * 0.2)  # 20% increase
+        health_increase = 1  # +1 health
         self.max_health += health_increase
         self.health = min(self.health + health_increase, self.max_health)
         DebugLogger.state(f"Health upgraded: max HP {old_max} → {self.max_health}")
@@ -345,7 +354,7 @@ class Player(BaseEntity):
         # This will be handled by player_ability, using the state_manager modifier
         current_damage_bonus = self.state_manager.get_stat("damage_bonus", 1.0)
         new_damage_bonus = current_damage_bonus * 1.2  # 20% increase
-        self.state_manager.add_modifier("damage_bonus", new_damage_bonus, permanent=True)
+        self.state_manager.add_modifier("damage_bonus", new_damage_bonus, duration=-1)
         DebugLogger.state(f"Damage upgraded: {current_damage_bonus}x → {new_damage_bonus}x")
         
     def _apply_speed_upgrade(self):
@@ -366,7 +375,7 @@ class Player(BaseEntity):
         # This will be handled by player_ability
         current_multishot = self.state_manager.get_stat("multishot_count", 0)
         new_multishot = current_multishot + 1
-        self.state_manager.add_modifier("multishot_count", new_multishot, permanent=True)
+        self.state_manager.add_modifier("multishot_count", new_multishot, duration=-1)
         DebugLogger.state(f"Multishot upgraded: {current_multishot} → {new_multishot} extra shots")
 
     # ===========================================================

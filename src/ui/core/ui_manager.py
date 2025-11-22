@@ -11,6 +11,7 @@ from src.ui.core.anchor_resolver import AnchorResolver
 from .binding_system import BindingSystem
 from .ui_loader import UILoader
 from .ui_element import UIElement
+from src.core.debug.debug_logger import DebugLogger
 
 
 class UIManager:
@@ -87,10 +88,14 @@ class UIManager:
             modal: If True, push onto modal stack (can stack multiple)
         """
         if name not in self.screens:
+            DebugLogger.warn(f"Screen '{name}' not found in available screens: {list(self.screens.keys())}", category="ui")
             return
+
+        DebugLogger.state(f"Showing screen '{name}', modal: {modal}, current modal_stack: {self.modal_stack}", category="ui")
 
         if modal:
             self.modal_stack.append(name)
+            DebugLogger.state(f"Added '{name}' to modal stack, new stack: {self.modal_stack}", category="ui")
         else:
             # Hide previous active screen
             if self.active_screen:
@@ -110,11 +115,15 @@ class UIManager:
             name = self.active_screen
 
         if not name:
+            DebugLogger.state("hide_screen called but no screen name provided", category="ui")
             return
+
+        DebugLogger.state(f"Hiding screen '{name}', current modal_stack: {self.modal_stack}", category="ui")
 
         # Remove from modal stack if present
         if name in self.modal_stack:
             self.modal_stack.remove(name)
+            DebugLogger.state(f"Removed '{name}' from modal stack, new stack: {self.modal_stack}", category="ui")
 
         # Clear active screen if it's the one being hidden
         if name == self.active_screen:
@@ -246,6 +255,7 @@ class UIManager:
             return None
 
         mouse_pos = event.pos
+        DebugLogger.state(f"UI handling click at: {mouse_pos}, modal_stack: {self.modal_stack}", category="ui")
 
         # Check modal screens first (top to bottom)
         for screen_name in reversed(self.modal_stack):
@@ -253,6 +263,7 @@ class UIManager:
             if screen:
                 action = self._handle_click_tree(screen, mouse_pos)
                 if action:
+                    DebugLogger.state(f"UI action found from modal '{screen_name}': {action}", category="ui")
                     return action
 
         # Check active screen
