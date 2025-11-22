@@ -17,17 +17,6 @@ children:
     anchor: "top_center"
     offset: [0, 40]
 
-  # Page indicator
-  - type: label
-    id: page_indicator
-    width: 300
-    height: 40
-    text: "Page 1 / 1"
-    font_size: 24
-    color: [200, 200, 200, 255]
-    anchor: "top_center"
-    offset: [0, 120]
-
   # Level list container (dynamically populated)
   - type: container
     id: level_list
@@ -35,8 +24,8 @@ children:
     height: 400
     layout: vertical
     spacing: 10
-    anchor: "center"
-    offset: [0, 0]
+    anchor: "top_center"
+    offset: [0, 120]
 
   # Navigation container
   - type: container
@@ -47,24 +36,6 @@ children:
     spacing: 20
     anchor: "bottom_center"
     offset: [0, -140]
-    children:
-      - type: button
-        id: btn_prev_page
-        width: 240
-        height: 60
-        text: "< PREV"
-        action: "prev_page"
-        enabled: false
-        color: [60, 60, 100, 255]
-
-      - type: button
-        id: btn_next_page
-        width: 240
-        height: 60
-        text: "NEXT >"
-        action: "next_page"
-        enabled: true
-        color: [60, 60, 100, 255]
 
   # Back button
   - type: button

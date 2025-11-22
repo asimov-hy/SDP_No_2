@@ -43,6 +43,7 @@ class ItemManager:
     """Manages item definitions and spawning logic."""
 
     ASSET_BASE_PATH = "assets/images/sprites/items/"
+    DEFAULT_ITEM_SIZE = (48, 48)
 
     def __init__(self, spawn_manager, item_data_path: str):
         """

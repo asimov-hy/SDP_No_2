@@ -127,7 +127,11 @@ class BaseEnemy(BaseEntity):
 
         self.update_rotation()
 
-        if not hasattr(self, '_nuke_subscribed'):
+        self._nuke_subscribed = False
+        self._subscribe_nuke()
+
+    def _subscribe_nuke(self):
+        if not self._nuke_subscribed:
             get_events().subscribe(NukeUsedEvent, self.on_nuke_used)
             self._nuke_subscribed = True
 
@@ -305,10 +309,7 @@ class BaseEnemy(BaseEntity):
             self.velocity *= self.speed
 
         self.update_rotation()
-
-        if not hasattr(self, '_nuke_subscribed') or not self._nuke_subscribed:
-            get_events().subscribe(NukeUsedEvent, self.on_nuke_used)
-            self._nuke_subscribed = True
+        self._subscribe_nuke()
 
     def cleanup(self):
         """Explicitly unsubscribe to prevent zombie processing."""

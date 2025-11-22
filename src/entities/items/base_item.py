@@ -12,6 +12,7 @@ Responsibilities
 """
 
 import pygame
+import random
 import math
 from src.core.runtime.game_settings import Display, Layers
 from src.entities.base_entity import BaseEntity
@@ -36,7 +37,6 @@ class BaseItem(BaseEntity):
     def __init_subclass__(cls, **kwargs):
         """Auto-register item subclasses when they're defined."""
         super().__init_subclass__(**kwargs)
-        EntityRegistry.auto_register(cls)
 
     def __init__(self, x, y, item_data=None, image=None, shape_data=None,
                  draw_manager=None, speed=500, despawn_y=None, lifetime=5.0, bounce=True):
@@ -103,7 +103,6 @@ class BaseItem(BaseEntity):
         self.bounce_enabled = bounce
         if bounce:
             # Random initial direction
-            import random
             angle = random.uniform(0, 360)
             self.velocity = pygame.Vector2(
                 speed * math.cos(math.radians(angle)),
@@ -216,5 +215,3 @@ class BaseItem(BaseEntity):
 
         # Sync rect to new position
         self.sync_rect()
-
-EntityRegistry.register("pickup", "default", BaseItem)

@@ -26,6 +26,7 @@ class EnemyStraight(BaseEnemy):
 
     __registry_category__ = EntityCategory.ENEMY
     __registry_name__ = "straight"
+    _cached_defaults = None
 
     # ===========================================================
     # Initialization
@@ -43,7 +44,9 @@ class EnemyStraight(BaseEnemy):
         """
 
         # Load defaults from JSON
-        defaults = EntityRegistry.get_data("enemy", "straight")
+        if EnemyStraight._cached_defaults is None:
+            EnemyStraight._cached_defaults = EntityRegistry.get_data("enemy", "straight")
+        defaults = EnemyStraight._cached_defaults
 
         # Apply overrides or use defaults
         speed = speed if speed is not None else defaults.get("speed", 200)
@@ -52,10 +55,6 @@ class EnemyStraight(BaseEnemy):
 
         image_path = defaults.get("image", "assets/images/sprites/enemies/missile.png")
         hitbox_config = defaults.get("hitbox", {})
-
-        # Create sprite
-        if draw_manager is None:
-            raise ValueError("EnemyStraight requires draw_manager for sprite loading")
 
         # Load and scale image using helper
         img = BaseEntity.load_and_scale_image(image_path, scale)
@@ -102,7 +101,7 @@ class EnemyStraight(BaseEnemy):
 
     def reset(self, x, y, direction=(0, 1), speed=None, health=None, scale=None, **kwargs):
         # Load defaults from JSON (same as __init__)
-        defaults = EntityRegistry.get_data("enemy", "straight")
+        defaults = EnemyStraight._cached_defaults
 
         speed = speed if speed is not None else defaults.get("speed", 200)
         health = health if health is not None else defaults.get("hp", 1)

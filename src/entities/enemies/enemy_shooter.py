@@ -12,9 +12,12 @@ Responsibilities
 """
 
 import math
+import pygame
+from src.systems.spawning.entity_registry import EntityRegistry
 from src.entities.enemies.base_enemy import BaseEnemy
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_types import EntityCategory
+from src.core.debug.debug_logger import DebugLogger
 
 
 class EnemyShooter(BaseEnemy):
@@ -26,6 +29,7 @@ class EnemyShooter(BaseEnemy):
 
     __registry_category__ = EntityCategory.ENEMY
     __registry_name__ = "shooter"
+    _cached_defaults = None
 
     # ===========================================================
     # Initialization
@@ -36,16 +40,9 @@ class EnemyShooter(BaseEnemy):
         """
         JSON-driven shooter enemy with optional overrides.
         """
-        import pygame
-        from src.systems.spawning.entity_registry import EntityRegistry
-
-        if draw_manager is None:
-            raise ValueError("EnemyShooter requires draw_manager")
-
-        # ============================
-        # Load defaults from JSON
-        # ============================
-        defaults = EntityRegistry.get_data("enemy", "shooter")
+        if EnemyShooter._cached_defaults is None:
+            EnemyShooter._cached_defaults = EntityRegistry.get_data("enemy", "shooter")
+        defaults = EnemyShooter._cached_defaults
 
         speed = speed if speed is not None else defaults.get("speed", 100)
         health = health if health is not None else defaults.get("hp", 2)
@@ -71,9 +68,8 @@ class EnemyShooter(BaseEnemy):
         # Load sprite
         # ============================
         # Calculate scale from target size
-        temp_img = pygame.image.load(image_path).convert_alpha()
-        scale = (norm_size[0] / temp_img.get_width(), norm_size[1] / temp_img.get_height())
-        img = BaseEntity.load_and_scale_image(image_path, scale)
+        img = pygame.image.load(image_path).convert_alpha()
+        img = pygame.transform.scale(img, norm_size)
 
         super().__init__(
             x, y,
@@ -114,7 +110,6 @@ class EnemyShooter(BaseEnemy):
         self.player_ref = player_ref
         self.bullet_manager = bullet_manager
 
-        from src.core.debug.debug_logger import DebugLogger
         DebugLogger.init(
             f"Spawned EnemyShooter at ({x}, {y}) | Move={movement_type} | ShootInterval={shoot_interval}",
             category="enemy"

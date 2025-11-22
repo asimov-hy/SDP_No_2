@@ -69,7 +69,8 @@ class EventManager:
         self._subscribers[event_type].append(callback)
         callback_name = getattr(callback, '__name__', repr(callback))
         DebugLogger.system(
-            f"Subscribed '{callback_name}' to '{event_type.__name__}'"
+            f"Subscribed '{callback_name}' to '{event_type.__name__}'",
+            category="event_manager"
         )
 
     def unsubscribe(self, event_type: Type[BaseEvent], callback: Callable) -> None:

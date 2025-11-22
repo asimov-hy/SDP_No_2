@@ -11,6 +11,7 @@ Responsibilities
 """
 
 import pygame
+import math
 from src.entities.enemies.base_enemy import BaseEnemy
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_types import EntityCategory
@@ -25,6 +26,7 @@ class EnemyHoming(BaseEnemy):
 
     __registry_category__ = EntityCategory.ENEMY
     __registry_name__ = "homing"
+    _cached_defaults = None
 
     # ===========================================================
     # Initialization
@@ -45,7 +47,9 @@ class EnemyHoming(BaseEnemy):
             player_ref: Reference to player for homing calculations
         """
         # Load defaults from JSON
-        defaults = EntityRegistry.get_data("enemy", "homing")
+        if EnemyHoming._cached_defaults is None:
+            EnemyHoming._cached_defaults = EntityRegistry.get_data("enemy", "homing")
+        defaults = EnemyHoming._cached_defaults
 
         # Apply overrides or use defaults
         speed = speed if speed is not None else defaults.get("speed", 150)
@@ -55,9 +59,6 @@ class EnemyHoming(BaseEnemy):
         turn_rate = turn_rate if turn_rate is not None else defaults.get("turn_rate", 180)
         image_path = defaults.get("image")
         hitbox_config = defaults.get("hitbox", {})
-
-        if draw_manager is None:
-            raise ValueError("EnemyHoming requires draw_manager")
 
         # Load and scale image using helper
         img = BaseEntity.load_and_scale_image(image_path, scale)
@@ -172,7 +173,6 @@ class EnemyHoming(BaseEnemy):
         current_dir = self.velocity.normalize() if self.velocity.length() > 0 else pygame.Vector2(0, 1)
 
         # Calculate angle difference
-        import math
         target_angle = math.degrees(math.atan2(target_dir.y, target_dir.x))
         current_angle = math.degrees(math.atan2(current_dir.y, current_dir.x))
 

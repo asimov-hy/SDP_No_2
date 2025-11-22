@@ -27,6 +27,8 @@ class BaseBullet(BaseEntity):
     # Add slots for bullet-specific attributes
     __slots__ = ('vel', 'owner', 'radius', 'damage', 'state')
 
+    _cached_defaults = None
+
     def __init_subclass__(cls, **kwargs):
         """Auto-register bullet subclasses when they're defined."""
         super().__init_subclass__(**kwargs)
@@ -51,10 +53,11 @@ class BaseBullet(BaseEntity):
             hitbox_scale (float): Hitbox scale (override, or use JSON default).
             draw_manager: Optional DrawManager for shape prebaking.
         """
-        from src.systems.spawning.entity_registry import EntityRegistry
 
         # Load defaults from JSON
-        defaults = EntityRegistry.get_data("projectile", "straight")
+        if BaseBullet._cached_defaults is None:
+            BaseBullet._cached_defaults = EntityRegistry.get_data("projectile", "straight")
+        defaults = BaseBullet._cached_defaults
 
         # Apply overrides or use defaults
         damage = damage if damage is not None else defaults.get("damage", 1)
