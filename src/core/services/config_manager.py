@@ -26,6 +26,7 @@ SEARCH_DIRS = [
     DATA_ROOT,
     os.path.join(DATA_ROOT, "entities"),  # plural fallback
     os.path.join(DATA_ROOT, "levels"),
+os.path.join(DATA_ROOT, "animations"),
 ]
 
 

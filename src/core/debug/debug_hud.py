@@ -261,12 +261,13 @@ class DebugHUD:
         self.visible = not self.visible
         if self.visible:
             self._ensure_loaded()
+
         state = "shown" if self.visible else "hidden"
         DebugLogger.action(f"DebugHUD {state}")
 
     def record_frame_metrics(self, frame_time_ms: float, scene_time: float, render_time: float, fps: float):
         """
-        Record all frame timing metrics. Called once per frame by GameLoop.
+        Record all frame timing metrics. Called once per frame by Main Loop.
 
         Args:
             frame_time_ms: Total frame time in milliseconds

@@ -9,7 +9,7 @@ def damage_blink(entity, t):
 
 def damage_flash(entity, t):
     """Red tint that fades."""
-    orig = getattr(entity, '_original_image', entity.image)
+    orig = getattr(entity, '_base_image', entity.image)
 
     # Red overlay intensity decreases over time
     intensity = int(255 * (1.0 - t))

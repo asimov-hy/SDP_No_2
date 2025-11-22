@@ -5,6 +5,7 @@ Unified input system with context-aware action queries.
 """
 import pygame
 from src.core.debug.debug_logger import DebugLogger
+from src.core.runtime.game_settings import Debug
 
 # ===========================================================
 # Default Key Bindings
@@ -385,7 +386,6 @@ class InputManager:
         # F3 - Debug HUD
         elif self._is_pressed_in_context("toggle_debug", keys, system_ctx):
             debug_hud.toggle()
-            from src.core.runtime.game_settings import Debug
             Debug.HITBOX_VISIBLE = debug_hud.visible
             DebugLogger.action(f"Debug HUD: {'ON' if debug_hud.visible else 'OFF'}")
 

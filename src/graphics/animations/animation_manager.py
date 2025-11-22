@@ -14,6 +14,11 @@ Responsibilities
 
 from src.core.debug.debug_logger import DebugLogger
 from src.graphics.animations.animation_registry import get_animation, get_animations_for_entity
+from src.graphics.animations.animation_data import (
+    get_animation_frames,
+    get_animation_duration,
+    get_animation_config
+)
 
 
 class AnimationManager:
@@ -74,18 +79,31 @@ class AnimationManager:
     # ===========================================================
     # Playback Controls
     # ===========================================================
-    def play(self, anim_type: str, duration: float = 1.0, **kwargs):
+    def play(self, anim_type: str, duration: float = None, **kwargs):
         """
-        Start an animation sequence for this entity.
+        Start an animation. Automatically loads frames/config from animation data.
 
         Args:
-            anim_type (str): Name of the animation to play (e.g., "damage", "death").
-            duration (float): Total time the animation should last in seconds.
-            **kwargs: Additional parameters passed to animation function via context.
-                      Common params: blink_interval, target_state, previous_state
+            anim_type: Animation name ("death", "damage", etc.)
+            duration: Override duration (or uses config default)
+            **kwargs: Additional context overrides
         """
         if not self.enabled:
             return
+
+        # Get entity identifiers for lookup
+        category = getattr(self.entity, 'category', 'unknown')
+        entity_name = getattr(self.entity, '__registry_name__', 'default')
+
+        # Load config from animation data
+        config = get_animation_config(category, entity_name, anim_type)
+
+        # Auto-load frames if animation uses them
+        frames = get_animation_frames(category, entity_name, anim_type)
+
+        # Use provided duration or config default
+        if duration is None:
+            duration = config.get("duration", 0.5)
 
         self.active_type = anim_type
         self.timer = 0.0
@@ -93,20 +111,18 @@ class AnimationManager:
         self.finished = False
         self._effect_queue.clear()
 
-        # Store original image once at animation start (cold path)
-        if hasattr(self.entity, 'image') and self.entity.image:
-            self.entity._original_image = self.entity.image.copy()
-
-        # Build context for animation function
+        # Build context - merge config defaults with overrides
         self.context = {
+            **config,  # Spread config first
             "duration": duration,
             "elapsed_time": 0.0,
+            "frames": frames,  # Now this overwrites config's paths with actual surfaces
             **kwargs
         }
 
         DebugLogger.state(
-            f"{type(self.entity).__name__}: Animation '{anim_type}' started ({duration:.2f}s)",
-            category="animation"
+            f"{type(self.entity).__name__}: Animation '{anim_type}' started ({duration:.2f}s, {len(frames)} frames)",
+            # category="animation"
         )
 
     def stop(self):
@@ -118,8 +134,8 @@ class AnimationManager:
             )
 
         # Restore original image if stored
-        if hasattr(self.entity, '_original_image') and self.entity._original_image:
-            self.entity.image = self.entity._original_image
+        if hasattr(self.entity, '_base_image') and self.entity._base_image:
+            self.entity.image = self.entity._base_image
             self.entity.image.set_alpha(255)
 
         self.active_type = None

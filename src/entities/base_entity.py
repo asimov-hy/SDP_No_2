@@ -73,8 +73,7 @@ class BaseEntity:
         'death_state', 'layer', 'category', 'collision_tag', 'tags',
 
         # Sprite/animation
-        '_current_sprite', '_sprite_config', 'anim_manager',
-        '_death_frames', '_damage_frames', 'anim_context',
+        '_current_sprite', '_sprite_config', 'anim_manager', 'anim_context',
 
         # Hitbox configuration
         'hitbox_scale', 'hitbox_shape', 'hitbox_offset', 'hitbox_params', 'hitbox',
@@ -221,8 +220,6 @@ class BaseEntity:
         self._sprite_config = {}  # Subclasses populate state→image/color mapping
 
         # Animation frame storage (for sprite-cycling animations)
-        self._death_frames = []
-        self._damage_frames = []
         self.anim_context = {}
 
         # Initialize animation manager AFTER all attributes exist
@@ -294,14 +291,17 @@ class BaseEntity:
         self.rotation_angle = 0
         self._cached_rotation_index = -1
 
-        # FIXED: Always clear cache on reset to prevent stale sprites from previous pool usage.
-        # Since we use lazy caching, this is cheap (O(1)) and prevents visual bugs.
         if self._rotation_enabled:
             self._rotation_cache.clear()
 
         # Restore base image
         if hasattr(self, '_base_image') and self._base_image:
             self.image = self._base_image
+
+        # Reset animation manager state for pooled reuse
+        if hasattr(self, 'anim_manager'):
+            self.anim_manager.stop()
+        self.anim_context = {}
 
         self.sync_rect()
 
@@ -520,11 +520,3 @@ class BaseEntity:
     def get_target_image(self, state_key):
         images = self._sprite_config.get('images', {})
         return images.get(state_key)
-
-    def load_animation_frames(self, frame_paths, scale=1.0):
-        frames = []
-        for path in frame_paths:
-            frame = self.load_and_scale_image(path, scale)
-            if frame:
-                frames.append(frame)
-        return frames

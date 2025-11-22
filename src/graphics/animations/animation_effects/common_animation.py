@@ -25,7 +25,7 @@ def scale_down(entity, t):
     if scale <= 0:
         return
 
-    orig = getattr(entity, '_original_image', entity.image)
+    orig = getattr(entity, '_base_image', entity.image)
     new_size = (
         max(1, int(orig.get_width() * scale)),
         max(1, int(orig.get_height() * scale))
@@ -62,7 +62,7 @@ def fade_color(entity, t, start_color=(255, 0, 0), end_color=(0, 0, 0)):
 
     Use case: Flash red on hit, fade to normal
     """
-    orig = getattr(entity, '_original_image', entity.image)
+    orig = getattr(entity, '_base_image', entity.image)
 
     # Lerp flash intensity
     r = int(start_color[0] + (end_color[0] - start_color[0]) * t)
@@ -78,23 +78,14 @@ def fade_color(entity, t, start_color=(255, 0, 0), end_color=(0, 0, 0)):
     entity.image.set_alpha(current_alpha)
 
 
-def sprite_cycle(entity, t, frame_key='death_frames'):
-    """
-    Generic frame cycling - works for any animation type.
-
-    Args:
-        entity: Entity with anim_context containing frames
-        t: Normalized time 0..1
-        frame_key: Key in anim_context dict (e.g., 'death_frames', 'attack_frames')
-    """
+def sprite_cycle(entity, t):
+    """Cycle through animation frames from context."""
     ctx = getattr(entity, 'anim_context', {})
-    frames = ctx.get(frame_key, [])
+    frames = ctx.get('frames', [])
 
     if not frames:
-        # Fallback to fade if no frames provided
         fade_out(entity, t)
         return
 
-    # Calculate frame index with even distribution
     frame_idx = min(int(t * len(frames)), len(frames) - 1)
     entity.image = frames[frame_idx]

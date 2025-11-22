@@ -29,8 +29,10 @@ def death_enemy(entity, t):
         t: Normalized time (0.0 to 1.0)
     """
     ctx = getattr(entity, 'anim_context', {})
+    frames = ctx.get('frames', [])  # Now just 'frames' - standardized
 
-    if ctx.get('death_frames'):
+    # print(frames)
+    if frames:
         death_sprite_cycle(entity, t)
     else:
         death_fade(entity, t)

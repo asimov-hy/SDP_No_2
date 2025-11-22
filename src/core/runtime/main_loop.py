@@ -1,5 +1,5 @@
 """
-game_loop.py
+main_loop.py
 ------------
 Defines the main GameLoop class responsible for orchestrating the entire
 runtime cycle of the game.
@@ -32,12 +32,12 @@ from src.core.debug.debug_hud import DebugHUD
 from src.graphics.draw_manager import DrawManager
 
 
-class GameLoop:
+class MainLoop:
     """Core runtime controller that manages the game’s main loop."""
 
     def __init__(self):
         """Initialize pygame and all foundational systems."""
-        DebugLogger.section("Initializing GameLoop")
+        DebugLogger.section("Initializing MainLoop")
 
         # -------------------------------------------------------
         # Initialize pygame systems
@@ -76,7 +76,7 @@ class GameLoop:
         self.debug_hud = DebugHUD(self.display, self.draw_manager)
         DebugLogger.init_sub("Bound [DisplayManager, DrawManager] dependencies", level=1)
 
-        DebugLogger.init_entry("GameLoop Runtime")
+        DebugLogger.init_entry("Main Loop Runtime")
         self.clock = pygame.time.Clock()
         DebugLogger.init_sub("Game Clock Initialized", level=1)
         self.running = True

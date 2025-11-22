@@ -19,7 +19,7 @@ def death_spin_fade(entity, t):
     """Rotate while fading."""
     fade_out(entity, t)
 
-    orig = getattr(entity, '_original_image', entity.image)
+    orig = getattr(entity, '_base_image', entity.image)
     angle = t * 360
     entity.image = pygame.transform.rotate(orig, angle)
     entity.rect = entity.image.get_rect(center=entity.rect.center)
@@ -27,4 +27,4 @@ def death_spin_fade(entity, t):
 
 def death_sprite_cycle(entity, t):
     """Cycle through death sprite frames."""
-    sprite_cycle(entity, t, frame_key='death_frames')
+    sprite_cycle(entity, t)
