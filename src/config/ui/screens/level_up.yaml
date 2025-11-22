@@ -20,7 +20,7 @@ children:
 
   # Instructions
   - type: label
-    text: "Choose 3 upgrades:"
+    text: "Choose 1 upgrade:"
     size: [800, 40]
     anchor: top_center
     offset: [0, 120]
@@ -28,22 +28,22 @@ children:
     text_color: [220, 220, 220]
     text_align: center
 
-  # Upgrades Container (5 options, player can choose 3)
+  # Upgrades Container (3 random options, player can choose 1)
   - type: container
     size: [750, 280]
     anchor: center
     offset: [0, 50]
     
     children:
-      # Health Upgrade Button
+      # First Upgrade Button (determined at runtime)
       - type: button
-        id: health_upgrade_btn
-        text: "Health +20%"
-        action: "upgrade_health"
-        size: [140, 80]
-        anchor: top_left
-        offset: [20, 20]
-        color: [80, 60, 60]
+        id: upgrade_btn_1
+        text: "Upgrade 1"  # Will be updated at runtime
+        action: "upgrade_1"  # Will be updated at runtime
+        size: [200, 80]
+        anchor: top_center
+        offset: [-225, 40]
+        color: [80, 60, 60]  # Will be updated at runtime
         hover:
           color: [120, 80, 80]
         font_size: 20
@@ -51,15 +51,15 @@ children:
         border_color: [150, 100, 100]
         border_radius: 8
 
-      # Damage Upgrade Button
+      # Second Upgrade Button (determined at runtime)
       - type: button
-        id: damage_upgrade_btn
-        text: "Damage +20%"
-        action: "upgrade_damage"
-        size: [140, 80]
-        anchor: top_left
-        offset: [170, 20]
-        color: [60, 60, 80]
+        id: upgrade_btn_2
+        text: "Upgrade 2"  # Will be updated at runtime
+        action: "upgrade_2"  # Will be updated at runtime
+        size: [200, 80]
+        anchor: top_center
+        offset: [0, 40]
+        color: [60, 60, 80]  # Will be updated at runtime
         hover:
           color: [80, 80, 120]
         font_size: 20
@@ -67,78 +67,18 @@ children:
         border_color: [100, 100, 150]
         border_radius: 8
 
-      # Speed Upgrade Button
+      # Third Upgrade Button (determined at runtime)
       - type: button
-        id: speed_upgrade_btn
-        text: "Speed +20%"
-        action: "upgrade_speed"
-        size: [140, 80]
-        anchor: top_left
-        offset: [320, 20]
-        color: [60, 80, 60]
+        id: upgrade_btn_3
+        text: "Upgrade 3"  # Will be updated at runtime
+        action: "upgrade_3"  # Will be updated at runtime
+        size: [200, 80]
+        anchor: top_center
+        offset: [225, 40]
+        color: [60, 80, 60]  # Will be updated at runtime
         hover:
           color: [80, 120, 80]
         font_size: 20
         border: 2
         border_color: [100, 150, 100]
         border_radius: 8
-
-      # Fire Rate Upgrade Button
-      - type: button
-        id: firerate_upgrade_btn
-        text: "Attack Speed +25%"
-        action: "upgrade_firerate"
-        size: [140, 80]
-        anchor: top_left
-        offset: [170, 100]
-        color: [80, 60, 100]
-        hover:
-          color: [120, 80, 140]
-        font_size: 20
-        border: 2
-        border_color: [150, 100, 170]
-        border_radius: 8
-
-      # Multishot Upgrade Button
-      - type: button
-        id: multishot_upgrade_btn
-        text: "Extra Shot"
-        action: "upgrade_multishot"
-        size: [140, 80]
-        anchor: top_left
-        offset: [320, 100]
-        color: [60, 100, 80]
-        hover:
-          color: [80, 120, 100]
-        font_size: 20
-        border: 2
-        border_color: [100, 150, 120]
-        border_radius: 8
-
-      # Selected Counter
-      - type: label
-        id: selection_counter
-        text: "Selected: 0 / 3"
-        size: [150, 40]
-        anchor: bottom_right
-        offset: [-20, -20]
-        font_size: 20
-        text_color: [200, 200, 200]
-        text_align: right
-
-      # Confirm Button
-      - type: button
-        id: confirm_btn
-        text: "Confirm Upgrades"
-        action: "confirm_upgrades"
-        size: [180, 50]
-        anchor: bottom_right
-        offset: [-20, -70]
-        color: [40, 80, 40]
-        hover:
-          color: [60, 120, 60]
-        font_size: 18
-        border: 2
-        border_color: [80, 160, 80]
-        border_radius: 5
-        enabled: false

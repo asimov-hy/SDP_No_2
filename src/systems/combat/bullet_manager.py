@@ -137,7 +137,7 @@ class BulletManager:
         # DebugLogger.trace(f"[BulletSpawn] {bullet.collision_tag} at {pos} → Vel={vel}")
 
     def spawn_custom(self, bullet_class, pos, vel, image=None, color=(255, 255, 255),
-                     radius=3, owner="enemy", damage=1, hitbox_scale=0.9):
+                     radius=3, owner="enemy", damage=1, hitbox_scale=0.9, damage_bonus=1.0):
         """
         Create or reuse a bullet of a specified class (e.g., ZigzagBullet, SpiralBullet).
         Falls back to StraightBullet on failure.
@@ -148,7 +148,8 @@ class BulletManager:
                 image=image, color=color,
                 radius=radius, owner=owner,
                 damage=damage, hitbox_scale=hitbox_scale,
-                draw_manager=self.draw_manager
+                draw_manager=self.draw_manager,
+                damage_bonus=damage_bonus
             )
         except Exception as e:
             DebugLogger.warn(
@@ -160,7 +161,8 @@ class BulletManager:
                 image=image, color=color,
                 radius=radius, owner=owner,
                 damage=damage, hitbox_scale=hitbox_scale,
-                draw_manager=self.draw_manager
+                draw_manager=self.draw_manager,
+                damage_bonus=damage_bonus
             )
 
         bullet.collision_tag = f"{owner}_bullet"

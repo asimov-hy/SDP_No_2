@@ -5,6 +5,7 @@ Main gameplay scene - runs active level with player, enemies, bullets.
 """
 
 import pygame
+import random
 from src.scenes.base_scene import BaseScene
 from src.systems.game_system_initializer import GameSystemInitializer
 from src.core.runtime.game_settings import Debug
@@ -46,7 +47,7 @@ class GameScene(BaseScene):
         
         # Level up selection state
         self.level_up_active = False
-        self.selected_upgrades = set()
+        self.available_upgrades = []  # Store the 3 randomly selected upgrades
 
         # Set callbacks
         self.level_manager.on_level_complete = self._on_level_complete
@@ -193,13 +194,15 @@ class GameScene(BaseScene):
             self.scene_manager.set_scene("MainMenu")
         elif action == "return_to_menu":
             self.scene_manager.set_scene("MainMenu")
+        elif action in ("upgrade_1", "upgrade_2", "upgrade_3"):
+            # Get index of selected upgrade (1, 2, or 3)
+            idx = int(action.split("_")[1]) - 1
+            if 0 <= idx < len(self.available_upgrades):
+                self._select_upgrade(self.available_upgrades[idx])
         elif action in ("upgrade_health", "upgrade_damage", "upgrade_speed", "upgrade_firerate", "upgrade_multishot"):
-            upgrade_type = action.split("_")[1]  # Extract upgrade type
-            self._toggle_upgrade_selection(upgrade_type)
-        elif action == "confirm_upgrades" and len(self.selected_upgrades) == 3:
-            upgrade_type = action.split("_")[1]  # Extract upgrade type
-            get_events().dispatch(PlayerSelectedUpgradeEvent(upgrade_type=upgrade_type))
-            self.level_up_active = False
+            # Handle legacy actions for compatibility
+            upgrade_type = action.split("_")[1]
+            self._select_upgrade(upgrade_type)
 
     def _on_level_complete(self):
         """Called when level is completed."""
@@ -274,78 +277,81 @@ class GameScene(BaseScene):
         return None
         
     def _on_player_level_up(self, event):
-        """Handle player level up event - show level up UI."""
+        """Handle player level up event - show level up UI with 3 random upgrades."""
         self.scene_manager.pause_active_scene()
         self.ui.show_screen("level_up", modal=True)
         self.level_up_active = True
-        self.selected_upgrades.clear()  # Clear previous selections
         DebugLogger.state(f"Player reached level {event.level}")
+        
+        # Generate 3 random upgrade options
+        self._generate_random_upgrades()
+        self._update_ui_buttons()
         
     def _on_upgrade_selected(self, event):
         """Handle upgrade selection - apply upgrade and continue game."""
         self.player.apply_upgrade(event.upgrade_type)
         self.level_up_active = False
         
-    def _toggle_upgrade_selection(self, upgrade_type):
-        """Toggle upgrade selection, update UI."""
-        # Add or remove upgrade from selection
-        if upgrade_type in self.selected_upgrades:
-            self.selected_upgrades.remove(upgrade_type)
-        else:
-            # Limit to 3 selections
-            if len(self.selected_upgrades) < 3:
-                self.selected_upgrades.add(upgrade_type)
-            else:
-                return  # Can't select more than 3 upgrades
-        
-        # Update counter label
-        overlay = self.ui.screens.get("level_up")
-        if overlay:
-            counter_elem = self._find_element_by_id(overlay, "selection_counter")
-            if counter_elem:
-                counter_elem.text = f"Selected: {len(self.selected_upgrades)} / 3"
-                counter_elem.mark_dirty()
-            
-            # Enable/disable confirm button
-            confirm_btn = self._find_element_by_id(overlay, "confirm_btn")
-            if confirm_btn:
-                confirm_btn.enabled = (len(self.selected_upgrades) == 3)
-                confirm_btn.mark_dirty()
-                
-            # Update visual state of selected buttons
-            self._update_button_states(overlay)
-    
-    def _update_button_states(self, overlay):
-        """Update visual state of upgrade buttons based on selection."""
-        buttons = {
-            "health": ("health_upgrade_btn", [80, 60, 60]),
-            "damage": ("damage_upgrade_btn", [60, 60, 80]),
-            "speed": ("speed_upgrade_btn", [60, 80, 60]),
-            "firerate": ("firerate_upgrade_btn", [80, 60, 100]),
-            "multishot": ("multishot_upgrade_btn", [60, 100, 80])
-        }
-        
-        for upgrade_type, (btn_id, default_color) in buttons.items():
-            btn = self._find_element_by_id(overlay, btn_id)
-            if btn:
-                if upgrade_type in self.selected_upgrades:
-                    # Highlight selected buttons
-                    btn.background = tuple(c + 60 for c in default_color)
-                else:
-                    # Reset to default color
-                    btn.background = default_color
-                btn.mark_dirty()
-    
-    def _apply_selected_upgrades(self):
-        """Apply all selected upgrades and continue game."""
-        # Apply each selected upgrade
-        for upgrade_type in self.selected_upgrades:
-            self.player.apply_upgrade(upgrade_type)
-            
-        # Reset selection state
-        self.selected_upgrades.clear()
-        self.level_up_active = False
-        
         # Hide level up screen and resume game
         self.ui.hide_screen("level_up")
         self.scene_manager.resume_active_scene()
+        
+    def _generate_random_upgrades(self):
+        """Generate 3 random upgrade options from available types."""
+        all_upgrades = ["health", "damage", "speed", "firerate", "multishot"]
+        self.available_upgrades = random.sample(all_upgrades, 3)
+        
+    def _update_ui_buttons(self):
+        """Update the UI buttons with the available upgrades."""
+        overlay = self.ui.screens.get("level_up")
+        if not overlay:
+            return
+            
+        # Mapping of upgrade types to display names
+        upgrade_names = {
+            "health": "Health +20%",
+            "damage": "Damage +20%",
+            "speed": "Speed +20%",
+            "firerate": "Attack Speed +25%",
+            "multishot": "Extra Shot"
+        }
+        
+        # Mapping of upgrade types to colors
+        upgrade_colors = {
+            "health": [80, 60, 60],
+            "damage": [60, 60, 80],
+            "speed": [60, 80, 60],
+            "firerate": [80, 60, 100],
+            "multishot": [60, 100, 80]
+        }
+        
+        # Update the 3 button elements
+        for i in range(3):
+            btn_id = f"upgrade_btn_{i+1}"
+            btn_action = f"upgrade_{i+1}"
+            btn = self._find_element_by_id(overlay, btn_id)
+            
+            if btn and i < len(self.available_upgrades):
+                upgrade_type = self.available_upgrades[i]
+                btn.text = upgrade_names[upgrade_type]
+                btn.config["action"] = btn_action
+                btn.background = upgrade_colors[upgrade_type]
+                btn.mark_dirty()
+    
+    def _select_upgrade(self, upgrade_type):
+        """Apply selected upgrade and close level up UI."""
+        if self.level_up_active:
+            # Apply the upgrade
+            self.player.apply_upgrade(upgrade_type)
+            
+            # Dispatch upgrade event (for any listeners)
+            get_events().dispatch(PlayerSelectedUpgradeEvent(upgrade_type=upgrade_type))
+            
+            # Set level up as inactive
+            self.level_up_active = False
+            
+            # Hide level up screen and resume game
+            self.ui.hide_screen("level_up")
+            self.scene_manager.resume_active_scene()
+            
+            DebugLogger.state(f"Applied upgrade: {upgrade_type}", category="upgrade")
