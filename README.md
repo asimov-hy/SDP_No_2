@@ -140,7 +140,6 @@ SDP-202X/
    │  │  ├─ __init__.py
    │  │  ├─ game_loop.py
    │  │  ├─ game_settings.py
-   │  │  ├─ menu_scene.py
    │  │  └─ session_stats.py
    │  │
    │  └─ services/
@@ -181,16 +180,14 @@ SDP-202X/
    │  │  ├─ __init__.py
    │  │  └─ base_item.py
    │  │
-   │  ├─ player/
-   │  │  ├─ __init__.py
-   │  │  ├─ player_ability.py
-   │  │  ├─ player_core.py
-   │  │  ├─ player_effects.py
-   │  │  ├─ player_logic.py
-   │  │  ├─ player_movement.py
-   │  │  └─ player_state.py
-   │  │
-   │  └─ state/
+   │  └─ player/
+   │     ├─ __init__.py
+   │     ├─ player_ability.py
+   │     ├─ player_core.py
+   │     ├─ player_effects.py
+   │     ├─ player_logic.py
+   │     ├─ player_movement.py
+   │     └─ player_state.py
    │
    ├─ graphics/
    │  ├─ __init__.py
@@ -237,26 +234,20 @@ SDP-202X/
    │  │  ├─ collision_hitbox.py
    │  │  └─ collision_manager.py
    │  │
-   │  ├─ combat/
+   │  ├─ entity_management/
    │  │  ├─ __init__.py
-   │  │  └─ bullet_manager.py
+   │  │  ├─ bullet_manager.py
+   │  │  ├─ entity_registry.py
+   │  │  ├─ item_manager.py
+   │  │  └─ spawn_manager.py
    │  │
-   │  ├─ items/
-   │  │  ├─ __init__.py
-   │  │  └─ item_manager.py
-   │  │
-   │  ├─ level/
-   │  │  ├─ __init__.py
-   │  │  ├─ level_manager.py
-   │  │  ├─ level_registry.py
-   │  │  ├─ pattern_registry.py
-   │  │  ├─ stage_loader.py
-   │  │  └─ wave_scheduler.py
-   │  │
-   │  └─ spawning/
+   │  └─ level/
    │     ├─ __init__.py
-   │     ├─ entity_registry.py
-   │     └─ spawn_manager.py
+   │     ├─ level_manager.py
+   │     ├─ level_registry.py
+   │     ├─ pattern_registry.py
+   │     ├─ stage_loader.py
+   │     └─ wave_scheduler.py
    │
    └─ ui/
       ├─ __init__.py

@@ -4,7 +4,6 @@ game_scene.py
 Main gameplay scene - runs active level with player, enemies, bullets.
 """
 
-import pygame
 from src.scenes.base_scene import BaseScene
 from src.systems.game_system_initializer import GameSystemInitializer
 from src.core.runtime.game_settings import Debug

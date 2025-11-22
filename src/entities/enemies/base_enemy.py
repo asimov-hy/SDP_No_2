@@ -17,7 +17,7 @@ from src.core.debug.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import LifecycleState, InteractionState
 from src.entities.entity_types import CollisionTags, EntityCategory
-from src.systems.spawning.entity_registry import EntityRegistry
+from src.systems.entity_management.entity_registry import EntityRegistry
 from src.core.services.event_manager import get_events, EnemyDiedEvent, NukeUsedEvent
 
 
