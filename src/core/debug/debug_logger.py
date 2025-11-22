@@ -6,9 +6,7 @@ Keeps meta_mode for normal logs, but renders init reports
 in a clean dotted diagnostic style.
 """
 
-import inspect
 import sys
-import os
 from datetime import datetime
 from src.core.runtime.game_settings import LoggerConfig
 
@@ -59,7 +57,7 @@ class DebugLogger:
             if 'cls' in frame.f_locals:
                 return frame.f_locals['cls'].__name__
             return frame.f_code.co_filename.split('/')[-1].replace('.py', '')
-        except:
+        except (ValueError, AttributeError, KeyError):
             return "Unknown"
 
     @staticmethod

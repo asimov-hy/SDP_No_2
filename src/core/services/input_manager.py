@@ -315,7 +315,11 @@ class InputManager:
 
     def _merge_controller_ui(self):
         """Merge controller input for UI navigation (additive with keyboard)."""
-        hat_x, hat_y = self.controller.get_hat(0)
+        if self.controller.get_numhats() > 0:
+            hat_x, hat_y = self.controller.get_hat(0)
+        else:
+            hat_x, hat_y = 0, 0
+
         x_axis = self.controller.get_axis(0)
         y_axis = self.controller.get_axis(1)
         threshold = 0.5

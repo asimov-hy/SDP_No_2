@@ -48,7 +48,7 @@ class SettingsManager:
 
                 # Merge with defaults (in case new settings added)
                 return self._merge_with_defaults(loaded)
-            except Exception as e:
+            except (json.JSONDecodeError, IOError, OSError) as e:
                 DebugLogger.warn(f"Failed to load settings: {e}")
                 return self.defaults.copy()
         else:
@@ -69,7 +69,7 @@ class SettingsManager:
             with open(self.settings_file, 'w') as f:
                 json.dump(self.settings, f, indent=2)
             DebugLogger.system(f"Saved settings to {self.settings_file}")
-        except Exception as e:
+        except (IOError, OSError, TypeError) as e:
             DebugLogger.warn(f"Failed to save settings: {e}")
 
     def get(self, category, key, default=None):
@@ -89,4 +89,11 @@ class SettingsManager:
 
 
 # Global singleton
-SETTINGS = SettingsManager()
+_SETTINGS = None
+
+def get_settings() -> SettingsManager:
+    """Get or create the settings singleton."""
+    global _SETTINGS
+    if _SETTINGS is None:
+        _SETTINGS = SettingsManager()
+    return _SETTINGS

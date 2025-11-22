@@ -99,4 +99,11 @@ class EventManager:
 # Global Instance
 # ============================================================
 
-EVENTS = EventManager()
+_EVENTS = None
+
+def get_events() -> EventManager:
+    """Get or create the event manager singleton."""
+    global _EVENTS
+    if _EVENTS is None:
+        _EVENTS = EventManager()
+    return _EVENTS

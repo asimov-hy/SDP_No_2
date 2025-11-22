@@ -7,7 +7,7 @@ Simplified scene coordinator - direct class registration.
 from src.core.debug.debug_logger import DebugLogger
 from src.scenes.scene_state import SceneState
 from src.core.services.service_locator import ServiceLocator
-from src.core.runtime.session_stats import SESSION_STATS
+from src.core.runtime.session_stats import update_session_stats
 from src.systems.spawning.entity_registry import EntityRegistry
 from src.systems.level.level_registry import LevelRegistry
 
@@ -34,7 +34,7 @@ class SceneManager:
         DebugLogger.init_sub("ServiceLocator initialized")
 
         # Register global systems
-        self.services.register_global("session_stats", SESSION_STATS)
+        self.services.register_global("session_stats", update_session_stats())
         self.services.register_global("entity_registry", EntityRegistry)
         self.services.register_global("level_registry", LevelRegistry)
         DebugLogger.init_sub("Registered global systems")

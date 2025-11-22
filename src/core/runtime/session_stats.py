@@ -5,6 +5,7 @@ Tracks statistics for the current game session/run.
 Separated from entity management and scene state.
 """
 
+
 class SessionStats:
     """
     Container for run-specific statistics.
@@ -99,4 +100,11 @@ class SessionStats:
 
 
 # Global singleton instance
-SESSION_STATS = SessionStats()
+_SESSION_STATS = None
+
+def update_session_stats() -> SessionStats:
+    """Get or create the session stats singleton."""
+    global _SESSION_STATS
+    if _SESSION_STATS is None:
+        _SESSION_STATS = SessionStats()
+    return _SESSION_STATS

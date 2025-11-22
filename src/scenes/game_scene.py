@@ -11,8 +11,8 @@ from src.core.runtime.game_settings import Debug
 from src.systems.level.level_registry import LevelRegistry
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.entity_state import LifecycleState
-from src.core.runtime.session_stats import SESSION_STATS
-from src.core.services.event_manager import EVENTS, EnemyDiedEvent
+from src.core.runtime.session_stats import update_session_stats
+from src.core.services.event_manager import get_events, EnemyDiedEvent
 
 
 class GameScene(BaseScene):
@@ -45,7 +45,7 @@ class GameScene(BaseScene):
 
         # Set callbacks
         self.level_manager.on_level_complete = self._on_level_complete
-        EVENTS.subscribe(EnemyDiedEvent, self._on_enemy_died_stats)
+        get_events().subscribe(EnemyDiedEvent, self._on_enemy_died_stats)
 
         DebugLogger.section("GameScene Initialized")
 
@@ -80,7 +80,7 @@ class GameScene(BaseScene):
 
         # Reset game state
         self.game_over_shown = False
-        SESSION_STATS.reset()
+        update_session_stats().reset()
 
         # Start specific level if selected
         if self.selected_level_id:
@@ -136,7 +136,7 @@ class GameScene(BaseScene):
             return
 
         # Track play time (only during active gameplay)
-        SESSION_STATS.add_time(dt)
+        update_session_stats().add_time(dt)
 
         # Core gameplay updates
         self.player.update(dt)
@@ -209,20 +209,20 @@ class GameScene(BaseScene):
         # Update stats
         score_elem = self._find_element_by_id(overlay, "score_label")
         if score_elem:
-            score_elem.text = f"Score: {SESSION_STATS.score}"
+            score_elem.text = f"Score: {update_session_stats().score}"
 
         kills_elem = self._find_element_by_id(overlay, "kills_label")
         if kills_elem:
-            kills_elem.text = f"Enemies Killed: {SESSION_STATS.enemies_killed}"
+            kills_elem.text = f"Enemies Killed: {update_session_stats().enemies_killed}"
 
         items_elem = self._find_element_by_id(overlay, "items_label")
         if items_elem:
-            items_elem.text = f"Items Collected: {SESSION_STATS.items_collected}"
+            items_elem.text = f"Items Collected: {update_session_stats().items_collected}"
 
         time_elem = self._find_element_by_id(overlay, "time_label")
         if time_elem:
-            minutes = int(SESSION_STATS.run_time // 60)
-            seconds = int(SESSION_STATS.run_time % 60)
+            minutes = int(update_session_stats().run_time // 60)
+            seconds = int(update_session_stats().run_time % 60)
             time_elem.text = f"Time: {minutes}:{seconds:02d}"
 
         # Show overlay
@@ -250,8 +250,8 @@ class GameScene(BaseScene):
 
     def _on_enemy_died_stats(self, event):
         """Track enemy kills in session stats."""
-        SESSION_STATS.add_kill()
-        SESSION_STATS.add_score(10)  # Base score per kill
+        update_session_stats().add_kill()
+        update_session_stats().add_score(10)  # Base score per kill
 
     def _show_game_over(self, victory: bool):
         """Show game over overlay with stats."""
@@ -277,23 +277,23 @@ class GameScene(BaseScene):
         # Update stats
         score_elem = self._find_element_by_id(overlay, "score_label")
         if score_elem:
-            score_elem.text = f"Score: {SESSION_STATS.score}"
+            score_elem.text = f"Score: {update_session_stats().score}"
             score_elem.mark_dirty()
 
         kills_elem = self._find_element_by_id(overlay, "kills_label")
         if kills_elem:
-            kills_elem.text = f"Enemies Killed: {SESSION_STATS.enemies_killed}"
+            kills_elem.text = f"Enemies Killed: {update_session_stats().enemies_killed}"
             kills_elem.mark_dirty()
 
         items_elem = self._find_element_by_id(overlay, "items_label")
         if items_elem:
-            items_elem.text = f"Items Collected: {SESSION_STATS.items_collected}"
+            items_elem.text = f"Items Collected: {update_session_stats().items_collected}"
             items_elem.mark_dirty()
 
         time_elem = self._find_element_by_id(overlay, "time_label")
         if time_elem:
-            minutes = int(SESSION_STATS.run_time // 60)
-            seconds = int(SESSION_STATS.run_time % 60)
+            minutes = int(update_session_stats().run_time // 60)
+            seconds = int(update_session_stats().run_time % 60)
             time_elem.text = f"Time: {minutes}:{seconds:02d}"
             time_elem.mark_dirty()
 

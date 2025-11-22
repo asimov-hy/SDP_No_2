@@ -132,11 +132,8 @@ class DrawManager:
         for layer_items in self.shape_layers.values():
             layer_items.clear()
 
-        if hasattr(self, "debug_hitboxes"):
-            self.debug_hitboxes.clear()
-
-        if hasattr(self, "debug_obbs"):
-            self.debug_obbs.clear()
+        self.debug_hitboxes.clear()
+        self.debug_obbs.clear()
 
     def queue_draw(self, surface, rect, layer=0):
         """
@@ -180,8 +177,6 @@ class DrawManager:
         parameters instead of allocating `pygame.Surface` objects.
         These are drawn directly during render() for near-zero overhead.
         """
-        if not hasattr(self, "debug_hitboxes"):
-            self.debug_hitboxes = []
 
         # Store draw command for later rendering (no surface creation)
         self.debug_hitboxes.append((rect, color, width))
@@ -195,8 +190,6 @@ class DrawManager:
             color (tuple): RGB color for the lines
             width (int): Line width
         """
-        if not hasattr(self, "debug_obbs"):
-            self.debug_obbs = []
 
         # Store draw command for later rendering
         self.debug_obbs.append((corners, color, width))
@@ -293,7 +286,7 @@ class DrawManager:
         # -------------------------------------------------------
         # Background rendering (cached surface to avoid fill cost)
         # -------------------------------------------------------
-        if hasattr(self, "background") and self.background is not None:
+        if self.background is not None:
             target_surface.blit(self.background, (0, 0))
         else:
             # Create cached background on first use

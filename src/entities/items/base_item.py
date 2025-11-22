@@ -18,7 +18,7 @@ from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import LifecycleState
 from src.entities.entity_types import CollisionTags, EntityCategory
 from src.systems.spawning.entity_registry import EntityRegistry
-from src.core.services.event_manager import EVENTS, ItemCollectedEvent
+from src.core.services.event_manager import get_events, ItemCollectedEvent
 from src.entities.player.player_effects import apply_item_effects
 
 
@@ -150,7 +150,7 @@ class BaseItem(BaseEntity):
             apply_item_effects(other, self.get_effects())
 
             # Notify observers (achievements, ui, etc can subscribe)
-            EVENTS.dispatch(ItemCollectedEvent(effects=self.get_effects()))
+            get_events().dispatch(ItemCollectedEvent(effects=self.get_effects()))
 
             # Legacy hook for subclasses (can be removed later)
             self.on_pickup(other)

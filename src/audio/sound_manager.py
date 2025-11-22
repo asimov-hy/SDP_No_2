@@ -1,6 +1,7 @@
 import pygame
 
-class sound_manager:
+
+class SoundManager:
     def __init__(self):
         pygame.init()
         pygame.mixer.init()

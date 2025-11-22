@@ -12,7 +12,7 @@ Responsibilities
 
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.entity_state import LifecycleState
-from src.core.services.event_manager import EVENTS, NukeUsedEvent
+from src.core.services.event_manager import get_events, NukeUsedEvent
 
 EFFECT_HANDLERS = {}
 
@@ -71,7 +71,7 @@ def handle_MULTIPLY_FIRE_RATE(player, effect_data):
 @effect_handler("USE_NUKE")
 def handle_USE_NUKE(player, effect_data):
     """Trigger a screen-clearing nuke."""
-    EVENTS.dispatch(NukeUsedEvent())
+    get_events().dispatch(NukeUsedEvent())
     DebugLogger.action("NUKE ACTIVATED! Clearing screen...", category="item")
 
 

@@ -18,7 +18,7 @@ from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import LifecycleState, InteractionState
 from src.entities.entity_types import CollisionTags, EntityCategory
 from src.systems.spawning.entity_registry import EntityRegistry
-from src.core.services.event_manager import EVENTS, EnemyDiedEvent, NukeUsedEvent
+from src.core.services.event_manager import get_events, EnemyDiedEvent, NukeUsedEvent
 
 
 class BaseEnemy(BaseEntity):
@@ -128,7 +128,7 @@ class BaseEnemy(BaseEntity):
         self.update_rotation()
 
         if not hasattr(self, '_nuke_subscribed'):
-            EVENTS.subscribe(NukeUsedEvent, self.on_nuke_used)
+            get_events().subscribe(NukeUsedEvent, self.on_nuke_used)
             self._nuke_subscribed = True
 
     # ===========================================================
@@ -207,7 +207,7 @@ class BaseEnemy(BaseEntity):
         self.anim_manager.play("death", duration=duration, death_frames=self._death_frames)
         self.collision_tag = CollisionTags.NEUTRAL
 
-        EVENTS.dispatch(EnemyDiedEvent(
+        get_events().dispatch(EnemyDiedEvent(
             position=(self.rect.centerx, self.rect.centery),
             enemy_type_tag=self.__class__.__name__,
             exp=self.exp_value
@@ -307,13 +307,13 @@ class BaseEnemy(BaseEntity):
         self.update_rotation()
 
         if not hasattr(self, '_nuke_subscribed') or not self._nuke_subscribed:
-            EVENTS.subscribe(NukeUsedEvent, self.on_nuke_used)
+            get_events().subscribe(NukeUsedEvent, self.on_nuke_used)
             self._nuke_subscribed = True
 
     def cleanup(self):
         """Explicitly unsubscribe to prevent zombie processing."""
         if hasattr(self, '_nuke_subscribed') and self._nuke_subscribed:
-            EVENTS.unsubscribe(NukeUsedEvent, self.on_nuke_used)
+            get_events().unsubscribe(NukeUsedEvent, self.on_nuke_used)
             self._nuke_subscribed = False
 
     def on_nuke_used(self, event: NukeUsedEvent):

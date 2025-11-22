@@ -53,7 +53,7 @@ def _load_py_module(py_path):
         spec.loader.exec_module(module)
         DebugLogger.system(f"Loaded {os.path.basename(py_path)} (Python)", category="loading")
         return getattr(module, "DEFAULT_CONFIG", {})
-    except Exception as e:
+    except (ImportError, AttributeError, FileNotFoundError, SyntaxError) as e:
         DebugLogger.warn(f"Failed to load Python config {py_path}: {e}", category="loading")
         return {}
 
@@ -102,7 +102,7 @@ def load_config(filename, default_dict=None):
 
         return _merge_dicts(default_dict, data)
 
-    except Exception as e:
+    except (json.JSONDecodeError, FileNotFoundError, IOError) as e:
         DebugLogger.warn(f"Failed to load {path}: {e} — using defaults", category="loading")
         return default_dict.copy()
 

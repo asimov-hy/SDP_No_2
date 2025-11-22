@@ -110,7 +110,7 @@ class EntityRegistry:
                     category="loading"
                 )
                 # Still allow registration for flexibility, just warn
-        except Exception:
+        except (TypeError, AttributeError):
             pass  # EntityCategory not available, skip validation
 
         # Validation 5: Check for duplicate registration

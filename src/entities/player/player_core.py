@@ -10,7 +10,7 @@ import os
 from src.core.runtime.game_settings import Display, Layers
 from src.core.debug.debug_logger import DebugLogger
 from src.core.services.config_manager import load_config
-from src.core.services.event_manager import EVENTS, EnemyDiedEvent
+from src.core.services.event_manager import get_events, EnemyDiedEvent
 
 from src.entities.base_entity import BaseEntity
 from src.entities.state_manager import StateManager
@@ -193,7 +193,7 @@ class Player(BaseEntity):
         self._death_frames = []  # No death animation frames for player
         self.state_manager = StateManager(self, cfg.get("state_effects", {}))
 
-        EVENTS.subscribe(EnemyDiedEvent, self._on_enemy_died)
+        get_events().subscribe(EnemyDiedEvent, self._on_enemy_died)
 
         DebugLogger.init_entry("Player Initialized")
         DebugLogger.init_sub(f"Location: ({x:.1f}, {y:.1f})")

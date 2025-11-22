@@ -16,7 +16,7 @@ from enum import Enum
 import pygame
 import os
 
-from src.core.services.event_manager import EVENTS, EnemyDiedEvent
+from src.core.services.event_manager import get_events, EnemyDiedEvent
 from src.core.services.config_manager import load_config
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
@@ -111,7 +111,7 @@ class ItemManager:
 
     def _subscribe_to_events(self) -> None:
         """Subscribe to game events for item spawning."""
-        EVENTS.subscribe(EnemyDiedEvent, self.on_enemy_died)
+        get_events().subscribe(EnemyDiedEvent, self.on_enemy_died)
 
     def _load_fallback_image(self) -> None:
         """Load fallback dummy_item image."""
