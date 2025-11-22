@@ -133,7 +133,6 @@ class StateManager:
 
         cfg = self.state_config[effect_name]
         duration = cfg.get("duration", 0.0)
-        self.active_states[effect] = duration
 
         # Add or refresh timer
         self.active_states[effect] = duration

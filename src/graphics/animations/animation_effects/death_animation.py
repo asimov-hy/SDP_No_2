@@ -19,11 +19,9 @@ def death_spin_fade(entity, t):
     """Rotate while fading."""
     fade_out(entity, t)
 
-    if not hasattr(entity, '_original_image'):
-        entity._original_image = entity.image.copy()
-
+    orig = getattr(entity, '_original_image', entity.image)
     angle = t * 360
-    entity.image = pygame.transform.rotate(entity._original_image, angle)
+    entity.image = pygame.transform.rotate(orig, angle)
     entity.rect = entity.image.get_rect(center=entity.rect.center)
 
 

@@ -93,6 +93,10 @@ class AnimationManager:
         self.finished = False
         self._effect_queue.clear()
 
+        # Store original image once at animation start (cold path)
+        if hasattr(self.entity, 'image') and self.entity.image:
+            self.entity._original_image = self.entity.image.copy()
+
         # Build context for animation function
         self.context = {
             "duration": duration,
@@ -112,6 +116,11 @@ class AnimationManager:
                 f"{type(self.entity).__name__}: Animation '{self.active_type}' stopped",
                 category="animation"
             )
+
+        # Restore original image if stored
+        if hasattr(self.entity, '_original_image') and self.entity._original_image:
+            self.entity.image = self.entity._original_image
+            self.entity.image.set_alpha(255)
 
         self.active_type = None
         self.timer = 0.0

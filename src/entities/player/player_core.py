@@ -18,6 +18,7 @@ from src.entities.entity_state import LifecycleState, InteractionState
 from src.entities.entity_types import CollisionTags, EntityCategory
 from .player_movement import update_movement
 from . import player_ability
+from .player_logic import damage_collision
 
 
 # ===========================================================
@@ -84,10 +85,12 @@ class Player(BaseEntity):
                     temp_img = pygame.image.load(sprite_path).convert_alpha()
                     scale = (size[0] / temp_img.get_width(), size[1] / temp_img.get_height())
                     image = BaseEntity.load_and_scale_image(sprite_path, scale)
+
                 else:
                     DebugLogger.warn(f"Missing sprite: {sprite_path}, using fallback.")
                     image = pygame.Surface(size)
                     image.fill((255, 50, 50))
+
             shape_data = None
         else:
             image = None
@@ -142,10 +145,13 @@ class Player(BaseEntity):
         # Load images if needed
         images = None
         if self.render_mode == "image":
-            images = {
-                state_key: self._load_and_scale(path, size)
-                for state_key, path in health_cfg["image_states"].items()
-            }
+            images = {}
+            for state_key, path in health_cfg["image_states"].items():
+                # Reuse initial image for normal state if same path
+                if state_key == "normal" and path == render.get("sprite", {}).get("path"):
+                    images[state_key] = image  # Reuse already loaded
+                else:
+                    images[state_key] = self._load_and_scale(path, size)
 
         # Setup via base entity
         self.setup_sprite(
@@ -169,7 +175,8 @@ class Player(BaseEntity):
         self.input_manager = input_manager
         self.input = PlayerInput(input_manager)
 
-        self.bullet_manager = None
+        self._bullet_manager = None
+        self._shooting_enabled = False
         self.base_shoot_cooldown = 0.1
         self.shoot_timer = 0.0
 
@@ -245,11 +252,11 @@ class Player(BaseEntity):
         self.anim_manager.update(dt)
         self.state_manager.update(dt)
 
-        self.input_manager.update()
+        # self.input_manager.update()
         update_movement(self, dt)
 
         # 4. Ability logic
-        if self.bullet_manager:
+        if self._bullet_manager:
             player_ability.update_shooting(self, dt)
 
     def draw(self, draw_manager):
@@ -267,7 +274,6 @@ class Player(BaseEntity):
 
         # damaging collisions
         if tag in (CollisionTags.ENEMY, CollisionTags.ENEMY_BULLET):
-            from .player_logic import damage_collision
             damage_collision(self, other)
 
     # ===========================================================
@@ -310,3 +316,13 @@ class Player(BaseEntity):
         """Get shoot cooldown with fire rate modifiers applied."""
         fire_rate_mult = self.state_manager.get_stat("fire_rate", 1.0)
         return self.base_shoot_cooldown / fire_rate_mult
+
+    @property
+    def bullet_manager(self):
+        return self._bullet_manager
+
+    @bullet_manager.setter
+    def bullet_manager(self, manager):
+        """Set manager and synchronize shooting state."""
+        self._bullet_manager = manager
+        self._shooting_enabled = manager is not None
