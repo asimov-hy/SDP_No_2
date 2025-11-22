@@ -48,6 +48,7 @@ class SpawnManager:
         # Pooling system
         self.pools = {}  # {(category, type_name): [inactive_entities]}
         self.pool_enabled = {}  # {(category, type_name): bool}
+        self._validated_types = set()
 
         # Statistics tracking
         self._spawn_stats = {
@@ -60,26 +61,31 @@ class SpawnManager:
         DebugLogger.init_entry("SpawnManager Initialized")
 
     # ===========================================================
-    # Entity Spawning
+    # Cold Validation (runs once per entity type)
     # ===========================================================
-    def spawn(self, category: str, type_name: str, x: float, y: float, **kwargs) -> BaseEntity | None:
+    def _validate_entity_type(self, category: str, type_name: str, x: float, y: float) -> bool:
         """
-        Spawn a new entity and register it with the scene.
-
-        Args:
-            category (str): Entity group in the registry (e.g., "enemy", "environment").
-            type_name (str): Entity type key (e.g., "straight", "asteroid").
-            x (float): Spawn x-coordinate.
-            y (float): Spawn y-coordinate.
-            **kwargs: Additional initialization parameters for the entity.
+        Validate entity type exists and produces valid entities.
+        Called only on first spawn of each type (cold path).
 
         Returns:
-            BaseEntity | None: Spawned entity or None if spawn failed
+            bool: True if type is valid and can be spawned
         """
+        # Check registry
+        if not EntityRegistry.has(category, type_name):
+            DebugLogger.warn(
+                f"Entity not registered: [{category}:{type_name}]. "
+                f"Available: {EntityRegistry.get_registered_names(category)}",
+                category="entity_spawn"
+            )
+            self._spawn_stats["total_failed"] += 1
+            return False
+
+        # Validate spawn bounds (warning only)
         if self.display:
             width = getattr(self.display, 'game_width', 1280)
             height = getattr(self.display, 'game_height', 720)
-            SPAWN_MARGIN = 1000  # Allow offscreen but not too far
+            SPAWN_MARGIN = 1000
 
             if (x < -SPAWN_MARGIN or x > width + SPAWN_MARGIN or
                     y < -SPAWN_MARGIN or y > height + SPAWN_MARGIN):
@@ -88,59 +94,86 @@ class SpawnManager:
                     category="entity_spawn"
                 )
 
-        # VALIDATION: Check if entity type exists in registry
-        if not EntityRegistry.has(category, type_name):
+        # Create test instance to validate structure
+        test_entity = EntityRegistry.create(
+            category, type_name, -9999, -9999,
+            draw_manager=self.draw_manager
+        )
+
+        if not test_entity:
             DebugLogger.warn(
-                f"Entity not registered: [{category}:{type_name}]. "
-                f"Available: {EntityRegistry.get_registered_names(category)}",
+                f"Failed to create test instance for [{category}:{type_name}]",
                 category="entity_spawn"
             )
             self._spawn_stats["total_failed"] += 1
-            return None
+            return False
 
-        # Ensure draw_manager is available
+        # Validate required attributes
+        missing = []
+        if not hasattr(test_entity, 'rect'):
+            missing.append('rect')
+        if not hasattr(test_entity, 'pos'):
+            missing.append('pos')
+        if not hasattr(test_entity, 'death_state'):
+            missing.append('death_state')
+        if not hasattr(test_entity, 'reset'):
+            missing.append('reset')
+
+        if missing:
+            DebugLogger.warn(
+                f"Entity {type(test_entity).__name__} missing attributes: {missing}",
+                category="entity_spawn"
+            )
+            self._spawn_stats["total_failed"] += 1
+            return False
+
+        # Cleanup test instance
+        if hasattr(test_entity, 'cleanup'):
+            test_entity.cleanup()
+
+        DebugLogger.trace(
+            f"Validated entity type [{category}:{type_name}]",
+            category="entity_spawn"
+        )
+        return True
+
+    # ===========================================================
+    # Entity Spawning
+    # ===========================================================
+    def spawn(self, category: str, type_name: str, x: float, y: float, **kwargs) -> BaseEntity | None:
+        """
+        Spawn a new entity and register it with the scene.
+        """
+        key = (category, type_name)
+
+        if key not in self._validated_types:
+            if not self._validate_entity_type(category, type_name, x, y):
+                return None
+            self._validated_types.add(key)
+
         kwargs.setdefault("draw_manager", self.draw_manager)
 
-        key = (category, type_name)
         entity = None
         from_pool = False
 
         # Try pool first if enabled
-        if key in self.pool_enabled and self.pool_enabled[key]:
+        if self.pool_enabled.get(key):
             entity = self._get_from_pool(category, type_name)
 
             if entity:
                 from_pool = True
-                if hasattr(entity, "reset"):
-                    try:
-                        entity.reset(x, y, **kwargs)
-
-                        # FIXED: Validate reset succeeded before using entity
-                        if not (hasattr(entity, 'rect') and hasattr(entity, 'pos') and
-                                hasattr(entity, 'death_state')):
-                            DebugLogger.warn(
-                                f"Pooled {type(entity).__name__}.reset() incomplete - missing attributes",
-                                category="entity_spawn"
-                            )
-                            entity = None
-                            from_pool = False
-                        else:
-                            # Reset alpha to prevent faded spawns
-                            if hasattr(entity, 'image') and entity.image:
-                                entity.image.set_alpha(255)
-                    except Exception as e:
-                        DebugLogger.warn(
-                            f"Failed to reset pooled {type(entity).__name__}: {e}",
-                            category="entity_spawn"
-                        )
-                        entity = None
-                        from_pool = False
-                else:
+                try:
+                    entity.reset(x, y, **kwargs)
+                    # Reset alpha to prevent faded spawns
+                    if getattr(entity, 'image', None):
+                        entity.image.set_alpha(255)
+                except Exception as e:
                     DebugLogger.warn(
-                        f"{type(entity).__name__} missing reset() method",
+                        f"Failed to reset pooled {type(entity).__name__}: {e}",
                         category="entity_spawn"
                     )
-                    entity = None  # Fallback to creation
+                    entity = None
+                    from_pool = False
 
         # Create new if pool miss
         if entity is None:
@@ -154,39 +187,18 @@ class SpawnManager:
                 self._spawn_stats["total_failed"] += 1
                 return None
 
-        # VALIDATION: Ensure entity has required attributes
-        if not hasattr(entity, 'rect') or not hasattr(entity, 'pos'):
-            DebugLogger.warn(
-                f"Entity {type(entity).__name__} missing required attributes (rect or pos)",
-                category="entity_spawn"
-            )
-            self._spawn_stats["total_failed"] += 1
-            return None
-
-        # VALIDATION: Ensure entity has lifecycle state
-        if not hasattr(entity, 'death_state'):
-            DebugLogger.warn(
-                f"Entity {type(entity).__name__} missing death_state attribute",
-                category="entity_spawn"
-            )
-            self._spawn_stats["total_failed"] += 1
-            return None
-
-        # All validations passed - add to active entities
+        # Add to active entities
         self.entities.append(entity)
 
-        # Register hitbox with collision system
+        # Register hitbox with collision system (type validated, trust entity has hitbox)
         if self.collision_manager:
-            # FIXED: Validate before registration
-            if hasattr(entity, 'hitbox'):
-                try:
-                    self.collision_manager.register_hitbox(entity)
-                except Exception as e:
-                    DebugLogger.warn(
-                        f"Failed to register hitbox for {type(entity).__name__}: {e}",
-                        category="entity_spawn"
-                    )
-            # Silent skip if no hitbox - some entities (particles) don't need collision
+            try:
+                self.collision_manager.register_hitbox(entity)
+            except Exception as e:
+                DebugLogger.warn(
+                    f"Failed to register hitbox for {type(entity).__name__}: {e}",
+                    category="entity_spawn"
+                )
 
         # Update statistics
         self._spawn_stats["total_spawned"] += 1
@@ -265,12 +277,8 @@ class SpawnManager:
 
     def _get_from_pool(self, category: str, type_name: str):
         """Try to get entity from pool, returns None if pool empty."""
-        key = (category, type_name)
-
-        if key not in self.pools or not self.pools[key]:
-            return None
-
-        return self.pools[key].pop()
+        pool = self.pools.get((category, type_name))
+        return pool.pop() if pool else None
 
     def _return_to_pool(self, entity):
         """Return entity to its pool if pooling is enabled for its type."""
@@ -282,7 +290,7 @@ class SpawnManager:
 
         key = (category, type_name)
 
-        if key in self.pool_enabled and self.pool_enabled[key]:
+        if self.pool_enabled.get(key):
             entity.death_state = LifecycleState.DEAD
             self.pools[key].append(entity)
             return True
@@ -456,4 +464,6 @@ class SpawnManager:
             self._return_to_pool(entity)
 
         self.entities.clear()
+        # Note: Keep _validated_types - entity classes don't change between levels
+        # Clear only if you want to re-validate (e.g., for hot-reload debugging)
         DebugLogger.system("SpawnManager reset (pools preserved)", category="entity_spawn")

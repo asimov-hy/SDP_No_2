@@ -79,7 +79,7 @@ class CollisionManager:
         # Cache frequently-accessed attributes for hot path optimization
         entity_id = id(entity)
         self._entity_cache[entity_id] = {
-            "collision_tag": getattr(entity, "collision_tag", None)
+            "collision_tag": getattr(entity, "collision_tag", None),
         }
 
         DebugLogger.trace(f"Registered hitbox for {type(entity).__name__}")

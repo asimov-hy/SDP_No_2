@@ -87,7 +87,6 @@ class BaseBullet(BaseEntity):
         )
 
         # Core attributes
-        self.pos = pygame.Vector2(pos)
         self.vel = pygame.Vector2(vel)
         self.death_state = LifecycleState.ALIVE
         self.state = InteractionState.DEFAULT

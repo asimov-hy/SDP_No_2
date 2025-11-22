@@ -13,10 +13,12 @@ Responsibilities
 """
 
 import pygame
+import random
 from src.core.debug.debug_logger import DebugLogger
 from src.systems.spawning.entity_registry import EntityRegistry
 from src.entities.entity_types import EntityCategory
 from src.systems.level.pattern_registry import PatternRegistry
+from src.entities.entity_state import LifecycleState
 
 
 class WaveScheduler:
@@ -47,6 +49,8 @@ class WaveScheduler:
 
         # Callback for entity death
         self.spawner.on_entity_destroyed = self._on_entity_destroyed
+
+        self._imported_entities = set()
 
     # ===========================================================
     # Wave Loading
@@ -153,15 +157,6 @@ class WaveScheduler:
 
         # Try lazy import
         self._lazy_import_entity(category, entity_type)
-
-        # VALIDATION: Check if entity exists
-        if not EntityRegistry.has(category, entity_type):
-            DebugLogger.warn(
-                f"[WaveScheduler] Cannot spawn unregistered entity [{category}:{entity_type}]. "
-                f"Available {category} types: {EntityRegistry.get_registered_names(category)}",
-                category="level"
-            )
-            return
 
         pattern = wave.get("pattern", "line")
 
@@ -321,7 +316,6 @@ class WaveScheduler:
 
     def _positions_from_edge(self, wave: dict) -> list:
         """Generate positions along screen edge."""
-        import random
 
         edge = wave["spawn_edge"]
         position = wave.get("spawn_position", 0.5)
@@ -484,7 +478,6 @@ class WaveScheduler:
 
         # FIXED: Check if player is dead
         if hasattr(self.player, 'death_state'):
-            from src.entities.entity_state import LifecycleState
             if self.player.death_state >= LifecycleState.DEAD:
                 return self._direction_to_center(x, y)
 
@@ -565,6 +558,12 @@ class WaveScheduler:
 
     def _lazy_import_entity(self, category: str, type_name: str):
         """Import entity module to trigger registration."""
+
+        key = (category, type_name)
+        if key in self._imported_entities:
+            return  # Already imported
+        self._imported_entities.add(key)
+
         try:
             if category == "enemy":
                 module_path = f"src.entities.enemies.enemy_{type_name}"
@@ -579,6 +578,6 @@ class WaveScheduler:
 
         except Exception as e:
             DebugLogger.warn(
-                f"[WaveScheduler] Failed to import {category}:{type_name} - {e}",
+                f"Failed to import {category}:{type_name} - {e}",
                 category="level"
             )
