@@ -283,9 +283,8 @@ class DrawManager:
             debug (bool): If True, logs the number of items rendered.
         """
         self.surface = target_surface
-        # -------------------------------------------------------
+
         # Background rendering (cached surface to avoid fill cost)
-        # -------------------------------------------------------
         if self.background is not None:
             target_surface.blit(self.background, (0, 0))
         else:
@@ -293,6 +292,7 @@ class DrawManager:
             if not hasattr(self, "_bg_cache") or self._bg_cache is None:
                 self._bg_cache = pygame.Surface(target_surface.get_size())
                 self._bg_cache.fill((50, 50, 100))
+
             target_surface.blit(self._bg_cache, (0, 0))
 
         # Cache sorted layer keys to avoid sorting every frame
@@ -302,9 +302,7 @@ class DrawManager:
             self._layer_keys_cache = sorted(all_layers)
             self._layers_dirty = False
 
-        # -------------------------------------------------------
         # Render each layer (surfaces then shapes)
-        # -------------------------------------------------------
         for layer in self._layer_keys_cache:
             # Batch blit all surfaces in this layer
             if layer in self.surface_layers:
@@ -318,10 +316,17 @@ class DrawManager:
                 for shape_type, rect, color, kwargs in shape_items:
                     self._draw_shape(target_surface, shape_type, rect, color, **kwargs)
 
-        if debug:
-            surface_count = sum(len(items) for items in self.surface_layers.values())
-            shape_count = sum(len(items) for items in self.shape_layers.values())
-            DebugLogger.state(f"Rendered {surface_count} surfaces and {shape_count} shapes", category="drawing")
+            # Debug hitbox rendering (always last = always on top)
+            for rect, color, width in self.debug_hitboxes:
+                pygame.draw.rect(target_surface, color, rect, width)
+
+            for corners, color, width in self.debug_obbs:
+                pygame.draw.lines(target_surface, color, True, corners, width)
+
+            if debug:
+                surface_count = sum(len(items) for items in self.surface_layers.values())
+                shape_count = sum(len(items) for items in self.shape_layers.values())
+                DebugLogger.state(f"Rendered {surface_count} surfaces and {shape_count} shapes", category="drawing")
 
     # ===========================================================
     # Shape Rendering Helper

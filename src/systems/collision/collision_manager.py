@@ -32,7 +32,7 @@ class CollisionManager:
         (1, 1), (-1, 1), (1, -1), (-1, -1)
     ]
 
-    def __init__(self, player, bullet_manager, spawn_manager):
+    def __init__(self, player, bullet_manager, spawn_manager=None):
         self.player = player
         self.bullet_manager = bullet_manager
         self.spawn_manager = spawn_manager
@@ -80,6 +80,7 @@ class CollisionManager:
         entity_id = id(entity)
         self._entity_cache[entity_id] = {
             "collision_tag": getattr(entity, "collision_tag", None),
+            "has_state": hasattr(entity, 'state'),
         }
 
         DebugLogger.trace(f"Registered hitbox for {type(entity).__name__}")
@@ -146,6 +147,9 @@ class CollisionManager:
     # ===========================================================
     def detect(self):
         """[OPTIMIZED] Collision detection using fixed-array spatial hashing."""
+        if not self.spawn_manager:
+            return self._collisions
+
         self._collisions.clear()
 
         # [OPTIMIZATION] Clear buckets without reallocation

@@ -363,6 +363,9 @@ class SpawnManager:
                 if self.on_entity_destroyed:
                     self.on_entity_destroyed(entity)
 
+                if self.collision_manager:
+                    self.collision_manager.unregister_hitbox(entity)
+
                 # Call entity's cleanup method if it exists
                 if hasattr(entity, 'cleanup'):
                     try:

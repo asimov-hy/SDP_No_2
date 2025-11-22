@@ -210,6 +210,9 @@ class BaseEnemy(BaseEntity):
         self.anim_manager.play("death")
         self.collision_tag = CollisionTags.NEUTRAL
 
+        if hasattr(self, 'hitbox') and self.hitbox:
+            self.hitbox.set_active(False)
+
         get_events().dispatch(EnemyDiedEvent(
             position=(self.rect.centerx, self.rect.centery),
             enemy_type_tag=self.__class__.__name__,

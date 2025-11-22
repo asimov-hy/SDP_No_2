@@ -19,6 +19,7 @@ from src.graphics.animations.animation_data import (
     get_animation_duration,
     get_animation_config
 )
+from src.entities.entity_state import LifecycleState
 
 
 class AnimationManager:
@@ -135,8 +136,10 @@ class AnimationManager:
 
         # Restore original image if stored
         if hasattr(self.entity, '_base_image') and self.entity._base_image:
-            self.entity.image = self.entity._base_image
-            self.entity.image.set_alpha(255)
+            death_state = getattr(self.entity, 'death_state', LifecycleState.ALIVE)
+            if death_state == LifecycleState.ALIVE:
+                self.entity.image = self.entity._base_image
+                self.entity.image.set_alpha(255)
 
         self.active_type = None
         self.timer = 0.0

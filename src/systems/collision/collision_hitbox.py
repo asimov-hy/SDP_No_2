@@ -227,10 +227,7 @@ class CollisionHitbox:
         Synchronize the hitbox position and size with the owner entity.
         Called once per frame before collision checks.
         """
-        rect = getattr(self.owner, "rect", None)
-
-        if not rect:
-            return
+        rect = self.owner.rect
 
         # Store old position for change detection
         old_center = (self.rect.centerx, self.rect.centery)

@@ -109,13 +109,15 @@ class GameSystemInitializer(SystemInitializer):
             image=player.bullet_image
         )
 
-        collision_manager = CollisionManager(
-            player,
-            bullet_manager,
-            None
-        )
+        # collision_manager = CollisionManager(
+        #     player,
+        #     bullet_manager,
+        #     None
+        # )
+        #
+        # bullet_manager.collision_manager = collision_manager
+        collision_manager = CollisionManager(player, bullet_manager)
 
-        bullet_manager.collision_manager = collision_manager
         DebugLogger.init_sub("Bound [CollisionManager] to [BulletManager]")
 
         collision_manager.register_hitbox(player)
