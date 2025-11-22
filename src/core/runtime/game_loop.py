@@ -71,10 +71,10 @@ class GameLoop:
         # -------------------------------------------------------
         # Global Debug HUD (independent of scenes)
         # -------------------------------------------------------
+        self._last_perf_warn_time = 0
+
         self.debug_hud = DebugHUD(self.display, self.draw_manager)
-        DebugLogger.init_sub("Bound [DisplayManager] dependency", level=1)
-        self.debug_hud.draw_manager = self.draw_manager
-        DebugLogger.init_sub("Bound [DrawManager] dependency", level=1)
+        DebugLogger.init_sub("Bound [DisplayManager, DrawManager] dependencies", level=1)
 
         DebugLogger.init_entry("GameLoop Runtime")
         self.clock = pygame.time.Clock()
@@ -213,7 +213,7 @@ class GameLoop:
         # Profile: Debug HUD Draw
         # -------------------------------------------------------
         t_hud = time.perf_counter()
-        player = self.scenes.services.get_entity("player")
+        player = self.scenes.get_player()
 
         self.debug_hud.draw(self.draw_manager, player)
         hud_time = (time.perf_counter() - t_hud) * 1000
@@ -239,8 +239,10 @@ class GameLoop:
 
         # Slow frame warning (stays in GameLoop - it's a runtime concern)
         if frame_time_ms > Debug.FRAME_TIME_WARNING:
-            DebugLogger.warn(
-                f"Perf ⚠️ SLOW FRAME: {frame_time_ms:.2f} ms "
-                f"(Scene={scene_time:.2f} | HUD={hud_time:.2f} | Render={render_time:.2f})"
-            )
-            
+            now = time.perf_counter()
+            if now - self._last_perf_warn_time > 1.0:  # Throttle to 1/sec
+                self._last_perf_warn_time = now
+                DebugLogger.warn(
+                    f"Perf ⚠️ SLOW FRAME: {frame_time_ms:.2f} ms "
+                    f"(Scene={scene_time:.2f} | HUD={hud_time:.2f} | Render={render_time:.2f})"
+                )

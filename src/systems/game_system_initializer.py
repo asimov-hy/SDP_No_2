@@ -18,10 +18,11 @@ from src.systems.spawning.spawn_manager import SpawnManager
 from src.systems.level.level_manager import LevelManager
 from src.systems.items.item_manager import ItemManager
 
-# Animation registration
-from src.graphics.animations.entities_animation import player_animation
-from src.graphics.animations.entities_animation import enemy_animation
-from src.graphics.animations.animation_effects import common_animation
+# game_system_initializer.py lines 22-24
+# Animation modules imported for auto-registration side effects
+from src.graphics.animations.entities_animation import player_animation  # noqa: F401
+from src.graphics.animations.entities_animation import enemy_animation   # noqa: F401
+from src.graphics.animations.animation_effects import common_animation   # noqa: F401
 
 
 class GameSystemInitializer(SystemInitializer):
@@ -67,12 +68,7 @@ class GameSystemInitializer(SystemInitializer):
     # ===========================================================
     def _init_ui(self) -> UIManager:
         """Initialize UI system."""
-        ui = UIManager(
-            display_manager=self.display,
-            draw_manager=self.draw_manager,
-            game_width=Display.WIDTH,
-            game_height=Display.HEIGHT
-        )
+        ui = self.services.ui_manager  # Use existing
         ui.load_screen("pause", "hud/pause_hud.yaml")
         return ui
 

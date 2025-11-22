@@ -6,7 +6,7 @@ Uses data-driven UI system for buttons, direct rendering for metrics.
 """
 
 import pygame
-
+import time
 from src.core.runtime.game_settings import Display, Layers
 from src.core.debug.debug_logger import DebugLogger
 from src.ui.core.ui_loader import UILoader
@@ -33,11 +33,8 @@ class DebugHUD:
         self.anchor_resolver = AnchorResolver(Display.WIDTH, Display.HEIGHT)
 
         # Load UI from config
-        try:
-            self.root_element = self.loader.load("debug_hud.yaml")
-        except FileNotFoundError:
-            DebugLogger.warn("debug_hud.yaml not found - using fallback")
-            self.root_element = None
+        self.root_element = None
+        self._loaded = False
 
         # Metrics tracking (always active for performance monitoring)
         self.smoothed_fps = 0.0
@@ -261,8 +258,9 @@ class DebugHUD:
         draw_manager.queue_draw(surface, rect, Layers.DEBUG)
 
     def toggle(self):
-        """Toggle HUD visibility."""
         self.visible = not self.visible
+        if self.visible:
+            self._ensure_loaded()
         state = "shown" if self.visible else "hidden"
         DebugLogger.action(f"DebugHUD {state}")
 
@@ -309,6 +307,15 @@ class DebugHUD:
             self.max_fps = fps
 
         if fps < self.min_fps:
-            import time
             self.min_fps = fps
             self.min_fps_time = time.strftime("%H:%M:%S")
+
+    def _ensure_loaded(self):
+        if self._loaded:
+            return
+        self._loaded = True
+
+        try:
+            self.root_element = self.loader.load("debug_hud.yaml")
+        except FileNotFoundError:
+            DebugLogger.warn("debug_hud.yaml not found - using fallback")

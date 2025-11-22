@@ -275,3 +275,6 @@ class SceneManager:
         # Normal scene rendering
         if self._active_scene:
             self._active_scene.draw(draw_manager)
+
+    def get_player(self):
+        return self.services.get_entity("player")
