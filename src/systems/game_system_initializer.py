@@ -116,7 +116,12 @@ class GameSystemInitializer(SystemInitializer):
         # )
         #
         # bullet_manager.collision_manager = collision_manager
-        collision_manager = CollisionManager(player, bullet_manager)
+        collision_manager = CollisionManager(
+            player,
+            bullet_manager,
+            None  # spawn_manager not ready
+        )
+        bullet_manager.link_collision_manager(collision_manager)
 
         DebugLogger.init_sub("Bound [CollisionManager] to [BulletManager]")
 

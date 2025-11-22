@@ -32,7 +32,7 @@ class CollisionManager:
         (1, 1), (-1, 1), (1, -1), (-1, -1)
     ]
 
-    def __init__(self, player, bullet_manager, spawn_manager=None):
+    def __init__(self, player, bullet_manager, spawn_manager):
         self.player = player
         self.bullet_manager = bullet_manager
         self.spawn_manager = spawn_manager
