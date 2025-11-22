@@ -10,7 +10,7 @@ import os
 from src.core.runtime.game_settings import Display, Layers
 from src.core.debug.debug_logger import DebugLogger
 from src.core.services.config_manager import load_config
-from src.core.services.event_manager import get_events, EnemyDiedEvent
+from src.core.services.event_manager import get_events, EnemyDiedEvent, PlayerLevelUpEvent
 
 from src.entities.base_entity import BaseEntity
 from src.entities.state_manager import StateManager
@@ -298,10 +298,76 @@ class Player(BaseEntity):
         # Smooth EXP curve
         self.exp_required = int(30 * (1.15 ** (self.level - 1)))
 
+        # Dispatch level up event
+        get_events().dispatch(PlayerLevelUpEvent(level=self.level))
+
         DebugLogger.state(
             f"Level: {self.level}, Next={self.exp_required}",
             category="exp"
         )
+
+    # ===========================================================
+    # UPGRADE HANDLING
+    # ===========================================================
+    def apply_upgrade(self, upgrade_type: str):
+        """
+        Apply an upgrade to the player.
+        
+        Args:
+            upgrade_type: Type of upgrade ("health", "damage", "speed")
+        """
+        if upgrade_type == "health":
+            self._apply_health_upgrade()
+        elif upgrade_type == "damage":
+            self._apply_damage_upgrade()
+        elif upgrade_type == "speed":
+            self._apply_speed_upgrade()
+        elif upgrade_type == "firerate":
+            self._apply_firerate_upgrade()
+        elif upgrade_type == "multishot":
+            self._apply_multishot_upgrade()
+        else:
+            DebugLogger.warn(f"Invalid upgrade type: {upgrade_type}")
+            return
+            
+        DebugLogger.state(f"Upgrade applied: {upgrade_type}")
+        
+    def _apply_health_upgrade(self):
+        """Apply health upgrade: increase max health by 20% and heal that amount."""
+        old_max = self.max_health
+        health_increase = int(old_max * 0.2)  # 20% increase
+        self.max_health += health_increase
+        self.health = min(self.health + health_increase, self.max_health)
+        DebugLogger.state(f"Health upgraded: max HP {old_max} → {self.max_health}")
+        
+    def _apply_damage_upgrade(self):
+        """Apply damage upgrade: increase bullet damage by 20%."""
+        # This will be handled by player_ability, using the state_manager modifier
+        current_damage_bonus = self.state_manager.get_stat("damage_bonus", 1.0)
+        new_damage_bonus = current_damage_bonus * 1.2  # 20% increase
+        self.state_manager.add_modifier("damage_bonus", new_damage_bonus, permanent=True)
+        DebugLogger.state(f"Damage upgraded: {current_damage_bonus}x → {new_damage_bonus}x")
+        
+    def _apply_speed_upgrade(self):
+        """Apply speed upgrade: increase base speed by 20%."""
+        old_speed = self.base_speed
+        self.base_speed *= 1.2  # 20% increase
+        DebugLogger.state(f"Speed upgraded: {old_speed} → {self.base_speed}")
+        
+    def _apply_firerate_upgrade(self):
+        """Apply fire rate upgrade: increase fire rate by 25%."""
+        old_firerate = self.base_shoot_cooldown
+        # Decrease cooldown time by 25% (faster shooting)
+        self.base_shoot_cooldown *= 0.75  # 25% faster shooting
+        DebugLogger.state(f"Fire rate upgraded: {old_firerate}s → {self.base_shoot_cooldown}s")
+        
+    def _apply_multishot_upgrade(self):
+        """Apply multishot upgrade: add extra projectile to shooting."""
+        # This will be handled by player_ability
+        current_multishot = self.state_manager.get_stat("multishot_count", 0)
+        new_multishot = current_multishot + 1
+        self.state_manager.add_modifier("multishot_count", new_multishot, permanent=True)
+        DebugLogger.state(f"Multishot upgraded: {current_multishot} → {new_multishot} extra shots")
 
     # ===========================================================
     # Stat Properties (with modifiers applied)

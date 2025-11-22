@@ -50,6 +50,18 @@ class NukeUsedEvent(BaseEvent):
     damage: int = 9999
 
 
+@dataclass(frozen=True)
+class PlayerLevelUpEvent(BaseEvent):
+    """Dispatched when player levels up."""
+    level: int
+
+
+@dataclass(frozen=True)
+class PlayerSelectedUpgradeEvent(BaseEvent):
+    """Dispatched when player selects an upgrade."""
+    upgrade_type: str  # "health", "damage", or "speed"
+
+
 # ============================================================
 # Event Manager
 # ============================================================

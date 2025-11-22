@@ -25,7 +25,7 @@ class BaseBullet(BaseEntity):
     """Base class for all bullet entities_animation."""
 
     # Add slots for bullet-specific attributes
-    __slots__ = ('vel', 'owner', 'radius', 'damage', 'state')
+    __slots__ = ('vel', 'owner', 'radius', 'damage', 'state', 'damage_bonus')
 
     def __init_subclass__(cls, **kwargs):
         """Auto-register bullet subclasses when they're defined."""
@@ -36,7 +36,7 @@ class BaseBullet(BaseEntity):
     # Initialization
     # ===========================================================
     def __init__(self, pos, vel, image=None, color=None,
-                 radius=None, owner="player", damage=None, hitbox_scale=None, draw_manager=None):
+                 radius=None, owner="player", damage=None, hitbox_scale=None, draw_manager=None, damage_bonus=1.0):
         """
         Initialize the base bullet entity.
 
@@ -57,10 +57,13 @@ class BaseBullet(BaseEntity):
         defaults = EntityRegistry.get_data("projectile", "straight")
 
         # Apply overrides or use defaults
-        damage = damage if damage is not None else defaults.get("damage", 1)
+        base_damage = damage if damage is not None else defaults.get("damage", 1)
         radius = radius if radius is not None else defaults.get("radius", 3)
         color = tuple(color) if color is not None else tuple(defaults.get("color", [255, 255, 255]))
         hitbox_config = defaults.get("hitbox", {})
+        
+        # Apply damage bonus
+        damage = int(base_damage * damage_bonus)
 
         radius = max(1, radius)
         size = (radius * 2, radius * 2)
@@ -91,6 +94,7 @@ class BaseBullet(BaseEntity):
         self.owner = owner
         self.radius = radius
         self.damage = damage
+        self.damage_bonus = damage_bonus
 
         # Collision setup
         self.collision_tag = CollisionTags.PLAYER_BULLET if owner == "player" else CollisionTags.ENEMY_BULLET

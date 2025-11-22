@@ -12,7 +12,7 @@ from src.systems.level.level_registry import LevelRegistry
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.entity_state import LifecycleState
 from src.core.runtime.session_stats import update_session_stats
-from src.core.services.event_manager import get_events, EnemyDiedEvent
+from src.core.services.event_manager import get_events, EnemyDiedEvent, PlayerLevelUpEvent, PlayerSelectedUpgradeEvent
 from src.scenes.scene_state import SceneState
 
 
@@ -43,10 +43,16 @@ class GameScene(BaseScene):
 
         # Game over state
         self.game_over_shown = False
+        
+        # Level up selection state
+        self.level_up_active = False
+        self.selected_upgrades = set()
 
         # Set callbacks
         self.level_manager.on_level_complete = self._on_level_complete
         get_events().subscribe(EnemyDiedEvent, self._on_enemy_died_stats)
+        get_events().subscribe(PlayerLevelUpEvent, self._on_player_level_up)
+        get_events().subscribe(PlayerSelectedUpgradeEvent, self._on_upgrade_selected)
 
         DebugLogger.section("GameScene Initialized")
 
@@ -78,6 +84,9 @@ class GameScene(BaseScene):
 
         # Load game over overlay (hidden by default)
         self.ui.load_screen("game_over", "hud/game_over.yaml")
+        
+        # Load level up overlay (hidden by default)
+        self.ui.load_screen("level_up", "screens/level_up.yaml")
 
         # Reset game state
         self.game_over_shown = False
@@ -131,6 +140,11 @@ class GameScene(BaseScene):
 
         # Don't update gameplay or track time if paused
         if self.state == SceneState.PAUSED:
+            # Handle special case for level up (allow UI interactions but not gameplay)
+            if self.level_up_active:
+                mouse_pos = self.input_manager.get_mouse_pos()
+                self.ui.update(dt, mouse_pos)
+                return
             mouse_pos = self.input_manager.get_mouse_pos()
             self.ui.update(dt, mouse_pos)
             return
@@ -179,6 +193,13 @@ class GameScene(BaseScene):
             self.scene_manager.set_scene("MainMenu")
         elif action == "return_to_menu":
             self.scene_manager.set_scene("MainMenu")
+        elif action in ("upgrade_health", "upgrade_damage", "upgrade_speed", "upgrade_firerate", "upgrade_multishot"):
+            upgrade_type = action.split("_")[1]  # Extract upgrade type
+            self._toggle_upgrade_selection(upgrade_type)
+        elif action == "confirm_upgrades" and len(self.selected_upgrades) == 3:
+            upgrade_type = action.split("_")[1]  # Extract upgrade type
+            get_events().dispatch(PlayerSelectedUpgradeEvent(upgrade_type=upgrade_type))
+            self.level_up_active = False
 
     def _on_level_complete(self):
         """Called when level is completed."""
@@ -251,3 +272,80 @@ class GameScene(BaseScene):
                     return result
 
         return None
+        
+    def _on_player_level_up(self, event):
+        """Handle player level up event - show level up UI."""
+        self.scene_manager.pause_active_scene()
+        self.ui.show_screen("level_up", modal=True)
+        self.level_up_active = True
+        self.selected_upgrades.clear()  # Clear previous selections
+        DebugLogger.state(f"Player reached level {event.level}")
+        
+    def _on_upgrade_selected(self, event):
+        """Handle upgrade selection - apply upgrade and continue game."""
+        self.player.apply_upgrade(event.upgrade_type)
+        self.level_up_active = False
+        
+    def _toggle_upgrade_selection(self, upgrade_type):
+        """Toggle upgrade selection, update UI."""
+        # Add or remove upgrade from selection
+        if upgrade_type in self.selected_upgrades:
+            self.selected_upgrades.remove(upgrade_type)
+        else:
+            # Limit to 3 selections
+            if len(self.selected_upgrades) < 3:
+                self.selected_upgrades.add(upgrade_type)
+            else:
+                return  # Can't select more than 3 upgrades
+        
+        # Update counter label
+        overlay = self.ui.screens.get("level_up")
+        if overlay:
+            counter_elem = self._find_element_by_id(overlay, "selection_counter")
+            if counter_elem:
+                counter_elem.text = f"Selected: {len(self.selected_upgrades)} / 3"
+                counter_elem.mark_dirty()
+            
+            # Enable/disable confirm button
+            confirm_btn = self._find_element_by_id(overlay, "confirm_btn")
+            if confirm_btn:
+                confirm_btn.enabled = (len(self.selected_upgrades) == 3)
+                confirm_btn.mark_dirty()
+                
+            # Update visual state of selected buttons
+            self._update_button_states(overlay)
+    
+    def _update_button_states(self, overlay):
+        """Update visual state of upgrade buttons based on selection."""
+        buttons = {
+            "health": ("health_upgrade_btn", [80, 60, 60]),
+            "damage": ("damage_upgrade_btn", [60, 60, 80]),
+            "speed": ("speed_upgrade_btn", [60, 80, 60]),
+            "firerate": ("firerate_upgrade_btn", [80, 60, 100]),
+            "multishot": ("multishot_upgrade_btn", [60, 100, 80])
+        }
+        
+        for upgrade_type, (btn_id, default_color) in buttons.items():
+            btn = self._find_element_by_id(overlay, btn_id)
+            if btn:
+                if upgrade_type in self.selected_upgrades:
+                    # Highlight selected buttons
+                    btn.background = tuple(c + 60 for c in default_color)
+                else:
+                    # Reset to default color
+                    btn.background = default_color
+                btn.mark_dirty()
+    
+    def _apply_selected_upgrades(self):
+        """Apply all selected upgrades and continue game."""
+        # Apply each selected upgrade
+        for upgrade_type in self.selected_upgrades:
+            self.player.apply_upgrade(upgrade_type)
+            
+        # Reset selection state
+        self.selected_upgrades.clear()
+        self.level_up_active = False
+        
+        # Hide level up screen and resume game
+        self.ui.hide_screen("level_up")
+        self.scene_manager.resume_active_scene()
