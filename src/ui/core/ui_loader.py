@@ -174,18 +174,33 @@ class UILoader:
         Returns:
             Config with resolved layer values
         """
-        if 'layer' not in config:
-            return config
+        # Check root level (old format)
+        if 'layer' in config:
+            config['layer'] = self._resolve_single_layer(config['layer'])
 
-        layer_value = config['layer']
+        # Check visual dict (new format)
+        if 'visual' in config and isinstance(config['visual'], dict):
+            if 'layer' in config['visual']:
+                config['visual']['layer'] = self._resolve_single_layer(config['visual']['layer'])
 
+        return config
+
+    def _resolve_single_layer(self, layer_value) -> int:
+        """
+        Resolve a single layer value.
+
+        Args:
+            layer_value: Layer value (int, float, or string)
+
+        Returns:
+            Resolved layer as integer
+        """
         # Already a number - return as-is
         if isinstance(layer_value, (int, float)):
-            return config
+            return int(layer_value)
 
         # String - needs resolution
         if isinstance(layer_value, str):
-
             layer_str = layer_value.strip()
 
             # Build safe evaluation namespace with only Layers constants
@@ -199,18 +214,21 @@ class UILoader:
                 result = eval(layer_str, safe_namespace)
 
                 if isinstance(result, (int, float)):
-                    config['layer'] = int(result)
-                    DebugLogger.trace(f"Resolved '{layer_str}' -> {config['layer']}", category="ui")
+                    DebugLogger.trace(f"Resolved '{layer_str}' -> {int(result)}", category="ui")
+                    return int(result)
                 else:
-                    DebugLogger.warn(f"Layer expression '{layer_str}' didn't return a number, using Layers.UI",
-                                     category="ui")
-                    config['layer'] = Layers.UI
+                    DebugLogger.warn(
+                        f"Layer expression '{layer_str}' didn't return a number, using Layers.UI",
+                        category="ui"
+                    )
+                    return Layers.UI
 
             except Exception as e:
                 DebugLogger.warn(f"Failed to parse layer '{layer_str}': {e}, using Layers.UI", category="ui")
-                config['layer'] = Layers.UI
+                return Layers.UI
 
-        return config
+        # Fallback
+        return Layers.UI
 
 
 # Register base element type

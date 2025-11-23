@@ -12,74 +12,113 @@ from src.core.runtime.game_settings import Layers
 class UIElement:
     """Base ui element with cached rendering and position management."""
 
+    _font_cache: Dict[int, pygame.font.Font] = {}
+
     def __init__(self, config: Dict[str, Any]):
         """
         Initialize ui element from config dictionary.
 
-        Args:
-            config: Configuration dictionary from YAML or code
+        Config structure:
+            position: {anchor, offset, align, size, margin, padding}
+            visual: {color, alpha, background, image, border, ...}
+            data: {bind, format, max_value}
         """
+        # Store original config for debugging
+        self.config = {'id': config.get('id'), 'type': config.get('type')}
+
         # Identity
         self.id = config.get('id')
         self.type = config.get('type')
 
-        # Position (resolved later by anchor system)
-        self.anchor = config.get('anchor')
-        self.offset = config.get('offset', [0, 0])
-        self.align = config.get('align', None)
-        self.position_mode = config.get('position')  # 'absolute' or None
+        # Extract grouped configs (support both old and new format)
+        position_dict = config.get('position', {})
+        visual_dict = config.get('visual', {})
+        data_dict = config.get('data', {})
 
-        self.text_align = config.get('text_align', 'center')
+        # Legacy support - if no groups, use root level
+        if not position_dict and not visual_dict:
+            position_dict = config
+            visual_dict = config
+            data_dict = config
 
-        # Explicit position (for absolute mode)
-        self.x = config.get('x', 0)
-        self.y = config.get('y', 0)
+        # Store for access by other methods
+        self.position_dict = position_dict
+        self.visual_dict = visual_dict
+        self.data_dict = data_dict
 
-        # Size
-        self.width = config.get('width', 100)
-        self.height = config.get('height', 50)
-        size = config.get('size')
-        if size:
-            self.width, self.height = size
+        # === POSITION GROUP ===
+        self.anchor = position_dict.get('anchor')
+        self.offset = position_dict.get('offset', [0, 0])
+        self.align = position_dict.get('align', None)
+
+        # Auto-match align to anchor if not specified
+        if self.anchor and self.align is None:
+            if isinstance(self.anchor, str) and ':' in self.anchor and not self.anchor.startswith('#'):
+                # Extract position from "screen:center" or "parent:top_left"
+                self.align = self.anchor.split(':', 1)[1]
+            elif isinstance(self.anchor, str) and not self.anchor.startswith('#'):
+                self.align = self.anchor.replace('parent_', '')
+            else:
+                self.align = 'center'
+
+        self.text_align = position_dict.get('text_align', 'center')
+
+        # Size - ONLY from position.size (no width/height)
+        size = position_dict.get('size', [100, 50])
+        self.width, self.height = size
+
+        # Spacing
+        self.margin = position_dict.get('margin', 0)
+        margin_sides = position_dict.get('margin_sides')
+        if margin_sides:
+            self.margin_top = margin_sides[0]
+            self.margin_right = margin_sides[1] if len(margin_sides) > 1 else margin_sides[0]
+            self.margin_bottom = margin_sides[2] if len(margin_sides) > 2 else margin_sides[0]
+            self.margin_left = margin_sides[3] if len(margin_sides) > 3 else margin_sides[1]
+        else:
+            self.margin_top = position_dict.get('margin_top', self.margin)
+            self.margin_bottom = position_dict.get('margin_bottom', self.margin)
+            self.margin_left = position_dict.get('margin_left', self.margin)
+            self.margin_right = position_dict.get('margin_right', self.margin)
+
+        self.padding = position_dict.get('padding', 0)
+
+        # === VISUAL GROUP ===
+        # Color (can be RGB or RGBA)
+        self.color = self._parse_color(visual_dict.get('color', [100, 100, 100]))
+
+        # Separate alpha for entire element (independent of color's alpha)
+        self.alpha = self._parse_alpha(visual_dict.get('alpha', 255))
+
+        # Background
+        background_val = visual_dict.get('background')
+        self.background = self._parse_color(background_val) if background_val else None
 
         # Image properties
-        self.image_path = config.get('image')
-        self.image_scale = config.get('image_scale', 1.0)
-        self.image_tint = self._parse_color(config.get('image_tint')) if config.get('image_tint') else None
-        self._loaded_image = None  # Cached loaded image
-        self._draw_manager_ref = None  # Injected by UIManager
+        self.image_path = visual_dict.get('image')
+        self.image_scale = visual_dict.get('image_scale', 1.0)
+        image_tint_val = visual_dict.get('image_tint')
+        self.image_tint = self._parse_color(image_tint_val) if image_tint_val else None
+        self._loaded_image = None
+        self._draw_manager_ref = None
         self._image_load_attempted = False
 
-        # Spacing (for layout children)
-        self.margin = config.get('margin', 0)
-        self.margin_top = config.get('margin_top', self.margin)
-        self.margin_bottom = config.get('margin_bottom', self.margin)
-        self.margin_left = config.get('margin_left', self.margin)
-        self.margin_right = config.get('margin_right', self.margin)
-
-        self.padding = config.get('padding', 0)
-
-        # Visual properties
-        self.color = self._parse_color(config.get('color', [100, 100, 100]))
-        self.alpha = self._parse_alpha(config.get('alpha', 255))
-        self.background = self._parse_color(config.get('background')) if config.get('background') else None
-
         # Border
-        self.border = config.get('border', 0)
-        self.border_color = self._parse_color(config.get('border_color', [255, 255, 255]))
-        self.border_radius = config.get('border_radius', 0)
+        self.border = visual_dict.get('border', 0)
+        self.border_color = self._parse_color(visual_dict.get('border_color', [255, 255, 255]))
+        self.border_radius = visual_dict.get('border_radius', 0)
 
-        # State
-        self.visible = config.get('visible', True)
-        self.enabled = config.get('enabled', True)
-        self.layer = config.get('layer', Layers.UI)
-
-        # Bindings
-        self.bind_path = config.get('bind')
+        # State (default to true)
+        self.visible = visual_dict.get('visible', True)
+        self.enabled = visual_dict.get('enabled', True)
+        self.layer = visual_dict.get('layer', Layers.UI)
 
         # Effects
-        self.hover_config = config.get('hover', {})
-        self.fade_config = config.get('fade')
+        self.hover_config = visual_dict.get('hover', {})
+        self.fade_config = visual_dict.get('fade')
+
+        # === DATA GROUP ===
+        self.bind_path = data_dict.get('bind')
 
         # Animation state
         self.animations = []
@@ -88,7 +127,7 @@ class UIElement:
         self._surface_cache: Optional[pygame.Surface] = None
         self._dirty = True
         self.rect: Optional[pygame.Rect] = None
-        self._position_cache_valid = False  # Track if rect needs recalculation
+        self._position_cache_valid = False
 
         # Layout state (set by parent container)
         self._layout_x = 0
@@ -96,7 +135,13 @@ class UIElement:
 
         # Parent reference
         self.parent: Optional['UIElement'] = None
-        self.current_value = None
+
+    @classmethod
+    def _get_cached_font(cls, size: int) -> pygame.font.Font:
+        """Get or create cached font by size."""
+        if size not in cls._font_cache:
+            cls._font_cache[size] = pygame.font.Font(None, size)
+        return cls._font_cache[size]
 
     def _parse_color(self, color) -> Optional[Tuple[int, ...]]:
         """Parse color from various formats."""
@@ -252,7 +297,6 @@ class UIElement:
     def mark_dirty(self):
         """Mark element as needing re-render."""
         self._dirty = True
-        self._position_cache_valid = False  # Invalidate position when content changes
 
     def set_visible(self, visible: bool):
         """Set visibility state."""
@@ -283,3 +327,55 @@ class UIElement:
             return text_surf.get_rect(midright=(container_rect.width - padding, container_rect.height // 2))
         else:  # center (default)
             return text_surf.get_rect(center=(container_rect.width // 2, container_rect.height // 2))
+
+    def invalidate_position(self):
+        """Mark position as needing recalculation (affects children too)."""
+        self._position_cache_valid = False
+        # Cascade to children if this is a container
+        if hasattr(self, 'children'):
+            for child in self.children:
+                child.invalidate_position()
+
+    def mark_dirty_with_position(self):
+        """Mark both surface and position as invalid."""
+        self._dirty = True
+        self.invalidate_position()
+
+    # Add after mark_dirty_with_position()
+
+    def show(self):
+        """Make element visible."""
+        self.set_visible(True)
+
+    def hide(self):
+        """Make element invisible."""
+        self.set_visible(False)
+
+    def enable(self):
+        """Enable element interaction (buttons)."""
+        if not self.enabled:
+            self.enabled = True
+            self.mark_dirty()
+
+    def disable(self):
+        """Disable element interaction (visible but not clickable)."""
+        if self.enabled:
+            self.enabled = False
+            self.mark_dirty()
+
+    @property
+    def interactive(self):
+        """Check if element is both visible and enabled."""
+        return self.visible and self.enabled
+
+    @property
+    def position(self) -> Tuple[int, int]:
+        """
+        Get current element position.
+
+        Returns:
+            (x, y) tuple based on positioning mode
+        """
+        if self.rect:
+            return (self.rect.x, self.rect.y)
+        return (0, 0)

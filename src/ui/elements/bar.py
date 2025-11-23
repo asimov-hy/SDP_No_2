@@ -24,30 +24,34 @@ class UIBar(UIElement):
         """
         super().__init__(config)
 
+        # Extract config groups (support both old and new format)
+        visual_dict = config.get('visual', config)
+        data_dict = config.get('data', config)
+
         # Bar properties
-        self.max_value = config.get('max_value', 100)
-        self.current_value = config.get('current_value', self.max_value)
+        self.max_value = data_dict.get('max_value', 100)
+        self.current_value = data_dict.get('current_value', self.max_value)
         self._max_value_valid = self.max_value > 0
 
-        # Visual
-        self.fill_color = self._parse_color(config.get('color', [0, 255, 0]))
-        self.bg_color = self._parse_color(config.get('background', [50, 50, 50]))
+        # Visual - fill color (prefer 'color' from visual, fallback to base color)
+        self.fill_color = self._parse_color(visual_dict.get('color', [0, 255, 0]))
+        self.bg_color = self.background if self.background else self._parse_color([50, 50, 50])
 
         # Gradient configuration
-        self.gradient_config = config.get('gradient')
+        self.gradient_config = visual_dict.get('gradient')
 
         # Label
-        self.show_label = config.get('show_label', False)
-        self.label_text = config.get('label', '')
+        self.show_label = visual_dict.get('show_label', False)
+        self.label_text = visual_dict.get('label', '')
         self._label_font = pygame.font.Font(None, 20) if self.show_label else None
 
         # Direction
-        self.direction = config.get('direction', 'horizontal')  # horizontal, vertical
+        self.direction = visual_dict.get('direction', 'horizontal')
 
         # Animation
-        self.animated = config.get('animated', True)
-        self.visual_value = self.current_value  # Smooth interpolation value
-        self.anim_speed = config.get('anim_speed', 5.0)
+        self.animated = visual_dict.get('animated', True)
+        self.visual_value = self.current_value
+        self.anim_speed = visual_dict.get('anim_speed', 5.0)
 
     def update(self, dt: float, mouse_pos: Tuple[int, int], binding_system=None):
         """Update bar state."""

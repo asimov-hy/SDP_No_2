@@ -7,6 +7,7 @@ Manages ui screens, HUD elements, and rendering with the new system.
 import pygame
 from typing import Dict, List, Optional, Tuple
 
+from src.core.runtime.game_settings import Layers
 from src.ui.core.anchor_resolver import AnchorResolver
 from .binding_system import BindingSystem
 from .ui_loader import UILoader
@@ -84,20 +85,28 @@ class UIManager:
 
         Args:
             name: Screen identifier
-            modal: If True, push onto modal stack (can stack multiple)
+            modal: If True, show as overlay on top of current screen
         """
         if name not in self.screens:
             return
 
+        screen = self.screens.get(name)
+
+        # Auto-assign layer based on modal state
         if modal:
+            self._set_auto_layer(screen, Layers.DEBUG)  # Modal overlays = layer 10
             self.modal_stack.append(name)
         else:
-            # Hide previous active screen
+            self._set_auto_layer(screen, Layers.UI)  # Regular screens = layer 9
             if self.active_screen:
                 self._on_screen_hide(self.active_screen)
 
             self.active_screen = name
             self._on_screen_show(name)
+
+        # Invalidate position when showing
+        if screen:
+            screen.invalidate_position()
 
     def hide_screen(self, name: Optional[str] = None):
         """
@@ -162,6 +171,9 @@ class UIManager:
         """
         root_element = self.loader.load(filename)
 
+        # Auto-assign UI layer for HUD elements
+        self._set_auto_layer(root_element, Layers.UI)
+
         # If root is a container, add all children as separate HUD elements
         if hasattr(root_element, 'children'):
             for child in root_element.children:
@@ -195,17 +207,16 @@ class UIManager:
 
     def _find_in_tree(self, element, target_id: str):
         """Recursive element search by id."""
-        # Check element.id attribute
-        if getattr(element, 'id', None) == target_id:
+        # Single ID check
+        if element.id == target_id:
             return element
-        # Check config dict id
-        if getattr(element, 'config', {}).get('id') == target_id:
-            return element
+
         # Recurse children
-        for child in getattr(element, 'children', []):
-            result = self._find_in_tree(child, target_id)
-            if result:
-                return result
+        if hasattr(element, 'children'):
+            for child in element.children:
+                result = self._find_in_tree(child, target_id)
+                if result:
+                    return result
         return None
 
     # ===================================================================
@@ -380,3 +391,22 @@ class UIManager:
         if hasattr(element, 'children'):
             for child in element.children:
                 self._draw_element_tree(child, draw_manager, parent=element)
+
+    def _set_auto_layer(self, element, layer):
+        """
+        Recursively set auto layer for elements without explicit layer.
+
+        Args:
+            element: Root element
+            layer: Layer to assign
+        """
+        visual_dict = getattr(element, 'visual_dict', {})
+
+        # Only set if not explicitly specified in config
+        if 'layer' not in visual_dict:
+            element.layer = layer
+
+        # Recursively set for children
+        if hasattr(element, 'children'):
+            for child in element.children:
+                self._set_auto_layer(child, layer)

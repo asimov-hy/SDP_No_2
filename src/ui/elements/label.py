@@ -24,16 +24,20 @@ class UILabel(UIElement):
         """
         super().__init__(config)
 
+        # Extract config groups (support both old and new format)
+        visual_dict = config.get('visual', config)
+        data_dict = config.get('data', config)
+
         # Text properties
-        self.text = config.get('text', '')
-        self.format = config.get('format', '{}')  # Format string for bound values
+        self.text = visual_dict.get('text', '')
+        self.format = data_dict.get('format', '{}')
 
         # Font
-        self.font_size = config.get('font_size', 24)
-        self.font = pygame.font.Font(None, self.font_size)
+        self.font_size = visual_dict.get('font_size', 24)
+        self.font = self._get_cached_font(self.font_size)
 
-        # Text color
-        text_color = config.get('text_color') or config.get('color', [255, 255, 255])
+        # Text color (prefer text_color, fallback to color)
+        text_color = visual_dict.get('text_color') or visual_dict.get('color', [255, 255, 255])
         self.text_color = self._parse_color(text_color)
 
         # Dynamic text from binding

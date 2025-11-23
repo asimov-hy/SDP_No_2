@@ -49,9 +49,11 @@ class AnchorResolver:
         Returns:
             Final positioned rect
         """
-        # Absolute positioning overrides everything
-        if element.position_mode == 'absolute':
-            return pygame.Rect(element.x, element.y, element.width, element.height)
+        # Check for absolute positioning via anchor
+        if element.anchor == 'screen:absolute':
+            # Use offset as absolute x, y coordinates
+            offset_x, offset_y = self._parse_offset(element.offset, element.width, element.height)
+            return pygame.Rect(int(offset_x), int(offset_y), element.width, element.height)
 
         # Calculate anchor point
         anchor_x, anchor_y = self._get_anchor_point(element.anchor, parent, element)
@@ -117,35 +119,59 @@ class AnchorResolver:
         """
         Convert named anchor to coordinates.
 
+        Supported formats:
+            "screen:center"           → Screen position
+            "screen:absolute"         → Absolute positioning (uses offset as x, y)
+            "parent:top_left"         → Parent position
+            "#element_id:bottom"      → Element position
+            "center"                  → Legacy screen position
+            "parent_center"           → Legacy parent position (backwards compat)
+
         Args:
-            name: Anchor name (e.g., 'center', 'top_left', 'parent_center')
+            name: Anchor name or reference
             parent: Parent container
 
         Returns:
             (x, y) coordinates
         """
 
-        # Element ID reference (e.g., "#button_id:center")
+        # New format: "prefix:position"
+        if ':' in name and not name.startswith('#'):
+            parts = name.split(':', 1)
+            prefix, position = parts[0], parts[1]
+
+            if prefix == 'screen':
+                if position == 'absolute':
+                    # Absolute positioning handled in resolve()
+                    return (0, 0)
+                screen_rect = pygame.Rect(0, 0, self.game_width, self.game_height)
+                return self._calculate_rect_anchor(screen_rect, position)
+
+            elif prefix == 'parent':
+                if not parent or not parent.rect:
+                    # Fallback to screen if no parent
+                    screen_rect = pygame.Rect(0, 0, self.game_width, self.game_height)
+                    return self._calculate_rect_anchor(screen_rect, position)
+                return self._calculate_rect_anchor(parent.rect, position)
+
+        # Element ID reference (e.g., "#health_bar:center")
         if name.startswith('#'):
             parts = name[1:].split(':')
             element_id = parts[0]
             position = parts[1] if len(parts) > 1 else 'center'
 
-            # Find element by ID (need to pass element registry)
             target_element = self._find_element_by_id(element_id)
             if target_element and target_element.rect:
                 return self._calculate_rect_anchor(target_element.rect, position)
 
-        # Parent-relative anchors
+        # Legacy parent_ prefix (backwards compatibility)
         if name.startswith('parent_'):
             if not parent or not parent.rect:
-                # Fallback to screen anchors if no parent
                 return self._get_named_anchor(name.replace('parent_', ''), None)
-
             parent_anchor = name.replace('parent_', '')
             return self._calculate_rect_anchor(parent.rect, parent_anchor)
 
-        # Screen-relative anchors
+        # Default: screen anchor (legacy format)
         screen_rect = pygame.Rect(0, 0, self.game_width, self.game_height)
         return self._calculate_rect_anchor(screen_rect, name)
 
@@ -262,8 +288,15 @@ class AnchorResolver:
         elif isinstance(anchor, str):
             if anchor.startswith('#'):
                 position = 'center'
-            else:
+            elif ':' in anchor:
+                # New format: "screen:center" or "parent:top_left"
+                position = anchor.split(':', 1)[1]
+            elif anchor.startswith('parent_'):
+                # Legacy format: "parent_center"
                 position = anchor.replace('parent_', '')
+            else:
+                # Direct position: "center", "top_left", etc.
+                position = anchor
         else:
             # Percentage anchors default to center
             position = 'center'

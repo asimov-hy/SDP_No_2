@@ -24,42 +24,75 @@ class UIContainer(UIElement):
         """
         super().__init__(config)
 
+        # Extract config groups (support both old and new format)
+        position_dict = config.get('position', config)
+
         # Layout properties
-        self.layout = config.get('layout')  # None, 'vertical', 'horizontal', 'grid'
-        self.spacing = config.get('spacing', 0)
-        self.align = config.get('align', 'start')  # start, center, end
+        self.layout = position_dict.get('layout')
+        self.spacing = position_dict.get('spacing', 0)
+        self.align = position_dict.get('align', 'start')
 
         # Children
         self.children: List[UIElement] = []
 
         # Auto-calculate size if not specified
-        self.auto_size = config.get('auto_size', False)
+        self.auto_size = position_dict.get('auto_size', False)
 
+        # Layout batching
+        self._layout_pending = False
 
-    def add_child(self, child: UIElement):
+    def add_child(self, child: UIElement, batch: bool = False):
         """
         Add a child element.
 
         Args:
             child: Child element to add
+            batch: If True, defer layout until commit_layout()
         """
         child.parent = self
         self.children.append(child)
-        self._layout_children()
-        self.mark_dirty()
 
-    def remove_child(self, child: UIElement):
+        if batch:
+            self._layout_pending = True
+        else:
+            self._layout_children()
+            self.mark_dirty()
+
+    def add_children(self, children: List[UIElement]):
+        """
+        Add multiple children in one batch.
+
+        Args:
+            children: List of child elements to add
+        """
+        for child in children:
+            self.add_child(child, batch=True)
+        self.commit_layout()
+
+    def commit_layout(self):
+        """Apply pending layout changes."""
+        if self._layout_pending:
+            self._layout_children()
+            self.mark_dirty()
+            self._layout_pending = False
+
+    def remove_child(self, child: UIElement, batch: bool = False):
         """
         Remove a child element.
 
         Args:
             child: Child to remove
+            batch: If True, defer layout until commit_layout()
         """
         if child in self.children:
             self.children.remove(child)
             child.parent = None
-            self._layout_children()
-            self.mark_dirty()
+
+            if batch:
+                self._layout_pending = True
+            else:
+                self._layout_children()
+                self.mark_dirty()
 
     def _layout_children(self):
         """Position children based on layout mode."""
@@ -79,7 +112,7 @@ class UIContainer(UIElement):
 
         for child in self.children:
             # Skip absolutely positioned children
-            if child.position_mode == 'absolute' or child.anchor is not None:
+            if child.anchor is not None:
                 continue
 
             # Add top margin
@@ -106,7 +139,7 @@ class UIContainer(UIElement):
 
         for child in self.children:
             # Skip absolutely positioned children
-            if child.position_mode == 'absolute' or child.anchor is not None:
+            if child.anchor is not None:
                 continue
 
             # Add left margin
@@ -128,9 +161,20 @@ class UIContainer(UIElement):
             x_offset += child.width + child.margin_right + self.spacing
 
     def _layout_grid(self):
-        """Layout children in a grid (simple implementation)."""
-        # TODO: Implement grid layout with columns configuration
-        pass
+        """
+        Layout children in a grid.
+
+        TODO: Not yet implemented. Planned features:
+        - columns: number of columns
+        - column_widths: explicit column sizing
+        - row_heights: explicit row sizing
+
+        Raises:
+            NotImplementedError: Grid layout is not yet implemented
+        """
+        raise NotImplementedError(
+            "Grid layout not yet implemented. Use 'vertical' or 'horizontal' layout instead."
+        )
 
     def update(self, dt: float, mouse_pos: Tuple[int, int], binding_system=None):
         """Update container and children."""
