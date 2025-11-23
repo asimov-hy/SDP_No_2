@@ -76,7 +76,7 @@ class GameScene(BaseScene):
         level_registry = self.services.get_global("level_registry")
 
         # Load HUD
-        self.ui.load_hud("hud/gameplay_hud.yaml")
+        self.ui.load_hud("hud/player_hud.yaml")
 
         # Load game over overlay (hidden by default)
         self.ui.load_screen("game_over", "hud/game_over.yaml")

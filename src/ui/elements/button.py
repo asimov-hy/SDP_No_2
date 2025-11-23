@@ -25,13 +25,13 @@ class UIButton(UIElement):
         super().__init__(config)
 
         # Extract config groups (support both old and new format)
-        visual_dict = config.get('visual', config)  # Fallback to root if no groups
+        graphic_dict = config.get('graphic', config)
         data_dict = config.get('data', config)
 
         # Button-specific properties
-        self.text = visual_dict.get('text', '')
+        self.text = graphic_dict.get('text', '')
         self.action = data_dict.get('action')
-        self.icon = visual_dict.get('icon')
+        self.icon = graphic_dict.get('icon')
 
         # Colors
         self.hover_color = None
@@ -54,10 +54,10 @@ class UIButton(UIElement):
         self.hover_t = 0.0
 
         # Transition speed
-        self.transition_speed = visual_dict.get('transition_speed', 8.0)
+        self.transition_speed = graphic_dict.get('transition_speed', 8.0)
 
         # Font
-        self.font_size = visual_dict.get('font_size', 24)
+        self.font_size = graphic_dict.get('font_size', 24)
         self.font = self._get_cached_font(self.font_size)
 
     def update(self, dt: float, mouse_pos: Tuple[int, int], binding_system=None):

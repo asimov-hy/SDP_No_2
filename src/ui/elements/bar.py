@@ -1,7 +1,7 @@
 """
 bar.py
 ------
-Progress/health bar element with gradient and binding support.
+Progress/health bar element with color thresholds and binding support.
 """
 
 import pygame
@@ -25,7 +25,7 @@ class UIBar(UIElement):
         super().__init__(config)
 
         # Extract config groups (support both old and new format)
-        visual_dict = config.get('visual', config)
+        graphic_dict = config.get('graphic', config)
         data_dict = config.get('data', config)
 
         # Bar properties
@@ -34,24 +34,24 @@ class UIBar(UIElement):
         self._max_value_valid = self.max_value > 0
 
         # Visual - fill color (prefer 'color' from visual, fallback to base color)
-        self.fill_color = self._parse_color(visual_dict.get('color', [0, 255, 0]))
+        self.fill_color = self._parse_color(graphic_dict.get('color', [0, 255, 0]))
         self.bg_color = self.background if self.background else self._parse_color([50, 50, 50])
 
         # Gradient configuration
-        self.gradient_config = visual_dict.get('gradient')
+        self.color_thresholds = graphic_dict.get('color_thresholds')
 
         # Label
-        self.show_label = visual_dict.get('show_label', False)
-        self.label_text = visual_dict.get('label', '')
+        self.show_label = graphic_dict.get('show_label', False)
+        self.label_text = graphic_dict.get('label', '')
         self._label_font = pygame.font.Font(None, 20) if self.show_label else None
 
         # Direction
-        self.direction = visual_dict.get('direction', 'horizontal')
+        self.direction = graphic_dict.get('direction', 'horizontal')
 
         # Animation
-        self.animated = visual_dict.get('animated', True)
+        self.animated = graphic_dict.get('animated', True)
         self.visual_value = self.current_value
-        self.anim_speed = visual_dict.get('anim_speed', 5.0)
+        self.anim_speed = graphic_dict.get('anim_speed', 5.0)
 
     def update(self, dt: float, mouse_pos: Tuple[int, int], binding_system=None):
         """Update bar state."""
@@ -67,15 +67,15 @@ class UIBar(UIElement):
             self.mark_dirty()
 
     def _get_fill_color(self) -> Tuple[int, int, int]:
-        """Get fill color (with gradient support)."""
-        if not self.gradient_config:
+        """Get fill color (with threshold-based color switching)."""
+        if not self.color_thresholds:
             return self.fill_color
 
         # Calculate percentage
         percentage = (self.current_value / self.max_value) * 100 if self._max_value_valid else 0
 
-        # Find gradient stops
-        stops = sorted(self.gradient_config.items(), key=lambda x: float(x[0]), reverse=True)
+        # Find color threshold stops
+        stops = sorted(self.color_thresholds.items(), key=lambda x: float(x[0]), reverse=True)
 
         for threshold, color in stops:
             if percentage >= float(threshold):

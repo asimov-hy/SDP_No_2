@@ -7,14 +7,16 @@ main_menu:
     # Title
     - type: label
       id: "title"
-      text: "202X"
-      size: [600, 100]
+      # position
       parent_anchor: top_center
       self_anchor: top_center
       offset: [0, 120]
-      font_size: 72
-      color: [220, 240, 255]
       layer: Layers.UI
+      #graphic
+      text: "202X"
+      font_size: 72
+      size: [600, 100]
+      color: [220, 240, 255]
 
     # Subtitle
     - type: label

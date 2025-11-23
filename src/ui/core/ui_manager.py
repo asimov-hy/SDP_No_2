@@ -160,6 +160,7 @@ class UIManager:
         Args:
             element: HUD element to add
         """
+        self._inject_draw_manager_to_tree(element)
         self.hud_elements.append(element)
 
     def load_hud(self, filename: str):
@@ -170,6 +171,9 @@ class UIManager:
             filename: YAML file path relative to ui/configs/
         """
         root_element = self.loader.load(filename)
+
+        # Inject DrawManager for image loading
+        self._inject_draw_manager_to_tree(root_element)
 
         # Auto-assign UI layer for HUD elements
         self._set_auto_layer(root_element, Layers.UI)
@@ -400,10 +404,10 @@ class UIManager:
             element: Root element
             layer: Layer to assign
         """
-        visual_dict = getattr(element, 'visual_dict', {})
+        graphic_dict  = getattr(element, 'visual_dict', {})
 
         # Only set if not explicitly specified in config
-        if 'layer' not in visual_dict:
+        if 'layer' not in graphic_dict :
             element.layer = layer
 
         # Recursively set for children

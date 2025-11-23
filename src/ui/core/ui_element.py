@@ -20,7 +20,7 @@ class UIElement:
 
         Config structure:
             position: {anchor, offset, align, size, margin, padding}
-            visual: {color, alpha, background, image, border, ...}
+            graphic: {color, alpha, background, image, border, ...}
             data: {bind, format, max_value}
         """
         # Store original config for debugging
@@ -32,18 +32,18 @@ class UIElement:
 
         # Extract grouped configs (support both old and new format)
         position_dict = config.get('position', {})
-        visual_dict = config.get('visual', {})
+        graphic_dict = config.get('graphic', {})
         data_dict = config.get('data', {})
 
         # Legacy support - if no groups, use root level
-        if not position_dict and not visual_dict:
+        if not position_dict and not graphic_dict:
             position_dict = config
-            visual_dict = config
+            graphic_dict = config
             data_dict = config
 
         # Store for access by other methods
         self.position_dict = position_dict
-        self.visual_dict = visual_dict
+        self.graphic_dict = graphic_dict
         self.data_dict = data_dict
 
         # === POSITION GROUP ===
@@ -53,8 +53,13 @@ class UIElement:
         self.text_align = position_dict.get('text_align', 'center')
 
         # Size - ONLY from position.size (no width/height)
-        size = position_dict.get('size', [100, 50])
-        self.width, self.height = size
+        size = position_dict.get('size')
+        if size:
+            self.width, self.height = size
+        else:
+            # Defer size calculation until image loads
+            self.width, self.height = 100, 50  # Temporary defaults
+            self._auto_size_from_image = True
 
         # Spacing
         self.margin = position_dict.get('margin', 0)
@@ -74,37 +79,37 @@ class UIElement:
 
         # === VISUAL GROUP ===
         # Color (can be RGB or RGBA)
-        self.color = self._parse_color(visual_dict.get('color', [100, 100, 100]))
+        self.color = self._parse_color(graphic_dict.get('color', [100, 100, 100]))
 
         # Separate alpha for entire element (independent of color's alpha)
-        self.alpha = self._parse_alpha(visual_dict.get('alpha', 255))
+        self.alpha = self._parse_alpha(graphic_dict.get('alpha', 255))
 
         # Background
-        background_val = visual_dict.get('background')
+        background_val = graphic_dict.get('background')
         self.background = self._parse_color(background_val) if background_val else None
 
         # Image properties
-        self.image_path = visual_dict.get('image')
-        self.image_scale = visual_dict.get('image_scale', 1.0)
-        image_tint_val = visual_dict.get('image_tint')
+        self.image_path = graphic_dict.get('image')
+        self.image_scale = graphic_dict.get('image_scale', 1.0)
+        image_tint_val = graphic_dict.get('image_tint')
         self.image_tint = self._parse_color(image_tint_val) if image_tint_val else None
         self._loaded_image = None
         self._draw_manager_ref = None
         self._image_load_attempted = False
 
         # Border
-        self.border = visual_dict.get('border', 0)
-        self.border_color = self._parse_color(visual_dict.get('border_color', [255, 255, 255]))
-        self.border_radius = visual_dict.get('border_radius', 0)
+        self.border = graphic_dict.get('border', 0)
+        self.border_color = self._parse_color(graphic_dict.get('border_color', [255, 255, 255]))
+        self.border_radius = graphic_dict.get('border_radius', 0)
 
         # State (default to true)
-        self.visible = visual_dict.get('visible', True)
-        self.enabled = visual_dict.get('enabled', True)
-        self.layer = visual_dict.get('layer', Layers.UI)
+        self.visible = graphic_dict.get('visible', True)
+        self.enabled = graphic_dict.get('enabled', True)
+        self.layer = position_dict.get('layer', Layers.UI)
 
         # Effects
-        self.hover_config = visual_dict.get('hover', {})
-        self.fade_config = visual_dict.get('fade')
+        self.hover_config = graphic_dict.get('hover', {})
+        self.fade_config = graphic_dict.get('fade')
 
         # === DATA GROUP ===
         self.bind_path = data_dict.get('bind')
@@ -201,6 +206,14 @@ class UIElement:
         if not image:
             return None
 
+        # Auto-size from image if needed
+        if hasattr(self, '_auto_size_from_image') and self._auto_size_from_image:
+            self.width = int(image.get_width())
+            self.height = int(image.get_height())
+            self._auto_size_from_image = False
+            self.invalidate_position()
+            self.mark_dirty()
+
         # Scale to element dimensions
         w, h = max(1, int(self.width)), max(1, int(self.height))
         scaled = pygame.transform.scale(image, (w, h))
@@ -264,10 +277,11 @@ class UIElement:
 
     def _build_surface(self) -> pygame.Surface:
         """Build element surface. Override in subclasses for custom rendering."""
+        image = self._load_image()
+
+        # Create surface with updated dimensions
         surf = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
 
-        # Background - image takes priority over color
-        image = self._load_image()
         if image:
             surf.blit(image, (0, 0))
         elif self.background:

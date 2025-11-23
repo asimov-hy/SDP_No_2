@@ -182,10 +182,15 @@ class UIContainer(UIElement):
 
     def _build_surface(self) -> pygame.Surface:
         """Build container surface."""
+        image = self._load_image()
+
+        # Create surface with (potentially updated) dimensions
         surf = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
 
-        # Background
-        if self.background:
+        # Background - image takes priority over color
+        if image:
+            surf.blit(image, (0, 0))
+        elif self.background:
             surf.fill(self.background)
 
         # Border
