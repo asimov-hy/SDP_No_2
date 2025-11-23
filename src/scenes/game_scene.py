@@ -109,6 +109,7 @@ class GameScene(BaseScene):
         """Clean up when leaving gameplay."""
         # Clear HUD
         self.ui.clear_hud()
+        self.ui.hide_screen("game_over")
 
     def on_pause(self):
         """Show pause overlay."""
