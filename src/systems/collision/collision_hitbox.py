@@ -490,9 +490,6 @@ class CollisionHitbox:
         Args:
             surface (pygame.Surface or DrawManager): The rendering surface to draw onto.
         """
-        if not Debug.HITBOX_VISIBLE:
-            return
-
         # Draw AABB - use DrawManager queue if available
         if hasattr(surface, "queue_hitbox"):
             surface.queue_hitbox(self.rect, color=self._color_cache, width=Debug.HITBOX_LINE_WIDTH)

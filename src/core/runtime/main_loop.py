@@ -57,7 +57,7 @@ class MainLoop:
         # Core Systems
         # -------------------------------------------------------
         self.display = DisplayManager(Display.WIDTH, Display.HEIGHT, Display.DEFAULT_WINDOW_SIZE)
-        self.input_manager = InputManager()
+        self.input_manager = InputManager(display_manager=self.display)
         self.draw_manager = DrawManager()
 
         self.ui_manager = UIManager(

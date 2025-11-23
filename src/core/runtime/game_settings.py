@@ -81,6 +81,5 @@ class Debug:
 
     SHOW_FPS = True
     FRAME_TIME_WARNING = 16.67
-    HITBOX_ACTIVE = True
     HITBOX_VISIBLE = False
     HITBOX_LINE_WIDTH = 5

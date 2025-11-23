@@ -316,17 +316,17 @@ class DrawManager:
                 for shape_type, rect, color, kwargs in shape_items:
                     self._draw_shape(target_surface, shape_type, rect, color, **kwargs)
 
-            # Debug hitbox rendering (always last = always on top)
-            for rect, color, width in self.debug_hitboxes:
-                pygame.draw.rect(target_surface, color, rect, width)
+        # Debug hitbox rendering (always last = always on top)
+        for rect, color, width in self.debug_hitboxes:
+            pygame.draw.rect(target_surface, color, rect, width)
 
-            for corners, color, width in self.debug_obbs:
-                pygame.draw.lines(target_surface, color, True, corners, width)
+        for corners, color, width in self.debug_obbs:
+            pygame.draw.lines(target_surface, color, True, corners, width)
 
-            if debug:
-                surface_count = sum(len(items) for items in self.surface_layers.values())
-                shape_count = sum(len(items) for items in self.shape_layers.values())
-                DebugLogger.state(f"Rendered {surface_count} surfaces and {shape_count} shapes", category="drawing")
+        if debug:
+            surface_count = sum(len(items) for items in self.surface_layers.values())
+            shape_count = sum(len(items) for items in self.shape_layers.values())
+            DebugLogger.state(f"Rendered {surface_count} surfaces and {shape_count} shapes", category="drawing")
 
     # ===========================================================
     # Shape Rendering Helper

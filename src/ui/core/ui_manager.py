@@ -280,7 +280,7 @@ class UIManager:
         if event.type != pygame.MOUSEBUTTONDOWN or event.button != 1:
             return None
 
-        mouse_pos = event.pos
+        mouse_pos = self.display.screen_to_game_pos(*event.pos)
 
         # Check modal screens first (top to bottom)
         for screen_name in reversed(self.modal_stack):

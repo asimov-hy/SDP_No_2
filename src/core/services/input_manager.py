@@ -59,10 +59,11 @@ class InputManager:
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(self, key_bindings=None):
+    def __init__(self, key_bindings=None, display_manager=None):
         """Initialize input system with optional custom bindings."""
         self.key_bindings = key_bindings or DEFAULT_KEY_BINDINGS
         self.context = "gameplay"
+        self.display_manager = display_manager
 
         # Build lookup tables
         self._key_to_action_cache = {}
@@ -402,4 +403,7 @@ class InputManager:
         Returns:
             Tuple[int, int]: (x, y) mouse coordinates
         """
-        return pygame.mouse.get_pos()
+        screen_pos = pygame.mouse.get_pos()
+        if self.display_manager:
+            return self.display_manager.screen_to_game_pos(*screen_pos)
+        return screen_pos
