@@ -222,9 +222,9 @@ class BaseEnemy(BaseEntity):
     # ===========================================================
     # Rendering
     # ===========================================================
-    def draw(self, draw_manager):
-        """Render the enemy sprite to the screen."""
-        draw_manager.draw_entity(self, layer=self.layer)
+    # def draw(self, draw_manager):
+    #     """Render the enemy sprite to the screen."""
+    #     draw_manager.draw_entity(self, layer=self.layer)
 
     # ===========================================================
     # Collision Handling

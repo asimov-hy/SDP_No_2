@@ -10,11 +10,11 @@
     }
   },
   "homing": {
-    "image": null,
-    "hp": 1,
+    "image": "assets/images/sprites/enemies/enemy_homing.png",
+    "scale": 0.5,
+    "hp": 3,
     "speed": 150,
     "exp": 75,
-    "size": 52,
     "color": [0, 128, 255],
     "turn_rate": 180,
     "hitbox": {
@@ -22,10 +22,10 @@
     }
   },
   "shooter": {
-    "image": null,
+    "image": "assets/images/sprites/enemies/enemy_shooter.png",
+    "scale": 1.0,
     "hp": 3,
     "speed": 100,
-    "size": 60,
     "color": [255, 128, 0],
     "exp": 100,
     "movement_type": "linear",

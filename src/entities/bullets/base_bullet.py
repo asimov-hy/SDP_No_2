@@ -168,13 +168,13 @@ class BaseBullet(BaseEntity):
     # ===========================================================
     # Rendering
     # ===========================================================
-    def draw(self, draw_manager):
-        """
-        Render the bullet on screen.
-
-        Draws either an image or fallback circle based on render mode.
-        """
-        super().draw(draw_manager)
+    # def draw(self, draw_manager):
+    #     """
+    #     Render the bullet on screen.
+    #
+    #     Draws either an image or fallback circle based on render mode.
+    #     """
+    #     super().draw(draw_manager)
 
     # ===========================================================
     # Reset for Object Pooling

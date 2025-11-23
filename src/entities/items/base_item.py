@@ -133,9 +133,9 @@ class BaseItem(BaseEntity):
 
         self.sync_rect()
 
-    def draw(self, draw_manager):
-        """Render the item sprite."""
-        draw_manager.draw_entity(self, layer=self.layer)
+    # def draw(self, draw_manager):
+    #     """Render the item sprite."""
+    #     draw_manager.draw_entity(self, layer=self.layer)
 
     def get_effects(self) -> list:
         """Returns effects list from item_data."""

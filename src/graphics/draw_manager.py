@@ -405,3 +405,99 @@ class DrawManager:
 
         return None  # Non-polygon shapes (rect, circle, ellipse)
 
+    def get_entity_image(self, entity_type, size=None, config=None, color=None, image_path=None):
+        """
+        Unified entity image getter - handles loading, shapes, and fallbacks automatically.
+
+        Args:
+            entity_type: Identifier string (e.g., "enemy_straight", "player")
+            size: Target size tuple (width, height)
+            config: Optional config dict with "image", "size", "color", "scale" keys
+            color: Optional color for shape-based entities
+            image_path: Direct path to image file (overrides config)
+
+        Returns:
+            pygame.Surface: Always returns a valid image (never None)
+        """
+        # Parse config if provided
+        if config:
+            image_path = image_path or config.get("image")
+            size = size or config.get("size", (32, 32))
+            color = color or config.get("color")
+            scale = config.get("scale", 1.0)
+        else:
+            size = size or (32, 32)
+            scale = 1.0
+
+        # Generate cache key
+        cache_key = f"{entity_type}_{size[0]}x{size[1]}"
+        if color:
+            cache_key += f"_{''.join(map(str, color))}"
+
+        # Return cached if exists
+        if cache_key in self.images:
+            return self.images[cache_key]
+
+        # Try loading from image path
+        if image_path:
+            try:
+                img = pygame.image.load(image_path).convert_alpha()
+                if scale != 1.0:
+                    new_size = (int(img.get_width() * scale), int(img.get_height() * scale))
+                    img = pygame.transform.scale(img, new_size)
+                else:
+                    img = pygame.transform.scale(img, size)
+                self.images[cache_key] = img
+                DebugLogger.action(f"Loaded entity image: {entity_type} from {image_path}")
+                return img
+            except Exception as e:
+                DebugLogger.warn(f"Failed to load {image_path}: {e}, using fallback")
+
+        # Try creating shape-based image
+        if color:
+            img = pygame.Surface(size, pygame.SRCALPHA)
+            img.fill(color)
+            self.images[cache_key] = img
+            return img
+
+        # FALLBACK: Generate placeholder
+        DebugLogger.warn(f"No image/color for {entity_type}, using fallback placeholder")
+        img = self._generate_fallback(size, entity_type)
+        self.images[cache_key] = img
+        return img
+
+    def _generate_fallback(self, size, entity_type="unknown"):
+        """
+        Private helper: Generate fallback placeholder image.
+
+        Args:
+            size: Tuple (width, height)
+            entity_type: Entity identifier for debug text
+
+        Returns:
+            pygame.Surface: Magenta placeholder with visual indicators
+        """
+        fallback_path = "assets/images/null.png"
+
+        # Try loading fallback image first
+        if os.path.exists(fallback_path):
+            try:
+                img = pygame.image.load(fallback_path).convert_alpha()
+                img = pygame.transform.scale(img, size)
+                return img
+            except Exception as e:
+                DebugLogger.warn(f"Failed to load fallback {fallback_path}: {e}")
+
+        # Generate procedural placeholder
+        img = pygame.Surface(size, pygame.SRCALPHA)
+        img.fill((255, 0, 255))  # Magenta
+        pygame.draw.rect(img, (255, 255, 255), img.get_rect(), 2)  # White border
+
+        # Add "?" marker if big enough
+        if size[0] >= 16 and size[1] >= 16:
+            font = pygame.font.Font(None, min(size[0], 24))
+            text = font.render("?", True, (255, 255, 255))
+            text_rect = text.get_rect(center=(size[0] // 2, size[1] // 2))
+            img.blit(text, text_rect)
+
+        return img

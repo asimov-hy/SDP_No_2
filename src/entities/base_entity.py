@@ -161,17 +161,27 @@ class BaseEntity:
                 f"Shape will render per-frame (slow). Pass draw_manager for optimization."
             )
 
-        # Convert shape to image at creation time
-        if image is None and shape_data and draw_manager:
-            self.image = draw_manager.prebake_shape(
-                type=shape_data["type"],
-                size=shape_data["size"],
-                color=shape_data["color"],
-                **shape_data.get("kwargs", {})
-            )
-            self.shape_data = shape_data
-        else:
+        # -------------------------------------------------------
+        # Unified Image Acquisition (always gets valid image)
+        # -------------------------------------------------------
+        if image is not None:
             self.image = image
+        elif draw_manager:
+            # DrawManager handles everything: images, shapes, fallbacks
+            self.image = draw_manager.get_entity_image(
+                entity_type=type(self).__name__,
+                size=shape_data["size"] if shape_data else (32, 32),
+                color=shape_data["color"] if shape_data else None,
+                config=shape_data
+            )
+            if shape_data:
+                self.shape_data = shape_data
+        else:
+            # No draw_manager - create emergency fallback
+            size = shape_data.get("size", (32, 32)) if shape_data else (32, 32)
+            self.image = pygame.Surface(size, pygame.SRCALPHA)
+            self.image.fill((255, 0, 255))
+            DebugLogger.warn(f"{type(self).__name__}: Created without draw_manager")
 
         # Store base image for rotation (critical for cache system)
         self._base_image = self.image
@@ -187,16 +197,7 @@ class BaseEntity:
         # -------------------------------------------------------
         # Rect Setup (center-aligned)
         # -------------------------------------------------------
-        if self.image:
-            self.rect = self.image.get_rect(center=(x, y))
-        else:
-            # Fallback for entities created without draw_manager
-            size = shape_data.get("size", (10, 10)) if shape_data else (10, 10)
-            self.rect = pygame.Rect(0, 0, *size)
-            self.rect.center = (x, y)
-            # Store shape config for manual rendering (fallback path)
-            self.shape_data = shape_data
-
+        self.rect = self.image.get_rect(center=(x, y))
         self.draw_manager = draw_manager
 
         # Rotation Support (optional, used by entities that rotate)
@@ -312,27 +313,13 @@ class BaseEntity:
         """
         Queue this entity for rendering via the DrawManager.
         """
-        if self.image is not None:
-            draw_manager.draw_entity(self, self.layer)
-        elif hasattr(self, 'shape_data') and self.shape_data:
-            draw_manager.queue_shape(
-                self.shape_data["type"],
-                self.rect,
-                self.shape_data["color"],
-                self.layer,
-                **self.shape_data.get("kwargs", {})
+        if self.image is None:
+            DebugLogger.fail(
+                f"{type(self).__name__} has None image - bug in get_entity_image()!"
             )
-        else:
-            DebugLogger.warn(
-                f"{type(self).__name__} has no image or shape_data; drawing debug rect"
-            )
-            draw_manager.queue_shape(
-                "rect",
-                self.rect,
-                (255, 0, 255),
-                self.layer,
-                width=1
-            )
+            return
+
+        draw_manager.draw_entity(self, self.layer)
 
     def refresh_sprite(self, new_image=None, new_color=None, shape_type=None, size=None):
         """
