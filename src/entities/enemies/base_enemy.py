@@ -206,8 +206,6 @@ class BaseEnemy(BaseEntity):
             self.on_death(source)
 
     def on_death(self, source):
-        print(f"[DEATH] {self.__class__.__name__} - {source}, self tag: {self.collision_tag}")
-
         self.anim_manager.play("death")
 
         get_events().dispatch(EnemyDiedEvent(

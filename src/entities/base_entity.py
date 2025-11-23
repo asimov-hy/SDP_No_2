@@ -433,7 +433,14 @@ class BaseEntity:
     # ===========================================================
     # Collision Interface
     # ===========================================================
-    def on_collision(self, other: "BaseEntity"):
+    def on_collision(self, other: "BaseEntity", collision_tag=None):
+        """
+        Handle collision with another entity.
+
+        Args:
+            other: The entity this collided with
+            collision_tag: Optional pre-captured collision tag to prevent race conditions
+        """
         pass
 
     # ===========================================================

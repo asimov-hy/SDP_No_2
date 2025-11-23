@@ -17,6 +17,7 @@ from src.systems.collision.collision_manager import CollisionManager
 from src.systems.entity_management.spawn_manager import SpawnManager
 from src.systems.level.level_manager import LevelManager
 from src.systems.entity_management.item_manager import ItemManager
+from src.entities.items.base_item import BaseItem
 
 # game_system_initializer.py lines 22-24
 # Animation modules imported for auto-registration side effects

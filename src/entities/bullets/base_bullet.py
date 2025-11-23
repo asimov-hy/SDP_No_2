@@ -123,12 +123,13 @@ class BaseBullet(BaseEntity):
     # ===========================================================
     # Collision Handling
     # ===========================================================
-    def on_collision(self, target):
+    def on_collision(self, target, collision_tag=None):
         """
         Entry point for collision events from CollisionManager.
 
         Args:
             target (BaseEntity): The entity that this bullet collided with.
+            collision_tag: Optional pre-captured collision tag to prevent race conditions
         """
         if self.death_state >= LifecycleState.DEAD or target is self:
             return
@@ -148,7 +149,7 @@ class BaseBullet(BaseEntity):
         self.death_state = LifecycleState.DEAD
         DebugLogger.state(
             f"{type(self).__name__} hit {type(target).__name__} → destroyed",
-            category="collision"
+            category="bullet"
         )
 
     # ===========================================================

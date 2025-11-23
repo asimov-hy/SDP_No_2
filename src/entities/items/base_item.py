@@ -20,6 +20,7 @@ from src.entities.entity_state import LifecycleState
 from src.entities.entity_types import CollisionTags, EntityCategory
 from src.core.services.event_manager import get_events, ItemCollectedEvent
 from src.entities.player.player_effects import apply_item_effects
+from src.systems.entity_management.entity_registry import EntityRegistry
 
 
 class BaseItem(BaseEntity):
@@ -36,6 +37,7 @@ class BaseItem(BaseEntity):
     def __init_subclass__(cls, **kwargs):
         """Auto-register item subclasses when they're defined."""
         super().__init_subclass__(**kwargs)
+        EntityRegistry.auto_register(cls)
 
     def __init__(self, x, y, item_data=None, image=None, shape_data=None,
                  draw_manager=None, speed=500, despawn_y=None, lifetime=5.0, bounce=True):
@@ -139,9 +141,10 @@ class BaseItem(BaseEntity):
         """Returns effects list from item_data."""
         return self.item_data.get("effects", [])
 
-    def on_collision(self, other):
+    def on_collision(self, other, collision_tag=None):
         """Handle collision with player."""
-        tag = getattr(other, "collision_tag", "unknown")
+        # Use passed tag if provided (prevents race conditions), else read current tag
+        tag = collision_tag if collision_tag is not None else getattr(other, "collision_tag", "unknown")
 
         if tag == "player":
             # Apply effects directly to player
@@ -214,3 +217,7 @@ class BaseItem(BaseEntity):
 
         # Sync rect to new position
         self.sync_rect()
+
+if not EntityRegistry.has("pickup", "default"):
+    EntityRegistry.register("pickup", "default", BaseItem)
+    
