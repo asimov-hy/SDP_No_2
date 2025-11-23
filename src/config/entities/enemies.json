@@ -16,10 +16,11 @@
     "speed": 150,
     "exp": 75,
     "color": [0, 128, 255],
-    "turn_rate": 180,
+    "homing_mode": "efficient",
     "hitbox": {
       "scale": 0.9
-    }
+    },
+    "_comment": "homing_mode options: 'default' (slow turn), 'efficient' (fast turn), 'smarter' (instant snap every 1s), 'launcher' (aim once then boost)"
   },
   "shooter": {
     "image": "assets/images/sprites/enemies/enemy_shooter.png",

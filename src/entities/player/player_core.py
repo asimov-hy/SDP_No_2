@@ -128,7 +128,7 @@ class Player(BaseEntity):
         # Player stats
         self.exp = 0
         self.level = 1
-        self.exp_required = 100
+        self.exp_required = 500
 
         self.visible = True
         self.layer = Layers.PLAYER
@@ -305,7 +305,7 @@ class Player(BaseEntity):
         self.level += 1
 
         # Cap at reasonable max to prevent overflow
-        exp_calc = 30 * (1.15 ** min(self.level - 1, 200))
+        exp_calc = 30 * (2.0 ** min(self.level - 1, 200))
         self.exp_required = min(int(exp_calc), 999999)
 
         self.exp = overflow

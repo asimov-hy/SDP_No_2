@@ -201,7 +201,7 @@ class BaseEnemy(BaseEntity):
             self.anim_manager.play("damage", duration=0.15)
             self.on_damage(amount)
 
-        if self.health <= 0:
+        if self.health <= 0 and self.death_state == LifecycleState.ALIVE:
             self.mark_dead(immediate=False)
             self.on_death(source)
 
