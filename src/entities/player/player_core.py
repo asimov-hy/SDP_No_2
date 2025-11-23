@@ -265,10 +265,10 @@ class Player(BaseEntity):
             return
         super().draw(draw_manager)
 
-    def on_collision(self, other):
+    def on_collision(self, other, collision_tag=None):
         """Handle collision events."""
 
-        tag = getattr(other, "collision_tag", None)
+        tag = collision_tag if collision_tag is not None else getattr(other, "collision_tag", None)
         if tag is None:
             return
 

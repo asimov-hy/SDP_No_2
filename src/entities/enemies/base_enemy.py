@@ -191,8 +191,7 @@ class BaseEnemy(BaseEntity):
         self.health = max(0, self.health - amount)
 
         if self.health > 0:
-            # FIX: Set INTANGIBLE during damage animation so we don't hurt player
-            # while invisible/blinking
+            # Set INTANGIBLE during damage animation so we don't hurt player
             self.state = InteractionState.INTANGIBLE
 
             # Re-bind callback because stop() clears it
@@ -207,17 +206,20 @@ class BaseEnemy(BaseEntity):
             self.on_death(source)
 
     def on_death(self, source):
-        self.anim_manager.play("death")
-        self.collision_tag = CollisionTags.NEUTRAL
+        print(f"[DEATH] {self.__class__.__name__} - {source}, self tag: {self.collision_tag}")
 
-        if hasattr(self, 'hitbox') and self.hitbox:
-            self.hitbox.set_active(False)
+        self.anim_manager.play("death")
 
         get_events().dispatch(EnemyDiedEvent(
             position=(self.rect.centerx, self.rect.centery),
             enemy_type_tag=self.__class__.__name__,
             exp=self.exp_value
         ))
+
+        if hasattr(self, 'hitbox') and self.hitbox:
+            self.hitbox.set_active(False)
+
+        self.collision_tag = CollisionTags.NEUTRAL
 
     # ===========================================================
     # Rendering
@@ -229,9 +231,9 @@ class BaseEnemy(BaseEntity):
     # ===========================================================
     # Collision Handling
     # ===========================================================
-    def on_collision(self, other):
+    def on_collision(self, other, collision_tag=None):
         """Default collision response for enemies."""
-        tag = getattr(other, "collision_tag", "unknown")
+        tag = collision_tag if collision_tag is not None else getattr(other, "collision_tag", "unknown")
 
         if tag == "player_bullet":
             self.take_damage(1, source="player_bullet")

@@ -258,28 +258,30 @@ class CollisionManager:
                             continue
 
                         if self._check_collision(a_hitbox, b_hitbox):
+                            a_collision_tag = a_tag
+                            b_collision_tag = b_tag
 
                             append_collision((a, b))
-                            self._process_collision(a, b)
+                            self._process_collision(a, b, a_collision_tag, b_collision_tag)
 
         return self._collisions
 
     # ===========================================================
     # Collision Processing
     # ===========================================================
-    def _process_collision(self, entity_a, entity_b):
+    def _process_collision(self, entity_a, entity_b, tag_a, tag_b):
         """Route collision based on categories."""
         try:
+            # Pass original collision tag to prevent race conditions
             if hasattr(entity_a, "on_collision"):
-                entity_a.on_collision(entity_b)
+                entity_a.on_collision(entity_b, collision_tag=tag_b)
 
             if hasattr(entity_b, "on_collision"):
-                entity_b.on_collision(entity_a)
+                entity_b.on_collision(entity_a, collision_tag=tag_a)
 
         except Exception as e:
             DebugLogger.warn(
-                f"[Collision] Error {type(entity_a).__name__} <-> {type(entity_b).__name__}: {e}",
-                category="collision"
+                f"Error {type(entity_a).__name__} <-> {type(entity_b).__name__}: {e}",
             )
 
     def _check_collision(self, hitbox_a, hitbox_b):

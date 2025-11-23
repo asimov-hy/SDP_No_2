@@ -48,14 +48,14 @@ class LoggerConfig:
         "entity_logic": True,        # Common entity behavior and updates
         "entity_spawn": False,       # SpawnManager activity and enemy waves
         "entity_cleanup": False,     # Entity removal or offscreen cleanup
-        "collision": False,          # CollisionManager, hit detection traces
+        "collision": True,          # CollisionManager, hit detection traces
         "bullet": True,              # BulletManager creation and pooling
         "animation_effects": False,            # Visual/particle effects creation and cleanup
-        "animation": True,           # AnimationManager initialization and updates
+        "animation": False,           # AnimationManager initialization and updates
         "event": True,
         "item": True,
         "level": False,
-        "exp": True,
+        "exp": False,
 
         # ---------------------------------------------------
         # Rendering & Drawing

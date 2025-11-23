@@ -123,7 +123,7 @@ class AnimationManager:
 
         DebugLogger.state(
             f"{type(self.entity).__name__}: Animation '{anim_type}' started ({duration:.2f}s, {len(frames)} frames)",
-            # category="animation"
+            category="animation"
         )
 
     def stop(self):
