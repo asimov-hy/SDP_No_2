@@ -126,10 +126,20 @@ class BaseItem(BaseEntity):
 
         # Bounce off screen edges
         if self.bounce_enabled:
-            if self.pos.x <= 0 or self.pos.x >= Display.WIDTH:
-                self.velocity.x *= -1  # Reflect X
-            if self.pos.y <= 0 or self.pos.y >= Display.HEIGHT:
-                self.velocity.y *= -1  # Reflect Y
+            # Clamp first so we never cross boundary
+            if self.pos.x <= 0:
+                self.pos.x = 0
+                self.velocity.x *= -1
+            elif self.pos.x >= Display.WIDTH:
+                self.pos.x = Display.WIDTH
+                self.velocity.x *= -1
+
+            if self.pos.y <= 0:
+                self.pos.y = 0
+                self.velocity.y *= -1
+            elif self.pos.y >= Display.HEIGHT:
+                self.pos.y = Display.HEIGHT
+                self.velocity.y *= -1
 
         self.sync_rect()
 
