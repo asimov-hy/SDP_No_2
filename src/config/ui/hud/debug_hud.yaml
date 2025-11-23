@@ -1,0 +1,39 @@
+debug_hud:
+  type: container
+  layout: vertical
+  anchor: top_right
+  align: top_right
+  offset: [-10, 10]
+  spacing: 5
+  visible: true
+  auto_size: true
+  layer: Layers.UI
+  
+  children:
+    - type: button
+      id: fullscreen_btn
+      width: 40
+      height: 40
+      action: toggle_fullscreen
+      text: "FS"
+      font_size: 16
+      color: [40, 40, 40, 180]
+      border: 1
+      border_color: [200, 200, 200]
+      hover:
+        color: [60, 60, 60, 200]
+      layer: Layers.UI
+
+    - type: button
+      id: exit_btn
+      width: 40
+      height: 40
+      action: quit
+      text: "X"
+      font_size: 20
+      color: [40, 40, 40, 180]
+      border: 1
+      border_color: [200, 200, 200]
+      hover:
+        color: [80, 40, 40, 200]
+      layer: Layers.UI

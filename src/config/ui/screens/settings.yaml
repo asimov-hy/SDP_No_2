@@ -1,0 +1,183 @@
+type: container
+id: settings_root
+size: [800, 600]
+anchor: center
+background: [20, 20, 30, 240]
+border: 2
+border_color: [100, 100, 120]
+border_radius: 10
+
+children:
+  # Title
+  - type: label
+    text: "SETTINGS"
+    size: [800, 80]
+    anchor: top_center
+    offset: [0, 20]
+    font_size: 48
+    text_color: [255, 255, 255]
+
+  # Display Section
+  - type: container
+    size: [700, 280]
+    anchor: top_center
+    offset: [0, 120]
+    background: [30, 30, 40, 200]
+    border: 1
+    border_color: [80, 80, 100]
+    border_radius: 5
+    padding: 20
+
+    children:
+      # Section Title
+      - type: label
+        text: "Display"
+        size: [700, 40]
+        anchor: top_left
+        font_size: 32
+        text_color: [200, 200, 255]
+        text_align: left
+
+      # Fullscreen Toggle Button
+      - type: button
+        id: fullscreen_button
+        text: "Toggle Fullscreen"
+        action: "toggle_fullscreen"
+        size: [250, 50]
+        anchor: top_left
+        offset: [20, 60]
+        color: [60, 80, 120]
+        hover:
+          color: [80, 100, 140]
+        font_size: 24
+        border: 2
+        border_color: [100, 120, 160]
+        border_radius: 5
+
+      # Window Size Label
+      - type: label
+        text: "Window Size:"
+        size: [150, 40]
+        anchor: top_left
+        offset: [20, 130]
+        font_size: 20
+        text_color: [200, 200, 200]
+        text_align: left
+
+      # Small Window Button (720p)
+      - type: button
+        id: window_size_small
+        text: "720p"
+        action: "window_size_small"
+        size: [120, 45]
+        anchor: top_left
+        offset: [20, 175]
+        color: [60, 80, 120]
+        hover:
+          color: [80, 100, 140]
+        font_size: 20
+        border: 2
+        border_color: [100, 120, 160]
+        border_radius: 5
+
+      # Medium Window Button (1080p)
+      - type: button
+        id: window_size_medium
+        text: "1080p"
+        action: "window_size_medium"
+        size: [120, 45]
+        anchor: top_left
+        offset: [155, 175]
+        color: [60, 80, 120]
+        hover:
+          color: [80, 100, 140]
+        font_size: 20
+        border: 2
+        border_color: [100, 120, 160]
+        border_radius: 5
+
+      # Large Window Button (1440p)
+      - type: button
+        id: window_size_large
+        text: "1440p"
+        action: "window_size_large"
+        size: [120, 45]
+        anchor: top_left
+        offset: [290, 175]
+        color: [60, 80, 120]
+        hover:
+          color: [80, 100, 140]
+        font_size: 20
+        border: 2
+        border_color: [100, 120, 160]
+        border_radius: 5
+
+      # Window Size Info
+      - type: label
+        text: "(Changes apply immediately)"
+        size: [300, 30]
+        anchor: top_left
+        offset: [425, 185]
+        font_size: 14
+        text_color: [150, 150, 150]
+        text_align: left
+
+  # Audio Section
+  - type: container
+    size: [700, 150]
+    anchor: top_center
+    offset: [0, 420]
+    background: [30, 30, 40, 200]
+    border: 1
+    border_color: [80, 80, 100]
+    border_radius: 5
+    padding: 20
+
+    children:
+      # Section Title
+      - type: label
+        text: "Audio"
+        size: [700, 40]
+        anchor: top_left
+        font_size: 32
+        text_color: [200, 200, 255]
+        text_align: left
+
+      # Master Volume Label
+      - type: label
+        text: "Master Volume: 80%"
+        size: [250, 40]
+        anchor: top_left
+        offset: [20, 60]
+        font_size: 20
+        text_color: [180, 180, 180]
+
+      # Volume Info
+      - type: label
+        text: "(Coming soon)"
+        size: [200, 30]
+        anchor: top_left
+        offset: [280, 65]
+        font_size: 14
+        text_color: [120, 120, 120]
+
+  # Bottom Buttons
+  - type: container
+    size: [700, 60]
+    anchor: bottom_center
+    offset: [0, -20]
+
+    children:
+      # Back Button (centered)
+      - type: button
+        text: "Back"
+        action: "back"
+        size: [200, 50]
+        anchor: center
+        color: [80, 100, 140]
+        hover:
+          color: [100, 120, 160]
+        font_size: 24
+        border: 2
+        border_color: [120, 140, 180]
+        border_radius: 5

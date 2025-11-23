@@ -1,0 +1,49 @@
+
+type: container
+width: 1280
+height: 720
+background: [20, 20, 30, 255]
+padding: 40
+
+children:
+  # Title
+  - type: label
+    id: title
+    width: 600
+    height: 60
+    text: "SELECT LEVEL"
+    font_size: 48
+    color: [255, 255, 255, 255]
+    anchor: "top_center"
+    offset: [0, 40]
+
+  # Level list container (dynamically populated)
+  - type: container
+    id: level_list
+    width: 500
+    height: 400
+    layout: vertical
+    spacing: 10
+    anchor: "top_center"
+    offset: [0, 120]
+
+  # Navigation container
+  - type: container
+    id: nav_container
+    width: 500
+    height: 60
+    layout: horizontal
+    spacing: 20
+    anchor: "bottom_center"
+    offset: [0, -140]
+
+  # Back button
+  - type: button
+    id: btn_back
+    width: 300
+    height: 60
+    text: "BACK"
+    action: "back"
+    color: [100, 40, 40, 255]
+    anchor: "bottom_center"
+    offset: [0, -60]

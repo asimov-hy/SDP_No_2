@@ -1,0 +1,58 @@
+{
+  "_notes": "Organized for readability. Sections: core_attributes, rendering, health_states, effects.",
+
+  "core_attributes": {
+    "_notes": "Defines base physics and behavior values.",
+    "scale": 1.0,
+    "health": 2,
+    "hitbox_scale": 0.85,
+
+    "speed": 300,
+    "accel_rate": 3000,
+    "friction_rate": 500,
+    "max_speed_mult": 1.8
+  },
+
+  "render": {
+    "_notes": "Visual representation and drawing mode: image or shape",
+    "mode": "image",
+    "size": [64, 64],
+
+    "sprite": {
+      "path": "assets/images/sprites/player/robot_Garda.png"
+    },
+
+    "default_shape": {
+      "shape_type": "rect",
+      "color": [255, 255, 255]
+    }
+  },
+
+  "health_states": {
+    "_notes": "Controls appearance and feedback based on health.",
+    "thresholds": {
+      "moderate": 2,
+      "critical": 1
+    },
+
+    "image_states": {
+      "normal": "assets/images/sprites/player/robot_Garda.png",
+      "damaged_moderate": "assets/images/sprites/player/robot_Garda.png",
+      "damaged_critical": "assets/images/sprites/player/robot_Garda.png"
+    },
+
+    "color_states": {
+      "normal": [255, 255, 255],
+      "damaged_moderate": [255, 160, 120],
+      "damaged_critical": [180, 30, 30]
+    }
+  },
+
+  "state_effects": {
+    "_notes": "Temporary effect configurations such as i-frames, dash, or buffs.",
+    "iframe": {
+      "duration": 2,
+      "interaction_state": "INTANGIBLE"
+    }
+  }
+}

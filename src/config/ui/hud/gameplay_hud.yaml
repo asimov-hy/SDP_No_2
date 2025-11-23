@@ -1,0 +1,245 @@
+# ===================================================================
+# Gameplay HUD Scene Configuration
+# ===================================================================
+scene:
+  type: container
+  width: 1280
+  height: 720
+  anchor: top_left
+  layer: Layers.UI
+
+  children:
+    # Top-left status cluster
+    - type: container
+      layout: vertical
+      spacing: 10
+      anchor: top_left
+      offset: [20, 20]
+      auto_size: true
+      layer: Layers.UI
+
+      children:
+        # Health bar
+        - type: container
+          layout: horizontal
+          spacing: 10
+          auto_size: true
+          layer: Layers.UI
+
+          children:
+            - type: label
+              text: "HP"
+              font_size: 20
+              color: [255, 100, 100]
+              width: 40
+              layer: Layers.UI
+
+            - type: bar
+              width: 200
+              height: 24
+              background: [40, 20, 20]
+              color: [255, 80, 80]
+              border_color: [200, 60, 60]
+              border: 2
+              bind: "player.health"
+              min_value: 0
+              max_value: 100
+              layer: Layers.UI
+
+            - type: label
+              format: "{:.0f}"
+              bind: "player.health"
+              font_size: 20
+              color: [255, 255, 255]
+              width: 50
+              layer: Layers.UI
+
+        # Power bar
+        - type: container
+          layout: horizontal
+          spacing: 10
+          auto_size: true
+          layer: Layers.UI
+
+          children:
+            - type: label
+              text: "PWR"
+              font_size: 20
+              color: [100, 150, 255]
+              width: 40
+              layer: Layers.UI
+
+            - type: bar
+              width: 200
+              height: 24
+              background: [20, 30, 50]
+              color: [80, 120, 255]
+              border_color: [60, 100, 200]
+              border: 2
+              bind: "player.power"
+              min_value: 0
+              max_value: 100
+              layer: Layers.UI
+
+            - type: label
+              format: "{:.0f}"
+              bind: "player.power"
+              font_size: 20
+              color: [255, 255, 255]
+              width: 50
+              layer: Layers.UI
+
+        # Bombs
+        - type: container
+          layout: horizontal
+          spacing: 10
+          auto_size: true
+          layer: Layers.UI
+
+          children:
+            - type: label
+              text: "BOMBS"
+              font_size: 20
+              color: [255, 200, 100]
+              width: 80
+              layer: Layers.UI
+
+            - type: label
+              format: "{:.0f}"
+              bind: "player.bombs"
+              font_size: 24
+              color: [255, 220, 120]
+              width: 50
+              layer: Layers.UI
+
+    # Top-right stats cluster
+    - type: container
+      layout: vertical
+      spacing: 8
+      anchor: top_right
+      offset: [-20, 20]
+      auto_size: true
+      layer: Layers.UI
+
+      children:
+        # Score
+        - type: container
+          layout: horizontal
+          spacing: 10
+          auto_size: true
+          layer: Layers.UI
+
+          children:
+            - type: label
+              text: "SCORE"
+              font_size: 18
+              color: [200, 200, 255]
+              width: 80
+              text_align: right
+              layer: Layers.UI
+
+            - type: label
+              format: "{:>10}"
+              bind: "session.score"
+              font_size: 22
+              color: [255, 255, 255]
+              width: 150
+              text_align: right
+              layer: Layers.UI
+
+        # High score
+        - type: container
+          layout: horizontal
+          spacing: 10
+          auto_size: true
+          layer: Layers.UI
+
+          children:
+            - type: label
+              text: "HIGH"
+              font_size: 18
+              color: [200, 200, 255]
+              width: 80
+              text_align: right
+              layer: Layers.UI
+
+            - type: label
+              format: "{:>10}"
+              bind: "session.high_score"
+              font_size: 22
+              color: [255, 220, 100]
+              width: 150
+              text_align: right
+              layer: Layers.UI
+
+        # Graze counter
+        - type: container
+          layout: horizontal
+          spacing: 10
+          auto_size: true
+          layer: Layers.UI
+
+          children:
+            - type: label
+              text: "GRAZE"
+              font_size: 18
+              color: [200, 200, 255]
+              width: 80
+              text_align: right
+              layer: Layers.UI
+
+            - type: label
+              format: "{:>10}"
+              bind: "session.graze"
+              font_size: 22
+              color: [100, 255, 255]
+              width: 150
+              text_align: right
+              layer: Layers.UI
+
+    # Bottom-center level info
+    - type: container
+      layout: vertical
+      spacing: 5
+      anchor: bottom_center
+      offset: [0, -30]
+      auto_size: true
+      layer: Layers.UI
+
+      children:
+        # Level name
+        - type: label
+          text: ""
+          bind: "level.name"
+          font_size: 20
+          color: [180, 180, 200]
+          layer: Layers.UI
+
+        # Boss health bar (conditional)
+        - type: container
+          layout: vertical
+          spacing: 5
+          auto_size: true
+          visible: false
+          bind_visible: "boss.active"
+          layer: Layers.UI
+
+          children:
+            - type: label
+              text: ""
+              bind: "boss.name"
+              font_size: 24
+              color: [255, 100, 100]
+              layer: Layers.UI
+
+            - type: bar
+              width: 600
+              height: 30
+              background: [60, 20, 20]
+              color: [255, 50, 50]
+              border_color: [200, 40, 40]
+              border: 3
+              bind: "boss.health"
+              min_value: 0
+              bind_max: "boss.max_health"
+              layer: Layers.UI

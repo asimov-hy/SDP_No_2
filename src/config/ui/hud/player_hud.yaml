@@ -1,0 +1,69 @@
+player_hud:
+  type: container
+  width: 1280
+  height: 720
+  layer: Layers.UI
+
+  children:
+    # Health bar
+    - type: bar
+      id: health_bar
+      anchor: top_left
+      offset: [20, 20]
+      width: 200
+      height: 24
+      max_value: 100
+      bind: player.health
+      color: [0, 255, 0]
+      gradient:
+        100: [0, 255, 0]
+        50: [255, 255, 0]
+        25: [255, 100, 0]
+        0: [255, 0, 0]
+      background: [30, 30, 30]
+      border: 2
+      border_color: [200, 200, 200]
+      border_radius: 3
+      layer: Layers.UI
+
+    # Health text
+    - type: label
+      id: health_text
+      anchor: "#health_bar:center"
+      align: center
+      width: 80
+      height: 24
+      bind: player.health
+      format: "{:.0f} HP"
+      font_size: 18
+      color: [255, 255, 255]
+      text_align: center
+      layer: Layers.UI
+
+    # Score label
+    - type: label
+      id: score
+      anchor: top_right
+      offset: [-20, 20]
+      width: 200
+      height: 30
+      bind: player.score
+      format: "Score: {:,}"
+      font_size: 24
+      color: [255, 255, 255]
+      text_align: right
+      layer: Layers.UI
+
+    # Ammo counter
+    - type: label
+      id: ammo
+      anchor: bottom_center
+      offset: [0, -50]
+      width: 150
+      height: 30
+      bind: player.ammo
+      format: "Ammo: {}"
+      font_size: 20
+      color: [255, 255, 255]
+      text_align: center
+      layer: Layers.UI

@@ -1,0 +1,66 @@
+main_menu:
+  type: container
+  width: 1280
+  height: 720
+  anchor: center
+  layer: Layers.UI
+  children:
+    # Title
+    - type: label
+      id: "title"
+      text: "BULLET HELL GAME"
+      width: 600
+      height: 80
+      anchor: top_center
+      offset: [0, 150]
+      font_size: 64
+      color: [255, 255, 255]
+      layer: Layers.UI
+    # Start button - anchored below title
+    - type: button
+      id: "start_button"
+      text: "START GAME"
+      action: "start_game"
+      width: 300
+      height: 60
+      anchor: "#title:bottom"
+      align: top_center
+      offset: [0, 100]
+      color: [60, 100, 180]
+      border: 2
+      border_color: [100, 140, 220]
+      border_radius: 8
+      font_size: 28
+      layer: Layers.UI
+    # Settings button - anchored below start button
+    - type: button
+      id: "settings_button"
+      text: "SETTINGS"
+      action: "settings"
+      width: 300
+      height: 60
+      anchor: "#start_button:bottom"
+      align: top_center
+      offset: [0, 20]
+      color: [60, 100, 180]
+      border: 2
+      border_color: [100, 140, 220]
+      border_radius: 8
+      font_size: 28
+      layer: Layers.UI
+    # Quit button - anchored below settings button
+    - type: button
+      id: "quit_button"
+      text: "QUIT"
+      action: "quit"
+      width: 300
+      height: 60
+      anchor: "#settings_button:bottom"
+      align: top_center
+      offset: [0, 20]
+      color: [140, 60, 60]
+      border: 2
+      border_color: [180, 100, 100]
+      border_radius: 8
+      font_size: 28
+      layer: Layers.UI
