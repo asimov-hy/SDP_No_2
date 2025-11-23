@@ -25,6 +25,9 @@ class SessionStats:
         self.items_collected = 0
         self.run_time = 0.0
 
+        self.max_level_reached = 1
+        self.total_exp_gained = 0
+
         # Additional stats can be added dynamically
         self._custom_stats = {}
 

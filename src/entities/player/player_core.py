@@ -11,6 +11,7 @@ from src.core.runtime.game_settings import Display, Layers
 from src.core.debug.debug_logger import DebugLogger
 from src.core.services.config_manager import load_config
 from src.core.services.event_manager import get_events, EnemyDiedEvent
+from src.core.runtime.session_stats import update_session_stats
 
 from src.entities.base_entity import BaseEntity
 from src.entities.state_manager import StateManager
@@ -281,22 +282,36 @@ class Player(BaseEntity):
     # ===========================================================
     def _on_enemy_died(self, event):
         """Receive EXP from dead enemies."""
-        self.exp += event.exp
+        exp_gain = max(0, event.exp)  # Prevent negative exp
+        if exp_gain == 0:
+            return
+
+        self.exp += exp_gain
+
+        stats = update_session_stats()
+        stats.total_exp_gained += exp_gain
+
+        # Handle multiple level-ups
+        while self.exp >= self.exp_required:
+            self._level_up()
 
         DebugLogger.state(
-            f"Experience: {event.exp} ({self.exp}/{self.exp_required})",
+            f"Experience: +{exp_gain} ({self.exp}/{self.exp_required})",
             category="exp"
         )
 
-        if self.exp >= self.exp_required:
-            self._level_up()
-
     def _level_up(self):
+        overflow = self.exp - self.exp_required
         self.level += 1
-        self.exp = 0
 
-        # Smooth EXP curve
-        self.exp_required = int(30 * (1.15 ** (self.level - 1)))
+        # Cap at reasonable max to prevent overflow
+        exp_calc = 30 * (1.15 ** min(self.level - 1, 200))
+        self.exp_required = min(int(exp_calc), 999999)
+
+        self.exp = overflow
+
+        stats = update_session_stats()
+        stats.max_level_reached = max(stats.max_level_reached, self.level)
 
         DebugLogger.state(
             f"Level: {self.level}, Next={self.exp_required}",
