@@ -105,7 +105,7 @@ class UIElement:
         # State (default to true)
         self.visible = graphic_dict.get('visible', True)
         self.enabled = graphic_dict.get('enabled', True)
-        self.layer = position_dict.get('layer', Layers.UI)
+        self.layer = graphic_dict.get('layer', Layers.UI)
 
         # Effects
         self.hover_config = graphic_dict.get('hover', {})

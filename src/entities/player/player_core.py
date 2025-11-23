@@ -128,7 +128,7 @@ class Player(BaseEntity):
         # Player stats
         self.exp = 0
         self.level = 1
-        self.exp_required = 30
+        self.exp_required = 100
 
         self.visible = True
         self.layer = Layers.PLAYER

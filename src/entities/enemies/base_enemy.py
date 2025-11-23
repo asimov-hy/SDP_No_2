@@ -208,10 +208,14 @@ class BaseEnemy(BaseEntity):
     def on_death(self, source):
         self.anim_manager.play("death")
 
+        exp_to_award = 0
+        if source in ("player_bullet", "nuke"):
+            exp_to_award = self.exp_value
+
         get_events().dispatch(EnemyDiedEvent(
             position=(self.rect.centerx, self.rect.centery),
             enemy_type_tag=self.__class__.__name__,
-            exp=self.exp_value
+            exp=exp_to_award
         ))
 
         if hasattr(self, 'hitbox') and self.hitbox:
