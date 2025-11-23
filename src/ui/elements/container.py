@@ -112,7 +112,7 @@ class UIContainer(UIElement):
 
         for child in self.children:
             # Skip absolutely positioned children
-            if child.anchor is not None:
+            if child.parent_anchor is not None:
                 continue
 
             # Add top margin
@@ -139,7 +139,7 @@ class UIContainer(UIElement):
 
         for child in self.children:
             # Skip absolutely positioned children
-            if child.anchor is not None:
+            if child.parent_anchor is not None:
                 continue
 
             # Add left margin

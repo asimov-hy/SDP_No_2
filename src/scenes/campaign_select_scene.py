@@ -19,13 +19,13 @@ class CampaignSelectScene(BaseScene):
 
     def on_enter(self):
         """Load campaign list when entering."""
-        self.ui.load_screen("campaign_select", "screens/campaign_select.yaml")
+        self.ui.load_screen("level_select", "screens/level_select.yaml")
         self._populate_levels()
-        self.ui.show_screen("campaign_select")
+        self.ui.show_screen("level_select")
 
     def on_exit(self):
         """Called when leaving scene."""
-        self.ui.hide_screen("campaign_select")
+        self.ui.hide_screen("level_select")
 
     def update(self, dt: float):
         """Update selection logic."""
@@ -47,24 +47,30 @@ class CampaignSelectScene(BaseScene):
             self.scene_manager.set_scene("MainMenu")
 
     def _populate_levels(self):
-        """Populate level list."""
-        level_container = self.ui.find_element_by_id("campaign_select", "level_list")
-        if not level_container:
-            return
-
-        level_container.children.clear()
-
+        """Update level button text dynamically."""
         all_levels = self.level_registry.get_campaign(self.current_campaign)
 
-        from src.ui.elements.button import UIButton
-        for level in all_levels:
-            button_config = {
-                'width': 500,
-                'height': 70,
-                'text': level.name,
-                'action': f'select_level_{level.id}',
-                'enabled': level.unlocked,
-                'margin_bottom': 10
-            }
-            button = UIButton(button_config)
-            level_container.add_child(button)
+        # Update the 3 static level buttons
+        for i in range(3):
+            button_id = f"level_btn_{i}"
+            button = self.ui.find_element_by_id("level_select", button_id)
+
+            if button and i < len(all_levels):
+                level = all_levels[i]
+                # Update button text and action
+                button.text = level.name
+                button.action = f'select_level_{level.id}'
+                button.enabled = level.unlocked
+
+                # Visual feedback for locked levels
+                if not level.unlocked:
+                    button.color = (80, 80, 80)
+                    button.border_color = (120, 120, 120)
+                else:
+                    button.color = (60, 100, 180)
+                    button.border_color = (100, 140, 220)
+
+                button.mark_dirty()
+            elif button:
+                # Hide button if no level exists for this slot
+                button.visible = False

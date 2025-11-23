@@ -1,0 +1,84 @@
+level_select:
+  type: container
+  size: [1280, 720]
+  background: [20, 20, 30, 255]
+  parent_anchor: center
+  self_anchor: center
+  layer: Layers.UI
+
+  children:
+    # Title
+    - type: label
+      id: "title"
+      text: "SELECT LEVEL"
+      size: [600, 60]
+      parent_anchor: top_center
+      self_anchor: top_center
+      offset: [0, 80]
+      font_size: 48
+      color: [255, 255, 255]
+      layer: Layers.UI
+
+    # Level Button 1
+    - type: button
+      id: "level_btn_0"
+      text: "Level 1"
+      action: "select_level_0"
+      size: [500, 70]
+      parent_anchor: "#title:bottom"
+      self_anchor: top_center
+      offset: [0, 60]
+      color: [60, 100, 180]
+      border: 2
+      border_color: [100, 140, 220]
+      border_radius: 8
+      font_size: 24
+      layer: Layers.UI
+
+    # Level Button 2
+    - type: button
+      id: "level_btn_1"
+      text: "Level 2"
+      action: "select_level_1"
+      size: [500, 70]
+      parent_anchor: "#level_btn_0:bottom"
+      self_anchor: top_center
+      offset: [0, 20]
+      color: [60, 100, 180]
+      border: 2
+      border_color: [100, 140, 220]
+      border_radius: 8
+      font_size: 24
+      layer: Layers.UI
+
+    # Level Button 3
+    - type: button
+      id: "level_btn_2"
+      text: "Level 3"
+      action: "select_level_2"
+      size: [500, 70]
+      parent_anchor: "#level_btn_1:bottom"
+      self_anchor: top_center
+      offset: [0, 20]
+      color: [60, 100, 180]
+      border: 2
+      border_color: [100, 140, 220]
+      border_radius: 8
+      font_size: 24
+      layer: Layers.UI
+
+    # Back button
+    - type: button
+      id: "btn_back"
+      text: "BACK"
+      action: "back"
+      size: [300, 60]
+      parent_anchor: "#level_btn_2:bottom"
+      self_anchor: top_center
+      offset: [0, 40]
+      color: [100, 40, 40]
+      border: 2
+      border_color: [150, 80, 80]
+      border_radius: 8
+      font_size: 24
+      layer: Layers.UI

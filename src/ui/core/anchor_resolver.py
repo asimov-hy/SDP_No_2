@@ -50,31 +50,27 @@ class AnchorResolver:
             Final positioned rect
         """
         # Check for absolute positioning via anchor
-        if element.anchor == 'screen:absolute':
+        if element.parent_anchor == 'screen:absolute':
             # Use offset as absolute x, y coordinates
             offset_x, offset_y = self._parse_offset(element.offset, element.width, element.height)
             return pygame.Rect(int(offset_x), int(offset_y), element.width, element.height)
 
         # Calculate anchor point
-        anchor_x, anchor_y = self._get_anchor_point(element.anchor, parent, element)
+        anchor_x, anchor_y = self._get_anchor_point(element.parent_anchor, parent, element)
 
         # Apply offset
         offset_x, offset_y = self._parse_offset(element.offset, element.width, element.height)
 
         # Apply layout position if set by parent container
-        if hasattr(element, '_layout_x') and element.anchor is None:
+        if hasattr(element, '_layout_x') and element.parent_anchor is None:
             # Use layout positioning from parent
             final_x = element._layout_x
             final_y = element._layout_y
         else:
-            # Align element based on anchor type or explicit alignment
-            element_align = getattr(element, 'align', None)
-            align_x, align_y = self._get_element_alignment(
-                element.anchor,
-                element.width,
-                element.height,
-                element_align
-            )
+            # Calculate child's self_anchor offset from top-left
+            align_x, align_y = self._get_alignment_offset(element.self_anchor, element.width, element.height)
+
+            # Position child so its self_anchor point touches parent's parent_anchor point
             final_x = anchor_x + offset_x - align_x
             final_y = anchor_y + offset_y - align_y
 
@@ -265,42 +261,21 @@ class AnchorResolver:
 
         return x, y
 
-    def _get_element_alignment(self, anchor, elem_width: int, elem_height: int, element_align: str = None) -> Tuple[
-        int, int]:
+    def _get_alignment_offset(self, align: str, width: int, height: int) -> Tuple[int, int]:
         """
-        Get element alignment offset based on anchor type or explicit alignment.
+        Calculate offset from element's top-left to its self_anchor point.
 
         Args:
-            anchor: Anchor specification
-            elem_width: Element width
-            elem_height: Element height
-            element_align: Optional explicit alignment override
+            align: self_anchor position (e.g., 'top_left', 'center', 'bottom_right')
+            width: Element width
+            height: Element height
 
         Returns:
-            (x, y) offset from element's top-left to alignment point
+            (x, y) offset from top-left corner
+
+        Example:
+            align='center' on 100x50 element → (50, 25)
+            align='bottom_right' on 100x50 element → (100, 50)
         """
-        if anchor is None:
-            return 0, 0
-
-        # Determine position string
-        if element_align:
-            position = element_align
-        elif isinstance(anchor, str):
-            if anchor.startswith('#'):
-                position = 'center'
-            elif ':' in anchor:
-                # New format: "screen:center" or "parent:top_left"
-                position = anchor.split(':', 1)[1]
-            elif anchor.startswith('parent_'):
-                # Legacy format: "parent_center"
-                position = anchor.replace('parent_', '')
-            else:
-                # Direct position: "center", "top_left", etc.
-                position = anchor
-        else:
-            # Percentage anchors default to center
-            position = 'center'
-
-        # Use shared multipliers
-        mult = self._ALIGNMENT_MULTIPLIERS.get(position, (0.5, 0.5))
-        return int(elem_width * mult[0]), int(elem_height * mult[1])
+        mult = self._ALIGNMENT_MULTIPLIERS.get(align, (0, 0))
+        return int(width * mult[0]), int(height * mult[1])

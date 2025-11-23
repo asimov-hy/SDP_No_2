@@ -47,20 +47,9 @@ class UIElement:
         self.data_dict = data_dict
 
         # === POSITION GROUP ===
-        self.anchor = position_dict.get('anchor')
+        self.parent_anchor = position_dict.get('parent_anchor') or position_dict.get('anchor')  # Backwards compat
+        self.self_anchor = position_dict.get('self_anchor') or position_dict.get('align', 'top_left')
         self.offset = position_dict.get('offset', [0, 0])
-        self.align = position_dict.get('align', None)
-
-        # Auto-match align to anchor if not specified
-        if self.anchor and self.align is None:
-            if isinstance(self.anchor, str) and ':' in self.anchor and not self.anchor.startswith('#'):
-                # Extract position from "screen:center" or "parent:top_left"
-                self.align = self.anchor.split(':', 1)[1]
-            elif isinstance(self.anchor, str) and not self.anchor.startswith('#'):
-                self.align = self.anchor.replace('parent_', '')
-            else:
-                self.align = 'center'
-
         self.text_align = position_dict.get('text_align', 'center')
 
         # Size - ONLY from position.size (no width/height)
