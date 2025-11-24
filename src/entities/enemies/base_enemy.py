@@ -214,6 +214,7 @@ class BaseEnemy(BaseEntity):
             self.on_death(source)
 
     def on_death(self, source):
+        self.death_state = LifecycleState.DYING
         self.layer = Layers.PARTICLES   # TODO: temporary measure -> later replace with seperate layer and death animation
         self.anim_manager.play("death")
 
