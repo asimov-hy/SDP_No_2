@@ -292,8 +292,8 @@ class WaveScheduler:
                     failed += 1
 
             # Track enemies for wave clear
-            if category == "enemy" and self._waiting_for_clear:
-                self._remaining_enemies += spawned
+            # if category == "enemy" and self._waiting_for_clear:
+            #     self._remaining_enemies += spawned
 
             # Report results
             if failed > 0:
