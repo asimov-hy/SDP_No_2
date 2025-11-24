@@ -178,20 +178,19 @@ class WaveScheduler:
         if category == "enemy":
             needs_position_calc, movement_params = self._parse_movement_config(wave)
 
-            # Inject player reference for homing
-            if "homing" in movement_params:
+            # Inject player reference for homing - check both movement type AND enemy type
+            if entity_type == "homing":
                 movement_params["player_ref"] = self.player
+                base_params["player_ref"] = self.player
 
             # Merge movement params with priority system:
             # 1. Explicit enemy_params.direction (highest priority)
             # 2. Movement config direction
             # 3. Auto-direction from spawn_edge (lowest priority)
             if not needs_position_calc:
-                # Only apply movement direction if no explicit direction exists
                 if "direction" not in base_params or base_params.get("direction") is None:
                     if movement_params.get("direction") is not None:
                         base_params.update(movement_params)
-                # Homing always overrides
                 elif "homing" in movement_params:
                     base_params.update(movement_params)
         else:

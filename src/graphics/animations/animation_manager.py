@@ -141,6 +141,10 @@ class AnimationManager:
                 self.entity.image = self.entity._base_image
                 self.entity.image.set_alpha(255)
 
+                # Re-apply rotation if enabled
+                if hasattr(self.entity, 'update_rotation') and getattr(self.entity, '_rotation_enabled', False):
+                    self.entity.update_rotation()
+
         self.active_type = None
         self.timer = 0.0
         self.duration = 0.0

@@ -21,7 +21,7 @@ from src.systems.entity_management.entity_registry import EntityRegistry
 class EnemyHoming(BaseEnemy):
     """Enemy that tracks the player with configurable homing modes."""
 
-    __slots__ = ('turn_rate', 'player_ref', 'update_delay', 'update_timer', 'spawn_edge', 'speed_boost_applied')
+    __slots__ = ('turn_rate', 'player_ref', 'update_delay', 'update_timer', 'spawn_edge')
 
     __registry_category__ = EntityCategory.ENEMY
     __registry_name__ = "homing"
@@ -32,7 +32,7 @@ class EnemyHoming(BaseEnemy):
         "default": {"turn_rate": 90, "update_delay": 0, "speed_boost": 0},     # Slow constant turning
         "efficient": {"turn_rate": 180, "update_delay": 0, "speed_boost": 0},  # Fast constant turning
         "smarter": {"turn_rate": 9999, "update_delay": 1.0, "speed_boost": 0}, # Instant snap every 1.0s
-        "launcher": {"turn_rate": 9999, "update_delay": 999.0, "speed_boost": 500}  # One-time aim + speed boost
+        # "launcher": {"turn_rate": 9999, "update_delay": 999.0, "speed_boost": 500}  # One-time aim + speed boost
     }
 
     # ===========================================================
@@ -85,15 +85,17 @@ class EnemyHoming(BaseEnemy):
         self.update_delay = config["update_delay"]
         self.player_ref = player_ref
         self.update_timer = 0.0  # For delayed update modes
-        self.speed_boost_applied = False  # Track if launcher speed boost was applied
         self.spawn_edge = kwargs.get("spawn_edge")
 
-        # Apply speed boost for launcher mode
-        if config.get("speed_boost", 0) > 0:
-            self.speed += config["speed_boost"]
+        # self.speed_boost_applied = False  # Track if launcher speed boost was applied
+        # # Apply speed boost for launcher mode
+        # if config.get("speed_boost", 0) > 0:
+        #     self.speed += config["speed_boost"]
 
         # Store exp value
         self.exp_value = defaults.get("exp", 0)
+
+        self._rotation_enabled = False
 
         DebugLogger.init(
             f"Spawned EnemyHoming at ({x}, {y}) | Speed={speed} | Mode={homing_mode}",
@@ -152,11 +154,11 @@ class EnemyHoming(BaseEnemy):
             self.turn_rate = config["turn_rate"]
             self.update_delay = config["update_delay"]
             self.update_timer = 0.0
-            self.speed_boost_applied = False
 
-            # Apply speed boost for launcher mode
-            if config.get("speed_boost", 0) > 0:
-                self.speed += config["speed_boost"]
+            # self.speed_boost_applied = False
+            # # Apply speed boost for launcher mode
+            # if config.get("speed_boost", 0) > 0:
+            #     self.speed += config["speed_boost"]
 
         if "player_ref" in kwargs:
             self.player_ref = kwargs["player_ref"]

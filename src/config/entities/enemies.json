@@ -13,7 +13,7 @@
     "image": "assets/images/sprites/enemies/enemy_homing.png",
     "scale": 0.5,
     "hp": 3,
-    "speed": 150,
+    "speed": 300,
     "exp": 75,
     "color": [0, 128, 255],
     "homing_mode": "efficient",

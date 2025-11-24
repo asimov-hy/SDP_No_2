@@ -18,6 +18,8 @@ class MainMenuScene(BaseScene):
 
     def on_enter(self):
         """Called when scene becomes active."""
+        self.ui.clear_hud()
+        self.ui.hide_all_screens()
         self.ui.load_screen("main_menu", "screens/main_menu.yaml")
         self.ui.show_screen("main_menu")
 

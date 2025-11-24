@@ -1,78 +1,46 @@
 {
   "stages": [
     {
+      "name": "Homing Mode Test",
+      "exit_trigger": "all_waves_cleared",
       "timeline": {
-        "2": [
+        "0.5": [
           {
             "enemy": "homing",
-            "count": 3,
-            "pattern": "line",
             "spawn_edge": "top",
-            "pattern_config": {
-              "spread": 0.6
-            },
-            "enemy_params": {
-              "homing_mode": "default"
-            },
-            "movement": {
-              "type": "homing_continuous"
-            }
-          }
-        ],
-        "8": [
-          {
-            "enemy": "homing",
-            "count": 3,
-            "pattern": "line",
-            "spawn_edge": "left",
-            "pattern_config": {
-              "spread": 0.6
-            },
+            "spawn_position": 0.5,
+            "spawn_offset_y": -100,
+            "count": 1,
             "enemy_params": {
               "homing_mode": "efficient"
-            },
-            "movement": {
-              "type": "homing_continuous"
             }
           }
         ],
-        "14": [
+        "2.5": [
           {
             "enemy": "homing",
-            "count": 3,
-            "pattern": "line",
-            "spawn_edge": "right",
-            "pattern_config": {
-              "spread": 0.6
-            },
+            "spawn_edge": "top",
+            "spawn_position": 0.3,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": {
+              "homing_mode": "default"
+            }
+          }
+        ],
+        "4.5": [
+          {
+            "enemy": "homing",
+            "spawn_edge": "left",
+            "spawn_position": 0.5,
+            "spawn_offset_x": -100,
+            "count": 1,
             "enemy_params": {
               "homing_mode": "smarter"
-            },
-            "movement": {
-              "type": "homing_continuous"
-            }
-          }
-        ],
-        "20": [
-          {
-            "enemy": "homing",
-            "count": 2,
-            "pattern": "line",
-            "spawn_edge": "top",
-            "pattern_config": {
-              "spread": 0.4
-            },
-            "enemy_params": {
-              "homing_mode": "launcher",
-              "speed": 100
-            },
-            "movement": {
-              "type": "homing_continuous"
             }
           }
         ]
-      },
-      "exit_trigger": "all_waves_cleared"
+      }
     }
   ]
 }

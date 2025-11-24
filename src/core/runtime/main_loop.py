@@ -232,7 +232,7 @@ class MainLoop:
         # Frame Summary
         frame_time_ms = (time.perf_counter() - start_total) * 1000
 
-        fps = 1000.0 / frame_time_ms if frame_time_ms > 0 else 0.0
+        fps = self.clock.get_fps()  # Actual frame rate from pygame clock
 
         # Delegate all metrics tracking to DebugHUD
         self.debug_hud.record_frame_metrics(frame_time_ms, scene_time, render_time, fps)

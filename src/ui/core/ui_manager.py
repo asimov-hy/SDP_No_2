@@ -414,3 +414,15 @@ class UIManager:
         if hasattr(element, 'children'):
             for child in element.children:
                 self._set_auto_layer(child, layer)
+
+    def hide_all_screens(self):
+        """Hide all active screens and clear modal stack."""
+        # Hide all modals
+        for screen_name in list(self.modal_stack):
+            self._on_screen_hide(screen_name)
+        self.modal_stack.clear()
+
+        # Hide active screen
+        if self.active_screen:
+            self._on_screen_hide(self.active_screen)
+            self.active_screen = None
