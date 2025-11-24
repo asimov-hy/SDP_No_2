@@ -89,3 +89,4 @@ def sprite_cycle(entity, t):
 
     frame_idx = min(int(t * len(frames)), len(frames) - 1)
     entity.image = frames[frame_idx]
+    entity.rect = entity.image.get_rect(center=entity.rect.center)

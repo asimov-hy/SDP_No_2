@@ -70,7 +70,7 @@ class GameSystemInitializer(SystemInitializer):
     def _init_ui(self) -> UIManager:
         """Initialize UI system."""
         ui = self.services.ui_manager  # Use existing
-        ui.load_screen("pause", "hud/pause_hud.yaml")
+        ui.load_screen("pause", "screens/pause_screen.yaml")
         return ui
 
     def _init_player(self) -> Player:

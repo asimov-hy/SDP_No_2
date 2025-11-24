@@ -84,7 +84,7 @@ class GameScene(BaseScene):
         self.ui.load_hud("hud/player_hud.yaml")
 
         # Load game over overlay (hidden by default)
-        self.ui.load_screen("game_over", "hud/game_over.yaml")
+        self.ui.load_screen("game_over", "screens/game_over.yaml")
 
         # Reset game state
         self.game_over_shown = False

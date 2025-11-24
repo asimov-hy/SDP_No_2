@@ -6,6 +6,7 @@ gameplay_hud:
   visual:
     size: [400, 100]
     layer: Layers.UI
+
   children:
     # Health Bar
     - type: bar
