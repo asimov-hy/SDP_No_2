@@ -1,0 +1,88 @@
+{
+  "stages": [
+    {
+      "name": "Spawn Mode Test",
+      "exit_trigger": "all_waves_cleared",
+      "timeline": {
+        "0.5": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": {
+              "speed": 200,
+              "size": 32,
+              "direction" : [0, 1]
+            },
+            "movement": {
+              "type": "straight"
+            }
+          }
+        ],
+        "2.0": [
+          {
+            "enemy": "straight",
+            "formation": "line",
+            "spawn_edge": "top",
+            "formation_config": {
+              "spacing": 150
+            },
+            "spawn_offset_y": -100,
+            "count": 5,
+            "enemy_params": {
+              "speed": 180,
+              "size": 28,
+              "direction": [0, 1]
+            },
+            "movement": {
+              "type": "straight"
+            }
+          }
+        ],
+        "4.0": [
+          {
+            "enemy": "straight",
+            "formation": "v",
+            "spawn_edge": "top",
+            "formation_config": {
+              "x_spacing": 100,
+              "y_spacing": 40
+            },
+            "spawn_offset_y": -100,
+            "count": 5,
+            "enemy_params": {
+              "speed": 160,
+              "size": 26,
+              "direction": [0, 1]
+            },
+            "movement": {
+              "type": "straight"
+            }
+          }
+        ],
+        "6.0": [
+          {
+            "enemy": "straight",
+            "formation": "line",
+            "spawn_edge": "left",
+            "formation_config": {
+              "spacing": 120
+            },
+            "spawn_offset_x": -100,
+            "count": 4,
+            "enemy_params": {
+              "speed": 200,
+              "size": 30,
+              "direction": [1, 0]
+            },
+            "movement": {
+              "type": "straight"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

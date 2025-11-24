@@ -15,7 +15,7 @@ class CampaignSelectScene(BaseScene):
         self.input_context = "ui"
         self.ui = services.ui_manager
         self.level_registry = services.get_global("level_registry")
-        self.current_campaign = "test"
+        self.current_campaign = "main"
 
     def on_enter(self):
         """Load campaign list when entering."""

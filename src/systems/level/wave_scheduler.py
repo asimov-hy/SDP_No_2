@@ -170,8 +170,8 @@ class WaveScheduler:
             )
             return
 
-        # Pre-compute wave parameters
-        spawn_edge = wave.get("spawn_edge") or wave.get("pattern_config", {}).get("edge")
+        # Extract spawn edge (only from wave level, not pattern_config)
+        spawn_edge = wave.get("spawn_edge")
         base_params = entity_params.copy()
 
         # Parse movement configuration
@@ -182,26 +182,51 @@ class WaveScheduler:
             if "homing" in movement_params:
                 movement_params["player_ref"] = self.player
 
-            # Pre-compute if uniform direction
+            # Merge movement params with priority system:
+            # 1. Explicit enemy_params.direction (highest priority)
+            # 2. Movement config direction
+            # 3. Auto-direction from spawn_edge (lowest priority)
             if not needs_position_calc:
-                base_params.update(movement_params)
+                # Only apply movement direction if no explicit direction exists
+                if "direction" not in base_params or base_params.get("direction") is None:
+                    if movement_params.get("direction") is not None:
+                        base_params.update(movement_params)
+                # Homing always overrides
+                elif "homing" in movement_params:
+                    base_params.update(movement_params)
         else:
             needs_position_calc = False
             movement_params = {}
 
         # Deferred spawning for large waves
         if len(positions) > self._spawns_per_frame:
-            for x, y in positions:
+            for pos_data in positions:
+                # Unpack position with optional metadata
+                if isinstance(pos_data, tuple) and len(pos_data) == 3:
+                    x, y, metadata = pos_data
+                else:
+                    x, y = pos_data[0], pos_data[1]
+                    metadata = {}
+
                 spawn_params = base_params.copy()
 
+                # Handle position-dependent direction calculation
                 if needs_position_calc:
                     direction_params = self._calculate_position_dependent_direction(
                         x, y, movement_params.get("target")
                     )
                     spawn_params.update(direction_params)
 
+                # Handle pattern metadata: use_auto_direction
+                elif metadata.get("use_auto_direction", False):
+                    # Override with auto-direction based on position
+                    spawn_params["direction"] = None
+                    spawn_params["spawn_edge"] = spawn_edge
+
+                # Pass spawn_edge for auto-direction calculation
                 spawn_kwargs = {}
                 if spawn_edge:
+                    # Only use auto-direction if direction is None or homing needs edge
                     if spawn_params.get("direction") is None or spawn_params.get("homing") == "snapshot_axis":
                         spawn_kwargs["spawn_edge"] = spawn_edge
 
@@ -219,7 +244,14 @@ class WaveScheduler:
             spawned = 0
             failed = 0
 
-            for x, y in positions:
+            for pos_data in positions:
+                # Unpack position with optional metadata
+                if isinstance(pos_data, tuple) and len(pos_data) == 3:
+                    x, y, metadata = pos_data
+                else:
+                    x, y = pos_data[0], pos_data[1]
+                    metadata = {}
+
                 # VALIDATION: Coordinate types
                 if not isinstance(x, (int, float)) or not isinstance(y, (int, float)):
                     DebugLogger.warn(
@@ -231,20 +263,32 @@ class WaveScheduler:
 
                 spawn_params = base_params.copy()
 
+                # Handle position-dependent direction calculation
                 if needs_position_calc:
                     direction_params = self._calculate_position_dependent_direction(
                         x, y, movement_params.get("target")
                     )
                     spawn_params.update(direction_params)
 
-                if spawn_edge:
-                    if spawn_params.get("direction") is None or spawn_params.get("homing") == "snapshot_axis":
-                        spawn_params["spawn_edge"] = spawn_edge
+                # Handle pattern metadata: use_auto_direction
+                elif metadata.get("use_auto_direction", False):
+                    # Override with auto-direction based on position
+                    spawn_params["direction"] = None
+                    spawn_params["spawn_edge"] = spawn_edge
 
-                entity = self.spawner.spawn(category, entity_type, x, y, **spawn_params)
+                # Pass spawn_edge for auto-direction calculation
+                spawn_kwargs = {}
+                if spawn_edge:
+                    # Only use auto-direction if direction is None or homing needs edge
+                    if spawn_params.get("direction") is None or spawn_params.get("homing") == "snapshot_axis":
+                        spawn_kwargs["spawn_edge"] = spawn_edge
+
+                entity = self.spawner.spawn(category, entity_type, x, y, **{**spawn_kwargs, **spawn_params})
 
                 if entity:
                     spawned += 1
+                    if category == "enemy" and self._waiting_for_clear:
+                        self._remaining_enemies += 1
                 else:
                     failed += 1
 
@@ -272,43 +316,31 @@ class WaveScheduler:
         """
         Calculate spawn positions from wave config.
 
-        Args:
-            wave: Wave dict with position config
-
-        Returns:
-            list: [(x, y), ...] spawn positions
+        Modes:
+        - Individual: spawn_edge only (single position)
+        - Formation: spawn_edge + formation (shaped group on one edge)
+        - Pattern: pattern only (complex multi-edge choreography)
         """
-        # Mode A: Direct coordinates
-        if "x" in wave and "y" in wave:
-            count = wave.get("count", 1)
-            x, y = wave["x"], wave["y"]
-
-            if not isinstance(x, (int, float)) or not isinstance(y, (int, float)):
-                DebugLogger.warn(
-                    f"[WaveScheduler] Invalid x/y coordinates: ({x}, {y})",
-                    category="level"
-                )
-                return []
-
-            return [(float(x), float(y))] * count
-
-        # Mode B: Edge spawn
-        if "spawn_edge" in wave:
-            edge = wave.get("spawn_edge")
-            if edge not in ["top", "bottom", "left", "right"]:
-                DebugLogger.warn(
-                    f"[WaveScheduler] Invalid spawn_edge: '{edge}'",
-                    category="level"
-                )
-                return []
+        # Mode 1: Individual spawn (spawn_edge without formation)
+        if "spawn_edge" in wave and "formation" not in wave and "pattern" not in wave:
             return self._positions_from_edge(wave)
 
-        # Mode C: Pattern spawn
+        # Mode 2: Formation spawn (shaped group on single edge)
+        if "formation" in wave:
+            if "spawn_edge" not in wave:
+                DebugLogger.warn(
+                    "[WaveScheduler] Formation requires 'spawn_edge'",
+                    category="level"
+                )
+                return []
+            return self._positions_from_formation(wave)
+
+        # Mode 3: Pattern spawn (multi-edge patterns)
         if "pattern" in wave:
             return self._positions_from_pattern(wave)
 
         DebugLogger.warn(
-            "[WaveScheduler] Wave has no position config (x/y, spawn_edge, or pattern)",
+            "[WaveScheduler] Wave has no position config (spawn_edge, formation, or pattern)",
             category="level"
         )
         return []
@@ -580,3 +612,53 @@ class WaveScheduler:
                 f"Failed to import {category}:{type_name} - {e}",
                 category="level"
             )
+
+    def _positions_from_formation(self, wave: dict) -> list:
+        """Generate positions using formation along single edge."""
+        formation_name = wave["formation"]
+        count = wave.get("count", 1)
+        edge = wave["spawn_edge"]
+
+        # Build formation config from wave
+        formation_config = wave.get("formation_config", {}).copy()
+        formation_config["edge"] = edge
+
+        # Add offset if specified at wave level (single offset)
+        if "spawn_offset" in wave:
+            formation_config.setdefault("offset", wave["spawn_offset"])
+        # Backward compatibility: offset_y for top/bottom, offset_x for left/right
+        elif edge in ["top", "bottom"] and "spawn_offset_y" in wave:
+            formation_config.setdefault("offset", wave["spawn_offset_y"])
+        elif edge in ["left", "right"] and "spawn_offset_x" in wave:
+            formation_config.setdefault("offset", wave["spawn_offset_x"])
+
+        # Get display dimensions
+        if self.spawner.display:
+            width = getattr(self.spawner.display, "game_width", 1280)
+            height = getattr(self.spawner.display, "game_height", 720)
+        else:
+            width, height = 1280, 720
+
+        try:
+            positions = PatternRegistry.get_positions(
+                formation_name, count, width, height, formation_config
+            )
+            return positions
+        except KeyError as e:
+            DebugLogger.warn(
+                f"[WaveScheduler] Formation '{formation_name}' not registered: {e}",
+                category="level"
+            )
+            return []
+        except (ValueError, TypeError) as e:
+            DebugLogger.warn(
+                f"[WaveScheduler] Formation '{formation_name}' invalid config: {e}",
+                category="level"
+            )
+            return []
+        except Exception as e:
+            DebugLogger.warn(
+                f"[WaveScheduler] Formation '{formation_name}' failed: {e}",
+                category="level"
+            )
+            return []
