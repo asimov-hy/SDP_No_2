@@ -305,8 +305,13 @@ class Player(BaseEntity):
         self.level += 1
 
         # Cap at reasonable max to prevent overflow
-        exp_calc = 30 * (2.0 ** min(self.level - 1, 200))
-        self.exp_required = min(int(exp_calc), 999999)
+        if self.level == 1:
+            # Level 1 uses base 500
+            self.exp_required = 500
+        else:
+            # Level 2+ uses formula starting from 500
+            exp_calc = 500 * (2.0 ** min(self.level - 2, 200))
+            self.exp_required = min(int(exp_calc), 999999)
 
         self.exp = overflow
 
