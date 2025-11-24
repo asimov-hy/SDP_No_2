@@ -430,9 +430,9 @@ class DrawManager:
             scale = 1.0
 
         # Generate cache key
-        cache_key = f"{entity_type}_{size[0]}x{size[1]}"
+        cache_key = (entity_type, size[0], size[1])
         if color:
-            cache_key += f"_{''.join(map(str, color))}"
+            cache_key = (entity_type, size[0], size[1], tuple(color))
 
         # Return cached if exists
         if cache_key in self.images:
