@@ -141,9 +141,12 @@ class AnimationManager:
                 self.entity.image = self.entity._base_image
                 self.entity.image.set_alpha(255)
 
-                # Re-apply rotation if enabled
-                if hasattr(self.entity, 'update_rotation') and getattr(self.entity, '_rotation_enabled', False):
-                    self.entity.update_rotation()
+                # Re-apply rotation using cached index
+                if getattr(self.entity, '_rotation_enabled', False):
+                    cached_idx = self.entity._cached_rotation_index
+                    if cached_idx >= 0:
+                        self.entity.image = self.entity._get_rotated_surface(cached_idx)
+                        self.entity.rect = self.entity.image.get_rect(center=self.entity.rect.center)
 
         self.active_type = None
         self.timer = 0.0

@@ -178,7 +178,7 @@ class Player(BaseEntity):
 
         self._bullet_manager = None
         self._shooting_enabled = False
-        self.base_shoot_cooldown = 0.1
+        self.base_shoot_cooldown = 0.5
         self.shoot_timer = 0.0
 
         # ========================================

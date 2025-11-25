@@ -65,9 +65,9 @@
   },
   "waypoint": {
     "image": "assets/images/sprites/enemies/enemy_waypoint.png",
-    "scale": 0.5,
-    "hp": 2,
-    "speed": 500,
+    "scale": 0.3,
+    "hp": 8,
+    "speed": 600,
     "exp": 60,
     "hitbox": {
       "scale": 0.85

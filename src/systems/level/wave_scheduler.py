@@ -23,6 +23,13 @@ from src.entities.entity_state import LifecycleState
 class WaveScheduler:
     """Handles wave spawning, timing, and position calculation."""
 
+    ALLOWED_PARAMS = {
+        'waypoints',  # Waypoint paths (level-specific)
+        'direction',  # Custom movement direction
+        'player_ref',  # System-injected
+        'spawn_edge',  # System-injected
+    }
+
     def __init__(self, spawn_manager, player_ref=None):
         """
         Initialize wave scheduler.
@@ -126,7 +133,7 @@ class WaveScheduler:
         if "enemy" in wave:
             category = "enemy"
             entity_type = wave.get("enemy", "straight")
-            entity_params = wave.get("enemy_params", {})
+            entity_params = self._filter_enemy_params(wave.get("enemy_params", {}))
         elif "pickup" in wave:
             category = "pickup"
             entity_type = wave.get("pickup", "health")
@@ -661,3 +668,26 @@ class WaveScheduler:
                 category="level"
             )
             return []
+
+    def _filter_enemy_params(self, params: dict) -> dict:
+        """
+        Filter enemy_params to only allow level-specific overrides.
+        Blocks stat overrides (health, speed, scale) - use enemies.json instead.
+
+        Args:
+            params: Raw enemy_params from level JSON
+
+        Returns:
+            Filtered params with only positioning/behavior data
+        """
+        filtered = {k: v for k, v in params.items() if k in self.ALLOWED_PARAMS}
+
+        # Log blocked overrides
+        blocked = set(params.keys()) - set(filtered.keys())
+        if blocked:
+            DebugLogger.trace(
+                f"Blocked stat overrides: {blocked} (use enemies.json)",
+                category="level"
+            )
+
+        return filtered
