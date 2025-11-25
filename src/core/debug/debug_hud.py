@@ -175,11 +175,14 @@ class DebugHUD:
             element.rect = self.anchor_resolver.resolve(element, parent)
             element._position_cache_valid = True
 
+        # Register element if it has an ID (BEFORE children)
+        if element.id:
+            self.anchor_resolver.register_element(element.id, element)
+
         # Render surface
         surface = element.render_surface()
 
         # Queue for drawing
-        # print(f"[DEBUG] Drawing button at layer {Layers.DEBUG}")
         draw_manager.queue_draw(surface, element.rect, Layers.DEBUG)
 
         # Draw children
@@ -317,6 +320,6 @@ class DebugHUD:
         self._loaded = True
 
         try:
-            self.root_element = self.loader.load("debug_hud.yaml")
+            self.root_element = self.loader.load("hud/debug_hud.yaml")
         except FileNotFoundError:
             DebugLogger.warn("debug_hud.yaml not found - using fallback")

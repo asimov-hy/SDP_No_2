@@ -10,9 +10,9 @@ debug_hud:
       id: "fullscreen_btn"
       text: "FS"
       action: "toggle_fullscreen"
-      size: [400, 400]
-      parent_anchor: top_center
-      self_anchor: top_center
+      size: [40, 40]
+      parent_anchor: top_right
+      self_anchor: top_right
       offset: [0, 0]
       color: [40, 40, 40]
       border: 3
@@ -20,15 +20,16 @@ debug_hud:
       border_radius: 10
       font_size: 16
       layer: Layers.UI
+
     # Exit button
     - type: button
       id: "exit_btn"
       text: "X"
       action: "quit"
       size: [40, 40]
-      parent_anchor: "#fullscreen_btn:bottom"
+      parent_anchor: "#fullscreen_btn:bottom_center"
       self_anchor: top_center
-      offset: [0, 5]
+      offset: [0, 0]
       font_size: 20
       color: [40, 40, 40, 180]
       border: 1
