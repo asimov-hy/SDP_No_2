@@ -71,7 +71,7 @@ class LevelRegistry:
     # ===========================================================
 
     @classmethod
-    def load_config(cls, config_path: str = "config/campaigns.json"):
+    def load_config(cls, config_path: str = "config/Campaigns.json"):
         """
         Load level definitions from JSON config.
 
