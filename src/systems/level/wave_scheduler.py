@@ -179,7 +179,7 @@ class WaveScheduler:
             needs_position_calc, movement_params = self._parse_movement_config(wave)
 
             # Inject player reference for homing - check both movement type AND enemy type
-            if entity_type == "homing":
+            if entity_type.startswith("homing"):
                 movement_params["player_ref"] = self.player
                 base_params["player_ref"] = self.player
 

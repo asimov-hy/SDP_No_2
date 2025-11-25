@@ -19,28 +19,19 @@ from src.systems.entity_management.entity_registry import EntityRegistry
 
 
 class EnemyHoming(BaseEnemy):
-    """Enemy that tracks the player with configurable homing modes."""
+    """Enemy that tracks the player with configurable turn rates and speeds."""
 
-    __slots__ = ('turn_rate', 'player_ref', 'update_delay', 'update_timer', 'spawn_edge')
+    __slots__ = ('turn_rate', 'player_ref', 'update_delay', 'update_timer', 'spawn_edge', 'enemy_type')
 
     __registry_category__ = EntityCategory.ENEMY
     __registry_name__ = "homing"
-    _cached_defaults = None
-
-    # Homing mode configurations
-    HOMING_CONFIG = {
-        "default": {"turn_rate": 90, "update_delay": 0, "speed_boost": 0},     # Slow constant turning
-        "efficient": {"turn_rate": 180, "update_delay": 0, "speed_boost": 0},  # Fast constant turning
-        "smarter": {"turn_rate": 9999, "update_delay": 1.0, "speed_boost": 0}, # Instant snap every 1.0s
-        # "launcher": {"turn_rate": 9999, "update_delay": 999.0, "speed_boost": 500}  # One-time aim + speed boost
-    }
+    _cached_defaults = {}
 
     # ===========================================================
     # Initialization
     # ===========================================================
     def __init__(self, x, y, direction=(0, 1), speed=None, health=None,
-                 scale=None, draw_manager=None,
-                 homing_mode="default", player_ref=None, **kwargs):
+                 scale=None, draw_manager=None, player_ref=None, **kwargs):
         """
         Args:
             x, y: Spawn position
@@ -49,18 +40,24 @@ class EnemyHoming(BaseEnemy):
             health: HP before death (override, or use JSON default)
             scale: Size override (or use JSON default)
             draw_manager: Required for sprite loading
-            homing_mode: "default", "efficient", "smarter", or "launcher"
             player_ref: Reference to player for homing calculations
         """
-        # Load defaults from JSON
-        if EnemyHoming._cached_defaults is None:
-            EnemyHoming._cached_defaults = EntityRegistry.get_data("enemy", "homing")
-        defaults = EnemyHoming._cached_defaults
+        # Derive enemy type from registry name
+        enemy_type = self.__registry_name__
 
-        # Apply overrides or use defaults
-        speed = speed if speed is not None else defaults.get("speed", 150)
-        health = health if health is not None else defaults.get("hp", 1)
-        scale = scale if scale is not None else defaults.get("scale", 1.0)
+        # Cache defaults per enemy type
+        if enemy_type not in EnemyHoming._cached_defaults:
+            EnemyHoming._cached_defaults[enemy_type] = EntityRegistry.get_data("enemy", enemy_type)
+        defaults = EnemyHoming._cached_defaults[enemy_type]
+
+        # Apply overrides or use defaults from JSON
+        speed = speed if speed is not None else defaults.get("speed", 300)
+        health = health if health is not None else defaults.get("hp", 3)
+        scale = scale if scale is not None else defaults.get("scale", 0.5)
+
+        # Read homing behavior from JSON
+        turn_rate = defaults.get("turn_rate", 180)
+        update_delay = defaults.get("update_delay", 0)
 
         image_path = defaults.get("image")
         hitbox_config = defaults.get("hitbox", {})
@@ -79,26 +76,21 @@ class EnemyHoming(BaseEnemy):
             hitbox_config=hitbox_config
         )
 
-        # Homing configuration - always enabled
-        config = self.HOMING_CONFIG.get(homing_mode, self.HOMING_CONFIG["default"])
-        self.turn_rate = config["turn_rate"]
-        self.update_delay = config["update_delay"]
+        # Homing configuration from JSON
+        self.enemy_type = enemy_type
+        self.turn_rate = turn_rate
+        self.update_delay = update_delay
         self.player_ref = player_ref
         self.update_timer = 0.0  # For delayed update modes
         self.spawn_edge = kwargs.get("spawn_edge")
 
-        # self.speed_boost_applied = False  # Track if launcher speed boost was applied
-        # # Apply speed boost for launcher mode
-        # if config.get("speed_boost", 0) > 0:
-        #     self.speed += config["speed_boost"]
-
         # Store exp value
-        self.exp_value = defaults.get("exp", 0)
+        self.exp_value = defaults.get("exp", 75)
 
         self._rotation_enabled = False
 
         DebugLogger.init(
-            f"Spawned EnemyHoming at ({x}, {y}) | Speed={speed} | Mode={homing_mode}",
+            f"Spawned {enemy_type} at ({x}, {y}) | Speed={speed} | Turn={turn_rate}",
             category="animation_effects"
         )
 
@@ -114,19 +106,29 @@ class EnemyHoming(BaseEnemy):
         """
         if self.player_ref:
             if self.update_delay > 0:
-                # Delayed update modes (smarter, launcher)
+                # Delayed update modes (e.g., homing_smart)
                 self.update_timer += dt
                 if self.update_timer >= self.update_delay:
                     self._update_homing_continuous(dt)
                     self.update_timer = 0.0
             else:
-                # Constant update modes (default, efficient)
+                # Constant update modes (e.g., homing_slow, homing_fast)
                 self._update_homing_continuous(dt)
 
         super().update(dt)
 
-    def reset(self, x, y, direction=(0, 1), speed=200, health=1, size=50, color=(255, 0, 0), **kwargs):
+    def reset(self, x, y, direction=(0, 1), speed=None, health=None, **kwargs):
         """Reset enemy for pooling."""
+        # Derive enemy type from registry name
+        enemy_type = self.__registry_name__
+        # Reload defaults for new enemy type
+        if enemy_type not in EnemyHoming._cached_defaults:
+            EnemyHoming._cached_defaults[enemy_type] = EntityRegistry.get_data("enemy", enemy_type)
+        defaults = EnemyHoming._cached_defaults[enemy_type]
+
+        speed = speed if speed is not None else defaults.get("speed", 300)
+        health = health if health is not None else defaults.get("hp", 3)
+
         super().reset(
             x, y,
             direction=direction,
@@ -135,30 +137,11 @@ class EnemyHoming(BaseEnemy):
             spawn_edge=kwargs.get("spawn_edge")
         )
 
-        norm_size = (size, size) if isinstance(size, int) else size
-
-        # Update shape_data for new size/color
-        self.shape_data = {
-            "type": "circle",
-            "size": norm_size,
-            "color": color
-        }
-
-        # Rebuild image if draw_manager available
-        if self.draw_manager:
-            self.refresh_sprite(new_color=color, size=norm_size)
-
-        # Update homing mode if provided
-        if "homing_mode" in kwargs:
-            config = self.HOMING_CONFIG.get(kwargs["homing_mode"], self.HOMING_CONFIG["default"])
-            self.turn_rate = config["turn_rate"]
-            self.update_delay = config["update_delay"]
-            self.update_timer = 0.0
-
-            # self.speed_boost_applied = False
-            # # Apply speed boost for launcher mode
-            # if config.get("speed_boost", 0) > 0:
-            #     self.speed += config["speed_boost"]
+        # Update homing parameters from JSON
+        self.enemy_type = enemy_type
+        self.turn_rate = defaults.get("turn_rate", 180)
+        self.update_delay = defaults.get("update_delay", 0)
+        self.update_timer = 0.0
 
         if "player_ref" in kwargs:
             self.player_ref = kwargs["player_ref"]
@@ -198,3 +181,12 @@ class EnemyHoming(BaseEnemy):
         new_angle = current_angle + rotation
         rad = math.radians(new_angle)
         self.velocity = pygame.Vector2(math.cos(rad), math.sin(rad)) * self.speed
+
+class EnemyHomingSlow(EnemyHoming):
+    __registry_name__ = "homing_slow"
+
+class EnemyHomingFast(EnemyHoming):
+    __registry_name__ = "homing_fast"
+
+class EnemyHomingSmart(EnemyHoming):
+    __registry_name__ = "homing_smart"

@@ -6,38 +6,29 @@
       "timeline": {
         "0.5": [
           {
-            "enemy": "homing",
+            "enemy": "homing_fast",
             "spawn_edge": "top",
             "spawn_position": 0.5,
             "spawn_offset_y": -100,
-            "count": 1,
-            "enemy_params": {
-              "homing_mode": "efficient"
-            }
+            "count": 1
           }
         ],
         "2.5": [
           {
-            "enemy": "homing",
+            "enemy": "homing_slow",
             "spawn_edge": "top",
             "spawn_position": 0.3,
             "spawn_offset_y": -100,
-            "count": 1,
-            "enemy_params": {
-              "homing_mode": "default"
-            }
+            "count": 1
           }
         ],
         "4.5": [
           {
-            "enemy": "homing",
+            "enemy": "homing_smart",
             "spawn_edge": "left",
             "spawn_position": 0.5,
             "spawn_offset_x": -100,
-            "count": 1,
-            "enemy_params": {
-              "homing_mode": "smarter"
-            }
+            "count": 1
           }
         ]
       }
