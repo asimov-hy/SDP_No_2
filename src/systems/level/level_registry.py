@@ -100,10 +100,26 @@ class LevelRegistry:
             # Register campaigns
             campaign_count = 0
             for campaign_name, campaign_data in data.get("campaigns", {}).items():
+                campaign_levels = campaign_data.get("levels", [])
+                start_level = campaign_data.get("start_level")
+
+                invalid_levels = [lvl for lvl in campaign_levels if lvl not in cls._levels]
+                if invalid_levels:
+                    DebugLogger.warn(
+                        f"Campaign '{campaign_name}' references unknown levels: {invalid_levels}",
+                        category="loading"
+                    )
+
+                if start_level and start_level not in cls._levels:
+                    DebugLogger.warn(
+                        f"Campaign '{campaign_name}' has invalid start_level: '{start_level}'",
+                        category="loading"
+                    )
+
                 cls._campaigns[campaign_name] = {
                     "name": campaign_data.get("name", campaign_name),
-                    "start_level": campaign_data.get("start_level"),
-                    "levels": campaign_data.get("levels", [])
+                    "start_level": start_level,
+                    "levels": campaign_levels
                 }
                 campaign_count += 1
 
@@ -112,13 +128,19 @@ class LevelRegistry:
             # Set default start
             cls._default_campaign = data.get("default_campaign")
             if cls._default_campaign:
-                DebugLogger.init_sub(f"Default Campaign: {cls._default_campaign}")
+                if cls._default_campaign not in cls._campaigns:
+                    DebugLogger.warn(
+                        f"default_campaign '{cls._default_campaign}' does not exist",
+                        category="loading"
+                    )
+                else:
+                    DebugLogger.init_sub(f"Default Campaign: {cls._default_campaign}")
 
             cls._initialized = True
             DebugLogger.init_entry("Level Registry Loaded")
 
         except Exception as e:
-            DebugLogger.fail(f"[LevelRegistry] Failed to load config: {e}")
+            DebugLogger.fail(f"Failed to load config: {e}")
             cls._initialized = False
 
     # ===========================================================

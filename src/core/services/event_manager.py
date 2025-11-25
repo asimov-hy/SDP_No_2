@@ -44,6 +44,11 @@ class FireRateEvent(BaseEvent):
     multiplier: float  # e.g., 2.0 = double fire rate
     duration: float  # Seconds (0 = permanent)
 
+@dataclass(frozen=True)
+class NukeUsedEvent(BaseEvent):
+    """Dispatched when a bomb is used to clear the screen."""
+    damage: int = 9999
+
 
 # ============================================================
 # Event Manager
@@ -63,8 +68,9 @@ class EventManager:
 
         self._subscribers[event_type].append(callback)
         callback_name = getattr(callback, '__name__', repr(callback))
-        DebugLogger.init_sub(
-            f"Subscribed '{callback_name}' to '{event_type.__name__}'"
+        DebugLogger.system(
+            f"Subscribed '{callback_name}' to '{event_type.__name__}'",
+            category="event_manager"
         )
 
     def unsubscribe(self, event_type: Type[BaseEvent], callback: Callable) -> None:
@@ -94,4 +100,11 @@ class EventManager:
 # Global Instance
 # ============================================================
 
-EVENTS = EventManager()
+_EVENTS = None
+
+def get_events() -> EventManager:
+    """Get or create the event manager singleton."""
+    global _EVENTS
+    if _EVENTS is None:
+        _EVENTS = EventManager()
+    return _EVENTS

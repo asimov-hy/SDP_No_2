@@ -16,13 +16,18 @@ from src.core.runtime import game_settings
 from src.core.runtime.game_settings import Bounds
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
-from src.entities.entity_state import LifecycleState
-from src.entities.entity_types import EntityCategory
-from src.entities.entity_registry import EntityRegistry
+from src.entities.entity_state import LifecycleState, InteractionState
+from src.entities.entity_types import EntityCategory, CollisionTags
+from src.systems.entity_management.entity_registry import EntityRegistry
 
 
 class BaseBullet(BaseEntity):
     """Base class for all bullet entities_animation."""
+
+    # Add slots for bullet-specific attributes
+    __slots__ = ('vel', 'owner', 'radius', 'damage', 'state')
+
+    _cached_defaults = None
 
     def __init_subclass__(cls, **kwargs):
         """Auto-register bullet subclasses when they're defined."""
@@ -48,10 +53,11 @@ class BaseBullet(BaseEntity):
             hitbox_scale (float): Hitbox scale (override, or use JSON default).
             draw_manager: Optional DrawManager for shape prebaking.
         """
-        from src.entities.entity_registry import EntityRegistry
 
         # Load defaults from JSON
-        defaults = EntityRegistry.get_data("projectile", "straight")
+        if BaseBullet._cached_defaults is None:
+            BaseBullet._cached_defaults = EntityRegistry.get_data("projectile", "straight")
+        defaults = BaseBullet._cached_defaults
 
         # Apply overrides or use defaults
         damage = damage if damage is not None else defaults.get("damage", 1)
@@ -81,15 +87,15 @@ class BaseBullet(BaseEntity):
         )
 
         # Core attributes
-        self.pos = pygame.Vector2(pos)
         self.vel = pygame.Vector2(vel)
         self.death_state = LifecycleState.ALIVE
+        self.state = InteractionState.DEFAULT
         self.owner = owner
         self.radius = radius
         self.damage = damage
 
         # Collision setup
-        self.collision_tag = f"{owner}_bullet"
+        self.collision_tag = CollisionTags.PLAYER_BULLET if owner == "player" else CollisionTags.ENEMY_BULLET
         self.category = EntityCategory.PROJECTILE
         self.layer = game_settings.Layers.BULLETS
 
@@ -108,19 +114,22 @@ class BaseBullet(BaseEntity):
         if self.death_state >= LifecycleState.DEAD:
             return
 
-        # Motion update
-        self.pos += self.vel * dt
-        self.rect.center = self.pos
+        self.pos.x += self.vel.x * dt
+        self.pos.y += self.vel.y * dt
+
+        # Sync its rect and hitbox using the inherited helper method
+        self.sync_rect()
 
     # ===========================================================
     # Collision Handling
     # ===========================================================
-    def on_collision(self, target):
+    def on_collision(self, target, collision_tag=None):
         """
         Entry point for collision events from CollisionManager.
 
         Args:
             target (BaseEntity): The entity that this bullet collided with.
+            collision_tag: Optional pre-captured collision tag to prevent race conditions
         """
         if self.death_state >= LifecycleState.DEAD or target is self:
             return
@@ -140,7 +149,7 @@ class BaseBullet(BaseEntity):
         self.death_state = LifecycleState.DEAD
         DebugLogger.state(
             f"{type(self).__name__} hit {type(target).__name__} → destroyed",
-            category="collision"
+            category="bullet"
         )
 
     # ===========================================================
@@ -159,13 +168,13 @@ class BaseBullet(BaseEntity):
     # ===========================================================
     # Rendering
     # ===========================================================
-    def draw(self, draw_manager):
-        """
-        Render the bullet on screen.
-
-        Draws either an image or fallback circle based on render mode.
-        """
-        super().draw(draw_manager)
+    # def draw(self, draw_manager):
+    #     """
+    #     Render the bullet on screen.
+    #
+    #     Draws either an image or fallback circle based on render mode.
+    #     """
+    #     super().draw(draw_manager)
 
     # ===========================================================
     # Reset for Object Pooling
@@ -193,7 +202,7 @@ class BaseBullet(BaseEntity):
         # Update owner if provided
         if owner is not None:
             self.owner = owner
-            self.collision_tag = f"{owner}_bullet"
+            self.collision_tag = CollisionTags.PLAYER_BULLET if owner == "player" else CollisionTags.ENEMY_BULLET
 
         # Update damage if provided
         if damage is not None:

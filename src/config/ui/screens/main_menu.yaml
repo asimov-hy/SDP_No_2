@@ -1,0 +1,92 @@
+main_menu:
+  type: container
+  size: [1280, 720]
+  parent_anchor: center
+  layer: Layers.UI
+  children:
+    # Title
+    - type: label
+      id: "title"
+      # position
+      parent_anchor: top_center
+      self_anchor: top_center
+      offset: [0, 120]
+      layer: Layers.UI
+      #graphic
+      text: "202X"
+      font_size: 72
+      size: [600, 100]
+      color: [220, 240, 255]
+
+    # Subtitle
+    - type: label
+      id: "subtitle"
+      text: "BULLET HELL"
+      size: [400, 40]
+      parent_anchor: "#title:bottom"
+      self_anchor: top_center
+      offset: [0, 10]
+      font_size: 24
+      color: [150, 180, 220]
+      layer: Layers.UI
+
+    # Start button
+    - type: button
+      id: "start_button"
+      text: "START GAME"
+      action: "start_game"
+      size: [320, 65]
+      parent_anchor: "#subtitle:bottom"
+      self_anchor: top_center
+      offset: [0, 80]
+      color: [50, 120, 200]
+      border: 3
+      border_color: [100, 160, 255]
+      border_radius: 10
+      font_size: 30
+      layer: Layers.UI
+
+    # Settings button
+    - type: button
+      id: "settings_button"
+      text: "SETTINGS"
+      action: "settings"
+      size: [320, 58]
+      parent_anchor: "#start_button:bottom"
+      self_anchor: top_center
+      offset: [0, 18]
+      color: [70, 90, 140]
+      border: 2
+      border_color: [110, 130, 180]
+      border_radius: 10
+      font_size: 24
+      layer: Layers.UI
+
+    # Quit button
+    - type: button
+      id: "quit_button"
+      text: "QUIT"
+      action: "quit"
+      size: [320, 58]
+      parent_anchor: "#settings_button:bottom"
+      self_anchor: top_center
+      offset: [0, 18]
+      color: [140, 60, 70]
+      border: 2
+      border_color: [190, 100, 110]
+      border_radius: 10
+      font_size: 24
+      layer: Layers.UI
+
+    # Version label
+    - type: label
+      id: "version"
+      text: "v0.1.0-alpha"
+      size: [150, 25]
+      parent_anchor: bottom_right
+      self_anchor: bottom_right
+      offset: [-20, -20]
+      font_size: 14
+      color: [120, 120, 140]
+      text_align: right
+      layer: Layers.UI

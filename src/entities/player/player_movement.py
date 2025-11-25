@@ -13,16 +13,18 @@ Responsibilities
 import pygame
 from src.core.runtime.game_settings import Display
 
+VELOCITY_SMOOTHING_RATE = 8.0
 
-def update_movement(player, dt, move_vec):
+def update_movement(player, dt):
     """
     Update the player's velocity and position based on directional input.
 
     Args:
         player (Player): The player instance being updated.
         dt (float): Delta time since the last frame (in seconds).
-        move_vec (pygame.Vector2): Directional input vector.
     """
+
+    move_vec = player.input.move()
 
     # -------------------------------------------------------
     # Retrieve movement parameters from config
@@ -41,8 +43,10 @@ def update_movement(player, dt, move_vec):
         move_vec = move_vec.normalize()
         desired_velocity = move_vec * player.speed
 
+        smoothing_factor = VELOCITY_SMOOTHING_RATE * dt
+
         # Smoothly interpolate toward desired velocity
-        player.velocity = player.velocity.lerp(desired_velocity, 0.25)
+        player.velocity = player.velocity.lerp(desired_velocity, smoothing_factor)
 
         # Apply acceleration to build up momentum
         player.velocity += move_vec * accel_rate * dt

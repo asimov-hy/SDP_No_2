@@ -1,0 +1,56 @@
+gameplay_hud:
+  type: container
+  layout:
+    anchor: top_left
+    offset: [20, 20]
+  visual:
+    size: [400, 100]
+    layer: Layers.UI
+
+  children:
+    # Health Bar
+    - type: bar
+      id: health_bar
+      layout:
+        anchor: top_left
+        offset: [0, 0]
+      visual:
+        size: [200, 24]
+        color: [0, 255, 0]
+        border: 2
+        border_color: [255, 255, 255]
+        gradient:
+          75: [255, 255, 0]  # Yellow at 75%
+          25: [255, 100, 0]  # Orange at 25%
+          0: [255, 0, 0]     # Red at 0%
+      data:
+        bind: player.health
+        max_bind: player.max_health
+    
+    # Score Label
+    - type: label
+      id: score_label
+      layout:
+        anchor: top_left
+        offset: [0, 35]
+      visual:
+        text: "Score: "
+        font_size: 18
+        text_color: [255, 255, 255]
+      data:
+        bind: session_stats.score
+        format: "Score: {}"
+    
+    # Level/Exp
+    - type: label
+      id: level_label
+      layout:
+        anchor: top_left
+        offset: [0, 60]
+      visual:
+        text: "Level: "
+        font_size: 16
+        text_color: [200, 200, 255]
+      data:
+        bind: player.level
+        format: "Level: {}"

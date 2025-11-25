@@ -10,6 +10,8 @@ Performance:
 - Minimal error handling in hot path
 """
 
+import inspect
+
 # Global registry: {entity_tag: {anim_name: function}}
 registry = {}
 
@@ -39,6 +41,16 @@ def register(entity_tag: str, anim_name: str = None):
     """
 
     def decorator(func):
+        from src.core.debug.debug_logger import DebugLogger
+
+        sig = inspect.signature(func)
+        if len(sig.parameters) < 2:
+            DebugLogger.warn(
+                f"Invalid signature for {func.__name__}: "
+                f"needs (entity, t) parameters, got {list(sig.parameters.keys())}"
+            )
+            return func  # Return unregistered to prevent crashes
+
         # Use provided name or function name
         name = anim_name or func.__name__
 
@@ -46,7 +58,19 @@ def register(entity_tag: str, anim_name: str = None):
         if entity_tag not in registry:
             registry[entity_tag] = {}
 
+        if name in registry[entity_tag]:
+            DebugLogger.warn(
+                f"Overwriting animation '{entity_tag}.{name}'"
+            )
+
         registry[entity_tag][name] = func
+
+        # Log successful registration
+        DebugLogger.state(
+            f"Registered animation [{entity_tag}.{name}] -> {func.__name__}",
+            category="loading"
+        )
+
         return func
 
     return decorator

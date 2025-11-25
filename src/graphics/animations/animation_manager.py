@@ -14,6 +14,12 @@ Responsibilities
 
 from src.core.debug.debug_logger import DebugLogger
 from src.graphics.animations.animation_registry import get_animation, get_animations_for_entity
+from src.graphics.animations.animation_data import (
+    get_animation_frames,
+    get_animation_duration,
+    get_animation_config
+)
+from src.entities.entity_state import LifecycleState
 
 
 class AnimationManager:
@@ -58,11 +64,11 @@ class AnimationManager:
         self.context = {}
 
         # Debug: Log available animations for this entity
-        tag = getattr(entity, "category", "unknown")
-        anims = get_animations_for_entity(tag)
+        category = getattr(entity, "category", "unknown")
+        anims = get_animations_for_entity(category)
         if anims:
             DebugLogger.init(
-                f"AnimationManager for {type(entity).__name__} (tag: {tag}) - {len(anims)} animations available",
+                f"AnimationManager for {type(entity).__name__} (category: {category}) - {len(anims)} animations available",
                 category="animation"
             )
         # else:
@@ -74,18 +80,31 @@ class AnimationManager:
     # ===========================================================
     # Playback Controls
     # ===========================================================
-    def play(self, anim_type: str, duration: float = 1.0, **kwargs):
+    def play(self, anim_type: str, duration: float = None, **kwargs):
         """
-        Start an animation sequence for this entity.
+        Start an animation. Automatically loads frames/config from animation data.
 
         Args:
-            anim_type (str): Name of the animation to play (e.g., "damage", "death").
-            duration (float): Total time the animation should last in seconds.
-            **kwargs: Additional parameters passed to animation function via context.
-                      Common params: blink_interval, target_state, previous_state
+            anim_type: Animation name ("death", "damage", etc.)
+            duration: Override duration (or uses config default)
+            **kwargs: Additional context overrides
         """
         if not self.enabled:
             return
+
+        # Get entity identifiers for lookup
+        category = getattr(self.entity, 'category', 'unknown')
+        entity_name = getattr(self.entity, '__registry_name__', 'default')
+
+        # Load config from animation data
+        config = get_animation_config(category, entity_name, anim_type)
+
+        # Auto-load frames if animation uses them
+        frames = get_animation_frames(category, entity_name, anim_type)
+
+        # Use provided duration or config default
+        if duration is None:
+            duration = config.get("duration", 0.5)
 
         self.active_type = anim_type
         self.timer = 0.0
@@ -93,15 +112,17 @@ class AnimationManager:
         self.finished = False
         self._effect_queue.clear()
 
-        # Build context for animation function
+        # Build context - merge config defaults with overrides
         self.context = {
+            **config,  # Spread config first
             "duration": duration,
             "elapsed_time": 0.0,
+            "frames": frames,  # Now this overwrites config's paths with actual surfaces
             **kwargs
         }
 
         DebugLogger.state(
-            f"{type(self.entity).__name__}: Animation '{anim_type}' started ({duration:.2f}s)",
+            f"{type(self.entity).__name__}: Animation '{anim_type}' started ({duration:.2f}s, {len(frames)} frames)",
             category="animation"
         )
 
@@ -112,6 +133,17 @@ class AnimationManager:
                 f"{type(self.entity).__name__}: Animation '{self.active_type}' stopped",
                 category="animation"
             )
+
+        # Restore original image if stored
+        if hasattr(self.entity, '_base_image') and self.entity._base_image:
+            death_state = getattr(self.entity, 'death_state', LifecycleState.ALIVE)
+            if death_state == LifecycleState.ALIVE:
+                self.entity.image = self.entity._base_image
+                self.entity.image.set_alpha(255)
+
+                # Re-apply rotation if enabled
+                if hasattr(self.entity, 'update_rotation') and getattr(self.entity, '_rotation_enabled', False):
+                    self.entity.update_rotation()
 
         self.active_type = None
         self.timer = 0.0
@@ -158,12 +190,12 @@ class AnimationManager:
                             self.entity.state_manager.timed_state(eff)
                         else:
                             DebugLogger.warn(
-                                f"[EffectSkip] {self.entity.collision_tag} has no effect_manager for '{eff}'",
+                                f"[EffectSkip] {self.entity.category} has no effect_manager for '{eff}'",
                                 category="animation_effects"
                             )
                 except Exception as e:
                     DebugLogger.warn(
-                        f"[EffectFail] {eff} on {self.entity.collision_tag} → {e}",
+                        f"[EffectFail] {eff} on {self.entity.category} → {e}",
                         category="animation_effects"
                     )
 
@@ -201,7 +233,7 @@ class AnimationManager:
                 self._check_effect_triggers(t)
             else:
                 DebugLogger.warn(
-                    f"{type(self.entity).__name__}: No animation '{self.active_type}' registered for tag '{self.entity.collision_tag}'",
+                    f"{type(self.entity).__name__}: No animation '{self.active_type}' registered for category '{self.entity.category}'",
                     category="animation"
                 )
                 self.stop()
@@ -233,4 +265,4 @@ class AnimationManager:
     # ===========================================================
     def has(self, anim_type: str) -> bool:
         """Return True if the entity supports the given animation."""
-        return get_animation(self.entity.collision_tag, anim_type) is not None
+        return get_animation(self.entity.category, anim_type) is not None

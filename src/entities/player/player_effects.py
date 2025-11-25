@@ -12,6 +12,7 @@ Responsibilities
 
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.entity_state import LifecycleState
+from src.core.services.event_manager import get_events, NukeUsedEvent
 
 EFFECT_HANDLERS = {}
 
@@ -27,6 +28,7 @@ def effect_handler(effect_name: str):
 # ===========================================================
 # effects Handlers
 # ===========================================================
+@effect_handler("ADD_HEALTH")
 def handle_ADD_HEALTH(player, effect_data):
     """Add health to player (capped at max_health)."""
     amount = effect_data.get("amount", 0)
@@ -38,32 +40,8 @@ def handle_ADD_HEALTH(player, effect_data):
         category="item"
     )
 
-
-def handle_ADD_MAX_HEALTH(player, effect_data):
-    """Increase max health and heal for the difference."""
-    amount = effect_data.get("amount", 0)
-    old_max = player.max_health
-    player.max_health += amount
-    player.health += amount
-
-    DebugLogger.action(
-        f"Max Health +{amount} ({old_max} → {player.max_health})",
-        category="item"
-    )
-
-
-def handle_FULL_HEAL(player, effect_data):
-    """Restore player to full health."""
-    old_health = player.health
-    player.health = player.max_health
-
-    DebugLogger.action(
-        f"Full heal ({old_health} → {player.health})",
-        category="item"
-    )
-
-
-def handle_MULTIPLY_SPEED(player, effect_data):
+@effect_handler("SPEED_BOOST")
+def handle_SPEED_BOOST(player, effect_data):
     """Temporarily multiply player movement speed."""
     multiplier = effect_data.get("multiplier", 1.0)
     duration = effect_data.get("duration", 5.0)
@@ -76,7 +54,7 @@ def handle_MULTIPLY_SPEED(player, effect_data):
         category="item"
     )
 
-
+@effect_handler("MULTIPLY_FIRE_RATE")
 def handle_MULTIPLY_FIRE_RATE(player, effect_data):
     """Temporarily multiply player fire rate."""
     multiplier = effect_data.get("multiplier", 1.0)
@@ -90,42 +68,11 @@ def handle_MULTIPLY_FIRE_RATE(player, effect_data):
         category="item"
     )
 
-
-def handle_ADD_DAMAGE(player, effect_data):
-    """Add flat damage bonus to player projectiles."""
-    amount = effect_data.get("amount", 1)
-    duration = effect_data.get("duration", 5.0)
-    stack_type = effect_data.get("stack_type", "ADD")
-
-    player.state_manager.add_stat_modifier("damage", amount, duration, stack_type)
-
-    DebugLogger.action(
-        f"Damage +{amount} for {duration}s",
-        category="item"
-    )
-
-
-def handle_GRANT_SHIELD(player, effect_data):
-    """Grant temporary shield/invincibility."""
-    duration = effect_data.get("duration", 3.0)
-
-    from src.entities.player.player_state import PlayerEffectState
-    player.state_manager.timed_state(PlayerEffectState.IFRAME)
-
-    DebugLogger.action(
-        f"Shield granted for {duration}s",
-        category="item"
-    )
-
-
-def handle_ADD_SCORE(player, effect_data):
-    """Add score points (debug only - no score system implemented)."""
-    amount = effect_data.get("amount", 0)
-
-    DebugLogger.action(
-        f"Score +{amount} (not implemented - debug only)",
-        category="item"
-    )
+@effect_handler("USE_NUKE")
+def handle_USE_NUKE(player, effect_data):
+    """Trigger a screen-clearing nuke."""
+    get_events().dispatch(NukeUsedEvent())
+    DebugLogger.action("NUKE ACTIVATED! Clearing screen...", category="item")
 
 
 # ===========================================================

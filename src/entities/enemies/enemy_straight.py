@@ -10,20 +10,21 @@ Responsibilities
 - Serve as a baseline template for other enemy types.
 """
 
-import pygame
-import os
 from src.entities.enemies.base_enemy import BaseEnemy
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_types import EntityCategory
 from src.core.debug.debug_logger import DebugLogger
-from src.entities.entity_registry import EntityRegistry
+from src.systems.entity_management.entity_registry import EntityRegistry
 
 
 class EnemyStraight(BaseEnemy):
     """Simple enemy that moves vertically downward and disappears when off-screen."""
 
+    __slots__ = ()
+
     __registry_category__ = EntityCategory.ENEMY
     __registry_name__ = "straight"
+    _cached_defaults = None
 
     # ===========================================================
     # Initialization
@@ -41,19 +42,17 @@ class EnemyStraight(BaseEnemy):
         """
 
         # Load defaults from JSON
-        defaults = EntityRegistry.get_data("enemy", "straight")
+        if EnemyStraight._cached_defaults is None:
+            EnemyStraight._cached_defaults = EntityRegistry.get_data("enemy", "straight")
+        defaults = EnemyStraight._cached_defaults
 
         # Apply overrides or use defaults
         speed = speed if speed is not None else defaults.get("speed", 200)
         health = health if health is not None else defaults.get("hp", 1)
-        scale = scale if scale is not None else defaults.get("scale", 1.0)
+        scale = scale if scale is not None else defaults.get("scale", 0.1)
 
         image_path = defaults.get("image", "assets/images/sprites/enemies/missile.png")
         hitbox_config = defaults.get("hitbox", {})
-
-        # Create sprite
-        if draw_manager is None:
-            raise ValueError("EnemyStraight requires draw_manager for sprite loading")
 
         # Load and scale image using helper
         img = BaseEntity.load_and_scale_image(image_path, scale)
@@ -91,29 +90,13 @@ class EnemyStraight(BaseEnemy):
 
     def reset(self, x, y, direction=(0, 1), speed=None, health=None, scale=None, **kwargs):
         # Load defaults from JSON (same as __init__)
-        defaults = EntityRegistry.get_data("enemy", "straight")
+        defaults = EnemyStraight._cached_defaults
 
         speed = speed if speed is not None else defaults.get("speed", 200)
         health = health if health is not None else defaults.get("hp", 1)
-        scale = scale if scale is not None else defaults.get("scale", 1.0)
+        scale = scale if scale is not None else defaults.get("scale", 0.1)
         image_path = defaults.get("image")
         hitbox_scale = defaults.get("hitbox", {}).get("scale", 0.85)
-
-        # Reload and rescale image if using image mode
-        if image_path and os.path.exists(image_path):
-            img = pygame.image.load(image_path).convert_alpha()
-
-            # Apply scale
-            if isinstance(scale, (int, float)):
-                new_size = (int(img.get_width() * scale), int(img.get_height() * scale))
-            elif isinstance(scale, (list, tuple)) and len(scale) == 2:
-                new_size = (int(img.get_width() * scale[0]), int(img.get_height() * scale[1]))
-            else:
-                new_size = img.get_size()
-
-            self.image = pygame.transform.scale(img, new_size)
-            self.rect = self.image.get_rect(center=(x, y))
-            self._base_image = self.image
 
         # Update exp value in case it changed
         self.exp_value = defaults.get("exp", 0)
@@ -127,3 +110,7 @@ class EnemyStraight(BaseEnemy):
             spawn_edge=kwargs.get("spawn_edge"),
             hitbox_scale=hitbox_scale
         )
+
+        # Reload and rescale image if using image mode
+        if image_path:
+            self._reload_image_cached(image_path, scale)

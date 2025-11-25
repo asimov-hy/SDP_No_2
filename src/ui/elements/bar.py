@@ -1,7 +1,7 @@
 """
 bar.py
 ------
-Progress/health bar element with gradient and binding support.
+Progress/health bar element with color thresholds and binding support.
 """
 
 import pygame
@@ -24,39 +24,42 @@ class UIBar(UIElement):
         """
         super().__init__(config)
 
-        # Bar properties
-        self.max_value = config.get('max_value', 100)
-        self.current_value = config.get('current_value', self.max_value)
+        # Extract config groups (support both old and new format)
+        graphic_dict = config.get('graphic', config)
+        data_dict = config.get('data', config)
 
-        # Visual
-        self.fill_color = self._parse_color(config.get('color', [0, 255, 0]))
-        self.bg_color = self._parse_color(config.get('background', [50, 50, 50]))
+        # Bar properties
+        self.max_value = data_dict.get('max_value', 100)
+        self.current_value = data_dict.get('current_value', self.max_value)
+        self._max_value_valid = self.max_value > 0
+
+        # Visual - fill color (prefer 'color' from visual, fallback to base color)
+        self.fill_color = self._parse_color(graphic_dict.get('color', [0, 255, 0]))
+        self.bg_color = self.background if self.background else self._parse_color([50, 50, 50])
 
         # Gradient configuration
-        self.gradient_config = config.get('gradient')
+        self.color_thresholds = graphic_dict.get('color_thresholds')
 
         # Label
-        self.show_label = config.get('show_label', False)
-        self.label_text = config.get('label', '')
+        self.show_label = graphic_dict.get('show_label', False)
+        self.label_text = graphic_dict.get('label', '')
+        self._label_font = pygame.font.Font(None, 20) if self.show_label else None
 
         # Direction
-        self.direction = config.get('direction', 'horizontal')  # horizontal, vertical
+        self.direction = graphic_dict.get('direction', 'horizontal')
 
         # Animation
-        self.animated = config.get('animated', True)
-        self.visual_value = self.current_value  # Smooth interpolation value
-        self.anim_speed = config.get('anim_speed', 5.0)
+        self.animated = graphic_dict.get('animated', True)
+        self.visual_value = self.current_value
+        self.anim_speed = graphic_dict.get('anim_speed', 5.0)
 
     def update(self, dt: float, mouse_pos: Tuple[int, int], binding_system=None):
         """Update bar state."""
         super().update(dt, mouse_pos, binding_system)
 
-        # Update value from binding
-        if self.bind_path and binding_system:
-            value = binding_system.resolve(self.bind_path)
-            if value is not None and value != self.current_value:
-                self.current_value = max(0, min(self.max_value, value))
-                self.mark_dirty()
+        # Clamp value if binding active (base class already marked dirty)
+        if self.bind_path and self.current_value is not None:
+            self.current_value = max(0, min(self.max_value, self.current_value))
 
         # Smooth animation
         if self.animated and abs(self.visual_value - self.current_value) > 0.1:
@@ -64,15 +67,15 @@ class UIBar(UIElement):
             self.mark_dirty()
 
     def _get_fill_color(self) -> Tuple[int, int, int]:
-        """Get fill color (with gradient support)."""
-        if not self.gradient_config:
+        """Get fill color (with threshold-based color switching)."""
+        if not self.color_thresholds:
             return self.fill_color
 
         # Calculate percentage
-        percentage = (self.current_value / self.max_value) * 100 if self.max_value > 0 else 0
+        percentage = (self.current_value / self.max_value) * 100 if self._max_value_valid else 0
 
-        # Find gradient stops
-        stops = sorted(self.gradient_config.items(), key=lambda x: float(x[0]), reverse=True)
+        # Find color threshold stops
+        stops = sorted(self.color_thresholds.items(), key=lambda x: float(x[0]), reverse=True)
 
         for threshold, color in stops:
             if percentage >= float(threshold):
@@ -89,7 +92,7 @@ class UIBar(UIElement):
         surf.fill(self.bg_color)
 
         # Calculate fill amount
-        fill_ratio = self.visual_value / self.max_value if self.max_value > 0 else 0
+        fill_ratio = self.visual_value / self.max_value if self._max_value_valid else 0
         fill_ratio = max(0.0, min(1.0, fill_ratio))
 
         # Fill bar
@@ -117,8 +120,7 @@ class UIBar(UIElement):
 
         # Label
         if self.show_label and self.label_text:
-            font = pygame.font.Font(None, 20)
-            text_surf = font.render(self.label_text, True, (255, 255, 255))
+            text_surf = self._label_font.render(self.label_text, True, (255, 255, 255))
             text_rect = text_surf.get_rect(center=(self.width // 2, self.height // 2))
             surf.blit(text_surf, text_rect)
 

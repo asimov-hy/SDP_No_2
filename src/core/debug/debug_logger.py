@@ -6,10 +6,82 @@ Keeps meta_mode for normal logs, but renders init reports
 in a clean dotted diagnostic style.
 """
 
-import inspect
-import os
+import sys
 from datetime import datetime
-from src.core.runtime.game_settings import LoggerConfig
+
+# ===========================================================
+# Logger Configuration (Textual / Console Logging)
+# ===========================================================
+class LoggerConfig:
+    """
+    Controls which components emit log messages and at what verbosity level.
+    Used by DebugLogger to decide what to print.
+    """
+
+    # Master Control
+    ENABLE_LOGGING = True
+    LOG_LEVEL = "INFO"  # NONE, ERROR, WARN, INFO, VERBOSE
+
+    # Category Filters (only current categories in use)
+    CATEGORIES = {
+        # ---------------------------------------------------
+        # Core Engine Systems
+        # ---------------------------------------------------
+        "loading": False,
+        "system": True,              # General runtime lifecycle and initialization
+        "display": True,             # DisplayManager, window creation, scaling
+        "scene": True,               # SceneManager, transitions, and active scene info
+        "input": True,               # InputManager events and key handling
+        "debug_hud": True,           # DebugHUD and HUD rendering
+
+        # ---------------------------------------------------
+        # Game Loop / State
+        # ---------------------------------------------------
+        "stage": True,               # StageManager, wave control, scene flow
+        "game_state": True,          # GameState transitions and mode tracking
+        "timing": False,             # Delta time, fixed step timing, frame stats
+
+        # ---------------------------------------------------
+        # Entity & Gameplay Systems
+        # ---------------------------------------------------
+        "entity_core": True,         # BaseEntity initialization, IDs, and registration
+        "entity_logic": True,        # Common entity behavior and updates
+        "entity_spawn": True,       # SpawnManager activity and enemy waves
+        "entity_cleanup": False,     # Entity removal or offscreen cleanup
+        "collision": True,          # CollisionManager, hit detection traces
+        "bullet": False,              # BulletManager creation and pooling
+        "animation_effects": False,            # Visual/particle effects creation and cleanup
+        "animation": False,           # AnimationManager initialization and updates
+        "event": True,
+        "item": True,
+        "level": False,
+        "exp": False,
+
+        # ---------------------------------------------------
+        # Rendering & Drawing
+        # ---------------------------------------------------
+        "drawing": False,             # DrawManager operations and layer sorting
+        "render": True,              # Display render pipeline and scaling logs
+
+        # ---------------------------------------------------
+        # User / Interaction
+        # ---------------------------------------------------
+        "user_action": False,        # Player input, ui interactions
+        "ui": True,                  # UIManager, button states, and transitions
+
+        # ---------------------------------------------------
+        # Optional / Experimental
+        # ---------------------------------------------------
+        "performance": False,        # FPS / frame time diagnostics
+        "audio": False               # SoundManager (placeholder)
+    }
+
+    # Output Style
+    SHOW_TIMESTAMP = True
+    SHOW_CATEGORY = True
+    SHOW_LEVEL = True
+    # Optional: SAVE_TO_FILE = False
+
 
 black = "\033[0m"
 white = "\033[97m"
@@ -19,6 +91,7 @@ cyan = "\033[96m"
 blue = "\033[94m"
 yellow = "\033[93m"
 red = "\033[91m"
+
 
 class DebugLogger:
     length = 59
@@ -43,27 +116,23 @@ class DebugLogger:
         "fail": red,
     }
 
+    _LEVEL_VALUES = {"NONE": 0, "ERROR": 1, "WARN": 2, "INFO": 3, "VERBOSE": 4}
+
     # ===========================================================
     # Internal helpers
     # ===========================================================
     @staticmethod
     def _get_caller():
-        stack = inspect.stack()
-        for i, frame in enumerate(stack):
-            if frame.function in ("_log", "init"):
-                depth = i + 2
-                break
-        else:
-            depth = 2
-        frame = stack[depth]
-        module = inspect.getmodule(frame[0])
-        if "self" in frame.frame.f_locals:
-            return frame.frame.f_locals["self"].__class__.__name__
-        if "cls" in frame.frame.f_locals:
-            return frame.frame.f_locals["cls"].__name__
-        if module and hasattr(module, "__file__"):
-            return os.path.splitext(os.path.basename(module.__file__))[0]
-        return "Unknown"
+        """Fast caller detection using direct frame access"""
+        try:
+            frame = sys._getframe(3)
+            if 'self' in frame.f_locals:
+                return frame.f_locals['self'].__class__.__name__
+            if 'cls' in frame.f_locals:
+                return frame.f_locals['cls'].__name__
+            return frame.f_code.co_filename.split('/')[-1].replace('.py', '')
+        except (ValueError, AttributeError, KeyError):
+            return "Unknown"
 
     @staticmethod
     def _build_prefix(timestamp, source, tag, meta_mode):
@@ -89,10 +158,11 @@ class DebugLogger:
     def _should_log(category: str, level: str) -> bool:
         if not LoggerConfig.ENABLE_LOGGING:
             return False
-        if category not in LoggerConfig.CATEGORIES or not LoggerConfig.CATEGORIES[category]:
+        if not LoggerConfig.CATEGORIES.get(category, False):
             return False
-        order = ["NONE", "ERROR", "WARN", "INFO", "VERBOSE"]
-        return order.index(level) <= order.index(LoggerConfig.LOG_LEVEL)
+        level_val = DebugLogger._LEVEL_VALUES.get(level, 3)
+        config_val = DebugLogger._LEVEL_VALUES.get(LoggerConfig.LOG_LEVEL, 3)
+        return level_val <= config_val
 
     @staticmethod
     def _log(tag: str, message: str, color: str = "reset",

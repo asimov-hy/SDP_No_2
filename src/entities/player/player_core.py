@@ -2,39 +2,59 @@
 player_core.py
 --------------
 Defines the minimal Player entity core used to coordinate all components.
-
-Responsibilities
-----------------
-- Initialize player sprite, hitbox, and configuration
-- Manage base attributes (position, speed, health placeholder)
-- Delegate updates to:
-    - Movement → player_movement.py
-    - Combat   → player_ability.py
-    - Logic    → player_logic.py (status_effects, animation_effects, visuals)
 """
 
 import pygame
 import os
 
 from src.core.runtime.game_settings import Display, Layers
-from src.core.runtime.game_state import STATE
 from src.core.debug.debug_logger import DebugLogger
 from src.core.services.config_manager import load_config
-from src.core.services.event_manager import EVENTS, EnemyDiedEvent
+from src.core.services.event_manager import get_events, EnemyDiedEvent
+from src.core.runtime.session_stats import update_session_stats
 
 from src.entities.base_entity import BaseEntity
 from src.entities.state_manager import StateManager
 from src.entities.entity_state import LifecycleState, InteractionState
 from src.entities.entity_types import CollisionTags, EntityCategory
 from .player_movement import update_movement
+from . import player_ability
+from .player_logic import damage_collision
+
+
+# ===========================================================
+# Action Query Wrapper
+# ===========================================================
+class PlayerInput:
+    """Wrapper to simplify action queries without explicit imports."""
+
+    __slots__ = ('input_manager',)
+
+    def __init__(self, input_manager):
+        self.input_manager = input_manager
+
+    def pressed(self, action: str) -> bool:
+        """Check if action was just pressed."""
+        return self.input_manager.action_pressed(action)
+
+    def held(self, action: str) -> bool:
+        """Check if action is held."""
+        return self.input_manager.action_held(action)
+
+    def released(self, action: str) -> bool:
+        """Check if action was just released."""
+        return self.input_manager.action_released(action)
+
+    def move(self) -> pygame.Vector2:
+        """Get normalized movement vector."""
+        return self.input_manager.get_normalized_move()
 
 
 class Player(BaseEntity):
     """Represents the controllable player entity."""
 
-    def __init__(self, x: float | None = None, y: float | None = None,
-                 image: pygame.Surface | None = None, draw_manager=None,
-                 input_manager=None):
+    def __init__(self, x=None, y=None, image=None,
+                 draw_manager=None, input_manager=None):
         """Initialize the player entity."""
 
         # ========================================
@@ -42,6 +62,9 @@ class Player(BaseEntity):
         # ========================================
         cfg = load_config("player.json", {})
         self.cfg = cfg
+
+        if "core_attributes" not in cfg or "render" not in cfg or "health_states" not in cfg:
+            raise ValueError("Invalid player.json: missing required sections")
 
         core = cfg["core_attributes"]
         render = cfg["render"]
@@ -63,10 +86,12 @@ class Player(BaseEntity):
                     temp_img = pygame.image.load(sprite_path).convert_alpha()
                     scale = (size[0] / temp_img.get_width(), size[1] / temp_img.get_height())
                     image = BaseEntity.load_and_scale_image(sprite_path, scale)
+
                 else:
                     DebugLogger.warn(f"Missing sprite: {sprite_path}, using fallback.")
                     image = pygame.Surface(size)
                     image.fill((255, 50, 50))
+
             shape_data = None
         else:
             image = None
@@ -103,7 +128,7 @@ class Player(BaseEntity):
         # Player stats
         self.exp = 0
         self.level = 1
-        self.exp_required = 30
+        self.exp_required = 500
 
         self.visible = True
         self.layer = Layers.PLAYER
@@ -121,10 +146,13 @@ class Player(BaseEntity):
         # Load images if needed
         images = None
         if self.render_mode == "image":
-            images = {
-                state_key: self._load_and_scale(path, size)
-                for state_key, path in health_cfg["image_states"].items()
-            }
+            images = {}
+            for state_key, path in health_cfg["image_states"].items():
+                # Reuse initial image for normal state if same path
+                if state_key == "normal" and path == render.get("sprite", {}).get("path"):
+                    images[state_key] = image  # Reuse already loaded
+                else:
+                    images[state_key] = self._load_and_scale(path, size)
 
         # Setup via base entity
         self.setup_sprite(
@@ -139,16 +167,24 @@ class Player(BaseEntity):
         # 6. Collision & Combat
         # ========================================
 
-        if input_manager is not None:
-            self.input_manager = input_manager
-        self.bullet_manager = None
+        # Fail immediately if None passed
+        if input_manager is None:
+            raise ValueError("Player requires input_manager")
+        if draw_manager is None:
+            raise ValueError("Player requires draw_manager")
+
+        self.input_manager = input_manager
+        self.input = PlayerInput(input_manager)
+
+        self._bullet_manager = None
+        self._shooting_enabled = False
         self.base_shoot_cooldown = 0.1
         self.shoot_timer = 0.0
 
         # ========================================
         # Load Player Bullet Sprite
         # ========================================
-        bullet_path = "assets/projectiles/100H.png"
+        bullet_path = "assets/images/sprites/projectiles/100H.png"
         temp_img = pygame.image.load(bullet_path).convert_alpha() if os.path.exists(bullet_path) else None
         if temp_img:
             scale = (16 / temp_img.get_width(), 32 / temp_img.get_height())
@@ -161,9 +197,11 @@ class Player(BaseEntity):
         # ========================================
         # 7. Global Ref & Status
         # ========================================
-        self.state_manager = StateManager(self, cfg["state_effects"])
+        self._rotation_enabled = False  # Players don't rotate
+        self._death_frames = []  # No death animation frames for player
+        self.state_manager = StateManager(self, cfg.get("state_effects", {}))
 
-        EVENTS.subscribe(EnemyDiedEvent, self._on_enemy_died)
+        get_events().subscribe(EnemyDiedEvent, self._on_enemy_died)
 
         DebugLogger.init_entry("Player Initialized")
         DebugLogger.init_sub(f"Location: ({x:.1f}, {y:.1f})")
@@ -213,21 +251,14 @@ class Player(BaseEntity):
             return
 
         self.anim_manager.update(dt)
-
-        # 1. Time-based status_effects and temporary states
         self.state_manager.update(dt)
-        # 2. Input collection
-        self.input_manager.update()
 
-        # 3. Movement and physics
-        # from .player_movement import update_movement
-        move_vec = self.input_manager.get_normalized_move()
-        update_movement(self, dt, move_vec)
+        # self.input_manager.update()
+        update_movement(self, dt)
 
-        # 4. Combat logic
-        from .player_ability import update_shooting
-        attack_held = self.input_manager.is_action_held("attack")
-        update_shooting(self, dt, attack_held)
+        # 4. Ability logic
+        if self._bullet_manager:
+            player_ability.update_shooting(self, dt)
 
     def draw(self, draw_manager):
         """Render player if visible."""
@@ -235,16 +266,15 @@ class Player(BaseEntity):
             return
         super().draw(draw_manager)
 
-    def on_collision(self, other):
+    def on_collision(self, other, collision_tag=None):
         """Handle collision events."""
 
-        tag = getattr(other, "collision_tag", None)
+        tag = collision_tag if collision_tag is not None else getattr(other, "collision_tag", None)
         if tag is None:
             return
 
         # damaging collisions
         if tag in (CollisionTags.ENEMY, CollisionTags.ENEMY_BULLET):
-            from .player_logic import damage_collision
             damage_collision(self, other)
 
     # ===========================================================
@@ -252,22 +282,36 @@ class Player(BaseEntity):
     # ===========================================================
     def _on_enemy_died(self, event):
         """Receive EXP from dead enemies."""
-        self.exp += event.exp
+        exp_gain = max(0, event.exp)  # Prevent negative exp
+        if exp_gain == 0:
+            return
+
+        self.exp += exp_gain
+
+        stats = update_session_stats()
+        stats.total_exp_gained += exp_gain
+
+        # Handle multiple level-ups
+        while self.exp >= self.exp_required:
+            self._level_up()
 
         DebugLogger.state(
-            f"Experience: {event.exp} ({self.exp}/{self.exp_required})",
+            f"Experience: +{exp_gain} ({self.exp}/{self.exp_required})",
             category="exp"
         )
 
-        if self.exp >= self.exp_required:
-            self._level_up()
-
     def _level_up(self):
+        overflow = self.exp - self.exp_required
         self.level += 1
-        self.exp = 0
 
-        # Smooth EXP curve
-        self.exp_required = int(30 * (1.15 ** (self.level - 1)))
+        # Cap at reasonable max to prevent overflow
+        exp_calc = 30 * (2.0 ** min(self.level - 1, 200))
+        self.exp_required = min(int(exp_calc), 999999)
+
+        self.exp = overflow
+
+        stats = update_session_stats()
+        stats.max_level_reached = max(stats.max_level_reached, self.level)
 
         DebugLogger.state(
             f"Level: {self.level}, Next={self.exp_required}",
@@ -287,3 +331,13 @@ class Player(BaseEntity):
         """Get shoot cooldown with fire rate modifiers applied."""
         fire_rate_mult = self.state_manager.get_stat("fire_rate", 1.0)
         return self.base_shoot_cooldown / fire_rate_mult
+
+    @property
+    def bullet_manager(self):
+        return self._bullet_manager
+
+    @bullet_manager.setter
+    def bullet_manager(self, manager):
+        """Set manager and synchronize shooting state."""
+        self._bullet_manager = manager
+        self._shooting_enabled = manager is not None

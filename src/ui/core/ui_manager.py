@@ -7,7 +7,8 @@ Manages ui screens, HUD elements, and rendering with the new system.
 import pygame
 from typing import Dict, List, Optional, Tuple
 
-from .anchor_resolver import AnchorResolver
+from src.core.runtime.game_settings import Layers
+from src.ui.core.anchor_resolver import AnchorResolver
 from .binding_system import BindingSystem
 from .ui_loader import UILoader
 from .ui_element import UIElement
@@ -43,9 +44,19 @@ class UIManager:
         self.modal_stack: List[str] = []  # Stack of active modal screens
 
     # ===================================================================
-    # Screen Management
+    # DrawManager Integration
     # ===================================================================
 
+    def _inject_draw_manager_to_tree(self, element: UIElement):
+        """Recursively inject DrawManager reference to element tree."""
+        element.set_draw_manager(self.draw_manager)
+        if hasattr(element, 'children'):
+            for child in element.children:
+                self._inject_draw_manager_to_tree(child)
+
+    # ===================================================================
+    # Screen Management
+    # ===================================================================
     def register_screen(self, name: str, root_element: UIElement):
         """
         Register a ui screen.
@@ -55,6 +66,7 @@ class UIManager:
             root_element: Root element of the screen
         """
         self.screens[name] = root_element
+        self._inject_draw_manager_to_tree(root_element)
 
     def load_screen(self, name: str, filename: str):
         """
@@ -73,20 +85,28 @@ class UIManager:
 
         Args:
             name: Screen identifier
-            modal: If True, push onto modal stack (can stack multiple)
+            modal: If True, show as overlay on top of current screen
         """
         if name not in self.screens:
             return
 
+        screen = self.screens.get(name)
+
+        # Auto-assign layer based on modal state
         if modal:
+            self._set_auto_layer(screen, Layers.DEBUG)  # Modal overlays = layer 10
             self.modal_stack.append(name)
         else:
-            # Hide previous active screen
+            self._set_auto_layer(screen, Layers.UI)  # Regular screens = layer 9
             if self.active_screen:
                 self._on_screen_hide(self.active_screen)
 
             self.active_screen = name
             self._on_screen_show(name)
+
+        # Invalidate position when showing
+        if screen:
+            screen.invalidate_position()
 
     def hide_screen(self, name: Optional[str] = None):
         """
@@ -140,6 +160,7 @@ class UIManager:
         Args:
             element: HUD element to add
         """
+        self._inject_draw_manager_to_tree(element)
         self.hud_elements.append(element)
 
     def load_hud(self, filename: str):
@@ -151,6 +172,12 @@ class UIManager:
         """
         root_element = self.loader.load(filename)
 
+        # Inject DrawManager for image loading
+        self._inject_draw_manager_to_tree(root_element)
+
+        # Auto-assign UI layer for HUD elements
+        self._set_auto_layer(root_element, Layers.UI)
+
         # If root is a container, add all children as separate HUD elements
         if hasattr(root_element, 'children'):
             for child in root_element.children:
@@ -161,6 +188,40 @@ class UIManager:
     def clear_hud(self):
         """Remove all HUD elements."""
         self.hud_elements.clear()
+
+    # ===================================================================
+    # Element Lookup
+    # ===================================================================
+
+    def find_element_by_id(self, screen_name: str, element_id: str):
+        """
+        Find element by id in a screen.
+
+        Args:
+            screen_name: Screen to search in
+            element_id: Element id to find
+
+        Returns:
+            UIElement or None
+        """
+        screen = self.screens.get(screen_name)
+        if not screen:
+            return None
+        return self._find_in_tree(screen, element_id)
+
+    def _find_in_tree(self, element, target_id: str):
+        """Recursive element search by id."""
+        # Single ID check
+        if element.id == target_id:
+            return element
+
+        # Recurse children
+        if hasattr(element, 'children'):
+            for child in element.children:
+                result = self._find_in_tree(child, target_id)
+                if result:
+                    return result
+        return None
 
     # ===================================================================
     # Binding Management
@@ -234,7 +295,7 @@ class UIManager:
         if event.type != pygame.MOUSEBUTTONDOWN or event.button != 1:
             return None
 
-        mouse_pos = event.pos
+        mouse_pos = self.display.screen_to_game_pos(*event.pos)
 
         # Check modal screens first (top to bottom)
         for screen_name in reversed(self.modal_stack):
@@ -307,22 +368,61 @@ class UIManager:
             if screen:
                 self._draw_element_tree(screen, draw_manager)
 
-    def _draw_element_tree(self, element: UIElement, draw_manager, parent=None):
+    def _draw_element_tree(self, element, draw_manager, parent=None):
         """Recursively draw element and children."""
         if not element.visible:
             return
 
-        # Resolve position
-        element.rect = self.anchor_resolver.resolve(element, parent)
+        # NEW: Only resolve position if cache is invalid
+        # Parent invalidation cascades to children since their anchors may be relative
+        parent_invalid = parent and not getattr(parent, '_position_cache_valid', True)
+
+        if not element._position_cache_valid or parent_invalid:
+            element.rect = self.anchor_resolver.resolve(element, parent)
+            element._position_cache_valid = True
+
+        # Register element if it has an ID (BEFORE children)
+        if element.id:
+            self.anchor_resolver.register_element(element.id, element)
 
         # Render surface
         surface = element.render_surface()
 
         # Queue for drawing
-        # print(f"[UI] Drawing {element.type or 'element'} at layer {element.layer}")
         draw_manager.queue_draw(surface, element.rect, element.layer)
 
         # Draw children
         if hasattr(element, 'children'):
             for child in element.children:
                 self._draw_element_tree(child, draw_manager, parent=element)
+
+    def _set_auto_layer(self, element, layer):
+        """
+        Recursively set auto layer for elements without explicit layer.
+
+        Args:
+            element: Root element
+            layer: Layer to assign
+        """
+        graphic_dict  = getattr(element, 'visual_dict', {})
+
+        # Only set if not explicitly specified in config
+        if 'layer' not in graphic_dict :
+            element.layer = layer
+
+        # Recursively set for children
+        if hasattr(element, 'children'):
+            for child in element.children:
+                self._set_auto_layer(child, layer)
+
+    def hide_all_screens(self):
+        """Hide all active screens and clear modal stack."""
+        # Hide all modals
+        for screen_name in list(self.modal_stack):
+            self._on_screen_hide(screen_name)
+        self.modal_stack.clear()
+
+        # Hide active screen
+        if self.active_screen:
+            self._on_screen_hide(self.active_screen)
+            self.active_screen = None

@@ -133,7 +133,6 @@ class StateManager:
 
         cfg = self.state_config[effect_name]
         duration = cfg.get("duration", 0.0)
-        self.active_states[effect] = duration
 
         # Add or refresh timer
         self.active_states[effect] = duration
@@ -251,15 +250,13 @@ class StateManager:
         old_state = getattr(self.entity, "state", InteractionState.DEFAULT)
 
         if not self.active_states:
+
             if old_state != InteractionState.DEFAULT:
                 DebugLogger.state(
                     f"{self.entity.__class__.__name__} interaction mode: "
                     f"{old_state.name} → DEFAULT"
                 )
-            self.entity.state = InteractionState.DEFAULT
-            return
 
-        if not self.active_states:
             self.entity.state = InteractionState.DEFAULT
             return
 
@@ -272,7 +269,11 @@ class StateManager:
             state_str = cfg.get("interaction_state", "DEFAULT")
 
             # Convert string to enum
-            state = getattr(InteractionState, state_str, InteractionState.DEFAULT)
+            try:
+                state = InteractionState[state_str]
+            except (KeyError, AttributeError):
+                DebugLogger.warn(f"Invalid interaction_state: {state_str}")
+                state = InteractionState.DEFAULT
 
             if state > max_state:
                 max_state = state

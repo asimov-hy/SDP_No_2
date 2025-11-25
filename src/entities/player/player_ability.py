@@ -13,19 +13,12 @@ from src.entities.bullets.bullet_straight import StraightBullet
 # ===========================================================
 # Shooting System
 # ===========================================================
-def update_shooting(player, dt: float, attack_held: bool):
-    """
-    Handle the player's shooting behavior and cooldown timing.
-
-    Args:
-        player (Player): The player instance controlling the shot.
-        dt (float): Delta time since the last frame (in seconds).
-        attack_held (bool): Whether the attack input is currently held.
-    """
+def update_shooting(player, dt: float):
+    """Handle the player's shooting behavior and cooldown timing."""
     # Accumulate time toward next allowed shot
     player.shoot_timer = min(player.shoot_timer + dt, player.shoot_cooldown)
 
-    if attack_held and player.shoot_timer >= player.shoot_cooldown:
+    if player.input.held("attack") and player.shoot_timer >= player.shoot_cooldown:
         player.shoot_timer = max(0, player.shoot_timer - player.shoot_cooldown)
         _fire_bullet(player)
 

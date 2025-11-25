@@ -4,7 +4,7 @@ binding_system.py
 Resolves data bindings for dynamic ui updates.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 
 class BindingSystem:
@@ -13,6 +13,7 @@ class BindingSystem:
     def __init__(self):
         """Initialize empty binding context."""
         self.context: Dict[str, Any] = {}
+        self._path_cache: Dict[str, List[str]] = {}  # Cache split paths
 
     def register(self, name: str, obj: Any):
         """
@@ -47,7 +48,10 @@ class BindingSystem:
         if not path:
             return None
 
-        parts = path.split('.')
+        # Use cached path parts
+        if path not in self._path_cache:
+            self._path_cache[path] = path.split('.')
+        parts = self._path_cache[path]
 
         # Get root object
         obj = self.context.get(parts[0])
@@ -56,11 +60,8 @@ class BindingSystem:
 
         # Navigate path
         for part in parts[1:]:
-            try:
-                obj = getattr(obj, part, None)
-                if obj is None:
-                    return None
-            except AttributeError:
+            obj = getattr(obj, part, None)
+            if obj is None:
                 return None
 
         return obj

@@ -24,20 +24,21 @@ class UILabel(UIElement):
         """
         super().__init__(config)
 
+        # Extract config groups (support both old and new format)
+        graphic_dict = config.get('graphic', config)
+        data_dict = config.get('data', config)
+
         # Text properties
-        self.text = config.get('text', '')
-        self.format = config.get('format', '{}')  # Format string for bound values
+        self.text = graphic_dict.get('text', '')
+        self.format = data_dict.get('format', '{}')
 
         # Font
-        self.font_size = config.get('font_size', 24)
-        self.font = pygame.font.Font(None, self.font_size)
+        self.font_size = graphic_dict.get('font_size', 24)
+        self.font = self._get_cached_font(self.font_size)
 
-        # Text color
-        text_color = config.get('text_color') or config.get('color', [255, 255, 255])
+        # Text color (prefer text_color, fallback to color)
+        text_color = graphic_dict.get('text_color') or graphic_dict.get('color', [255, 255, 255])
         self.text_color = self._parse_color(text_color)
-
-        # Alignment
-        self.align = config.get('align', 'center')  # left, center, right
 
         # Dynamic text from binding
         self.current_value = None
@@ -46,13 +47,6 @@ class UILabel(UIElement):
     def update(self, dt: float, mouse_pos: Tuple[int, int], binding_system=None):
         """Update label state."""
         super().update(dt, mouse_pos, binding_system)
-
-        # Update text from binding
-        if self.bind_path and binding_system:
-            value = binding_system.resolve(self.bind_path)
-            if value is not None and value != self.current_value:
-                self.current_value = value
-                self.mark_dirty()
 
     def _get_display_text(self) -> str:
         """Get the text to display (static or formatted from binding)."""
@@ -78,14 +72,8 @@ class UILabel(UIElement):
         if self.background:
             surf.fill(self.background)
 
-        # Position text based on alignment
-        if self.align == 'left':
-            text_rect = text_surf.get_rect(midleft=(5, self.height // 2))
-        elif self.align == 'right':
-            text_rect = text_surf.get_rect(midright=(self.width - 5, self.height // 2))
-        else:  # center
-            text_rect = text_surf.get_rect(center=(self.width // 2, self.height // 2))
-
+        # Position text using base class helper
+        text_rect = self._get_text_position(text_surf, surf.get_rect())
         surf.blit(text_surf, text_rect)
 
         # Border

@@ -1,0 +1,55 @@
+player_hud:
+  type: container
+  size: [1280, 720]
+  position:
+    parent_anchor: center
+    size: [1280, 720]
+
+  children:
+
+    # Main HUD frame
+    - type: container
+      id: "hud_frame"
+      position:
+        parent_anchor: bottom
+        self_anchor: bottom
+        offset: [0, -0]
+      graphic:
+        image: "ui/bars/main_bar.png"
+        image_scale: 1.0
+
+      children:
+        # EXP frame
+        - type: container
+          id: "exp_frame"
+          position:
+            parent_anchor: "#hud_frame:left"
+            self_anchor: left
+            offset: [100, 0]
+          graphic:
+            image: "ui/bars/exp_frame.png"
+            image_scale: 1.0
+
+          children:
+            # EXP bar
+            - type: container
+              id: "exp_bar"
+              position:
+                parent_anchor: "#exp_frame:left"
+                self_anchor: left
+                offset: [10, 0]
+              graphic:
+                image: "ui/bars/exp_bar.png"
+                image_scale: 1.0
+                layer: Layers.UI
+
+        # Health gauge
+        - type: container
+          id: "health_gauge"
+          position:
+            parent_anchor: "#hud_frame:right"
+            self_anchor: right
+            offset: [-100, 0]
+          graphic:
+            image: "ui/health/health_gauge.png"
+            image_scale: 1.0

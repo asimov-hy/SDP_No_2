@@ -5,7 +5,7 @@ Interactive button element with hover effects.
 """
 
 import pygame
-from typing import Tuple, Optional
+from typing import Dict, Tuple, Optional
 
 from ..core.ui_element import UIElement
 from ..core.ui_loader import register_element
@@ -24,10 +24,14 @@ class UIButton(UIElement):
         """
         super().__init__(config)
 
+        # Extract config groups (support both old and new format)
+        graphic_dict = config.get('graphic', config)
+        data_dict = config.get('data', config)
+
         # Button-specific properties
-        self.text = config.get('text', '')
-        self.action = config.get('action')
-        self.icon = config.get('icon')
+        self.text = graphic_dict.get('text', '')
+        self.action = data_dict.get('action')
+        self.icon = graphic_dict.get('icon')
 
         # Colors
         self.hover_color = None
@@ -36,23 +40,25 @@ class UIButton(UIElement):
         if self.hover_config:
             self.hover_color = self._parse_color(self.hover_config.get('color', self.color))
             self.pressed_color = self._parse_color(
-                self.hover_config.get('pressed_color', tuple(max(c - 40, 0) for c in self.color))
+                self.hover_config.get('pressed_color', tuple(max(c - 40, 0) for c in self.color[:3]))
             )
         else:
-            self.hover_color = tuple(min(c + 30, 255) for c in self.color)
-            self.pressed_color = tuple(max(c - 40, 0) for c in self.color)
+            # Default hover colors based on base color
+            base_rgb = self.color[:3]  # Get RGB without alpha
+            self.hover_color = tuple(min(c + 30, 255) for c in base_rgb)
+            self.pressed_color = tuple(max(c - 40, 0) for c in base_rgb)
 
         # State
         self.is_hovered = False
         self.is_pressed = False
-        self.hover_t = 0.0  # Hover transition (0-1)
+        self.hover_t = 0.0
 
         # Transition speed
-        self.transition_speed = config.get('transition_speed', 8.0)
+        self.transition_speed = graphic_dict.get('transition_speed', 8.0)
 
         # Font
-        self.font_size = config.get('font_size', 24)
-        self.font = pygame.font.Font(None, self.font_size)
+        self.font_size = graphic_dict.get('font_size', 24)
+        self.font = self._get_cached_font(self.font_size)
 
     def update(self, dt: float, mouse_pos: Tuple[int, int], binding_system=None):
         """Update button state."""
@@ -81,7 +87,7 @@ class UIButton(UIElement):
 
     def handle_click(self, mouse_pos: Tuple[int, int]) -> Optional[str]:
         """Handle click event."""
-        if self.enabled and self.rect and self.rect.collidepoint(mouse_pos):
+        if self.enabled and self.is_hovered:
             return self.action
         return None
 
@@ -95,11 +101,19 @@ class UIButton(UIElement):
         elif self.is_pressed:
             color = self.pressed_color
         else:
-            # Interpolate between normal and hover color
             color = self._lerp_color(self.color, self.hover_color, self.hover_t)
 
-        # Background
-        if self.background:
+        # Background - image takes priority
+        image = self._load_image()
+        if image:
+            surf.blit(image, (0, 0))
+            # Apply color tint over image for hover/press states
+            if self.hover_t > 0.01 or self.is_pressed:
+                tint_surf = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+                tint_alpha = int(30 * self.hover_t) if not self.is_pressed else 50
+                tint_surf.fill((*color, tint_alpha))
+                surf.blit(tint_surf, (0, 0))
+        elif self.background:
             surf.fill(self.background)
         else:
             surf.fill(color)
@@ -116,7 +130,7 @@ class UIButton(UIElement):
         if self.text:
             text_color = (255, 255, 255) if not self.enabled else (255, 255, 255)
             text_surf = self.font.render(self.text, True, text_color)
-            text_rect = text_surf.get_rect(center=surf.get_rect().center)
+            text_rect = self._get_text_position(text_surf, surf.get_rect())
             surf.blit(text_surf, text_rect)
 
         # Icon (if specified)

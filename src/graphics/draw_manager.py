@@ -26,8 +26,9 @@ class DrawManager:
     # ===========================================================
     def __init__(self):
         self.images = {}
-        # Layer buckets instead of flat queue
-        self.layers = {}  # {layer: [(surface, rect), ...]}
+        # Separate layer buckets for surfaces and shapes (avoids isinstance checks)
+        self.surface_layers = {}  # {layer: [(surface, rect), ...]}
+        self.shape_layers = {}  # {layer: [shape_data, ...]}
         self._layer_keys_cache = []
         self._layers_dirty = False
 
@@ -35,7 +36,6 @@ class DrawManager:
 
         self.debug_hitboxes = []  # Persistent list for queued hitboxes
         self.debug_obbs = []  # Persistent list for queued OBB lines
-        self.debug_hitboxes = []  # Persistent list for queued hitboxes
 
         DebugLogger.init_entry("DrawManager")
 
@@ -126,16 +126,14 @@ class DrawManager:
         Simply clears existing layer lists to reduce
         Python-level allocations and GC churn.
         """
-        for layer_items in self.layers.values():
+        for layer_items in self.surface_layers.values():
             layer_items.clear()
 
-        if hasattr(self, "debug_hitboxes"):
-            self.debug_hitboxes.clear()
+        for layer_items in self.shape_layers.values():
+            layer_items.clear()
 
-        if hasattr(self, "debug_obbs"):
-            self.debug_obbs.clear()
-
-        self._layers_dirty = True
+        self.debug_hitboxes.clear()
+        self.debug_obbs.clear()
 
     def queue_draw(self, surface, rect, layer=0):
         """
@@ -150,11 +148,11 @@ class DrawManager:
             DebugLogger.warn(f"Skipped invalid draw call at layer {layer}")
             return
 
-        if layer not in self.layers:
-            self.layers[layer] = []
+        if layer not in self.surface_layers:
+            self.surface_layers[layer] = []
             self._layers_dirty = True
 
-        self.layers[layer].append((surface, rect))
+        self.surface_layers[layer].append((surface, rect))
 
     def draw_entity(self, entity, layer=0):
         """
@@ -179,8 +177,6 @@ class DrawManager:
         parameters instead of allocating `pygame.Surface` objects.
         These are drawn directly during render() for near-zero overhead.
         """
-        if not hasattr(self, "debug_hitboxes"):
-            self.debug_hitboxes = []
 
         # Store draw command for later rendering (no surface creation)
         self.debug_hitboxes.append((rect, color, width))
@@ -194,8 +190,6 @@ class DrawManager:
             color (tuple): RGB color for the lines
             width (int): Line width
         """
-        if not hasattr(self, "debug_obbs"):
-            self.debug_obbs = []
 
         # Store draw command for later rendering
         self.debug_obbs.append((corners, color, width))
@@ -214,12 +208,12 @@ class DrawManager:
             layer (int): Rendering layer (lower values draw first).
             **kwargs: Additional shape-specific parameters (e.g., width, points).
         """
-        if layer not in self.layers:
-            self.layers[layer] = []
+        if layer not in self.shape_layers:
+            self.shape_layers[layer] = []
             self._layers_dirty = True
 
-        # Add tagged shape command for later rendering
-        self.layers[layer].append(("shape", shape_type, rect, color, kwargs))
+        # Add shape command for later rendering
+        self.shape_layers[layer].append((shape_type, rect, color, kwargs))
 
     # ===========================================================
     # Shape Prebaking (Optimization)
@@ -289,67 +283,50 @@ class DrawManager:
             debug (bool): If True, logs the number of items rendered.
         """
         self.surface = target_surface
-        # -------------------------------------------------------
+
         # Background rendering (cached surface to avoid fill cost)
-        # -------------------------------------------------------
-        if hasattr(self, "background") and self.background is not None:
+        if self.background is not None:
             target_surface.blit(self.background, (0, 0))
         else:
-            target_surface.fill((50, 50, 100))  # fallback solid color
+            # Create cached background on first use
+            if not hasattr(self, "_bg_cache") or self._bg_cache is None:
+                self._bg_cache = pygame.Surface(target_surface.get_size())
+                self._bg_cache.fill((50, 50, 100))
+
+            target_surface.blit(self._bg_cache, (0, 0))
 
         # Cache sorted layer keys to avoid sorting every frame
         if self._layers_dirty:
-            self._layer_keys_cache = sorted(self.layers.keys())
+            # Combine all unique layers from both dictionaries
+            all_layers = set(self.surface_layers.keys()) | set(self.shape_layers.keys())
+            self._layer_keys_cache = sorted(all_layers)
             self._layers_dirty = False
 
-        # -------------------------------------------------------
-        # Render each layer (surfaces + shapes)
-        # -------------------------------------------------------
+        # Render each layer (surfaces then shapes)
         for layer in self._layer_keys_cache:
-            items = self.layers[layer]
-            if not items:
-                continue
+            # Batch blit all surfaces in this layer
+            if layer in self.surface_layers:
+                surface_items = self.surface_layers[layer]
+                if surface_items:
+                    target_surface.blits(surface_items)
 
-            # Detect if layer contains shape commands
-            shape_items = []
-            surface_items = []
-            for item in items:
-                if isinstance(item[0], str):
-                    shape_items.append(item)
-                elif isinstance(item[0], pygame.Surface):
-                    surface_items.append(item)
+            # Draw all shapes in this layer
+            if layer in self.shape_layers:
+                shape_items = self.shape_layers[layer]
+                for shape_type, rect, color, kwargs in shape_items:
+                    self._draw_shape(target_surface, shape_type, rect, color, **kwargs)
 
-            # Batch blit all standard surfaces in one call
-            if surface_items:
-                target_surface.blits(surface_items)
+        # Debug hitbox rendering (always last = always on top)
+        for rect, color, width in self.debug_hitboxes:
+            pygame.draw.rect(target_surface, color, rect, width)
 
-            # Draw primitive shapes (rects, circles, etc.)
-            for item in shape_items:
-                _, shape_type, rect, color, kwargs = item
-                self._draw_shape(target_surface, shape_type, rect, color, **kwargs)
+        for corners, color, width in self.debug_obbs:
+            pygame.draw.lines(target_surface, color, True, corners, width)
 
         if debug:
-            draw_count = sum(len(items) for items in self.layers.values())
-            DebugLogger.state(f"Rendered {draw_count} queued surfaces and shapes", category="drawing")
-
-        # -------------------------------------------------------
-        # Optional debug overlay pass (hitboxes + OBBs)
-        # -------------------------------------------------------
-        if hasattr(self, "debug_hitboxes") and self.debug_hitboxes:
-            """
-            Directly draw debug hitboxes to avoid temporary surface allocation.
-            Each tuple: (rect, color, width)
-            """
-            for rect, color, width in self.debug_hitboxes:
-                pygame.draw.rect(target_surface, color, rect, width)
-
-        if hasattr(self, "debug_obbs") and self.debug_obbs:
-            """
-            Draw OBB corner lines for rotated hitboxes.
-            Each tuple: (corners, color, width)
-            """
-            for corners, color, width in self.debug_obbs:
-                pygame.draw.lines(target_surface, color, True, corners, width)
+            surface_count = sum(len(items) for items in self.surface_layers.values())
+            shape_count = sum(len(items) for items in self.shape_layers.values())
+            DebugLogger.state(f"Rendered {surface_count} surfaces and {shape_count} shapes", category="drawing")
 
     # ===========================================================
     # Shape Rendering Helper
@@ -428,3 +405,99 @@ class DrawManager:
 
         return None  # Non-polygon shapes (rect, circle, ellipse)
 
+    def get_entity_image(self, entity_type, size=None, config=None, color=None, image_path=None):
+        """
+        Unified entity image getter - handles loading, shapes, and fallbacks automatically.
+
+        Args:
+            entity_type: Identifier string (e.g., "enemy_straight", "player")
+            size: Target size tuple (width, height)
+            config: Optional config dict with "image", "size", "color", "scale" keys
+            color: Optional color for shape-based entities
+            image_path: Direct path to image file (overrides config)
+
+        Returns:
+            pygame.Surface: Always returns a valid image (never None)
+        """
+        # Parse config if provided
+        if config:
+            image_path = image_path or config.get("image")
+            size = size or config.get("size", (32, 32))
+            color = color or config.get("color")
+            scale = config.get("scale", 1.0)
+        else:
+            size = size or (32, 32)
+            scale = 1.0
+
+        # Generate cache key
+        cache_key = (entity_type, size[0], size[1])
+        if color:
+            cache_key = (entity_type, size[0], size[1], tuple(color))
+
+        # Return cached if exists
+        if cache_key in self.images:
+            return self.images[cache_key]
+
+        # Try loading from image path
+        if image_path:
+            try:
+                img = pygame.image.load(image_path).convert_alpha()
+                if scale != 1.0:
+                    new_size = (int(img.get_width() * scale), int(img.get_height() * scale))
+                    img = pygame.transform.scale(img, new_size)
+                else:
+                    img = pygame.transform.scale(img, size)
+                self.images[cache_key] = img
+                DebugLogger.action(f"Loaded entity image: {entity_type} from {image_path}")
+                return img
+            except Exception as e:
+                DebugLogger.warn(f"Failed to load {image_path}: {e}, using fallback")
+
+        # Try creating shape-based image
+        if color:
+            img = pygame.Surface(size, pygame.SRCALPHA)
+            img.fill(color)
+            self.images[cache_key] = img
+            return img
+
+        # FALLBACK: Generate placeholder
+        DebugLogger.warn(f"No image/color for {entity_type}, using fallback placeholder")
+        img = self._generate_fallback(size, entity_type)
+        self.images[cache_key] = img
+        return img
+
+    def _generate_fallback(self, size, entity_type="unknown"):
+        """
+        Private helper: Generate fallback placeholder image.
+
+        Args:
+            size: Tuple (width, height)
+            entity_type: Entity identifier for debug text
+
+        Returns:
+            pygame.Surface: Magenta placeholder with visual indicators
+        """
+        fallback_path = "assets/images/null.png"
+
+        # Try loading fallback image first
+        if os.path.exists(fallback_path):
+            try:
+                img = pygame.image.load(fallback_path).convert_alpha()
+                img = pygame.transform.scale(img, size)
+                return img
+            except Exception as e:
+                DebugLogger.warn(f"Failed to load fallback {fallback_path}: {e}")
+
+        # Generate procedural placeholder
+        img = pygame.Surface(size, pygame.SRCALPHA)
+        img.fill((255, 0, 255))  # Magenta
+        pygame.draw.rect(img, (255, 255, 255), img.get_rect(), 2)  # White border
+
+        # Add "?" marker if big enough
+        if size[0] >= 16 and size[1] >= 16:
+            font = pygame.font.Font(None, min(size[0], 24))
+            text = font.render("?", True, (255, 255, 255))
+            text_rect = text.get_rect(center=(size[0] // 2, size[1] // 2))
+            img.blit(text, text_rect)
+
+        return img

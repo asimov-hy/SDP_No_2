@@ -54,8 +54,6 @@ def damage_player(entity, t):
         blink(entity, t, interval=interval)
     else:
         # Image mode - just blink (no color fade)
-        if not hasattr(entity, '_original_image'):
-            entity._original_image = entity.image.copy()
         blink(entity, t, interval=interval)
 
     # Cleanup at end

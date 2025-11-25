@@ -171,10 +171,9 @@ class CollisionHitbox:
             return
 
         # Calculate bounding box from points
-        xs = [p[0] for p in points]
-        ys = [p[1] for p in points]
-        bbox_w = max(xs) - min(xs)
-        bbox_h = max(ys) - min(ys)
+        xs, ys = zip(*points) if points else ([], [])
+        bbox_w = max(xs) - min(xs) if xs else 0
+        bbox_h = max(ys) - min(ys) if ys else 0
 
         # Apply scale to bounding box
         self._shape_width = int(bbox_w * self.scale)
@@ -228,11 +227,7 @@ class CollisionHitbox:
         Synchronize the hitbox position and size with the owner entity.
         Called once per frame before collision checks.
         """
-        rect = getattr(self.owner, "rect", None)
-
-        if not rect:
-            DebugLogger.warn(f"[Hitbox] {type(self.owner).__name__} lost rect reference")
-            return
+        rect = self.owner.rect
 
         # Store old position for change detection
         old_center = (self.rect.centerx, self.rect.centery)
@@ -243,7 +238,8 @@ class CollisionHitbox:
 
         # Detect rotation change and update OBB state
         if abs(self._rotation - old_rotation) > 0.1:
-            self.use_obb = (self._rotation % 90 != 0)
+            rotation_mod = self._rotation % 90
+            self.use_obb = (rotation_mod > 0.1 and rotation_mod < 89.9)
             self._obb_corners = None  # Invalidate cache
 
         # Only recalculate size if in automatic mode
@@ -254,10 +250,16 @@ class CollisionHitbox:
                 self._update_circle_size(rect)
             # Polygon doesn't auto-resize
 
-        # Apply rotated offset to position
-        rotated_offset = self._rotate_offset(self.offset.x, self.offset.y, self._rotation)
-        self.rect.centerx = rect.centerx + rotated_offset[0]
-        self.rect.centery = rect.centery + rotated_offset[1]
+        # Apply rotated offset to position (skip if no offset or rotation)
+        if self.offset.x == 0 and self.offset.y == 0:
+            self.rect.center = rect.center
+        elif self._rotation == 0:
+            self.rect.centerx = rect.centerx + self.offset.x
+            self.rect.centery = rect.centery + self.offset.y
+        else:
+            rotated_offset = self._rotate_offset(self.offset.x, self.offset.y, self._rotation)
+            self.rect.centerx = rect.centerx + rotated_offset[0]
+            self.rect.centery = rect.centery + rotated_offset[1]
 
         # Invalidate OBB cache if position changed
         new_center = (self.rect.centerx, self.rect.centery)
@@ -285,7 +287,8 @@ class CollisionHitbox:
         """Recalculate circle hitbox size if entity rect changed."""
         if self._shape_radius is None:
             # Auto-recalculate from entity size
-            radius = int(min(rect.width, rect.height) * self.scale / 2)
+            min_dimension = min(rect.width, rect.height)
+            radius = int(min_dimension * self.scale / 2) if min_dimension > 0 else 1
         else:
             # Use manual radius
             radius = self._shape_radius
@@ -340,7 +343,6 @@ class CollisionHitbox:
             return self._obb_corners
 
         # Calculate rotated corners
-        import math
         radians = math.radians(-self._rotation)
         cos_a = math.cos(radians)
         sin_a = math.sin(radians)
@@ -488,9 +490,6 @@ class CollisionHitbox:
         Args:
             surface (pygame.Surface or DrawManager): The rendering surface to draw onto.
         """
-        if not Debug.HITBOX_VISIBLE:
-            return
-
         # Draw AABB - use DrawManager queue if available
         if hasattr(surface, "queue_hitbox"):
             surface.queue_hitbox(self.rect, color=self._color_cache, width=Debug.HITBOX_LINE_WIDTH)

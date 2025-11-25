@@ -1,61 +1,69 @@
 """
-enemy_straight.py
+enemy_homing.py
 -----------------
-Defines a simple downward-moving enemy for early gameplay testing.
+Defines a homing enemy capable of tracking the player.
 
 Responsibilities
 ----------------
-- Move straight down the screen at a constant speed.
-- Destroy itself when off-screen.
-- Serve as a baseline template for other enemy types.
+- Implement continuous homing with configurable modes.
+- Support slow gradual turning or instant snapping behaviors.
 """
 
 import pygame
+import math
 from src.entities.enemies.base_enemy import BaseEnemy
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_types import EntityCategory
 from src.core.debug.debug_logger import DebugLogger
-from src.entities.entity_registry import EntityRegistry
+from src.systems.entity_management.entity_registry import EntityRegistry
 
 
 class EnemyHoming(BaseEnemy):
-    """Simple enemy that moves vertically downward and disappears when off-screen."""
+    """Enemy that tracks the player with configurable homing modes."""
+
+    __slots__ = ('turn_rate', 'player_ref', 'update_delay', 'update_timer', 'spawn_edge')
 
     __registry_category__ = EntityCategory.ENEMY
     __registry_name__ = "homing"
+    _cached_defaults = None
+
+    # Homing mode configurations
+    HOMING_CONFIG = {
+        "default": {"turn_rate": 90, "update_delay": 0, "speed_boost": 0},     # Slow constant turning
+        "efficient": {"turn_rate": 180, "update_delay": 0, "speed_boost": 0},  # Fast constant turning
+        "smarter": {"turn_rate": 9999, "update_delay": 1.0, "speed_boost": 0}, # Instant snap every 1.0s
+        # "launcher": {"turn_rate": 9999, "update_delay": 999.0, "speed_boost": 500}  # One-time aim + speed boost
+    }
 
     # ===========================================================
     # Initialization
     # ===========================================================
     def __init__(self, x, y, direction=(0, 1), speed=None, health=None,
                  scale=None, draw_manager=None,
-                 homing=False, turn_rate=None, player_ref=None, **kwargs):
+                 homing_mode="default", player_ref=None, **kwargs):
         """
         Args:
             x, y: Spawn position
             direction: Tuple (dx, dy) for movement direction
             speed: Pixels per second (override, or use JSON default)
             health: HP before death (override, or use JSON default)
-            size: Size override (or use JSON default)
+            scale: Size override (or use JSON default)
             draw_manager: Required for sprite loading
-            homing: False, True (continuous), or "snapshot"
-            turn_rate: Degrees per second for continuous homing (override, or use JSON default)
+            homing_mode: "default", "efficient", "smarter", or "launcher"
             player_ref: Reference to player for homing calculations
         """
         # Load defaults from JSON
-        defaults = EntityRegistry.get_data("enemy", "homing")
+        if EnemyHoming._cached_defaults is None:
+            EnemyHoming._cached_defaults = EntityRegistry.get_data("enemy", "homing")
+        defaults = EnemyHoming._cached_defaults
 
         # Apply overrides or use defaults
         speed = speed if speed is not None else defaults.get("speed", 150)
         health = health if health is not None else defaults.get("hp", 1)
         scale = scale if scale is not None else defaults.get("scale", 1.0)
 
-        turn_rate = turn_rate if turn_rate is not None else defaults.get("turn_rate", 180)
         image_path = defaults.get("image")
         hitbox_config = defaults.get("hitbox", {})
-
-        if draw_manager is None:
-            raise ValueError("EnemyHoming requires draw_manager")
 
         # Load and scale image using helper
         img = BaseEntity.load_and_scale_image(image_path, scale)
@@ -71,31 +79,26 @@ class EnemyHoming(BaseEnemy):
             hitbox_config=hitbox_config
         )
 
-        # Homing support
-        self.homing = homing
-        self.turn_rate = turn_rate if homing else 0
-        self.player_ref = player_ref if homing else None
+        # Homing configuration - always enabled
+        config = self.HOMING_CONFIG.get(homing_mode, self.HOMING_CONFIG["default"])
+        self.turn_rate = config["turn_rate"]
+        self.update_delay = config["update_delay"]
+        self.player_ref = player_ref
+        self.update_timer = 0.0  # For delayed update modes
+        self.spawn_edge = kwargs.get("spawn_edge")
+
+        # self.speed_boost_applied = False  # Track if launcher speed boost was applied
+        # # Apply speed boost for launcher mode
+        # if config.get("speed_boost", 0) > 0:
+        #     self.speed += config["speed_boost"]
 
         # Store exp value
         self.exp_value = defaults.get("exp", 0)
 
-        # Homing support
-        self.homing = homing
-        self.turn_rate = turn_rate if homing else 0
-        self.player_ref = player_ref if homing else None
-
-        # Snapshot homing state
-        if homing in ("snapshot", "snapshot_axis"):
-            self.lock_delay = kwargs.get("lock_delay", 0.5)
-            self.lock_timer = 0.0
-            self.locked = False
-
-            # Store spawn edge for axis-locking mode
-            if homing == "snapshot_axis":
-                self.spawn_edge = kwargs.get("spawn_edge")
+        self._rotation_enabled = False
 
         DebugLogger.init(
-            f"Spawned EnemyHoming  at ({x}, {y}) | Speed={speed} | Homing={homing}",
+            f"Spawned EnemyHoming at ({x}, {y}) | Speed={speed} | Mode={homing_mode}",
             category="animation_effects"
         )
 
@@ -104,22 +107,26 @@ class EnemyHoming(BaseEnemy):
     # ===========================================================
     def update(self, dt: float):
         """
-        Move the enemy and handle homing if enabled.
+        Move the enemy and handle homing if player exists.
 
         Args:
             dt (float): Delta time (in seconds) since last frame.
         """
-        if self.homing == True and self.player_ref:  # Continuous
-            self._update_homing_continuous(dt)
-        elif self.homing == "snapshot" and self.player_ref:
-            self._update_homing_snapshot(dt)
-        elif self.homing == "snapshot_axis" and self.player_ref:
-            self._update_homing_snapshot_axis(dt)
+        if self.player_ref:
+            if self.update_delay > 0:
+                # Delayed update modes (smarter, launcher)
+                self.update_timer += dt
+                if self.update_timer >= self.update_delay:
+                    self._update_homing_continuous(dt)
+                    self.update_timer = 0.0
+            else:
+                # Constant update modes (default, efficient)
+                self._update_homing_continuous(dt)
 
         super().update(dt)
 
     def reset(self, x, y, direction=(0, 1), speed=200, health=1, size=50, color=(255, 0, 0), **kwargs):
-        # Forward auto-direction correctly
+        """Reset enemy for pooling."""
         super().reset(
             x, y,
             direction=direction,
@@ -140,30 +147,27 @@ class EnemyHoming(BaseEnemy):
         # Rebuild image if draw_manager available
         if self.draw_manager:
             self.refresh_sprite(new_color=color, size=norm_size)
-            self._base_image = self.image
 
-        # Update homing mode if pool respawn passes new params
-        if "homing" in kwargs:
-            self.homing = kwargs["homing"]
+        # Update homing mode if provided
+        if "homing_mode" in kwargs:
+            config = self.HOMING_CONFIG.get(kwargs["homing_mode"], self.HOMING_CONFIG["default"])
+            self.turn_rate = config["turn_rate"]
+            self.update_delay = config["update_delay"]
+            self.update_timer = 0.0
 
-        if "turn_rate" in kwargs:
-            self.turn_rate = kwargs["turn_rate"] if self.homing else 0
+            # self.speed_boost_applied = False
+            # # Apply speed boost for launcher mode
+            # if config.get("speed_boost", 0) > 0:
+            #     self.speed += config["speed_boost"]
 
         if "player_ref" in kwargs:
-            self.player_ref = kwargs["player_ref"] if self.homing else None
+            self.player_ref = kwargs["player_ref"]
 
-        # Snapshot reset
-        if self.homing in ("snapshot", "snapshot_axis"):
-            self.lock_delay = kwargs.get("lock_delay", getattr(self, "lock_delay", 0.5))
-            self.lock_timer = 0.0
-            self.locked = False
-
-            # Update spawn_edge for snapshot_axis mode
-            if self.homing == "snapshot_axis":
-                self.spawn_edge = kwargs.get("spawn_edge", getattr(self, "spawn_edge", None))
+        if "spawn_edge" in kwargs:
+            self.spawn_edge = kwargs["spawn_edge"]
 
     def _update_homing_continuous(self, dt):
-        """Smooth turn toward player each frame"""
+        """Smooth turn toward player each frame (or instant snap for high turn_rate)"""
         if not self.player_ref or not hasattr(self.player_ref, 'pos'):
             return
 
@@ -176,7 +180,6 @@ class EnemyHoming(BaseEnemy):
         current_dir = self.velocity.normalize() if self.velocity.length() > 0 else pygame.Vector2(0, 1)
 
         # Calculate angle difference
-        import math
         target_angle = math.degrees(math.atan2(target_dir.y, target_dir.x))
         current_angle = math.degrees(math.atan2(current_dir.y, current_dir.x))
 
@@ -195,48 +198,3 @@ class EnemyHoming(BaseEnemy):
         new_angle = current_angle + rotation
         rad = math.radians(new_angle)
         self.velocity = pygame.Vector2(math.cos(rad), math.sin(rad)) * self.speed
-
-    def _update_homing_snapshot(self, dt):
-        """Lock onto player after delay, then go straight"""
-        if not self.player_ref or not hasattr(self.player_ref, 'pos'):
-            return
-
-        if not self.locked:
-            self.lock_timer += dt
-            if self.lock_timer >= self.lock_delay:
-                # Lock direction to player
-                to_player = self.player_ref.pos - self.pos
-                if to_player.length() > 0:
-                    self.velocity = to_player.normalize() * self.speed
-                self.locked = True
-
-    def _update_homing_snapshot_axis(self, dt):
-        """Lock perpendicular axis to player, move straight on spawn axis"""
-        if not self.player_ref or not hasattr(self.player_ref, 'pos'):
-            return
-
-        if not self.locked:
-            self.lock_timer += dt
-            if self.lock_timer >= self.lock_delay:
-                # Determine axis based on spawn edge and reposition
-                if self.spawn_edge in ("top", "bottom"):
-                    # Spawned from top/bottom → lock X axis, move on Y
-                    self.pos.x = self.player_ref.pos.x
-                    # Set velocity to move straight on Y axis
-                    direction_y = 1 if self.spawn_edge == "top" else -1
-                    self.velocity = pygame.Vector2(0, direction_y) * self.speed
-
-                elif self.spawn_edge in ("left", "right"):
-                    # Spawned from left/right → lock Y axis, move on X
-                    self.pos.y = self.player_ref.pos.y
-                    # Set velocity to move straight on X axis
-                    direction_x = 1 if self.spawn_edge == "left" else -1
-                    self.velocity = pygame.Vector2(direction_x, 0) * self.speed
-
-                else:
-                    # Fallback: no spawn_edge provided, behave like regular snapshot
-                    to_player = self.player_ref.pos - self.pos
-                    if to_player.length() > 0:
-                        self.velocity = to_player.normalize() * self.speed
-
-                self.locked = True

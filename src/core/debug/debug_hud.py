@@ -6,10 +6,8 @@ Uses data-driven UI system for buttons, direct rendering for metrics.
 """
 
 import pygame
-from pathlib import Path
-
+import time
 from src.core.runtime.game_settings import Display, Layers
-from src.core.runtime.game_state import STATE
 from src.core.debug.debug_logger import DebugLogger
 from src.ui.core.ui_loader import UILoader
 from src.ui.core.anchor_resolver import AnchorResolver
@@ -35,11 +33,8 @@ class DebugHUD:
         self.anchor_resolver = AnchorResolver(Display.WIDTH, Display.HEIGHT)
 
         # Load UI from config
-        try:
-            self.root_element = self.loader.load("debug_hud.yaml")
-        except FileNotFoundError:
-            DebugLogger.warn("debug_hud.yaml not found - using fallback")
-            self.root_element = None
+        self.root_element = None
+        self._loaded = False
 
         # Metrics tracking (always active for performance monitoring)
         self.smoothed_fps = 0.0
@@ -173,8 +168,12 @@ class DebugHUD:
         if not element.visible:
             return
 
-        # Resolve position
-        element.rect = self.anchor_resolver.resolve(element, parent)
+        # NEW: Only resolve position if cache is invalid
+        parent_invalid = parent and not getattr(parent, '_position_cache_valid', True)
+
+        if not getattr(element, '_position_cache_valid', False) or parent_invalid:
+            element.rect = self.anchor_resolver.resolve(element, parent)
+            element._position_cache_valid = True
 
         # Render surface
         surface = element.render_surface()
@@ -259,7 +258,65 @@ class DebugHUD:
         draw_manager.queue_draw(surface, rect, Layers.DEBUG)
 
     def toggle(self):
-        """Toggle HUD visibility."""
         self.visible = not self.visible
+        if self.visible:
+            self._ensure_loaded()
+
         state = "shown" if self.visible else "hidden"
         DebugLogger.action(f"DebugHUD {state}")
+
+    def record_frame_metrics(self, frame_time_ms: float, scene_time: float, render_time: float, fps: float):
+        """
+        Record all frame timing metrics. Called once per frame by Main Loop.
+
+        Args:
+            frame_time_ms: Total frame time in milliseconds
+            scene_time: Scene update time in milliseconds
+            render_time: Render pass time in milliseconds
+            fps: Current frames per second
+        """
+        # Core timing
+        self.frame_time = frame_time_ms
+        self.update_time = scene_time
+        self.render_time = render_time
+
+        # Frame time history (for graphs)
+        self.frame_time_history.append(frame_time_ms)
+        if len(self.frame_time_history) > self.frame_time_history_max:
+            self.frame_time_history.pop(0)
+
+        # FPS history (for graphs)
+        self.fps_history.append(fps)
+        if len(self.fps_history) > self.fps_history_max:
+            self.fps_history.pop(0)
+
+        # Smoothed FPS (exponential moving average)
+        self.smoothed_fps = (
+            self.smoothed_fps * 0.9 + fps * 0.1
+            if self.smoothed_fps > 0 else fps
+        )
+
+        # Recent average (rolling window)
+        self.recent_fps_sum += fps
+        self.recent_fps_count += 1
+        if self.recent_fps_count > 300:  # 5-second window decay
+            self.recent_fps_sum *= 0.5
+            self.recent_fps_count = int(self.recent_fps_count * 0.5)
+
+        # Min/Max tracking
+        if fps > self.max_fps:
+            self.max_fps = fps
+
+        if fps < self.min_fps:
+            self.min_fps = fps
+            self.min_fps_time = time.strftime("%H:%M:%S")
+
+    def _ensure_loaded(self):
+        if self._loaded:
+            return
+        self._loaded = True
+
+        try:
+            self.root_element = self.loader.load("debug_hud.yaml")
+        except FileNotFoundError:
+            DebugLogger.warn("debug_hud.yaml not found - using fallback")
