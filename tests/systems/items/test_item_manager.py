@@ -13,6 +13,8 @@ Responsibilities
 """
 
 import pytest
+import json
+import os
 from unittest.mock import MagicMock, patch, ANY
 import pygame
 
@@ -255,3 +257,46 @@ def test_on_enemy_died_integration(item_manager):
         args, _ = item_manager.spawn_manager.spawn.call_args
         assert args[2] == 500  # x
         assert args[3] == 500  # y
+
+
+
+def test_validate_items_json_schema():
+    """
+    Validates the structure and content of the actual items.json file.
+    Ensures all items have required fields and correct types.
+    """
+    # Construct path to items.json relative to project root
+    # This file is in tests/systems/items/
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.abspath(os.path.join(base_dir, "../../../"))
+    config_path = os.path.join(project_root, "src/config/entities/items.json")
+
+    assert os.path.exists(config_path), f"items.json not found at {config_path}"
+
+    with open(config_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+
+    required_keys = {"name", "asset_path", "scale", "drop_weight", "physics", "effects"}
+    required_physics = {"velo_x", "velo_y", "hitbox_scale"}
+
+    for item_id, item_data in data.items():
+        # Check keys
+        missing_keys = required_keys - item_data.keys()
+        assert not missing_keys, f"Item '{item_id}' missing keys: {missing_keys}"
+
+        # Check types
+        assert isinstance(item_data["name"], str), f"Item '{item_id}': name must be string"
+        assert isinstance(item_data["asset_path"], str), f"Item '{item_id}': asset_path must be string"
+        assert isinstance(item_data["scale"], (int, float)), f"Item '{item_id}': scale must be number"
+        assert isinstance(item_data["drop_weight"], int), f"Item '{item_id}': drop_weight must be int"
+        assert isinstance(item_data["physics"], dict), f"Item '{item_id}': physics must be dict"
+        assert isinstance(item_data["effects"], list), f"Item '{item_id}': effects must be list"
+
+        # Check physics
+        missing_physics = required_physics - item_data["physics"].keys()
+        assert not missing_physics, f"Item '{item_id}' physics missing keys: {missing_physics}"
+
+        # Check effects
+        for i, effect in enumerate(item_data["effects"]):
+            assert isinstance(effect, dict), f"Item '{item_id}' effect #{i} must be dict"
+            assert "type" in effect, f"Item '{item_id}' effect #{i} missing 'type'"

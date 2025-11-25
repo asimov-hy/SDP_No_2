@@ -61,29 +61,62 @@ def item(mock_pygame_surface, mock_draw_manager, basic_item_data):
     return item
 
 # ===========================================================
-# Test Suites
+# Test Data Constants
 # ===========================================================
+BOUNCING_ITEM_DATA = {
+    "name": "Bouncing Health Pack",
+    "asset_path": "health_pack.png",
+    "scale": 1.0,
+    "drop_weight": 1000,
+    "physics": {"velo_x": 0, "velo_y": 100, "hitbox_scale": 0.85},
+    "effects": [{"type": "ADD_HEALTH", "amount": 1}]
+}
+FALLING_ITEM_DATA = {
+    "name": "Falling Nuke",
+    "asset_path": "nuke.png",
+    "scale": 1.0,
+    "drop_weight": 500,
+    "physics": {"velo_x": 0, "velo_y": 120, "hitbox_scale": 0.85},
+    "effects": [{"type": "USE_NUKE"}]
+}
 
 class TestBaseItemInitialization:
-    def test_init_defaults(self, mock_pygame_surface, mock_draw_manager):
-        """Test initialization with minimal arguments."""
+
+    @pytest.mark.parametrize(
+        "item_data, bounce, expected_speed, expected_vx, expected_vy",
+        [
+            (BOUNCING_ITEM_DATA, True, 100, None, None),
+            (FALLING_ITEM_DATA, False, 120, 0, 120),
+        ]
+    )
+
+    def test_initialization(self, mock_pygame_surface, mock_draw_manager,
+                            item_data, bounce, expected_speed, expected_vx, expected_vy):
+        """
+        Test initialization with realistic item configurations injected via parametrize.
+        Verifies that specific properties from items.json (like physics) are correctly applied.
+        """
+        # Initialize Item
         with patch('pygame.transform.scale', return_value=mock_pygame_surface):
-            item = BaseItem(x=50, y=50, image=mock_pygame_surface, draw_manager=mock_draw_manager)
-        
+            item = BaseItem(
+                x=50, y=50,
+                image=mock_pygame_surface,
+                draw_manager=mock_draw_manager,
+                item_data=item_data,
+                bounce=bounce
+            )
+
+        # Verify State
         assert item.pos.x == 50
         assert item.pos.y == 50
-        assert item.lifetime == 5.0 # Default
-        assert item.speed == 500 # Default speed setting
-        # With bounce=True (default), velocity is randomized but magnitude should match speed
-        assert pytest.approx(item.velocity.length(), rel=1e-3) == 500
-        assert item.category == "pickup" # From EntityCategory.PICKUP
-        
-    def test_init_with_data(self, item, basic_item_data):
-        """Test initialization with provided item_data."""
-        assert item.item_data == basic_item_data
-        # Check physics applied
-        assert item.velocity.x == 100
-        assert item.velocity.y == 100
+        assert item.category == "pickup"
+        assert item.item_data == item_data
+        assert item.speed == expected_speed
+        if bounce:
+            assert item.velocity.length() == pytest.approx(expected_speed, rel=1e-3)
+        else:
+            assert item.velocity.x == expected_vx
+            assert item.velocity.y == expected_vy
 
 class TestBaseItemMovement:
     def test_update_movement(self, item):
@@ -100,20 +133,20 @@ class TestBaseItemMovement:
     def test_bounce_logic(self, mock_pygame_surface, mock_draw_manager):
         """Test that item bounces off screen edges."""
         with patch('pygame.transform.scale', return_value=mock_pygame_surface):
-            # Force bounce enabled
             item = BaseItem(x=10, y=10, image=mock_pygame_surface, draw_manager=mock_draw_manager, bounce=True)
         
         # Manually set position and velocity to test bounce
+        dt = 0.1
         # Test Left Wall
         item.pos.x = -1
         item.velocity.x = -100
-        item.update(0.01) # Trigger logic
+        item.update(dt)
         assert item.velocity.x == 100 # Should flip
         
         # Test Right Wall
         item.pos.x = Display.WIDTH + 1
         item.velocity.x = 100
-        item.update(0.01)
+        item.update(dt)
         assert item.velocity.x == -100 # Should flip
 
 class TestBaseItemLifecycle:
