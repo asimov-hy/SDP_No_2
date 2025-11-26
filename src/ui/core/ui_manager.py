@@ -12,6 +12,7 @@ from src.ui.core.anchor_resolver import AnchorResolver
 from .binding_system import BindingSystem
 from .ui_loader import UILoader
 from .ui_element import UIElement
+from src.audio.sound_manager import get_sound_manager
 
 
 class UIManager:
@@ -296,30 +297,31 @@ class UIManager:
             return None
 
         mouse_pos = self.display.screen_to_game_pos(*event.pos)
+        action = None
 
         # Check modal screens first (top to bottom)
         for screen_name in reversed(self.modal_stack):
             screen = self.screens.get(screen_name)
             if screen:
                 action = self._handle_click_tree(screen, mouse_pos)
-                if action:
-                    return action
+                if action: break
 
         # Check active screen
-        if self.active_screen:
+        if not action and self.active_screen:
             screen = self.screens.get(self.active_screen)
             if screen:
                 action = self._handle_click_tree(screen, mouse_pos)
-                if action:
-                    return action
 
         # Check HUD
-        for element in self.hud_elements:
-            action = self._handle_click_tree(element, mouse_pos)
-            if action:
-                return action
+        if not action:
+            for element in self.hud_elements:
+                action = self._handle_click_tree(element, mouse_pos)
+                if action: break
 
-        return None
+        if action:
+            button_sound = get_sound_manager()
+            button_sound.play_bfx("button_click")
+        return action
 
     def _handle_click_tree(self, element: UIElement, mouse_pos: Tuple[int, int]) -> Optional[str]:
         """Recursively check element tree for clicks."""

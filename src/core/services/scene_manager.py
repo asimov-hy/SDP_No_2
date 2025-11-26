@@ -10,6 +10,7 @@ from src.core.services.service_locator import ServiceLocator
 from src.core.runtime.session_stats import get_session_stats
 from src.systems.entity_management.entity_registry import EntityRegistry
 from src.systems.level.level_registry import LevelRegistry
+from src.audio.sound_manager import SoundManager
 
 # Import scene classes
 from src.scenes.main_menu_scene import MainMenuScene
@@ -27,6 +28,7 @@ class SceneManager:
         self.input_manager = input_manager
         self.draw_manager = draw_manager
         self.ui_manager = ui_manager
+        self.sound_manager = SoundManager()
         DebugLogger.init_entry("SceneManager")
 
         # Create service locator
@@ -53,6 +55,10 @@ class SceneManager:
         EntityRegistry.load_entity_data("enemies.json")
         EntityRegistry.load_entity_data("items.json")
         DebugLogger.init_sub("Entity configs pre-loaded")
+
+        # setting sound files
+        self.sound_manager.set_master_volume(100)
+        self.services.register_global("sound_manager", self.sound_manager)
 
         # Scene registry - map names to classes
         self.scene_classes = {
