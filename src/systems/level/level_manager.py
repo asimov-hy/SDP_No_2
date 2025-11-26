@@ -28,13 +28,14 @@ class LevelManager:
     Delegates heavy lifting to StageLoader and WaveScheduler.
     """
 
-    def __init__(self, spawn_manager, player_ref=None):
+    def __init__(self, spawn_manager, player_ref=None, bullet_manager=None):
         """
         Initialize level manager and subsystems.
 
         Args:
             spawn_manager: SpawnManager instance for entity creation
             player_ref: Player entity reference for targeting
+            bullet_manager: BulletManager for shooting enemies
         """
         DebugLogger.init_entry("LevelManager Initialized")
 
@@ -46,7 +47,7 @@ class LevelManager:
 
         # Initialize subsystems
         self.stage_loader = StageLoader(spawn_manager)
-        self.wave_scheduler = WaveScheduler(spawn_manager, player_ref)
+        self.wave_scheduler = WaveScheduler(spawn_manager, player_ref, bullet_manager)
 
         # Callback
         self.on_level_complete = None

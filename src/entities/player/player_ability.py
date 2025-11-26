@@ -32,11 +32,14 @@ def _fire_bullet(player):
         DebugLogger.warn("Attempted to fire without BulletManager", category="combat")
         return
 
-    # Fire a straight bullet upward
+    # Fire a straight bullet upward (direction can be changed for 8-way later)
+    direction = (0, -1)  # Upward for now
+    vel = (direction[0] * player.bullet_speed, direction[1] * player.bullet_speed)
+
     player.bullet_manager.spawn_custom(
         StraightBullet,
         pos=player.rect.center,
-        vel=(0, -900),
+        vel=vel,
         image=player.bullet_image,
         radius=4,
         owner="player",

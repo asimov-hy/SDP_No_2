@@ -24,22 +24,28 @@ class WaveScheduler:
     """Handles wave spawning, timing, and position calculation."""
 
     ALLOWED_PARAMS = {
-        'waypoints',  # Waypoint paths (level-specific)
-        'direction',  # Custom movement direction
-        'player_ref',  # System-injected
-        'spawn_edge',  # System-injected
+        'waypoints',
+        'direction',
+        'player_ref',
+        'spawn_edge',
+        # Waypoint shooter params
+        'shoot_interval',
+        'bullet_speed',
+        'waypoint_speed',
     }
 
-    def __init__(self, spawn_manager, player_ref=None):
+    def __init__(self, spawn_manager, player_ref=None, bullet_manager=None):
         """
         Initialize wave scheduler.
 
         Args:
             spawn_manager: SpawnManager for entity creation
             player_ref: Player entity reference for homing/targeting
+            bullet_manager: BulletManager for shooting enemies
         """
         self.spawner = spawn_manager
         self.player = player_ref
+        self.bullet_manager = bullet_manager
 
         # Wave state
         self.waves = []
@@ -189,6 +195,11 @@ class WaveScheduler:
             if entity_type.startswith("homing"):
                 movement_params["player_ref"] = self.player
                 base_params["player_ref"] = self.player
+
+            # Inject references for waypoint_shooter
+            if entity_type == "waypoint_shooter":
+                base_params["player_ref"] = self.player
+                base_params["bullet_manager"] = self.bullet_manager
 
             # Merge movement params with priority system:
             # 1. Explicit enemy_params.direction (highest priority)

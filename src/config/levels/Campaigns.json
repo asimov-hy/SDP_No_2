@@ -9,7 +9,7 @@
   },
   "levels": {
     "1_Tutorial": {
-      "path": "1_Tutorial.json",
+      "path": "test_shooter.json",
       "name": "Tutorial",
       "description": "Learn the basics",
       "unlocked": true,
