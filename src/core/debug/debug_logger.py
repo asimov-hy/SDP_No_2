@@ -42,7 +42,7 @@ class LoggerConfig:
         "animation_effects": False,
         "animation": False,
         "event": True,
-        "event_manager": True,
+        "event_manager": False,
         "item": True,
         "level": False,
         "exp": False,
