@@ -54,14 +54,14 @@ class WaypointShooter(BaseEnemy):
         bullet_speed = bullet_speed if bullet_speed is not None else defaults.get("bullet_speed", 300)
 
         # Load and scale bullet image
-        bullet_image_path = defaults.get("bullet_image", "assets/images/sprites/projectiles/100H.png")
+        bullet_image_path = defaults.get("bullet_image", "assets/images/null.png")
         bullet_scale = defaults.get("bullet_scale", 0.3)
         bullet_img = pygame.image.load(bullet_image_path).convert_alpha()
         original_size = bullet_img.get_size()
         new_size = (int(original_size[0] * bullet_scale), int(original_size[1] * bullet_scale))
         self.bullet_image = pygame.transform.scale(bullet_img, new_size)
 
-        image_path = defaults.get("image", "assets/images/sprites/enemies/shooter.png")
+        image_path = defaults.get("image", "assets/images/null.png")
         hitbox_config = defaults.get("hitbox", {})
 
         norm_size = (size, size) if isinstance(size, int) else size

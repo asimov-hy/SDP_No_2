@@ -50,8 +50,8 @@ class SceneManager:
         DebugLogger.init_sub("Level registry loaded")
 
         # Pre-load entity configs once at startup
-        EntityRegistry.load_entity_data("entities/enemies.json")
-        EntityRegistry.load_entity_data("entities/items.json")
+        EntityRegistry.load_entity_data("enemies.json")
+        EntityRegistry.load_entity_data("items.json")
         DebugLogger.init_sub("Entity configs pre-loaded")
 
         # Scene registry - map names to classes
