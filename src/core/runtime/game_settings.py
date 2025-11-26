@@ -36,6 +36,16 @@ class Physics:
 
 
 # ===========================================================
+# Input Configuration
+# ===========================================================
+
+class Input:
+    """Controller and input configuration."""
+    CONTROLLER_DEADZONE: float = 0.2
+    CONTROLLER_UI_THRESHOLD: float = 0.5
+
+
+# ===========================================================
 # Bounds & Margins
 # ===========================================================
 
@@ -94,3 +104,4 @@ class Debug:
     FRAME_TIME_WARNING: float = 16.67
     HITBOX_VISIBLE: bool = False
     HITBOX_LINE_WIDTH: int = 5
+    PROFILING_ENABLED: bool = False

@@ -132,7 +132,7 @@ class EventManager:
         if event_type not in self._subscribers:
             return
 
-        for callback in self._subscribers[event_type][:]:
+        for callback in list(self._subscribers[event_type]):
             try:
                 callback(event)
             except Exception as e:

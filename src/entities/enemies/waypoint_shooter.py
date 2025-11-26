@@ -54,7 +54,7 @@ class WaypointShooter(BaseEnemy):
         bullet_speed = bullet_speed if bullet_speed is not None else defaults.get("bullet_speed", 300)
 
         # Load and scale bullet image
-        bullet_image_path = defaults.get("bullet_image", "assets/images/sprites/bullets/enemy_bullet.png")
+        bullet_image_path = defaults.get("bullet_image", "assets/images/sprites/projectiles/100H.png")
         bullet_scale = defaults.get("bullet_scale", 0.3)
         bullet_img = pygame.image.load(bullet_image_path).convert_alpha()
         original_size = bullet_img.get_size()

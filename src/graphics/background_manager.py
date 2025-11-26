@@ -12,7 +12,7 @@ DEFAULT_BACKGROUND_CONFIG = {
     "layers": [
         {
             "image": "assets/images/maps/test_background.png", # 1536 x1024
-            "scroll_speed": [0, -20],
+            "scroll_speed": [0, 20],
             "parallax": [0.2, 0.4]
         }
     ]
