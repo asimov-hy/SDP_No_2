@@ -18,6 +18,14 @@ class MainMenuScene(BaseScene):
 
     def on_enter(self):
         """Called when scene becomes active."""
+        self._setup_background({
+            "layers": [{
+                "image": "assets/images/maps/test_background.png",
+                "scroll_speed": [0, -20],  # Static
+                "parallax": [0, 0]
+            }]
+        })
+
         self.ui.clear_hud()
         self.ui.hide_all_screens()
         self.ui.load_screen("main_menu", "screens/main_menu.yaml")
@@ -29,6 +37,8 @@ class MainMenuScene(BaseScene):
 
     def update(self, dt: float):
         """Update menu logic."""
+        self._update_background(dt)
+
         mouse_pos = self.input_manager.get_mouse_pos()
         self.ui.update(dt, mouse_pos)
 

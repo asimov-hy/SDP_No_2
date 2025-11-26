@@ -85,7 +85,7 @@ class BaseScene(ABC):
             config = DEFAULT_BACKGROUND_CONFIG
 
         # Get draw manager
-        draw_manager = self.services.get_global("draw_manager")
+        draw_manager = self.draw_manager
 
         # Create background manager
         bg_manager = BackgroundManager((Display.WIDTH, Display.HEIGHT))
@@ -111,14 +111,15 @@ class BaseScene(ABC):
             dt: Delta time
             focal_point: (x, y) position for parallax (e.g., player position)
         """
-        draw_manager = self.services.get_global("draw_manager")
-        if draw_manager.bg_manager:
+        draw_manager = self.draw_manager
+        if draw_manager and draw_manager.bg_manager:
             draw_manager.bg_manager.update(dt, focal_point)
 
     def _clear_background(self):
         """Remove background (e.g., when leaving scene)."""
-        draw_manager = self.services.get_global("draw_manager")
-        draw_manager.bg_manager = None
+        draw_manager = self.draw_manager
+        if draw_manager:
+            draw_manager.bg_manager = None
 
     # ===========================================================
     # Standard Methods (Must implement in subclasses)

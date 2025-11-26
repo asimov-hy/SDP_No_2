@@ -36,15 +36,18 @@ class BackgroundLayer:
         self.parallax = pygame.Vector2(parallax_factor)
         self.scroll_offset = pygame.Vector2(0, 0)  # CHANGED: Separate scroll from camera
 
+        self.render_offset_x = 0
+        self.render_offset_y = 0
+
         # Load image
         try:
-            self.image = pygame.image.load(image_path).convert()
+            self.image = pygame.image.load(image_path).convert_alpha()  # Use convert_alpha for transparency
             DebugLogger.init_sub(f"Loaded background: {image_path}")
-        except:
+        except Exception as e:  # Specific exception to see actual error
             # Fallback: create colored surface
             self.image = pygame.Surface((1536, 1024))
             self.image.fill((30, 30, 60))
-            DebugLogger.warn(f"Failed to load {image_path}, using fallback")
+            DebugLogger.warn(f"Failed to load {image_path}: {e}, using fallback")
 
         self.width = self.image.get_width()
         self.height = self.image.get_height()
