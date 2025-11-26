@@ -26,7 +26,8 @@ class BaseEnemy(BaseEntity):
 
     __slots__ = (
         'speed', 'health', 'max_health', 'exp_value',
-        'velocity', '_last_rot_velocity', 'state', '_nuke_subscribed'
+        'velocity', '_last_rot_velocity', 'state', '_nuke_subscribed',
+        'spawn_time', 'spawn_grace_period'
     )
 
     @staticmethod
@@ -127,6 +128,10 @@ class BaseEnemy(BaseEntity):
 
         self.update_rotation()
 
+        # Spawn grace period to prevent instant death from bounds
+        self.spawn_time = 0.0
+        self.spawn_grace_period = 1.0  # 1 second grace period
+
         self._nuke_subscribed = False
         self._subscribe_nuke()
 
@@ -164,6 +169,9 @@ class BaseEnemy(BaseEntity):
         if self.death_state != LifecycleState.ALIVE:
             return
 
+        # Track spawn time for grace period
+        self.spawn_time += dt
+
         # Ensure animations (like damage blink) update while alive
         self.anim_manager.update(dt)
 
@@ -176,8 +184,8 @@ class BaseEnemy(BaseEntity):
             self.update_rotation()
             self._last_rot_velocity.xy = self.velocity.xy
 
-        # Mark dead if off-screen
-        if self.is_offscreen():
+        # Mark dead if off-screen (only after grace period)
+        if self.spawn_time > self.spawn_grace_period and self.is_offscreen():
             self.mark_dead(immediate=True)
 
     def take_damage(self, amount: int, source: str = "unknown"):
@@ -188,6 +196,7 @@ class BaseEnemy(BaseEntity):
         if self.death_state != LifecycleState.ALIVE:
             return
 
+        print(f"{self.health} -> {self.health - amount}")
         self.health = max(0, self.health - amount)
 
         if self.health > 0:
@@ -201,17 +210,23 @@ class BaseEnemy(BaseEntity):
             self.anim_manager.play("damage", duration=0.15)
             self.on_damage(amount)
 
-        if self.health <= 0:
+        if self.health <= 0 and self.death_state == LifecycleState.ALIVE:
             self.mark_dead(immediate=False)
             self.on_death(source)
 
     def on_death(self, source):
+        self.death_state = LifecycleState.DYING
+        self.layer = Layers.PARTICLES   # TODO: temporary measure -> later replace with seperate layer and death animation
         self.anim_manager.play("death")
+
+        exp_to_award = 0
+        if source in ("player_bullet", "nuke"):
+            exp_to_award = self.exp_value
 
         get_events().dispatch(EnemyDiedEvent(
             position=(self.rect.centerx, self.rect.centery),
             enemy_type_tag=self.__class__.__name__,
-            exp=self.exp_value
+            exp=exp_to_award
         ))
 
         if hasattr(self, 'hitbox') and self.hitbox:
@@ -222,9 +237,9 @@ class BaseEnemy(BaseEntity):
     # ===========================================================
     # Rendering
     # ===========================================================
-    def draw(self, draw_manager):
-        """Render the enemy sprite to the screen."""
-        draw_manager.draw_entity(self, layer=self.layer)
+    # def draw(self, draw_manager):
+    #     """Render the enemy sprite to the screen."""
+    #     draw_manager.draw_entity(self, layer=self.layer)
 
     # ===========================================================
     # Collision Handling
@@ -293,6 +308,9 @@ class BaseEnemy(BaseEntity):
 
         # Reset state to DEFAULT in case it was pooled while blinking
         self.state = InteractionState.DEFAULT
+
+        # Reset spawn grace period
+        self.spawn_time = 0.0
 
         if speed is not None:
             self.speed = speed

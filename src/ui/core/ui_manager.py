@@ -7,10 +7,12 @@ Manages ui screens, HUD elements, and rendering with the new system.
 import pygame
 from typing import Dict, List, Optional, Tuple
 
+from src.core.runtime.game_settings import Layers
 from src.ui.core.anchor_resolver import AnchorResolver
 from .binding_system import BindingSystem
 from .ui_loader import UILoader
 from .ui_element import UIElement
+from src.audio.sound_manager import get_sound_manager
 
 
 class UIManager:
@@ -84,20 +86,28 @@ class UIManager:
 
         Args:
             name: Screen identifier
-            modal: If True, push onto modal stack (can stack multiple)
+            modal: If True, show as overlay on top of current screen
         """
         if name not in self.screens:
             return
 
+        screen = self.screens.get(name)
+
+        # Auto-assign layer based on modal state
         if modal:
+            self._set_auto_layer(screen, Layers.DEBUG)  # Modal overlays = layer 10
             self.modal_stack.append(name)
         else:
-            # Hide previous active screen
+            self._set_auto_layer(screen, Layers.UI)  # Regular screens = layer 9
             if self.active_screen:
                 self._on_screen_hide(self.active_screen)
 
             self.active_screen = name
             self._on_screen_show(name)
+
+        # Invalidate position when showing
+        if screen:
+            screen.invalidate_position()
 
     def hide_screen(self, name: Optional[str] = None):
         """
@@ -151,6 +161,7 @@ class UIManager:
         Args:
             element: HUD element to add
         """
+        self._inject_draw_manager_to_tree(element)
         self.hud_elements.append(element)
 
     def load_hud(self, filename: str):
@@ -161,6 +172,12 @@ class UIManager:
             filename: YAML file path relative to ui/configs/
         """
         root_element = self.loader.load(filename)
+
+        # Inject DrawManager for image loading
+        self._inject_draw_manager_to_tree(root_element)
+
+        # Auto-assign UI layer for HUD elements
+        self._set_auto_layer(root_element, Layers.UI)
 
         # If root is a container, add all children as separate HUD elements
         if hasattr(root_element, 'children'):
@@ -195,17 +212,16 @@ class UIManager:
 
     def _find_in_tree(self, element, target_id: str):
         """Recursive element search by id."""
-        # Check element.id attribute
-        if getattr(element, 'id', None) == target_id:
+        # Single ID check
+        if element.id == target_id:
             return element
-        # Check config dict id
-        if getattr(element, 'config', {}).get('id') == target_id:
-            return element
+
         # Recurse children
-        for child in getattr(element, 'children', []):
-            result = self._find_in_tree(child, target_id)
-            if result:
-                return result
+        if hasattr(element, 'children'):
+            for child in element.children:
+                result = self._find_in_tree(child, target_id)
+                if result:
+                    return result
         return None
 
     # ===================================================================
@@ -281,30 +297,31 @@ class UIManager:
             return None
 
         mouse_pos = self.display.screen_to_game_pos(*event.pos)
+        action = None
 
         # Check modal screens first (top to bottom)
         for screen_name in reversed(self.modal_stack):
             screen = self.screens.get(screen_name)
             if screen:
                 action = self._handle_click_tree(screen, mouse_pos)
-                if action:
-                    return action
+                if action: break
 
         # Check active screen
-        if self.active_screen:
+        if not action and self.active_screen:
             screen = self.screens.get(self.active_screen)
             if screen:
                 action = self._handle_click_tree(screen, mouse_pos)
-                if action:
-                    return action
 
         # Check HUD
-        for element in self.hud_elements:
-            action = self._handle_click_tree(element, mouse_pos)
-            if action:
-                return action
+        if not action:
+            for element in self.hud_elements:
+                action = self._handle_click_tree(element, mouse_pos)
+                if action: break
 
-        return None
+        if action:
+            button_sound = get_sound_manager()
+            button_sound.play_bfx("button_click")
+        return action
 
     def _handle_click_tree(self, element: UIElement, mouse_pos: Tuple[int, int]) -> Optional[str]:
         """Recursively check element tree for clicks."""
@@ -380,3 +397,34 @@ class UIManager:
         if hasattr(element, 'children'):
             for child in element.children:
                 self._draw_element_tree(child, draw_manager, parent=element)
+
+    def _set_auto_layer(self, element, layer):
+        """
+        Recursively set auto layer for elements without explicit layer.
+
+        Args:
+            element: Root element
+            layer: Layer to assign
+        """
+        graphic_dict  = getattr(element, 'visual_dict', {})
+
+        # Only set if not explicitly specified in config
+        if 'layer' not in graphic_dict :
+            element.layer = layer
+
+        # Recursively set for children
+        if hasattr(element, 'children'):
+            for child in element.children:
+                self._set_auto_layer(child, layer)
+
+    def hide_all_screens(self):
+        """Hide all active screens and clear modal stack."""
+        # Hide all modals
+        for screen_name in list(self.modal_stack):
+            self._on_screen_hide(screen_name)
+        self.modal_stack.clear()
+
+        # Hide active screen
+        if self.active_screen:
+            self._on_screen_hide(self.active_screen)
+            self.active_screen = None

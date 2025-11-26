@@ -7,13 +7,14 @@ Simplified scene coordinator - direct class registration.
 from src.core.debug.debug_logger import DebugLogger
 from src.scenes.scene_state import SceneState
 from src.core.services.service_locator import ServiceLocator
-from src.core.runtime.session_stats import update_session_stats
+from src.core.runtime.session_stats import get_session_stats
 from src.systems.entity_management.entity_registry import EntityRegistry
 from src.systems.level.level_registry import LevelRegistry
+from src.audio.sound_manager import SoundManager
 
 # Import scene classes
 from src.scenes.main_menu_scene import MainMenuScene
-from src.scenes.campaign_select_scene import CampaignSelectScene
+from src.scenes.mission_select_scene import MissionSelectScene
 from src.scenes.game_scene import GameScene
 from src.scenes.settings_scene import SettingsScene
 
@@ -27,31 +28,42 @@ class SceneManager:
         self.input_manager = input_manager
         self.draw_manager = draw_manager
         self.ui_manager = ui_manager
+        self.sound_manager = SoundManager()
         DebugLogger.init_entry("SceneManager")
 
         # Create service locator
         self.services = ServiceLocator(self)
+        self.services.register_managers(
+            display=display_manager,
+            input_mgr=input_manager,
+            draw=draw_manager,
+            ui=ui_manager
+        )
         DebugLogger.init_sub("ServiceLocator initialized")
 
         # Register global systems
-        self.services.register_global("session_stats", update_session_stats())
+        self.services.register_global("session_stats", get_session_stats())
         self.services.register_global("entity_registry", EntityRegistry)
         self.services.register_global("level_registry", LevelRegistry)
         DebugLogger.init_sub("Registered global systems")
 
         # Load level registry config at startup
-        LevelRegistry.load_config("campaigns.json")
+        LevelRegistry.load_config("Campaigns.json")
         DebugLogger.init_sub("Level registry loaded")
 
         # Pre-load entity configs once at startup
-        EntityRegistry.load_entity_data("entities/enemies.json")
-        EntityRegistry.load_entity_data("entities/items.json")
+        EntityRegistry.load_entity_data("enemies.json")
+        EntityRegistry.load_entity_data("items.json")
         DebugLogger.init_sub("Entity configs pre-loaded")
+
+        # setting sound files
+        self.sound_manager.set_master_volume(100)
+        self.services.register_global("sound_manager", self.sound_manager)
 
         # Scene registry - map names to classes
         self.scene_classes = {
             "MainMenu": MainMenuScene,
-            "CampaignSelect": CampaignSelectScene,
+            "CampaignSelect": MissionSelectScene,
             "Game": GameScene,
             "Settings": SettingsScene,
         }

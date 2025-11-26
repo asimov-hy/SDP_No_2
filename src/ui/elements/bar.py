@@ -1,21 +1,36 @@
 """
 bar.py
+------
+Progress/health bar element with color thresholds and binding support.
 """
+
 import pygame
-from typing import Tuple
+from typing import Tuple, Optional, Dict, List
+
 from ..core.ui_element import UIElement
 from ..core.ui_loader import register_element
 
+
 @register_element('bar')
 class UIBar(UIElement):
+    """Visual bar for displaying progress, health, etc."""
+
     def __init__(self, config):
+        """
+        Initialize bar.
+
+        Args:
+            config: Configuration dictionary
+        """
         super().__init__(config)
 
+        # Extract config groups (support both old and new format)
         graphic_dict = config.get('graphic')
         if graphic_dict is None: graphic_dict = config
         data_dict = config.get('data')
         if data_dict is None: data_dict = config
 
+        # Bar properties
         self.max_value = data_dict.get('max_value', 100)
         self.current_value = data_dict.get('current_value', self.max_value)
         self._max_value_valid = self.max_value > 0
@@ -33,12 +48,15 @@ class UIBar(UIElement):
         self.anim_speed = graphic_dict.get('anim_speed', 5.0)
 
     def update(self, dt: float, mouse_pos: Tuple[int, int], binding_system=None):
+        """Update bar state."""
         super().update(dt, mouse_pos, binding_system)
 
+        # Clamp value if binding active (base class already marked dirty)
         if self.bind_path and self.current_value is not None:
             self.current_value = max(0, min(self.max_value, self.current_value))
 
-        if self.animated and abs(self.visual_value - self.current_value) > 0.01:
+        # Smooth animation
+        if self.animated and abs(self.visual_value - self.current_value) > 0.1:
             self.visual_value += (self.current_value - self.visual_value) * self.anim_speed * dt
             self.mark_dirty()
 
@@ -82,7 +100,14 @@ class UIBar(UIElement):
                 fill_y = self.height - fill_height
                 pygame.draw.rect(surf, fill_color, (0, fill_y, self.width, fill_height))
 
+        # Border
         if self.border > 0:
              pygame.draw.rect(surf, self.border_color, surf.get_rect(), self.border)
+
+        # Label
+        if self.show_label and self.label_text:
+            text_surf = self._label_font.render(self.label_text, True, (255, 255, 255))
+            text_rect = text_surf.get_rect(center=(self.width // 2, self.height // 2))
+            surf.blit(text_surf, text_rect)
 
         return surf

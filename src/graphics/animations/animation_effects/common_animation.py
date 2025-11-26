@@ -55,6 +55,39 @@ def blink(entity, t, interval=0.1):
         entity.image.set_alpha(0)
 
 
+# In common_animation.py
+def flash_white(entity, t, interval=0.08):
+    """
+    White flash with blinking effect.
+    Combines additive white overlay with visibility toggle.
+    """
+    # Cache base image
+    if not hasattr(entity, "_base_image") or entity._base_image is None:
+        entity._base_image = entity.image.copy()
+
+    # Flash intensity decreases over time
+    intensity = int(255 * (1.0 - t))
+
+    # Create flashed image
+    base = entity._base_image
+    flash = base.copy()
+    flash.fill((intensity, intensity, intensity), special_flags=pygame.BLEND_RGB_ADD)
+
+    # Apply blink on top of flash
+    elapsed = entity.anim_context.get("elapsed_time", 0)
+    if int(elapsed / interval) % 2 == 0:
+        flash.set_alpha(255)
+    else:
+        flash.set_alpha(0)
+
+    entity.image = flash
+
+    # Cleanup
+    if t >= 1.0:
+        entity.image = entity._base_image.copy()
+        entity.image.set_alpha(255)
+
+
 def fade_color(entity, t, start_color=(255, 0, 0), end_color=(0, 0, 0)):
     """
     Apply additive color flash overlay (e.g., red damage flash).
@@ -89,3 +122,4 @@ def sprite_cycle(entity, t):
 
     frame_idx = min(int(t * len(frames)), len(frames) - 1)
     entity.image = frames[frame_idx]
+    entity.rect = entity.image.get_rect(center=entity.rect.center)

@@ -58,7 +58,8 @@ class GameSystemInitializer(SystemInitializer):
         # Level system (depends on spawn + player)
         systems['level_manager'] = self._init_level_system(
             systems['spawn_manager'],
-            systems['player']
+            systems['player'],
+            systems['bullet_manager']
         )
 
         DebugLogger.init_entry("Game Systems Initialized")
@@ -70,7 +71,7 @@ class GameSystemInitializer(SystemInitializer):
     def _init_ui(self) -> UIManager:
         """Initialize UI system."""
         ui = self.services.ui_manager  # Use existing
-        ui.load_screen("pause", "hud/pause_hud.yaml")
+        ui.load_screen("pause", "screens/pause_screen.yaml")
         return ui
 
     def _init_player(self) -> Player:
@@ -164,16 +165,17 @@ class GameSystemInitializer(SystemInitializer):
             "item_manager": item_manager
         }
 
-    def _init_level_system(self, spawn_manager, player) -> LevelManager:
+    def _init_level_system(self, spawn_manager, player, bullet_manager) -> LevelManager:
         """
         Initialize level management.
 
         Args:
             spawn_manager: SpawnManager instance
             player: Player instance
+            bullet_manager: BulletManager instance
 
         Returns:
             LevelManager instance
         """
-        level_manager = LevelManager(spawn_manager, player_ref=player)
+        level_manager = LevelManager(spawn_manager, player_ref=player, bullet_manager=bullet_manager)
         return level_manager

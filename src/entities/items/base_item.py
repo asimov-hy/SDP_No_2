@@ -40,7 +40,7 @@ class BaseItem(BaseEntity):
         EntityRegistry.auto_register(cls)
 
     def __init__(self, x, y, item_data=None, image=None, shape_data=None,
-                 draw_manager=None, speed=500, despawn_y=None, lifetime=5.0, bounce=True):
+                 draw_manager=None, speed=300, despawn_y=None, lifetime=7.0, bounce=True):
         """
         Initialize a base item entity.
 
@@ -116,6 +116,22 @@ class BaseItem(BaseEntity):
 
         # Timer despawn
         self.lifetime_timer += dt
+
+        # life time blink
+        life_ratio = self.lifetime_timer / self.lifetime
+
+        if life_ratio > 0.7:
+            blink_speed = 4 * (life_ratio ** 3)
+
+            if int(self.lifetime_timer * blink_speed) % 2 == 0:
+                self.image.set_alpha(255)
+
+            else:
+                self.image.set_alpha(60)
+
+        else:
+            self.image.set_alpha(255)
+
         if self.lifetime_timer >= self.lifetime:
             self.mark_dead(immediate=True)
             return
@@ -126,16 +142,26 @@ class BaseItem(BaseEntity):
 
         # Bounce off screen edges
         if self.bounce_enabled:
-            if self.pos.x <= 0 or self.pos.x >= Display.WIDTH:
-                self.velocity.x *= -1  # Reflect X
-            if self.pos.y <= 0 or self.pos.y >= Display.HEIGHT:
-                self.velocity.y *= -1  # Reflect Y
+            # Clamp first so we never cross boundary
+            if self.pos.x <= 0:
+                self.pos.x = 0
+                self.velocity.x *= -1
+            elif self.pos.x >= Display.WIDTH:
+                self.pos.x = Display.WIDTH
+                self.velocity.x *= -1
+
+            if self.pos.y <= 0:
+                self.pos.y = 0
+                self.velocity.y *= -1
+            elif self.pos.y >= Display.HEIGHT:
+                self.pos.y = Display.HEIGHT
+                self.velocity.y *= -1
 
         self.sync_rect()
 
-    def draw(self, draw_manager):
-        """Render the item sprite."""
-        draw_manager.draw_entity(self, layer=self.layer)
+    # def draw(self, draw_manager):
+    #     """Render the item sprite."""
+    #     draw_manager.draw_entity(self, layer=self.layer)
 
     def get_effects(self) -> list:
         """Returns effects list from item_data."""

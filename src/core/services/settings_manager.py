@@ -1,67 +1,83 @@
 """
 settings_manager.py
 -------------------
-Global game settings (graphics, audio, controls).
+Manages persistent user settings (graphics, audio, controls).
 Singleton pattern for application-wide access.
 """
 
+import copy
 import json
 import os
 from src.core.debug.debug_logger import DebugLogger
 
 
+# ===========================================================
+# Settings Manager
+# ===========================================================
+
 class SettingsManager:
-    """Manages persistent user settings."""
+    """Manages persistent user settings with safe defaults."""
 
-    def __init__(self):
-        self.settings_file = "settings.json"
+    SETTINGS_FILE = "settings.json"
 
-        # Default settings
-        self.defaults = {
-            "graphics": {
-                "fps_limit": 60,
-                "vsync": True,
-                "fullscreen": False,
-                "resolution": [1280, 720]
-            },
-            "audio": {
-                "master_volume": 1.0,
-                "music_volume": 0.8,
-                "sfx_volume": 1.0,
-                "muted": False
-            },
-            "controls": {
-                "mouse_sensitivity": 1.0
-            }
+    DEFAULTS = {
+        "graphics": {
+            "fps_limit": 60,
+            "vsync": True,
+            "fullscreen": False,
+            "resolution": [1280, 720]
+        },
+        "audio": {
+            "master_volume": 1.0,
+            "music_volume": 0.8,
+            "sfx_volume": 1.0,
+            "muted": False
+        },
+        "controls": {
+            "mouse_sensitivity": 1.0
         }
+    }
 
-        # Current settings (loaded from file or defaults)
+    def __init__(self, settings_file=None):
+        """
+        Initialize settings manager.
+
+        Args:
+            settings_file: Optional custom path for settings file
+        """
+        self.settings_file = settings_file or self.SETTINGS_FILE
         self.settings = self._load()
 
-    def _load(self):
-        """Load settings from file or use defaults."""
-        if os.path.exists(self.settings_file):
-            try:
-                with open(self.settings_file, 'r') as f:
-                    loaded = json.load(f)
-                DebugLogger.system(f"Loaded settings from {self.settings_file}")
+    # ===========================================================
+    # Public API
+    # ===========================================================
 
-                # Merge with defaults (in case new settings added)
-                return self._merge_with_defaults(loaded)
-            except (json.JSONDecodeError, IOError, OSError) as e:
-                DebugLogger.warn(f"Failed to load settings: {e}")
-                return self.defaults.copy()
-        else:
-            DebugLogger.system("Using default settings")
-            return self.defaults.copy()
+    def get(self, category, key, default=None):
+        """
+        Get a setting value.
 
-    def _merge_with_defaults(self, loaded):
-        """Merge loaded settings with defaults."""
-        merged = self.defaults.copy()
-        for category, values in loaded.items():
-            if category in merged:
-                merged[category].update(values)
-        return merged
+        Args:
+            category: Settings category (graphics, audio, controls)
+            key: Setting key
+            default: Fallback if not found
+
+        Returns:
+            Setting value or default
+        """
+        return self.settings.get(category, {}).get(key, default)
+
+    def set(self, category, key, value):
+        """
+        Set a setting value.
+
+        Args:
+            category: Settings category
+            key: Setting key
+            value: Value to set
+        """
+        if category not in self.settings:
+            self.settings[category] = {}
+        self.settings[category][key] = value
 
     def save(self):
         """Save current settings to file."""
@@ -72,24 +88,66 @@ class SettingsManager:
         except (IOError, OSError, TypeError) as e:
             DebugLogger.warn(f"Failed to save settings: {e}")
 
-    def get(self, category, key, default=None):
-        """Get a setting value."""
-        return self.settings.get(category, {}).get(key, default)
-
-    def set(self, category, key, value):
-        """Set a setting value."""
-        if category not in self.settings:
-            self.settings[category] = {}
-        self.settings[category][key] = value
-
     def reset_to_defaults(self):
         """Reset all settings to defaults."""
-        self.settings = self.defaults.copy()
+        self.settings = copy.deepcopy(self.DEFAULTS)
         DebugLogger.system("Settings reset to defaults")
 
+    def reset_category(self, category):
+        """
+        Reset a single category to defaults.
 
-# Global singleton
+        Args:
+            category: Category to reset
+        """
+        if category in self.DEFAULTS:
+            self.settings[category] = copy.deepcopy(self.DEFAULTS[category])
+
+    # ===========================================================
+    # Loading & Merging
+    # ===========================================================
+
+    def _load(self):
+        """Load settings from file or use defaults."""
+        if not os.path.exists(self.settings_file):
+            DebugLogger.system("Using default settings")
+            return copy.deepcopy(self.DEFAULTS)
+
+        try:
+            with open(self.settings_file, 'r') as f:
+                loaded = json.load(f)
+            DebugLogger.system(f"Loaded settings from {self.settings_file}")
+            return self._merge_with_defaults(loaded)
+
+        except (json.JSONDecodeError, IOError, OSError) as e:
+            DebugLogger.warn(f"Failed to load settings: {e}")
+            return copy.deepcopy(self.DEFAULTS)
+
+    def _merge_with_defaults(self, loaded):
+        """
+        Merge loaded settings with defaults.
+        Defaults provide missing keys, loaded values take priority.
+        """
+        merged = copy.deepcopy(self.DEFAULTS)
+
+        for category, values in loaded.items():
+            if not isinstance(values, dict):
+                continue
+
+            if category in merged:
+                merged[category].update(values)
+            else:
+                merged[category] = values
+
+        return merged
+
+
+# ===========================================================
+# Singleton Access
+# ===========================================================
+
 _SETTINGS = None
+
 
 def get_settings() -> SettingsManager:
     """Get or create the settings singleton."""
@@ -97,3 +155,9 @@ def get_settings() -> SettingsManager:
     if _SETTINGS is None:
         _SETTINGS = SettingsManager()
     return _SETTINGS
+
+
+def reset_settings():
+    """Reset the singleton. Use for testing or full restart."""
+    global _SETTINGS
+    _SETTINGS = None
