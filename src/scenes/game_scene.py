@@ -15,7 +15,6 @@ from src.core.services.event_manager import get_events, EnemyDiedEvent
 from src.scenes.scene_state import SceneState
 from src.ui.level_up_ui import LevelUpUI
 from src.graphics.background_manager import DEFAULT_BACKGROUND_CONFIG
-
 class GameScene(BaseScene):
     """Active gameplay scene."""
 
@@ -86,6 +85,9 @@ class GameScene(BaseScene):
         # Load BGM
         game_sound = self.services.get_global("sound_manager")
         game_sound.play_bgm("game_bgm", loop=-1)
+
+        # Connect UI
+        self.ui.register_binding('player', self.player)
 
         # Load HUD
         self.ui.load_hud("hud/player_hud.yaml")
