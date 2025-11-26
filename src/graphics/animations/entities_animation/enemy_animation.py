@@ -8,6 +8,7 @@ Enemies share common damage/death patterns but can be customized per type.
 """
 
 from src.graphics.animations.animation_effects.common_animation import blink, fade_out, flash_white
+from src.graphics.animations.animation_effects.damage_animation import damage_flash
 from src.graphics.animations.animation_registry import register
 from src.core.debug.debug_logger import DebugLogger
 from src.graphics.animations.animation_effects.death_animation import death_fade, death_sprite_cycle  # Add death_sprite_cycle
@@ -56,7 +57,8 @@ def damage_enemy(entity, t):
     ctx = getattr(entity, 'anim_context', {})
     interval = ctx.get('blink_interval', 0.08)  # Faster blink than player
 
-    flash_white(entity, t, interval=interval)
+    damage_flash(entity, t)
+    # flash_white(entity, t, interval=interval)
 
     # Cleanup at end
     if t >= 1.0:
