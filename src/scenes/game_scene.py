@@ -10,7 +10,7 @@ from src.systems.game_system_initializer import GameSystemInitializer
 from src.core.runtime.game_settings import Debug
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.entity_state import LifecycleState
-from src.core.runtime.session_stats import update_session_stats
+from src.core.runtime.session_stats import get_session_stats
 from src.core.services.event_manager import get_events, EnemyDiedEvent
 from src.scenes.scene_state import SceneState
 from src.ui.level_up_ui import LevelUpUI
@@ -90,7 +90,7 @@ class GameScene(BaseScene):
 
         # Reset game state
         self.game_over_shown = False
-        update_session_stats().reset()
+        get_session_stats().reset()
 
         # Start specific level if selected
         if self.selected_level_id:
@@ -192,7 +192,7 @@ class GameScene(BaseScene):
             self.input_manager.set_context("gameplay")
 
         # Track play time (only during active gameplay)
-        update_session_stats().add_time(dt)
+        get_session_stats().add_time(dt)
 
         # Update scrolling background with player position for parallax
         player_pos = (self.player.virtual_pos.x, self.player.virtual_pos.y)
@@ -253,8 +253,8 @@ class GameScene(BaseScene):
 
     def _on_enemy_died_stats(self, event):
         """Track enemy kills in session stats."""
-        update_session_stats().add_kill()
-        update_session_stats().add_score(10)  # Base score per kill
+        get_session_stats().add_kill()
+        get_session_stats().add_score(10)  # Base score per kill
 
     def _show_game_over(self, victory: bool):
         """Show game over overlay with stats."""
@@ -274,23 +274,23 @@ class GameScene(BaseScene):
         # Update stats
         score_elem = self.ui.find_element_by_id("game_over", "score_label")
         if score_elem:
-            score_elem.text = f"Score: {update_session_stats().score}"
+            score_elem.text = f"Score: {get_session_stats().score}"
             score_elem.mark_dirty()
 
         kills_elem = self.ui.find_element_by_id("game_over", "kills_label")
         if kills_elem:
-            kills_elem.text = f"Enemies Killed: {update_session_stats().enemies_killed}"
+            kills_elem.text = f"Enemies Killed: {get_session_stats().enemies_killed}"
             kills_elem.mark_dirty()
 
         items_elem = self.ui.find_element_by_id("game_over", "items_label")
         if items_elem:
-            items_elem.text = f"Items Collected: {update_session_stats().items_collected}"
+            items_elem.text = f"Items Collected: {get_session_stats().items_collected}"
             items_elem.mark_dirty()
 
         time_elem = self.ui.find_element_by_id("game_over", "time_label")
         if time_elem:
-            minutes = int(update_session_stats().run_time // 60)
-            seconds = int(update_session_stats().run_time % 60)
+            minutes = int(get_session_stats().run_time // 60)
+            seconds = int(get_session_stats().run_time % 60)
             time_elem.text = f"Time: {minutes}:{seconds:02d}"
             time_elem.mark_dirty()
 
