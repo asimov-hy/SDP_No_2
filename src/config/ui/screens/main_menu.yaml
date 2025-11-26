@@ -14,7 +14,7 @@ main_menu:
       layer: Layers.UI
       #graphic
       text: "202X"
-      font_size: 72
+      font_size: 155
       size: [600, 100]
       color: [220, 240, 255]
 

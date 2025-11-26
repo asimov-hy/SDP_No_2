@@ -13,7 +13,7 @@ from src.systems.level.level_registry import LevelRegistry
 
 # Import scene classes
 from src.scenes.main_menu_scene import MainMenuScene
-from src.scenes.campaign_select_scene import CampaignSelectScene
+from src.scenes.mission_select_scene import MissionSelectScene
 from src.scenes.game_scene import GameScene
 from src.scenes.settings_scene import SettingsScene
 
@@ -51,7 +51,7 @@ class SceneManager:
         # Scene registry - map names to classes
         self.scene_classes = {
             "MainMenu": MainMenuScene,
-            "CampaignSelect": CampaignSelectScene,
+            "CampaignSelect": MissionSelectScene,
             "Game": GameScene,
             "Settings": SettingsScene,
         }

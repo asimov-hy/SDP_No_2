@@ -87,8 +87,8 @@ class BackgroundLayer:
         # Draw tiles
         for tx in range(tiles_x):
             for ty in range(tiles_y):
-                x = start_x + tx * self.width
-                y = start_y + ty * self.height
+                x = int(round(start_x + tx * self.width))  # Explicit rounding
+                y = int(round(start_y + ty * self.height))
                 surface.blit(self.image, (x, y))
 
 

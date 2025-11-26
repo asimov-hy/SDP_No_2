@@ -11,6 +11,14 @@ from src.scenes.base_scene import BaseScene
 class MainMenuScene(BaseScene):
     """Main menu scene with navigation."""
 
+    BACKGROUND_CONFIG = {
+        "layers": [{
+            "image": "assets/images/maps/main_menu.png",
+            "scroll_speed": [0, 0],
+            "parallax": [0, 0]
+        }]
+    }
+
     def __init__(self, services):
         super().__init__(services)
         self.input_context = "ui"
@@ -18,13 +26,7 @@ class MainMenuScene(BaseScene):
 
     def on_enter(self):
         """Called when scene becomes active."""
-        self._setup_background({
-            "layers": [{
-                "image": "assets/images/maps/test_background.png",
-                "scroll_speed": [0, -20],  # Static
-                "parallax": [0, 0]
-            }]
-        })
+        self._setup_background(self.BACKGROUND_CONFIG)
 
         self.ui.clear_hud()
         self.ui.hide_all_screens()
@@ -33,6 +35,7 @@ class MainMenuScene(BaseScene):
 
     def on_exit(self):
         """Called when leaving scene."""
+        self._clear_background()
         self.ui.hide_screen("main_menu")
 
     def update(self, dt: float):

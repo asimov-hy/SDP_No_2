@@ -10,6 +10,14 @@ from src.scenes.base_scene import BaseScene
 class SettingsScene(BaseScene):
     """Settings menu scene."""
 
+    BACKGROUND_CONFIG = {
+        "layers": [{
+            "image": "assets/images/maps/settings_menu.png",
+            "scroll_speed": [25, -25],
+            "parallax": [0, 0]
+        }]
+    }
+
     def __init__(self, services, caller_scene=None):
         super().__init__(services)
         self.input_context = "ui"
@@ -23,15 +31,21 @@ class SettingsScene(BaseScene):
 
     def on_enter(self):
         """Load settings UI."""
+        self._setup_background(self.BACKGROUND_CONFIG)
+
         self.ui.load_screen("settings", "screens/settings.yaml")
         self.ui.show_screen("settings")
 
     def on_exit(self):
         """Called when leaving scene."""
+        self._clear_background()
+
         self.ui.hide_screen("settings")
 
     def update(self, dt: float):
         """Update settings UI."""
+        self._update_background(dt)
+
         mouse_pos = self.input_manager.get_mouse_pos()
         self.ui.update(dt, mouse_pos)
 
