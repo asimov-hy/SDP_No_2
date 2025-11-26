@@ -22,6 +22,11 @@
       "path": "assets/images/sprites/player/robot_Garda.png"
     },
 
+    "bullet": {
+      "path": "assets/images/sprites/projectiles/plasma_red.png",
+      "size": [16, 32]
+    },
+
     "default_shape": {
       "shape_type": "rect",
       "color": [255, 255, 255]
@@ -53,6 +58,25 @@
     "iframe": {
       "duration": 2,
       "interaction_state": "INTANGIBLE"
+    }
+  },
+
+  "combat": {
+    "_notes": "Shooting and bullet configuration",
+    "shoot_cooldown": 0.5,
+    "bullet_speed": 900
+  },
+
+  "progression": {
+    "_notes": "Leveling and experience system",
+    "starting_level": 1,
+    "starting_exp": 0,
+    "initial_exp_required": 500,
+    "exp_formula": {
+      "base": 30,
+      "multiplier": 2.0,
+      "max_level": 200,
+      "max_exp_cap": 999999
     }
   }
 }

@@ -125,10 +125,11 @@ class Player(BaseEntity):
         self.health = core["health"]
         self.max_health = self.health
 
-        # Player stats
-        self.exp = 0
-        self.level = 1
-        self.exp_required = 500
+        # Player stats - load from progression config
+        prog_cfg = cfg.get("progression", {})
+        self.exp = prog_cfg.get("starting_exp", 0)
+        self.level = prog_cfg.get("starting_level", 1)
+        self.exp_required = prog_cfg.get("initial_exp_required", 500)
 
         self.visible = True
         self.layer = Layers.PLAYER
@@ -178,21 +179,26 @@ class Player(BaseEntity):
 
         self._bullet_manager = None
         self._shooting_enabled = False
-        self.base_shoot_cooldown = 0.5
+        combat_cfg = cfg.get("combat", {})
+        self.base_shoot_cooldown = combat_cfg.get("shoot_cooldown", 0.5)
+        self.bullet_speed = combat_cfg.get("bullet_speed", 900)
         self.shoot_timer = 0.0
 
         # ========================================
         # Load Player Bullet Sprite
         # ========================================
-        bullet_path = "assets/images/sprites/projectiles/100H.png"
+        bullet_cfg = render.get("bullet", {})
+        bullet_path = bullet_cfg.get("path", "assets/images/null.png")
+        bullet_size = tuple(bullet_cfg.get("size", [16, 32]))
+
         temp_img = pygame.image.load(bullet_path).convert_alpha() if os.path.exists(bullet_path) else None
         if temp_img:
-            scale = (16 / temp_img.get_width(), 32 / temp_img.get_height())
+            scale = (bullet_size[0] / temp_img.get_width(), bullet_size[1] / temp_img.get_height())
             self.bullet_image = BaseEntity.load_and_scale_image(bullet_path, scale)
         else:
             DebugLogger.warn(f"Missing bullet sprite: {bullet_path}")
-            self.bullet_image = pygame.Surface((8, 16), pygame.SRCALPHA)
-            pygame.draw.rect(self.bullet_image, (255, 255, 100), (0, 0, 8, 16))
+            self.bullet_image = pygame.Surface(bullet_size, pygame.SRCALPHA)
+            pygame.draw.rect(self.bullet_image, (255, 255, 100), (0, 0, *bullet_size))
 
         # ========================================
         # 7. Global Ref & Status
@@ -305,8 +311,14 @@ class Player(BaseEntity):
         self.level += 1
 
         # Cap at reasonable max to prevent overflow
-        exp_calc = 30 * (2.0 ** min(self.level - 1, 200))
-        self.exp_required = min(int(exp_calc), 999999)
+        formula = self.cfg.get("progression", {}).get("exp_formula", {})
+        base = formula.get("base", 30)
+        multiplier = formula.get("multiplier", 2.0)
+        max_level = formula.get("max_level", 200)
+        max_exp_cap = formula.get("max_exp_cap", 999999)
+
+        exp_calc = base * (multiplier ** min(self.level - 1, max_level))
+        self.exp_required = min(int(exp_calc), max_exp_cap)
 
         self.exp = overflow
 
