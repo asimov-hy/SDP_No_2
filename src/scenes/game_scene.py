@@ -4,6 +4,7 @@ game_scene.py
 Main gameplay scene - runs active level with player, enemies, bullets.
 """
 
+import copy
 from src.scenes.base_scene import BaseScene
 from src.systems.game_system_initializer import GameSystemInitializer
 from src.core.runtime.game_settings import Debug
@@ -194,7 +195,7 @@ class GameScene(BaseScene):
         update_session_stats().add_time(dt)
 
         # Update scrolling background with player position for parallax
-        player_pos = (self.player.rect.centerx, self.player.rect.centery)
+        player_pos = (self.player.virtual_pos.x, self.player.virtual_pos.y)
         self._update_background(dt, player_pos)
 
         # Core gameplay updates
@@ -311,8 +312,21 @@ class GameScene(BaseScene):
             level_config: Level data dict with optional 'background' section
         """
 
-        # Get background config from level or use default
-        bg_config = level_config.get("background", DEFAULT_BACKGROUND_CONFIG)
+        bg_config = copy.deepcopy(DEFAULT_BACKGROUND_CONFIG)
+
+        # Merge level-specific overrides
+        if "background" in level_config:
+            level_bg = level_config["background"]
+
+            # Merge layers
+            if "layers" in level_bg:
+                for i, layer_override in enumerate(level_bg["layers"]):
+                    if i < len(bg_config["layers"]):
+                        # Merge individual layer properties
+                        bg_config["layers"][i].update(layer_override)
+                    else:
+                        # Add new layer
+                        bg_config["layers"].append(layer_override)
 
         # Setup using base class method
         super()._setup_background(bg_config)

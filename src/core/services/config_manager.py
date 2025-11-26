@@ -23,9 +23,10 @@ from src.core.debug.debug_logger import DebugLogger
 # ===========================================================
 DATA_ROOT = os.path.join("src", "config")
 SEARCH_DIRS = [
+    ".",
     DATA_ROOT,
     os.path.join(DATA_ROOT, "entities"),  # plural fallback
-    os.path.join(DATA_ROOT, "levels"),
+    os.path.join(DATA_ROOT, "missions"),
 os.path.join(DATA_ROOT, "animations"),
 ]
 

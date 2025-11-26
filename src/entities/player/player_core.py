@@ -121,6 +121,10 @@ class Player(BaseEntity):
         # 4. Core Stats
         # ========================================
         self.velocity = pygame.Vector2(0, 0)
+        self.virtual_pos = pygame.Vector2(x, y)
+        self.clamped_x = False
+        self.clamped_y = False
+
         self.base_speed = core["speed"]
         self.health = core["health"]
         self.max_health = self.health

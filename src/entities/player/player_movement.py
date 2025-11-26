@@ -76,30 +76,43 @@ def update_movement(player, dt):
     # Update position and constrain within screen bounds
     # -------------------------------------------------------
     player.pos += player.velocity * dt
+    # Update virtual position (unclamped) for background parallax
+    velocity_for_bg = player.velocity.copy()
+    player.virtual_pos += velocity_for_bg * dt
+
     clamp_to_screen(player)
+
+    # Apply parallax boost if pushing against edges (NEW SECTION)
+    EDGE_PARALLAX_BOOST = 2.5  # Multiplier when clamped
+
+    if player.clamped_x and move_vec.x != 0:  # Still trying to move horizontally
+        boost_amount = move_vec.x * player.speed * (EDGE_PARALLAX_BOOST - 1) * dt
+        player.virtual_pos.x += boost_amount
+
+    if player.clamped_y and move_vec.y != 0:  # Still trying to move vertically
+        boost_amount = move_vec.y * player.speed * (EDGE_PARALLAX_BOOST - 1) * dt
+        player.virtual_pos.y += boost_amount
 
     # Sync render rectangle to updated position
     player.sync_rect()
 
 
 def clamp_to_screen(player):
-    """
-    Prevent the player from leaving the visible screen area.
-    If the player hits the border, their velocity on that axis is reset to zero.
-
-    Args:
-        player (Player): The player instance to clamp.
-    """
     screen_w, screen_h = Display.WIDTH, Display.HEIGHT
     half_w = player.rect.width * 0.5
     half_h = player.rect.height * 0.5
 
-    # Store old position BEFORE clamping
+    SOFT_MARGIN = 30  # pixels from edge (tune to taste)
+
     old_x, old_y = player.pos.x, player.pos.y
 
-    # Clamp position
-    player.pos.x = max(half_w, min(player.pos.x, screen_w - half_w))
-    player.pos.y = max(half_h, min(player.pos.y, screen_h - half_h))
+    # Clamp position with soft margins
+    player.pos.x = max(half_w + SOFT_MARGIN, min(player.pos.x, screen_w - half_w - SOFT_MARGIN))
+    player.pos.y = max(half_h + SOFT_MARGIN, min(player.pos.y, screen_h - half_h - SOFT_MARGIN))
+
+    # Track which edges are clamped (NEW)
+    player.clamped_x = (player.pos.x != old_x)
+    player.clamped_y = (player.pos.y != old_y)
 
     # Stop velocity if clamping occurred
     if player.pos.x != old_x:

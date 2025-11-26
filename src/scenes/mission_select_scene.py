@@ -76,7 +76,7 @@ class MissionSelectScene(BaseScene):
                 button.action = f'select_level_{level.id}'
                 button.enabled = level.unlocked
 
-                # Visual feedback for locked levels
+                # Visual feedback for locked missions
                 if not level.unlocked:
                     button.color = (80, 80, 80)
                     button.border_color = (120, 120, 120)

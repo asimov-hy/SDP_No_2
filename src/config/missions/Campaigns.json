@@ -4,10 +4,10 @@
     "main": {
       "name": "Main Campaign",
       "start_level": "1_Tutorial",
-      "levels": ["1_Tutorial", "2_Mission", "3_Boss"]
+      "missions": ["1_Tutorial", "2_Mission", "3_Boss"]
     }
   },
-  "levels": {
+  "missions": {
     "1_Tutorial": {
       "path": "test_shooter.json",
       "name": "Tutorial",

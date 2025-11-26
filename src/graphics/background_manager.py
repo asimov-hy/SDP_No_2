@@ -12,7 +12,7 @@ DEFAULT_BACKGROUND_CONFIG = {
     "layers": [
         {
             "image": "assets/images/maps/test_background.png", # 1536 x1024
-            "scroll_speed": [0, 20],
+            "scroll_speed": [0, -20],
             "parallax": [0.2, 0.4]
         }
     ]
@@ -64,7 +64,7 @@ class BackgroundLayer:
         if player_pos:
             # Center player position (subtract screen center)
             camera_x = (player_pos[0] - self.screen_width / 2) * self.parallax.x
-            camera_y = (player_pos[1] - self.screen_height / 2) * self.parallax.y
+            camera_y = - (player_pos[1] - self.screen_height / 2) * self.parallax.y
 
         # Combine scroll + camera for final offset
         final_x = (self.scroll_offset.x + camera_x) % self.width
