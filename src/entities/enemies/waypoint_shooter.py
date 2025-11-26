@@ -45,7 +45,8 @@ class WaypointShooter(BaseEnemy):
 
         speed = speed if speed is not None else defaults.get("speed", 100)
         health = health if health is not None else defaults.get("hp", 2)
-        size = size if size is not None else defaults.get("size", 60)
+
+        scale = defaults.get("scale", 1.0)
 
         waypoint_speed = waypoint_speed if waypoint_speed is not None else defaults.get("waypoint_speed", 120)
         waypoints = waypoints if waypoints is not None else defaults.get("waypoints", None)
@@ -64,14 +65,15 @@ class WaypointShooter(BaseEnemy):
         image_path = defaults.get("image", "assets/images/null.png")
         hitbox_config = defaults.get("hitbox", {})
 
-        norm_size = (size, size) if isinstance(size, int) else size
+        # norm_size = (size, size) if isinstance(size, int) else size
 
         # ============================
         # Load sprite
         # ============================
         # Calculate scale from target size
         img = pygame.image.load(image_path).convert_alpha()
-        img = pygame.transform.scale(img, norm_size)
+        w, h = img.get_size()
+        img = pygame.transform.scale(img, (int(w * scale), int(h * scale)))
 
         super().__init__(
             x, y,

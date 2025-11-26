@@ -47,8 +47,8 @@
   },
   "waypoint_shooter": {
     "image": "assets/images/sprites/enemies/waypoint_shooter.png",
-    "scale": 1.0,
-    "hp": 3,
+    "scale": 0.5,
+    "hp": 8,
     "speed": 100,
     "exp": 100,
     "waypoint_speed": 120,

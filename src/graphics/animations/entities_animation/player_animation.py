@@ -7,7 +7,7 @@ All player animations centralized here for easy tuning.
 """
 
 from src.graphics.animations.animation_effects.death_animation import death_fade
-from src.graphics.animations.animation_effects.common_animation import blink, fade_color
+from src.graphics.animations.animation_effects.common_animation import blink, fade_color, flash_white
 from src.core.debug.debug_logger import DebugLogger
 from src.graphics.animations.animation_registry import register
 
@@ -51,10 +51,10 @@ def damage_player(entity, t):
         entity.refresh_sprite(new_color=current_color)
 
         # Apply blink on top
-        blink(entity, t, interval=interval)
+        flash_white(entity, t, interval=interval)
     else:
         # Image mode - just blink (no color fade)
-        blink(entity, t, interval=interval)
+        flash_white(entity, t, interval=interval)
 
     # Cleanup at end
     if t >= 1.0 and hasattr(entity, '_original_image'):
