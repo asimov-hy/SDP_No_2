@@ -64,10 +64,19 @@ class BulletManager:
         # Only update image if explicitly provided (not None)
         if image is not None:
             b.image = image
+            b._base_image = image  # CRITICAL: Update rotation source
             b.rect = b.image.get_rect(center=pos)
+            b.shape_data = None  # Clear shape data when using image
+            b._rotation_enabled = True  # Enable rotation for image bullets
+
+            # Clear rotation cache to force regeneration
+            if hasattr(b, '_rotation_cache'):
+                b._rotation_cache.clear()
+                b._cached_rotation_index = -1
         else:
             # Keep existing prebaked image, just update position
             b.rect.center = pos
+            b._rotation_enabled = False
 
         # Only set radius for shape-based bullets (image bullets don't use these)
         if image is None:
