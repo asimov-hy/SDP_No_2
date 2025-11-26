@@ -1,4 +1,13 @@
 {
+  "background": {
+    "layers": [
+      {
+        "image": "assets/images/maps/test_background.png",
+        "scroll_speed": [0, 30],
+        "parallax": [0.3, 0.6]
+      }
+    ]
+  },
   "stages": [
     {
       "name": "Homing Mode Test",

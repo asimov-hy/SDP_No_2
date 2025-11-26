@@ -49,6 +49,9 @@ class LevelManager:
         self.stage_loader = StageLoader(spawn_manager)
         self.wave_scheduler = WaveScheduler(spawn_manager, player_ref, bullet_manager)
 
+        # Level data storage (for background config, etc.)
+        self.current_level_data = {}
+
         # Callback
         self.on_level_complete = None
 
@@ -70,6 +73,17 @@ class LevelManager:
             )
             return
 
+        # Load and store level data for background/config access
+        import json
+        try:
+            with open(level_path, 'r') as f:
+                self.current_level_data = json.load(f)
+        except Exception as e:
+            DebugLogger.warn(f"Failed to load level data from {level_path}: {e}", category="level")
+            self.current_level_data = {}
+            return
+
+        # Load stages into stage_loader
         self.stage_loader.load(level_path)
 
         if not self.stage_loader.stages:
@@ -172,6 +186,15 @@ class LevelManager:
 
             if self.on_level_complete:
                 self.on_level_complete()
+
+    def get_current_level_data(self):
+        """
+        Get the current level's full data dictionary.
+
+        Returns:
+            dict: Level data including waves, background, etc.
+        """
+        return self.current_level_data
 
     # ===========================================================
     # Properties (for backward compatibility)

@@ -33,6 +33,7 @@ class DrawManager:
         self._layers_dirty = False
 
         self.background = None  # Cached background surface (optional)
+        self.bg_manager = None  # NEW: Scrolling background manager
 
         self.debug_hitboxes = []  # Persistent list for queued hitboxes
         self.debug_obbs = []  # Persistent list for queued OBB lines
@@ -284,11 +285,14 @@ class DrawManager:
         """
         self.surface = target_surface
 
-        # Background rendering (cached surface to avoid fill cost)
-        if self.background is not None:
+        # Background rendering (scrolling or static)
+        if self.bg_manager is not None:
+            # NEW: Use scrolling background manager
+            self.bg_manager.render(target_surface)
+        elif self.background is not None:
             target_surface.blit(self.background, (0, 0))
         else:
-            # Create cached background on first use
+            # Fallback: cached solid color
             if not hasattr(self, "_bg_cache") or self._bg_cache is None:
                 self._bg_cache = pygame.Surface(target_surface.get_size())
                 self._bg_cache.fill((50, 50, 100))

@@ -13,6 +13,7 @@ from src.core.runtime.session_stats import update_session_stats
 from src.core.services.event_manager import get_events, EnemyDiedEvent
 from src.scenes.scene_state import SceneState
 from src.ui.level_up_ui import LevelUpUI
+from src.graphics.background_manager import DEFAULT_BACKGROUND_CONFIG
 
 class GameScene(BaseScene):
     """Active gameplay scene."""
@@ -96,6 +97,12 @@ class GameScene(BaseScene):
             if level_config:
                 DebugLogger.state(f"Starting level: {level_config.name}")
                 self.level_manager.load(level_config.path)
+
+                # Load background for this level
+                level_data = self.level_manager.get_current_level_data()
+                if level_data:
+                    self._load_level_background(level_data)
+
                 return
 
         # Otherwise start first level in campaign
@@ -103,6 +110,12 @@ class GameScene(BaseScene):
             first_level = self.campaign[0]
             DebugLogger.state(f"Starting level: {first_level.name}")
             self.level_manager.load(first_level.path)
+
+            # Load background for this level
+            level_data = self.level_manager.get_current_level_data()
+            if level_data:
+                self._load_level_background(level_data)
+
         else:
             # Fallback to default start level
             start_level = level_registry.get_default_start()
@@ -110,8 +123,16 @@ class GameScene(BaseScene):
                 DebugLogger.state(f"Starting level: {start_level.name}")
                 self.level_manager.load(start_level.path)
 
+                # Load background for this level
+                level_data = self.level_manager.get_current_level_data()
+                if level_data:
+                    self._load_level_background(level_data)
+
     def on_exit(self):
         """Clean up when leaving gameplay."""
+        # Clear background
+        self._clear_background()
+
         # Clear HUD
         self.ui.clear_hud()
         self.ui.hide_screen("game_over")
@@ -171,6 +192,10 @@ class GameScene(BaseScene):
 
         # Track play time (only during active gameplay)
         update_session_stats().add_time(dt)
+
+        # Update scrolling background with player position for parallax
+        player_pos = (self.player.rect.centerx, self.player.rect.centery)
+        self._update_background(dt, player_pos)
 
         # Core gameplay updates
         self.player.update(dt)
@@ -272,3 +297,22 @@ class GameScene(BaseScene):
         self.ui.show_screen("game_over", modal=True)
 
         DebugLogger.state(f"Game over shown (victory={victory})", category="game")
+
+    def _setup_background(self):
+        """Initialize scrolling background from level config."""
+        # Will be called after level loads
+        pass
+
+    def _load_level_background(self, level_config):
+        """
+        Load background from level configuration.
+
+        Args:
+            level_config: Level data dict with optional 'background' section
+        """
+
+        # Get background config from level or use default
+        bg_config = level_config.get("background", DEFAULT_BACKGROUND_CONFIG)
+
+        # Setup using base class method
+        super()._setup_background(bg_config)
