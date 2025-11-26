@@ -20,10 +20,14 @@ class MainMenuScene(BaseScene):
         """Called when scene becomes active."""
         self.ui.load_screen("main_menu", "screens/main_menu.yaml")
         self.ui.show_screen("main_menu")
+        menu_sound = self.services.get_global("sound_manager")
+        menu_sound.play_bgm("menu_bgm", loop=-1)
 
     def on_exit(self):
         """Called when leaving scene."""
         self.ui.hide_screen("main_menu")
+        menu_sound = self.services.get_global("sound_manager")
+        menu_sound.stop_bgm()
 
     def update(self, dt: float):
         """Update menu logic."""

@@ -28,6 +28,7 @@ class GameScene(BaseScene):
 
         # Store system references
         self.player = systems['player']
+        self.player.sound_manager = services.get_global("sound_manager")
         self.collision_manager = systems['collision_manager']
         self.spawn_manager = systems['spawn_manager']
         self.bullet_manager = systems['bullet_manager']
@@ -74,6 +75,10 @@ class GameScene(BaseScene):
     def on_enter(self):
         """Start first level when scene becomes active."""
         level_registry = self.services.get_global("level_registry")
+
+        # Load BGM
+        game_sound = self.services.get_global("sound_manager")
+        game_sound.play_bgm("game_bgm", loop=-1)
 
         # Load HUD
         self.ui.load_hud("hud/gameplay_hud.yaml")
@@ -191,10 +196,14 @@ class GameScene(BaseScene):
         """Track enemy kills in session stats."""
         update_session_stats().add_kill()
         update_session_stats().add_score(10)  # Base score per kill
+        explosion_sound = self.services.get_global("sound_manager")
+        explosion_sound.play_bfx("enemy_destroy")
 
     def _show_game_over(self, victory: bool):
         """Show game over overlay with stats."""
         self.game_over_shown = True
+        end_sound = self.services.get_global("sound_manager")
+        end_sound.play_bgm("game_over", -1)
 
         # Update title
         title_elem = self.ui.find_element_by_id("game_over", "title_label")
