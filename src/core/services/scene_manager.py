@@ -40,7 +40,7 @@ class SceneManager:
         DebugLogger.init_sub("Registered global systems")
 
         # Load level registry config at startup
-        LevelRegistry.load_config("campaigns.json")
+        LevelRegistry.load_config("Campaigns.json")
         DebugLogger.init_sub("Level registry loaded")
 
         # Pre-load entity configs once at startup

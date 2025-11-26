@@ -1,5 +1,5 @@
 """
-enemy_shooter.py
+waypoint_shooter.py
 ----------------
 Shooting enemy with configurable movement patterns.
 
@@ -19,44 +19,47 @@ from src.entities.entity_types import EntityCategory
 from src.core.debug.debug_logger import DebugLogger
 
 
-class EnemyShooter(BaseEnemy):
+class WaypointShooter(BaseEnemy):
     """Enemy that shoots bullets while moving."""
 
-    __slots__ = ('movement_type', 'base_speed', 'waypoints', 'waypoint_speed', 'current_waypoint_index',
-                 'shoot_interval', 'shoot_timer', 'bullet_speed', 'bullet_color', 'bullet_radius',
-                 'aim_at_player', 'player_ref', 'bullet_manager')
+    __slots__ = ('waypoint_speed', 'waypoints', 'current_waypoint_index',
+                 'shoot_interval', 'shoot_timer', 'bullet_speed', 'bullet_image',
+                 'player_ref', 'bullet_manager')
 
     __registry_category__ = EntityCategory.ENEMY
-    __registry_name__ = "shooter"
+    __registry_name__ = "waypoint_shooter"
     _cached_defaults = None
 
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(self, x, y, speed=None, health=None, size=None, draw_manager=None, movement_type=None,
-                 waypoints=None, waypoint_speed=None, shoot_interval=None, bullet_speed=None, bullet_color=None,
-                 bullet_radius=None, aim_at_player=None, player_ref=None, bullet_manager=None, **kwargs):
+    def __init__(self, x, y, speed=None, health=None, size=None, draw_manager=None,
+                 waypoints=None, waypoint_speed=None, shoot_interval=None, bullet_speed=None,
+                 player_ref=None, bullet_manager=None, **kwargs):
         """
         JSON-driven shooter enemy with optional overrides.
         """
-        if EnemyShooter._cached_defaults is None:
-            EnemyShooter._cached_defaults = EntityRegistry.get_data("enemy", "shooter")
-        defaults = EnemyShooter._cached_defaults
+        if WaypointShooter._cached_defaults is None:
+            WaypointShooter._cached_defaults = EntityRegistry.get_data("enemy", "waypoint_shooter")
+        defaults = WaypointShooter._cached_defaults
 
         speed = speed if speed is not None else defaults.get("speed", 100)
         health = health if health is not None else defaults.get("hp", 2)
         size = size if size is not None else defaults.get("size", 60)
 
-        movement_type = movement_type if movement_type is not None else defaults.get("movement_type", "linear")
         waypoint_speed = waypoint_speed if waypoint_speed is not None else defaults.get("waypoint_speed", 120)
         waypoints = waypoints if waypoints is not None else defaults.get("waypoints", None)
 
         shoot_interval = shoot_interval if shoot_interval is not None else defaults.get("shoot_interval", 1.25)
         bullet_speed = bullet_speed if bullet_speed is not None else defaults.get("bullet_speed", 300)
-        bullet_color = bullet_color if bullet_color is not None else tuple(defaults.get("bullet_color", [255, 200, 0]))
-        bullet_radius = bullet_radius if bullet_radius is not None else defaults.get("bullet_radius", 6)
 
-        aim_at_player = aim_at_player if aim_at_player is not None else defaults.get("aim_at_player", True)
+        # Load and scale bullet image
+        bullet_image_path = defaults.get("bullet_image", "assets/images/sprites/bullets/enemy_bullet.png")
+        bullet_scale = defaults.get("bullet_scale", 0.3)
+        bullet_img = pygame.image.load(bullet_image_path).convert_alpha()
+        original_size = bullet_img.get_size()
+        new_size = (int(original_size[0] * bullet_scale), int(original_size[1] * bullet_scale))
+        self.bullet_image = pygame.transform.scale(bullet_img, new_size)
 
         image_path = defaults.get("image", "assets/images/sprites/enemies/shooter.png")
         hitbox_config = defaults.get("hitbox", {})
@@ -83,34 +86,22 @@ class EnemyShooter(BaseEnemy):
         # Store EXP from JSON
         self.exp_value = defaults.get("exp", 0)
 
-        # ============================
-        # Store parameters for movement
-        # ============================
-        self.movement_type = movement_type
-        self.base_speed = speed
+        # Always waypoint movement
+        self.waypoints = waypoints or [(x, y)]
+        self.waypoint_speed = waypoint_speed
+        self.current_waypoint_index = 0
+        self.velocity = pygame.Vector2(0, 0)
+        self._update_waypoint_velocity()
 
-        if movement_type == "waypoint":
-            self.waypoints = waypoints or [(x, y)]
-            self.waypoint_speed = waypoint_speed
-            self.current_waypoint_index = 0
-            self.velocity = pygame.Vector2(0, 0)
-            self._update_waypoint_velocity()
-
-        # ============================
-        # Shooting configuration
-        # ============================
         self.shoot_interval = shoot_interval
         self.shoot_timer = 0.0
         self.bullet_speed = bullet_speed
-        self.bullet_color = bullet_color
-        self.bullet_radius = bullet_radius
-
-        self.aim_at_player = aim_at_player
         self.player_ref = player_ref
         self.bullet_manager = bullet_manager
+        self._rotation_enabled = True
 
         DebugLogger.init(
-            f"Spawned EnemyShooter at ({x}, {y}) | Move={movement_type} | ShootInterval={shoot_interval}",
+            f"Spawned WaypointShooter at ({x}, {y}) | Waypoints={len(self.waypoints)} | ShootInterval={shoot_interval}",
             category="enemy"
         )
 
@@ -125,9 +116,11 @@ class EnemyShooter(BaseEnemy):
             self._shoot()
             self.shoot_timer = 0.0
 
-        # Update movement based on type
-        if self.movement_type == "waypoint":
-            self._update_waypoint_movement(dt)
+        # Always waypoint movement
+        self._update_waypoint_movement(dt)
+
+        # Rotate sprite to face player
+        self._rotate_towards_player()
 
         # Call base update for position sync and offscreen check
         super().update(dt)
@@ -174,43 +167,62 @@ class EnemyShooter(BaseEnemy):
             self.velocity.x = (dx / dist) * self.waypoint_speed
             self.velocity.y = (dy / dist) * self.waypoint_speed
 
+    def _rotate_towards_player(self):
+        """Rotate sprite to face player."""
+        if not self._rotation_enabled or not self._base_image or self.player_ref is None:
+            return
+
+        # Calculate direction to player
+        dx = self.player_ref.pos.x - self.pos.x
+        dy = self.player_ref.pos.y - self.pos.y
+
+        # Skip if too close (avoid jitter)
+        dist_sq = dx * dx + dy * dy
+        if dist_sq < 1.0:
+            return
+
+        # Calculate angle (assuming sprite faces UP by default)
+        direction = pygame.Vector2(dx, dy)
+        angle = -pygame.Vector2(0, -1).angle_to(direction)
+
+        # Normalize to 0-360
+        angle = angle % 360
+
+        # Calculate cache index
+        index = int(round(angle / self.ROTATION_INCREMENT)) % self.ROTATION_STEPS
+
+        # Apply rotation if changed
+        if index != self._cached_rotation_index:
+            self.image = self._get_rotated_surface(index)
+            self.rect = self.image.get_rect(center=self.rect.center)
+            self._cached_rotation_index = index
+            self.rotation_angle = index * self.ROTATION_INCREMENT
+
     # ===========================================================
     # Shooting
     # ===========================================================
     def _shoot(self):
-        """Spawn a bullet toward player or in fixed direction."""
-        if self.bullet_manager is None:
+        """Spawn a bullet toward player."""
+        if self.bullet_manager is None or self.player_ref is None:
             return
 
-        # Calculate bullet direction
-        if self.aim_at_player and self.player_ref:
-            # Optimization: Direct component access
-            dx = self.player_ref.pos.x - self.pos.x
-            dy = self.player_ref.pos.y - self.pos.y
+        # Calculate direction to player
+        dx = self.player_ref.pos.x - self.pos.x
+        dy = self.player_ref.pos.y - self.pos.y
+        dist_sq = dx * dx + dy * dy
 
-            dist_sq = dx*dx + dy*dy
-            if dist_sq > 0:
-                inv_dist = 1.0 / math.sqrt(dist_sq)
-                dir_x = dx * inv_dist
-                dir_y = dy * inv_dist
-            else:
-                dir_x, dir_y = 0.0, 1.0
+        if dist_sq > 0:
+            inv_dist = 1.0 / math.sqrt(dist_sq)
+            dir_x = dx * inv_dist
+            dir_y = dy * inv_dist
         else:
-            # Shoot in velocity direction, or downward if stationary
-            vel_sq = self.velocity.length_squared()
-            if vel_sq > 0:
-                inv_vel = 1.0 / math.sqrt(vel_sq)
-                dir_x = self.velocity.x * inv_vel
-                dir_y = self.velocity.y * inv_vel
-            else:
-                dir_x, dir_y = 0.0, 1.0
+            dir_x, dir_y = 0.0, 1.0
 
-        # Spawn bullet via bullet_manager (passing tuple for vel)
+        # Spawn bullet with image
         self.bullet_manager.spawn(
             pos=(self.pos.x, self.pos.y),
             vel=(dir_x * self.bullet_speed, dir_y * self.bullet_speed),
-            color=self.bullet_color,
-            radius=self.bullet_radius,
+            image=self.bullet_image,
             owner="enemy",
             damage=1
         )
@@ -218,53 +230,38 @@ class EnemyShooter(BaseEnemy):
     # ===========================================================
     # Reset for Object Pooling
     # ===========================================================
-    def reset(self, x, y, direction=(0, 1), speed=150, health=3, size=60,
-              color=(255, 128, 0), movement_type="linear", waypoints=None,
-              waypoint_speed=100, shoot_interval=1.0, bullet_speed=300,
-              bullet_color=(255, 200, 0), bullet_radius=5, aim_at_player=False,
-              player_ref=None, **kwargs):
-        """Reset shooter enemy parameters for pooling."""
+    def reset(self, x, y, speed=150, health=3, size=60,
+              waypoints=None, waypoint_speed=100, shoot_interval=1.0,
+              bullet_speed=300, player_ref=None, **kwargs):
+        """Reset waypoint shooter for pooling."""
 
-        # 1. Reset Base Properties FIRST (Updates pos, rect, and restores base image)
-        # CRITICAL: This must run first so self.pos is correct for refresh_sprite
+        # Reset base properties
         super().reset(
             x, y,
-            direction=direction,
             speed=speed,
             health=health,
             spawn_edge=kwargs.get("spawn_edge")
         )
 
-        # 2. Update Visuals if needed (using correct pos from super)
-        # Use getattr to safely handle first-time reset where vars might not exist
-        if size != getattr(self, 'size', None) or color != getattr(self, 'color', None):
+        # Update size if changed
+        if size != getattr(self, 'size', None):
             self.size = size
-            self.color = color
-            # Use refresh_sprite() to update _base_image, clear cache, and center rect
-            self.refresh_sprite(
-                new_color=color,
-                size=(size, size),
-                shape_type="rect"
-            )
+            norm_size = (size, size) if isinstance(size, int) else size
+            # Reload and scale image
+            if hasattr(self, '_base_image') and self._base_image:
+                self.image = pygame.transform.scale(self._base_image, norm_size)
+                self.rect = self.image.get_rect(center=self.pos)
 
-        self.base_speed = speed
+        # Always waypoint movement
+        self.waypoints = waypoints or [(x, y)]
+        self.waypoint_speed = waypoint_speed
+        self.current_waypoint_index = 0
+        self._update_waypoint_velocity()
 
-        self.movement_type = movement_type
-        if movement_type == "linear":
-            pass
-        elif movement_type == "waypoint":
-            self.waypoints = waypoints or [(x, y)]
-            self.waypoint_speed = waypoint_speed
-            self.current_waypoint_index = 0
-            self._update_waypoint_velocity()
-
-        # Reset shooting
+        # Reset shooting parameters
         self.shoot_interval = shoot_interval
         self.shoot_timer = 0.0
         self.bullet_speed = bullet_speed
-        self.bullet_color = bullet_color
-        self.bullet_radius = bullet_radius
-        self.aim_at_player = aim_at_player
         self.player_ref = player_ref
 
         # self.sync_rect() -> Removed: Redundant (handled by super().reset and refresh_sprite)

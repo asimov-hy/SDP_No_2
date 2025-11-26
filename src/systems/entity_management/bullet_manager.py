@@ -69,8 +69,10 @@ class BulletManager:
             # Keep existing prebaked image, just update position
             b.rect.center = pos
 
-        b.color = color
-        b.radius = radius
+        # Only set radius for shape-based bullets (image bullets don't use these)
+        if image is None:
+            b.radius = radius
+
         b.owner = owner
         b.damage = damage
         b.death_state = LifecycleState.ALIVE
