@@ -196,7 +196,7 @@ class BaseEnemy(BaseEntity):
         if self.death_state != LifecycleState.ALIVE:
             return
 
-        print(f"{self.health} -> {self.health - amount}")
+        # print(f"{self.health} -> {self.health - amount}")
         self.health = max(0, self.health - amount)
 
         if self.health > 0:
