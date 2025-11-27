@@ -63,7 +63,11 @@ class UILabel(UIElement):
         display_text = self._get_display_text()
 
         # Render text
-        text_surf = self.font.render(display_text, True, self.text_color)
+        text_surf = self.font.render(display_text, True, self.text_color[:3])
+
+        # Apply alpha if 4th value exists in RGBA
+        if len(self.text_color) == 4:
+            text_surf.set_alpha(self.text_color[3])
 
         # Create surface
         surf = pygame.Surface((self.width, self.height), pygame.SRCALPHA)

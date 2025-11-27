@@ -32,7 +32,7 @@ class MissionSelectScene(BaseScene):
         """Load campaign list when entering."""
         self._setup_background(self.BACKGROUND_CONFIG)
 
-        self.ui.load_screen("level_select", "screens/level_select.yaml")
+        self.ui.load_screen("level_select", "screens/mission_select.yaml")
         self._populate_levels()
         self.ui.show_screen("level_select")
 
@@ -80,13 +80,13 @@ class MissionSelectScene(BaseScene):
                 button.action = f'select_level_{level.id}'
                 button.enabled = level.unlocked
 
-                # Visual feedback for locked missions
-                if not level.unlocked:
-                    button.color = (80, 80, 80)
-                    button.border_color = (120, 120, 120)
-                else:
-                    button.color = (60, 100, 180)
-                    button.border_color = (100, 140, 220)
+                # # Visual feedback for locked missions
+                # if not level.unlocked:
+                #     button.color = (80, 80, 80)
+                #     button.border_color = (120, 120, 120)
+                # else:
+                #     button.color = (60, 100, 180)
+                #     button.border_color = (100, 140, 220)
 
                 button.mark_dirty()
             elif button:

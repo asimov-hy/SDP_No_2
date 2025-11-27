@@ -8,6 +8,7 @@ import pygame
 from src.scenes.base_scene import BaseScene
 from src.scenes.transitions.transitions import FadeTransition
 
+
 class MainMenuScene(BaseScene):
     """Main menu scene with navigation."""
 

@@ -9,24 +9,24 @@ main_menu:
     - type: label
       id: "title"
       # position
-      parent_anchor: top_center
-      self_anchor: top_center
-      offset: [0, 120]
+      parent_anchor: top_left
+      self_anchor: top_left
+      offset: [0, 100]
       layer: Layers.UI
       #graphic
       text: "202X"
-      font_size: 155
-      size: [600, 100]
-      color: [220, 240, 255]
+      font_size: 220
+      size: [600, 150]
+      text_color: [220, 240, 255, 240]
 
     # Subtitle
     - type: label
       id: "subtitle"
-      text: "BULLET HELL"
+      text: "War for the Future"
       size: [400, 40]
-      parent_anchor: "#title:bottom"
-      self_anchor: top_center
-      offset: [0, 10]
+      parent_anchor: "#title:bottom_right"
+      self_anchor: top_right
+      offset: [20, -20]
       font_size: 24
       color: [150, 180, 220]
       layer: Layers.UI
@@ -37,12 +37,12 @@ main_menu:
       text: "START GAME"
       action: "start_game"
       size: [320, 65]
-      parent_anchor: "#subtitle:bottom"
+      parent_anchor: "#title:bottom_center"
       self_anchor: top_center
-      offset: [0, 80]
-      color: [50, 120, 200]
+      offset: [-50, 80]
+      color: [96, 96, 96, 100]
       border: 3
-      border_color: [100, 160, 255]
+      border_color: [100, 160, 255, 0]
       border_radius: 10
       font_size: 30
       layer: Layers.UI
@@ -53,14 +53,14 @@ main_menu:
       text: "SETTINGS"
       action: "settings"
       size: [320, 58]
-      parent_anchor: "#start_button:bottom"
+      parent_anchor: "#start_button:bottom_center"
       self_anchor: top_center
       offset: [0, 18]
-      color: [70, 90, 140]
+      color: [96, 96, 96, 100]
       border: 2
-      border_color: [110, 130, 180]
+      border_color: [100, 160, 255, 0]
       border_radius: 10
-      font_size: 24
+      font_size: 30
       layer: Layers.UI
 
     # Quit button
@@ -69,20 +69,20 @@ main_menu:
       text: "QUIT"
       action: "quit"
       size: [320, 58]
-      parent_anchor: "#settings_button:bottom"
+      parent_anchor: "#settings_button:bottom_center"
       self_anchor: top_center
       offset: [0, 18]
-      color: [140, 60, 70]
+      color: [96, 96, 96, 100]
       border: 2
-      border_color: [190, 100, 110]
+      border_color: [100, 160, 255, 0]
       border_radius: 10
-      font_size: 24
+      font_size: 30
       layer: Layers.UI
 
     # Version label
     - type: label
       id: "version"
-      text: "v0.1.0-alpha"
+      text: "v0.9.0-alpha"
       size: [150, 25]
       parent_anchor: bottom_right
       self_anchor: bottom_right

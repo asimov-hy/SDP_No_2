@@ -44,9 +44,14 @@ class UIButton(UIElement):
             )
         else:
             # Default hover colors based on base color
-            base_rgb = self.color[:3]  # Get RGB without alpha
+            base_rgb = self.color[:3]
             self.hover_color = tuple(min(c + 30, 255) for c in base_rgb)
             self.pressed_color = tuple(max(c - 40, 0) for c in base_rgb)
+
+            # Preserve alpha if RGBA
+            if len(self.color) == 4:
+                self.hover_color = (*self.hover_color, self.color[3])
+                self.pressed_color = (*self.pressed_color, self.color[3])
 
         # State
         self.is_hovered = False
@@ -59,6 +64,10 @@ class UIButton(UIElement):
         # Font
         self.font_size = graphic_dict.get('font_size', 24)
         self.font = self._get_cached_font(self.font_size)
+
+        # Text color (prefer text_color, fallback to white)
+        text_color_val = graphic_dict.get('text_color', [255, 255, 255])
+        self.text_color = self._parse_color(text_color_val)
 
     def update(self, dt: float, mouse_pos: Tuple[int, int], binding_system=None):
         """Update button state."""
@@ -116,7 +125,10 @@ class UIButton(UIElement):
         elif self.background:
             surf.fill(self.background)
         else:
-            surf.fill(color)
+            if self.border_radius > 0:
+                pygame.draw.rect(surf, color, surf.get_rect(), border_radius=self.border_radius)
+            else:
+                surf.fill(color)
 
         # Border
         if self.border > 0:
@@ -128,8 +140,18 @@ class UIButton(UIElement):
 
         # Text
         if self.text:
-            text_color = (255, 255, 255) if not self.enabled else (255, 255, 255)
-            text_surf = self.font.render(self.text, True, text_color)
+            # Use text_color property, dim if disabled
+            if not self.enabled:
+                text_color = tuple(c // 2 for c in self.text_color[:3])  # 50% darker
+                if len(self.text_color) == 4:
+                    text_color = (*text_color, self.text_color[3])  # Keep alpha
+            else:
+                text_color = self.text_color
+
+            text_surf = self.font.render(self.text, True, text_color[:3])
+            if len(text_color) == 4:
+                text_surf.set_alpha(text_color[3])
+
             text_rect = self._get_text_position(text_surf, surf.get_rect())
             surf.blit(text_surf, text_rect)
 
