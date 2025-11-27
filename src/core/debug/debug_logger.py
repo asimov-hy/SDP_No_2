@@ -119,11 +119,23 @@ class DebugLogger:
         """Detect calling class or module name via frame inspection."""
         try:
             frame = sys._getframe(3)
+
+            # Case 1: instance method
             if 'self' in frame.f_locals:
                 return frame.f_locals['self'].__class__.__name__
+
+            # Case 2: classmethod
             if 'cls' in frame.f_locals:
                 return frame.f_locals['cls'].__name__
-            return frame.f_code.co_filename.split('/')[-1].replace('.py', '')
+
+            # Case 3: fallback to module
+            filename = frame.f_code.co_filename.replace("\\", "/").split("/")[-1]
+            module_name = filename.replace(".py", "")
+
+            # Convert snake_case to PascalCase for readability
+            parts = module_name.split("_")
+            return "".join(p.capitalize() for p in parts)
+
         except (ValueError, AttributeError, KeyError):
             return "Unknown"
 
@@ -252,7 +264,7 @@ class DebugLogger:
         color = Colors.WHITE
         reset = Colors.RESET
         indent = " " * (level * 4)
-        print(f"{indent}* {color}{detail}{reset}")
+        print(f"{indent}• {color}{detail}{reset}")
 
     @staticmethod
     def _render_entry(module: str, status: str) -> str:
