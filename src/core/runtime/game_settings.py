@@ -74,9 +74,9 @@ class Bounds:
 class Layers:
     """Z-order for rendering."""
     BACKGROUND: int = 0
-    ENEMIES: int = 1
-    PICKUPS: int = 2
-    BULLETS: int = 3
+    PICKUPS: int = 1
+    BULLETS: int = 2
+    ENEMIES: int = 3
     PLAYER: int = 4
     PARTICLES: int = 5
     UI: int = 9
