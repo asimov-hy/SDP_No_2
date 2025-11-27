@@ -1,0 +1,73 @@
+level_up_modal:
+  type: container
+  position:
+    anchor: center
+    size: [600, 200]
+  graphic:
+    background: [40, 40, 50]
+    border: 2
+    border_color: [200, 200, 255]
+    border_radius: 8
+    layer: "Layers.UI + 10"
+
+  children:
+    - type: label
+      id: title
+      position:
+        parent_anchor: top_center
+        offset: [0, 30]
+      graphic:
+        font_size: 36
+        text_color: [255, 255, 255]
+      data:
+        text: "LEVEL UP!"
+
+    - type: label
+      position:
+        parent_anchor: top_center
+        offset: [0, 60]
+      graphic:
+        font_size: 24
+        text_color: [200, 200, 200]
+      data:
+        text: "Choose an upgrade:"
+
+    - type: container
+      position:
+        parent_anchor: center
+        offset: [0, 30]
+        layout: horizontal
+        spacing: 15
+      children:
+        - type: button
+          id: upgrade_slot_0
+          position:
+            size: [180, 40]
+          graphic:
+            color: [192, 192, 192]
+            text: "Slot 0"
+            border_radius: 5
+          data:
+            action: none
+
+        - type: button
+          id: upgrade_slot_1
+          position:
+            size: [180, 40]
+          graphic:
+            color: [192, 192, 192]
+            text: "Slot 1"
+            border_radius: 5
+          data:
+            action: none
+
+        - type: button
+          id: upgrade_slot_2
+          position:
+            size: [180, 40]
+          graphic:
+            color: [192, 192, 192]
+            text: "Slot 2"
+            border_radius: 5
+          data:
+            action: none

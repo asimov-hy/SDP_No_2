@@ -42,7 +42,7 @@ from src.scenes.transitions.transitions import FadeTransition, UIFadeOverlay
 from src.systems.game_system_initializer import GameSystemInitializer
 
 # UI
-from src.ui.level_up_ui import LevelUpUI
+from src.scenes.level_up_screen import LevelUp
 
 
 # ===========================================================
@@ -148,7 +148,7 @@ class GameScene(BaseScene):
 
     def _init_level_up_ui(self):
         """Initialize level up UI overlay."""
-        self.level_up_ui = LevelUpUI(self.player)
+        self.level_up_ui = LevelUp(self.player, self.ui)
         self.level_up_ui.on_close = lambda: self.input_manager.set_context("gameplay")
         self.last_player_level = self.player.level
 
@@ -360,7 +360,9 @@ class GameScene(BaseScene):
             return
 
         if self.level_up_ui.is_active:
-            self._update_level_up(dt)
+            if self.input_manager.context != "ui":
+                self.input_manager.set_context("ui")
+            self._update_ui_only(dt)
             return
 
         # --- Level Up Trigger Check ---
@@ -421,19 +423,6 @@ class GameScene(BaseScene):
         mouse_pos = self.input_manager.get_effective_mouse_pos()
         self.ui.update(dt, mouse_pos)
 
-    def _update_level_up(self, dt):
-        """
-        Update level up UI state.
-
-        Args:
-            dt: Delta time in seconds
-        """
-        if self.input_manager.context != "ui":
-            self.input_manager.set_context("ui")
-
-        self.level_up_ui.handle_input(self.input_manager)
-        self.level_up_ui.update(dt)
-
     def _update_gameplay(self, dt):
         """
         Update active gameplay systems.
@@ -478,9 +467,8 @@ class GameScene(BaseScene):
             2. Enemies (via spawn_manager)
             3. Bullets
             4. Overlay (dark tint for pause/game over)
-            5. UI elements
-            6. Level up UI
-            7. Debug overlays (if enabled)
+            5. UI elements (includes level_up when active)
+            6. Debug overlays (if enabled)
 
         Args:
             draw_manager: DrawManager for queuing draws
@@ -493,9 +481,8 @@ class GameScene(BaseScene):
         # Overlay (between game and UI)
         self.overlay.draw(draw_manager)
 
-        # UI layers
+        # UI layers (includes level_up screen when active)
         self.ui.draw(draw_manager)
-        self.level_up_ui.draw(draw_manager)
 
         # Debug overlays
         if Debug.HITBOX_VISIBLE:
@@ -512,12 +499,7 @@ class GameScene(BaseScene):
         Args:
             event: pygame event object
         """
-        # Level up UI has priority
-        if self.level_up_ui.is_active:
-            if self.level_up_ui.handle_event(event):
-                return
-
-        # UI event handling
+        # UI event handling (includes level_up when active)
         action = self.ui.handle_event(event)
         self._handle_ui_action(action)
 
@@ -528,6 +510,13 @@ class GameScene(BaseScene):
         Args:
             action: Action string from UI button
         """
+        if action is None:
+            return
+
+        # Let level_up handle upgrade actions
+        if self.level_up_ui.handle_action(action):
+            return
+
         if action == "resume":
             self.scene_manager.resume_active_scene()
         elif action in ("quit", "return_to_menu"):

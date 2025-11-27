@@ -50,7 +50,6 @@ class UIManager:
         # Focus navigation
         self.focusables: List[UIElement] = []  # Flat list of focusable buttons
         self.focus_index: int = -1  # -1 = none focused
-        self.nav_mode: str = "vertical"  # "vertical", "horizontal", or "both"
 
         self._pending_action: Optional[str] = None
 
@@ -276,22 +275,13 @@ class UIManager:
         """Process keyboard/controller UI navigation."""
         inp = self.input_manager
 
-        # Navigate up/down or left/right based on nav_mode
-        if self.nav_mode in ("vertical", "both"):
-            if inp.action_pressed("navigate_up"):
-                self.transfer_hover_to_focus()
-                self.navigate(-1)
-            elif inp.action_pressed("navigate_down"):
-                self.transfer_hover_to_focus()
-                self.navigate(1)
-
-        if self.nav_mode in ("horizontal", "both"):
-            if inp.action_pressed("navigate_left"):
-                self.transfer_hover_to_focus()
-                self.navigate(-1)
-            elif inp.action_pressed("navigate_right"):
-                self.transfer_hover_to_focus()
-                self.navigate(1)
+        # Up/Left = previous, Down/Right = next
+        if inp.action_pressed("navigate_up") or inp.action_pressed("navigate_left"):
+            self.transfer_hover_to_focus()
+            self.navigate(-1)
+        elif inp.action_pressed("navigate_down") or inp.action_pressed("navigate_right"):
+            self.transfer_hover_to_focus()
+            self.navigate(1)
 
         # Confirm activates focused button
         if inp.action_pressed("confirm"):
@@ -473,7 +463,7 @@ class UIManager:
             action = self._pending_action
             self._pending_action = None
             return action
-        
+
         if event.type != pygame.MOUSEBUTTONDOWN or event.button != 1:
             return None
 
