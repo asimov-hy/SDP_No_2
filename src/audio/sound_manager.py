@@ -36,6 +36,9 @@ class SoundManager:
         self.master_volume = 1.0
         self.load_assets()
 
+        self.current_bgm = None
+        self.current_bgm_id = None
+
     def load_assets(self):
         # DebugLogger.init("Loading Audio Assets...")
         for name, path in self.ASSET_PATHS["bgm"].items(): # load BGM
@@ -64,14 +67,21 @@ class SoundManager:
         bfx.play()
 
     def play_bgm(self, name, loop): # play BGM
+        if self.current_bgm_id == name:
+            return
+        if self.current_bgm:
+                self.stop_bgm()
+
         route = self.bgm[name]
         pygame.mixer.music.load(route)
         volume = self.master_volume * self.bgm_volume
         pygame.mixer.music.set_volume(volume)
         pygame.mixer.music.play(loops=loop)
+        self.current_bgm_id = name
 
     def stop_bgm(self): # stop BGM
         pygame.mixer.music.stop()
+        self.current_bgm_id = None
 
     # Set BFX volume (0 - 100)
     def set_bfx_volume(self, level):

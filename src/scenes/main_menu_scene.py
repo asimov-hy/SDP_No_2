@@ -42,8 +42,6 @@ class MainMenuScene(BaseScene):
         """Called when leaving scene."""
         self._clear_background()
         self.ui.hide_screen("main_menu")
-        menu_sound = self.services.get_global("sound_manager")
-        menu_sound.stop_bgm()
 
     def update(self, dt: float):
         """Update menu logic."""
