@@ -57,7 +57,14 @@ class BaseBullet(BaseEntity):
         # Load defaults from JSON
         if BaseBullet._cached_defaults is None:
             BaseBullet._cached_defaults = EntityRegistry.get_data("projectile", "straight")
+
         defaults = BaseBullet._cached_defaults
+        if not defaults:
+            DebugLogger.fail(
+                "bullets.json not loaded or missing 'straight' definition",
+                category="loading"
+            )
+            raise ValueError("BaseBullet requires bullets.json with 'straight' definition")
 
         # Apply overrides or use defaults
         damage = damage if damage is not None else defaults.get("damage", 1)

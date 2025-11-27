@@ -14,6 +14,7 @@ import pygame
 from src.core.runtime.game_settings import Display
 
 VELOCITY_SMOOTHING_RATE = 8.0
+EDGE_PARALLAX_BOOST = 2.5  # parallax boost Multiplier when clamped
 
 def update_movement(player, dt):
     """
@@ -56,21 +57,21 @@ def update_movement(player, dt):
         max_speed = player.speed * max_speed_mult
         max_speed_sq = max_speed ** 2
         if vel_len_sq > max_speed_sq:
-            player.velocity.scale_to_length(max_speed)
+            scale = max_speed / (vel_len_sq ** 0.5)
+            player.velocity *= scale
 
     # -------------------------------------------------------
     # No movement input — apply friction
     # -------------------------------------------------------
     else:
-        current_speed = player.velocity.length()
-        if current_speed > 0:
+        speed_sq = player.velocity.length_squared()
+        if speed_sq > 0:
+            current_speed = speed_sq ** 0.5
             new_speed = max(0.0, current_speed - friction_rate * dt)
-
-            # Stop completely when almost stationary
             if new_speed < 5.0:
                 player.velocity.xy = (0, 0)
             else:
-                player.velocity.scale_to_length(new_speed)
+                player.velocity *= (new_speed / current_speed)
 
     # -------------------------------------------------------
     # Update position and constrain within screen bounds
@@ -81,9 +82,6 @@ def update_movement(player, dt):
     player.virtual_pos += velocity_for_bg * dt
 
     clamp_to_screen(player)
-
-    # Apply parallax boost if pushing against edges (NEW SECTION)
-    EDGE_PARALLAX_BOOST = 2.5  # Multiplier when clamped
 
     if player.clamped_x and move_vec.x != 0:  # Still trying to move horizontally
         boost_amount = move_vec.x * player.speed * (EDGE_PARALLAX_BOOST - 1) * dt
@@ -115,7 +113,7 @@ def clamp_to_screen(player):
     player.clamped_y = (player.pos.y != old_y)
 
     # Stop velocity if clamping occurred
-    if player.pos.x != old_x:
+    if player.clamped_x:
         player.velocity.x = 0
-    if player.pos.y != old_y:
+    if player.clamped_y:
         player.velocity.y = 0

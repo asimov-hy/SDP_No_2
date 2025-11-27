@@ -63,8 +63,14 @@ class Player(BaseEntity):
         cfg = load_config("player.json", {})
         self.cfg = cfg
 
-        if "core_attributes" not in cfg or "render" not in cfg or "health_states" not in cfg:
-            raise ValueError("Invalid player.json: missing required sections")
+        _REQUIRED_SECTIONS = ("core_attributes", "render", "health_states")
+        missing = [s for s in _REQUIRED_SECTIONS if s not in cfg]
+        if missing:
+            DebugLogger.fail(
+                f"player.json missing required sections: {missing}",
+                category="loading"
+            )
+            raise ValueError(f"Invalid player.json: missing {missing}")
 
         core = cfg["core_attributes"]
         render = cfg["render"]
@@ -84,8 +90,7 @@ class Player(BaseEntity):
                 # Calculate scale factor from original image size
                 if sprite_path and os.path.exists(sprite_path):
                     temp_img = pygame.image.load(sprite_path).convert_alpha()
-                    scale = (size[0] / temp_img.get_width(), size[1] / temp_img.get_height())
-                    image = BaseEntity.load_and_scale_image(sprite_path, scale)
+                    image = pygame.transform.scale(temp_img, size)
 
                 else:
                     DebugLogger.warn(f"Missing sprite: {sprite_path}, using fallback.")
@@ -188,21 +193,21 @@ class Player(BaseEntity):
         self.bullet_speed = combat_cfg.get("bullet_speed", 900)
         self.shoot_timer = 0.0
 
-        # ========================================
-        # Load Player Bullet Sprite
-        # ========================================
-        bullet_cfg = render.get("bullet", {})
-        bullet_path = bullet_cfg.get("path", "assets/images/null.png")
-        bullet_size = tuple(bullet_cfg.get("size", [16, 32]))
-
-        temp_img = pygame.image.load(bullet_path).convert_alpha() if os.path.exists(bullet_path) else None
-        if temp_img:
-            scale = (bullet_size[0] / temp_img.get_width(), bullet_size[1] / temp_img.get_height())
-            self.bullet_image = BaseEntity.load_and_scale_image(bullet_path, scale)
-        else:
-            DebugLogger.warn(f"Missing bullet sprite: {bullet_path}")
-            self.bullet_image = pygame.Surface(bullet_size, pygame.SRCALPHA)
-            pygame.draw.rect(self.bullet_image, (255, 255, 100), (0, 0, *bullet_size))
+        # # ========================================
+        # # Load Player Bullet Sprite
+        # # ========================================
+        # bullet_cfg = render.get("bullet", {})
+        # bullet_path = bullet_cfg.get("path", "assets/images/null.png")
+        # bullet_size = tuple(bullet_cfg.get("size", [16, 32]))
+        #
+        # temp_img = pygame.image.load(bullet_path).convert_alpha() if os.path.exists(bullet_path) else None
+        # if temp_img:
+        #     scale = (bullet_size[0] / temp_img.get_width(), bullet_size[1] / temp_img.get_height())
+        #     self.bullet_image = BaseEntity.load_and_scale_image(bullet_path, scale)
+        # else:
+        #     DebugLogger.warn(f"Missing bullet sprite: {bullet_path}")
+        #     self.bullet_image = pygame.Surface(bullet_size, pygame.SRCALPHA)
+        #     pygame.draw.rect(self.bullet_image, (255, 255, 100), (0, 0, *bullet_size))
 
         # ========================================
         # 7. Global Ref & Status
@@ -357,3 +362,17 @@ class Player(BaseEntity):
         """Set manager and synchronize shooting state."""
         self._bullet_manager = manager
         self._shooting_enabled = manager is not None
+
+    def get_bullet_config(self) -> dict:
+        """Return bullet configuration for BulletManager registration."""
+        render = self.cfg.get("render", {})
+        bullet_cfg = render.get("bullet", {})
+        combat_cfg = self.cfg.get("combat", {})
+
+        return {
+            "path": bullet_cfg.get("path"),
+            "size": bullet_cfg.get("size", [16, 32]),
+            "damage": combat_cfg.get("bullet_damage", 1),
+            "color": (255, 255, 100),  # Fallback color
+            "radius": 4
+        }

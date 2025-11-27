@@ -54,6 +54,7 @@ class SceneManager:
         # Pre-load entity configs once at startup
         EntityRegistry.load_entity_data("enemies.json")
         EntityRegistry.load_entity_data("items.json")
+        EntityRegistry.load_entity_data("bullets.json")
         DebugLogger.init_sub("Entity configs pre-loaded")
 
         # setting sound files

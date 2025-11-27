@@ -75,18 +75,10 @@ class StatModifier:
 
         for stat, mods in self._modifiers.items():
             # Filter in-place: keep non-expired
-            i = 0
-            while i < len(mods):
-                mod = mods[i]
-                if mod["time"] == PERMANENT_DURATION:
-                    i += 1
-                    continue
-
-                mod["time"] -= dt
-                if mod["time"] <= 0:
-                    mods.pop(i)
-                else:
-                    i += 1
+            for mod in mods:
+                if mod["time"] != PERMANENT_DURATION:
+                    mod["time"] -= dt
+            self._modifiers[stat] = [m for m in mods if m["time"] == PERMANENT_DURATION or m["time"] > 0]
 
             if not mods:
                 empty_stats.append(stat)
