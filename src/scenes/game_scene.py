@@ -23,6 +23,7 @@ from src.entities.entity_state import LifecycleState
 # Scenes
 from src.scenes.base_scene import BaseScene
 from src.scenes.scene_state import SceneState
+from src.scenes.transitions.transitions import FadeTransition, UIFadeOverlay
 
 # Systems
 from src.systems.game_system_initializer import GameSystemInitializer
@@ -76,6 +77,12 @@ class GameScene(BaseScene):
 
         # Level up UI
         self._init_level_up_ui()
+
+        # Level up UI
+        self._init_level_up_ui()
+
+        # Overlay for pause/game over
+        self.overlay = UIFadeOverlay(color=(0, 0, 0), max_alpha=150)
 
         # Event subscriptions
         self.level_manager.on_level_complete = self._on_level_complete
@@ -171,11 +178,13 @@ class GameScene(BaseScene):
     def on_pause(self):
         """Pause gameplay and show pause overlay."""
         self.pause_background()
+        self.overlay.fade_in(speed=600)
         self.ui.show_screen("pause", modal=True)
 
     def on_resume(self):
         """Resume gameplay from pause."""
         self.resume_background()
+        self.overlay.fade_out(speed=600)
         self.ui.hide_screen("pause")
 
     # ===========================================================
@@ -253,6 +262,9 @@ class GameScene(BaseScene):
         Args:
             dt: Delta time in seconds
         """
+        # Update overlay animation
+        self.overlay.update(dt)
+
         # Check player death
         if self._check_player_death():
             return
@@ -386,6 +398,9 @@ class GameScene(BaseScene):
         self.spawn_manager.draw()
         self.bullet_manager.draw(draw_manager)
 
+        # Overlay (between game and UI)
+        self.overlay.draw(draw_manager)
+
         # UI layers
         self.ui.draw(draw_manager)
         self.level_up_ui.draw(draw_manager)
@@ -424,7 +439,7 @@ class GameScene(BaseScene):
         if action == "resume":
             self.scene_manager.resume_active_scene()
         elif action in ("quit", "return_to_menu"):
-            self.scene_manager.set_scene("MainMenu")
+            self.scene_manager.set_scene("MainMenu", transition=FadeTransition(0.5))
 
     # ===========================================================
     # Game Events
@@ -460,6 +475,9 @@ class GameScene(BaseScene):
             victory: True for victory, False for defeat
         """
         self.game_over_shown = True
+
+        # Fade overlay
+        self.overlay.fade_in(speed=400)
 
         # Audio
         sound_manager = self.services.get_global("sound_manager")

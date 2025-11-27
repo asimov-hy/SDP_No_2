@@ -6,6 +6,7 @@ Main menu - title, start game, settings, quit.
 
 import pygame
 from src.scenes.base_scene import BaseScene
+from src.scenes.transitions.transitions import FadeTransition
 
 
 class MainMenuScene(BaseScene):
@@ -58,8 +59,8 @@ class MainMenuScene(BaseScene):
         action = self.ui.handle_event(event)
 
         if action == "start_game":
-            self.scene_manager.set_scene("CampaignSelect")
+            self.scene_manager.set_scene("CampaignSelect", transition=FadeTransition(0.4))
         elif action == "settings":
-            self.scene_manager.set_scene("Settings", caller="MainMenu")
+            self.scene_manager.set_scene("Settings", transition=FadeTransition(0.3), caller="MainMenu")
         elif action == "quit":
             pygame.event.post(pygame.event.Event(pygame.QUIT))

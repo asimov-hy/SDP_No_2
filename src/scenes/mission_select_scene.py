@@ -5,6 +5,7 @@ Campaign/mission selection screen.
 """
 
 from src.scenes.base_scene import BaseScene
+from src.scenes.transitions.transitions import FadeTransition
 
 
 class MissionSelectScene(BaseScene):
@@ -56,9 +57,10 @@ class MissionSelectScene(BaseScene):
 
         if action and action.startswith("select_level_"):
             level_id = action.replace("select_level_", "")
-            self.scene_manager.set_scene("Game", level_id=level_id)
+            self.scene_manager.set_scene("Game", transition=FadeTransition(0.5), level_id=level_id)
+
         elif action == "back":
-            self.scene_manager.set_scene("MainMenu")
+            self.scene_manager.set_scene("MainMenu", transition=FadeTransition(0.3))
 
     def _populate_levels(self):
         """Update level button text dynamically."""

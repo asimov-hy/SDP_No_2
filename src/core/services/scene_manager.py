@@ -79,7 +79,10 @@ class SceneManager:
         # Transition system
         self._active_transition = None
         self._transition_old_scene = None
+        self._transition_old_name = None
         self._transition_new_scene = None
+        self._transition_new_name = None
+        self._fade_in_overlay = None
 
         DebugLogger.init_sub(f"Registered scenes: {list(self.scene_classes.keys())}")
 
@@ -102,7 +105,31 @@ class SceneManager:
             DebugLogger.warn(f"Unknown scene: '{name}'")
             return
 
-        # === STEP 1: Exit old scene ===
+        # Log transition
+        prev_name = self._active_name or "None"
+        DebugLogger.system(f"Transitioning [{prev_name}] → [{name}]")
+
+        # 1. Create new scene
+        scene_class = self.scene_classes[name]
+        new_scene = scene_class(self.services)
+
+        # 2. Load new scene
+        new_scene.state = SceneState.LOADING
+        DebugLogger.state(f"Loading {name}")
+        new_scene.on_load(**scene_data)
+
+        # 3. Handle transition
+        if transition is not None:
+            new_scene.state = SceneState.TRANSITIONING
+            self._active_transition = transition
+            self._transition_old_scene = self._active_scene
+            self._transition_old_name = self._active_name  # ADD THIS
+            self._transition_new_scene = new_scene
+            self._transition_new_name = name  # ADD THIS
+            DebugLogger.state(f"Starting transition: {transition.__class__.__name__}")
+            return
+
+        # 4. Exit old scene
         if self._active_scene:
             DebugLogger.state(f"Exiting {self._active_name}")
             self._active_scene.state = SceneState.EXITING
@@ -111,40 +138,18 @@ class SceneManager:
             # Clear scene-local entities
             self.services.clear_entities()
 
-        # Log transition
-        prev_name = self._active_name or "None"
-        DebugLogger.system(f"Transitioning [{prev_name}] → [{name}]")
-
-        # === STEP 2: Create new scene ===
-        scene_class = self.scene_classes[name]
-        new_scene = scene_class(self.services)
-
+        # 5. Activate new scene
         self._active_scene = new_scene
         self._active_name = name
-
-        # === STEP 3: Load new scene ===
-        new_scene.state = SceneState.LOADING
-        DebugLogger.state(f"Loading {name}")
-        new_scene.on_load(**scene_data)
-
-        # === STEP 4: Activate ===
         new_scene.state = SceneState.ACTIVE
         DebugLogger.section(f"Active Scene: {name}")
 
-        # === STEP 5: Handle transition ===
-        if transition is not None:
-            new_scene.state = SceneState.TRANSITIONING
-            self._active_transition = transition
-            self._transition_old_scene = self._active_scene
-            self._transition_new_scene = new_scene
-            DebugLogger.state(f"Starting transition: {transition.__class__.__name__}")
-            return
 
-        # === STEP 6: Enter scene ===
+        # 6. Enter scene
         DebugLogger.state(f"Entering {name}")
         new_scene.on_enter()
 
-        # === STEP 7: Switch input context ===
+        # 7. Switch input context
         self.input_manager.set_context(new_scene.input_context)
 
     def pause_active_scene(self):
@@ -241,17 +246,41 @@ class SceneManager:
 
             if transition_complete:
                 DebugLogger.state("Transition complete")
+
+                # Get fade-in overlay before clearing transition
+                if hasattr(self._active_transition, 'create_fade_in_overlay'):
+                    self._fade_in_overlay = self._active_transition.create_fade_in_overlay()
+
+                # Exit old scene NOW
+                if self._transition_old_scene:
+                    DebugLogger.state(f"Exiting {self._transition_old_name}")
+                    self._transition_old_scene.state = SceneState.EXITING
+                    self._transition_old_scene.on_exit()
+                    self.services.clear_entities()
+
+                # Activate new scene
+                self._active_scene = self._transition_new_scene
+                self._active_name = self._transition_new_name
+                self._active_scene.state = SceneState.ACTIVE
+                DebugLogger.section(f"Active Scene: {self._active_name}")
+                self._active_scene.on_enter()
+
+                # Cleanup
                 self._active_transition = None
                 self._transition_old_scene = None
+                self._transition_old_name = None
                 self._transition_new_scene = None
-
-                # Activate and enter new scene
-                self._active_scene.state = SceneState.ACTIVE
-                self._active_scene.on_enter()
+                self._transition_new_name = None
 
                 # Switch input context
                 self.input_manager.set_context(self._active_scene.input_context)
             return
+
+        # Update fade-in overlay (add AFTER the transition block, before pause handling)
+        if self._fade_in_overlay:
+            self._fade_in_overlay.update(dt)
+            if not self._fade_in_overlay.is_visible:
+                self._fade_in_overlay = None
 
         # Handle pause toggle - only in Game scene
         if self._active_name == "Game":
@@ -288,6 +317,10 @@ class SceneManager:
         # Normal scene rendering
         if self._active_scene:
             self._active_scene.draw(draw_manager)
+
+        # Fade-in overlay (post-transition)
+        if self._fade_in_overlay:
+            self._fade_in_overlay.draw(draw_manager)
 
     def get_player(self):
         return self.services.get_entity("player")

@@ -1,5 +1,5 @@
 """
-i_transition.py
+base_transition.py
 ---------------
 Interface for scene transitions.
 """
@@ -7,7 +7,7 @@ Interface for scene transitions.
 from abc import ABC, abstractmethod
 
 
-class ITransition(ABC):
+class BaseTransition(ABC):
     """Base interface for scene transitions."""
 
     def __init__(self, duration: float = 0.0):
