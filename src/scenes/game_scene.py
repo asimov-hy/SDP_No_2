@@ -49,6 +49,8 @@ from src.ui.level_up_ui import LevelUpUI
 # Constants
 # ===========================================================
 
+MAPS_PATH = "assets/images/maps/"
+
 # Default background for levels without explicit config
 DEFAULT_BACKGROUND = {
     "layers": [
@@ -293,8 +295,12 @@ class GameScene(BaseScene):
         if "background" in level_data:
             bg_config = {"layers": []}
             for layer in level_data["background"].get("layers", []):
+                image = layer.get("image", default_layer["image"])
+                if image and not image.startswith("assets/"):
+                    image = MAPS_PATH + image
+
                 merged = {
-                    "image": layer.get("image", default_layer["image"]),
+                    "image": image,
                     "scroll_speed": layer.get("scroll_speed", default_layer["scroll_speed"]),
                     "parallax": layer.get("parallax", default_layer["parallax"])
                 }

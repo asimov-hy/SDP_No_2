@@ -11,10 +11,12 @@ from src.scenes.transitions.transitions import FadeTransition
 class MissionSelectScene(BaseScene):
     """Mission selection scene."""
 
+    BACKGROUNDS_PATH = "assets/images/backgrounds/"
+
     BACKGROUND_CONFIG = {
         "layers": [{
-            "image": "assets/images/maps/mission_select.png",
-            "scroll_speed": [1, 0],
+            "image": BACKGROUNDS_PATH + "mission_select.png",
+            "scroll_speed": [0, 0],
             "parallax": [0, 0]
         }]
     }

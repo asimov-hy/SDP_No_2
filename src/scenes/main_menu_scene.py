@@ -8,13 +8,14 @@ import pygame
 from src.scenes.base_scene import BaseScene
 from src.scenes.transitions.transitions import FadeTransition
 
-
 class MainMenuScene(BaseScene):
     """Main menu scene with navigation."""
 
+    BACKGROUNDS_PATH = "assets/images/backgrounds/"
+
     BACKGROUND_CONFIG = {
         "layers": [{
-            "image": "assets/images/maps/main_menu.png",
+            "image": BACKGROUNDS_PATH + "main_menu.png",
             "scroll_speed": [0, 0],
             "parallax": [0, 0]
         }]
