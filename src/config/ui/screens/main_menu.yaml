@@ -3,6 +3,7 @@ main_menu:
   size: [1280, 720]
   parent_anchor: center
   layer: Layers.UI
+
   children:
     # Title
     - type: label
