@@ -40,9 +40,10 @@ def _fire_bullet(player):
         StraightBullet,
         pos=player.rect.center,
         vel=vel,
-        image=player.bullet_image,
-        radius=4,
         owner="player",
     )
+
+    if hasattr(player, "sound_manager") and player.sound_manager:
+        player.sound_manager.play_bfx("player_shoot")
 
     DebugLogger.state("StraightBullet fired", category="combat")

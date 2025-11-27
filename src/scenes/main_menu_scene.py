@@ -6,6 +6,7 @@ Main menu - title, start game, settings, quit.
 
 import pygame
 from src.scenes.base_scene import BaseScene
+from src.scenes.transitions.transitions import FadeTransition
 
 
 class MainMenuScene(BaseScene):
@@ -32,11 +33,15 @@ class MainMenuScene(BaseScene):
         self.ui.hide_all_screens()
         self.ui.load_screen("main_menu", "screens/main_menu.yaml")
         self.ui.show_screen("main_menu")
+        menu_sound = self.services.get_global("sound_manager")
+        menu_sound.play_bgm("menu_bgm", loop=-1)
 
     def on_exit(self):
         """Called when leaving scene."""
         self._clear_background()
         self.ui.hide_screen("main_menu")
+        menu_sound = self.services.get_global("sound_manager")
+        menu_sound.stop_bgm()
 
     def update(self, dt: float):
         """Update menu logic."""
@@ -54,8 +59,8 @@ class MainMenuScene(BaseScene):
         action = self.ui.handle_event(event)
 
         if action == "start_game":
-            self.scene_manager.set_scene("CampaignSelect")
+            self.scene_manager.set_scene("CampaignSelect", transition=FadeTransition(0.4))
         elif action == "settings":
-            self.scene_manager.set_scene("Settings", caller="MainMenu")
+            self.scene_manager.set_scene("Settings", transition=FadeTransition(0.3), caller="MainMenu")
         elif action == "quit":
             pygame.event.post(pygame.event.Event(pygame.QUIT))

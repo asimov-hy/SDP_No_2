@@ -105,10 +105,11 @@ class GameSystemInitializer(SystemInitializer):
         player.bullet_manager = bullet_manager
         DebugLogger.init_sub("Connected [Player] → [BulletManager]")
 
+        bullet_manager.register_bullet_config("player", player.get_bullet_config())
+
         bullet_manager.prewarm_pool(
             owner="player",
             count=50,
-            image=player.bullet_image
         )
 
         # collision_manager = CollisionManager(

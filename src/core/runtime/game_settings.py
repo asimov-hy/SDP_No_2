@@ -1,85 +1,107 @@
 """
 game_settings.py
------------
-Centralized configuration for all game systems.
+----------------
+Centralized constants for all game systems.
 """
 
 
 # ===========================================================
 # Display & Performance
 # ===========================================================
-class Display:
-    WIDTH = 1280
-    HEIGHT = 720
-    FPS = 60
-    CAPTION = "202X"
 
-    # Window size presets
+class Display:
+    """Screen and window configuration."""
+    WIDTH: int = 1280
+    HEIGHT: int = 720
+    FPS: int = 60
+    CAPTION: str = "202X"
+
     WINDOW_SIZES = {
-        "small": (1280, 720),  # 1x - 720p
-        "medium": (1920, 1080),  # 1.5x - 1080p
-        "large": (2560, 1440),  # 2x - 1440p
+        "small": (1280, 720),
+        "medium": (1920, 1080),
+        "large": (2560, 1440),
     }
-    DEFAULT_WINDOW_SIZE = "small"
+    DEFAULT_WINDOW_SIZE: str = "small"
 
 
 # ===========================================================
 # Physics & Timing
 # ===========================================================
-class Physics:
-    UPDATE_RATE = 60  # Hz
-    FIXED_DT = 1 / UPDATE_RATE
-    MAX_FRAME_TIME = 0.1  # Prevent frame spiral
 
+class Physics:
+    """Physics and update timing."""
+    UPDATE_RATE: int = 60
+    FIXED_DT: float = 1 / UPDATE_RATE
+    MAX_FRAME_TIME: float = 0.1
+
+
+# ===========================================================
+# Input Configuration
+# ===========================================================
+
+class Input:
+    """Controller and input configuration."""
+    CONTROLLER_DEADZONE: float = 0.2
+    CONTROLLER_UI_THRESHOLD: float = 0.5
+
+
+# ===========================================================
+# Bounds & Margins
+# ===========================================================
 
 class Bounds:
-    """Margin values for entity lifecycle management"""
+    """Margin values for entity lifecycle management."""
     # Enemies
-    ENEMY_DAMAGE_MARGIN = 50  # Must enter screen this far to be hittable
-    ENEMY_CLEANUP_MARGIN = 200  # Auto-cleanup when this far offscreen
+    ENEMY_DAMAGE_MARGIN: int = 50
+    ENEMY_CLEANUP_MARGIN: int = 200
 
     # Bullets
-    BULLET_PLAYER_MARGIN = 50  # Player bullets travel slightly offscreen
-    BULLET_ENEMY_MARGIN = 100  # Enemy bullets travel further
+    BULLET_PLAYER_MARGIN: int = 50
+    BULLET_ENEMY_MARGIN: int = 100
 
     # Items
-    ITEM_CLEANUP_MARGIN = 50
+    ITEM_CLEANUP_MARGIN: int = 50
 
-    # Environment entities (for future use)
-    ENV_DAMAGE_MARGIN = 0  # Hittable immediately
-    ENV_CLEANUP_MARGIN = 300
+    # Environment
+    ENV_DAMAGE_MARGIN: int = 0
+    ENV_CLEANUP_MARGIN: int = 300
 
 
 # ===========================================================
 # Rendering Layers
 # ===========================================================
+
 class Layers:
-    BACKGROUND = 0
-    ENEMIES = 1
-    PICKUPS = 2
-    BULLETS = 3
-    PLAYER = 4
-    PARTICLES = 5
-    UI = 9
-    DEBUG = 150   # Always on top
+    """Z-order for rendering."""
+    BACKGROUND: int = 0
+    ENEMIES: int = 1
+    PICKUPS: int = 2
+    BULLETS: int = 3
+    PLAYER: int = 4
+    PARTICLES: int = 5
+    UI: int = 9
+    DEBUG: int = 150
 
 
 # ===========================================================
-# Player Configuration
+# Player Defaults
 # ===========================================================
+
 class Player:
-    SPEED = 300
-    FOCUSED_SPEED = 150
-    HITBOX_RADIUS = 2
+    """Player configuration defaults."""
+    SPEED: int = 300
+    FOCUSED_SPEED: int = 150
+    HITBOX_RADIUS: int = 2
 
 
 # ===========================================================
-# Debug (Visual)
+# Debug Display
 # ===========================================================
+
 class Debug:
-    """Visual debug and HUD toggles — not related to logging."""
-
-    SHOW_FPS = True
-    FRAME_TIME_WARNING = 16.67
-    HITBOX_VISIBLE = False
-    HITBOX_LINE_WIDTH = 5
+    """Visual debug toggles -- not related to logging."""
+    SHOW_FPS: bool = True
+    FRAME_TIME_WARNING: float = 16.67
+    HITBOX_VISIBLE: bool = False
+    HITBOX_LINE_WIDTH: int = 5
+    PROFILING_ENABLED: bool = False
