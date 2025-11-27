@@ -74,13 +74,15 @@ class Bounds:
 class Layers:
     """Z-order for rendering."""
     BACKGROUND: int = 0
-    PICKUPS: int = 1
-    BULLETS: int = 2
-    ENEMIES: int = 3
-    PLAYER: int = 4
-    PARTICLES: int = 5
-    UI: int = 9
-    DEBUG: int = 150
+    PICKUPS: int = 100
+    BULLETS: int = 200
+    ENEMIES: int = 300
+    PLAYER: int = 400
+    PARTICLES: int = 500
+    UI: int = 600
+    OVERLAY: int = 700      # Pause, game over screens
+    MODAL: int = 800    # Tint overlays (if used separately)
+    DEBUG: int = 900
 
 
 # ===========================================================

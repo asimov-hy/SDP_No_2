@@ -5,8 +5,11 @@ Scene transition effects.
 """
 
 import pygame
-from src.scenes.transitions.base_transition import BaseTransition
+
 from src.core.runtime.game_settings import Display
+from src.core.runtime.game_settings import Layers
+
+from src.scenes.transitions.base_transition import BaseTransition
 
 
 class InstantTransition(BaseTransition):
@@ -100,8 +103,84 @@ class UIFadeOverlay:
     def draw(self, draw_manager):
         if self.alpha > 0:
             self.surface.fill((*self.color[:3], int(self.alpha)))
-            draw_manager.queue_draw(self.surface, self.surface.get_rect(), layer=8000)
+            draw_manager.queue_draw(self.surface, self.surface.get_rect(), layer=Layers.OVERLAY)
 
     @property
     def is_visible(self) -> bool:
         return self.alpha > 0
+
+
+class UISlideAnimation:
+    """Slide animation for UI screens."""
+
+    def __init__(self, direction: str = "top", duration: float = 0.3, reverse: bool = False):
+        """
+        Args:
+            direction: 'top', 'bottom', 'left', 'right'
+            duration: Animation duration in seconds
+        """
+        self.direction = direction
+        self.duration = duration
+        self.elapsed = 0.0
+        self.active = True
+        self.reverse = reverse
+
+        # Slide in: start off-screen, end at 0
+        # Slide out: start at 0, end off-screen
+        if reverse:
+            self._start = (0, 0)
+            self._end = self._get_off_screen_offset()
+        else:
+            self._start = self._get_off_screen_offset()
+            self._end = (0, 0)
+
+        self._offset = self._start
+
+    def _get_off_screen_offset(self) -> tuple:
+        """Get off-screen offset based on direction."""
+        if self.direction == "top":
+            return (0, -Display.HEIGHT)
+        elif self.direction == "bottom":
+            return (0, Display.HEIGHT)
+        elif self.direction == "left":
+            return (-Display.WIDTH, 0)
+        elif self.direction == "right":
+            return (Display.WIDTH, 0)
+        return (0, 0)
+
+    def update(self, dt: float) -> bool:
+        """
+        Update animation.
+
+        Returns:
+            True if animation complete
+        """
+        if not self.active:
+            return True
+
+        self.elapsed += dt
+        progress = min(self.elapsed / self.duration, 1.0)
+
+        # Ease-out curve
+        eased = 1 - (1 - progress) ** 2
+
+        self._offset = (
+            int(self._start[0] + (self._end[0] - self._start[0]) * eased),
+            int(self._start[1] + (self._end[1] - self._start[1]) * eased)
+        )
+
+        if progress >= 1.0:
+            self._offset = self._end
+            self.active = False
+            return True
+
+        return False
+
+    @property
+    def offset(self) -> tuple:
+        """Current position offset (x, y)."""
+        return self._offset
+
+    @property
+    def is_complete(self) -> bool:
+        return not self.active
