@@ -56,6 +56,7 @@ class UIButton(UIElement):
         # State
         self.is_hovered = False
         self.is_pressed = False
+        self.is_focused = False
         self.hover_t = 0.0
 
         # Transition speed
@@ -80,10 +81,11 @@ class UIButton(UIElement):
 
         # Check hover state
         was_hovered = self.is_hovered
-        self.is_hovered = self.rect.collidepoint(mouse_pos)
+        self.is_hovered = mouse_pos != (-1, -1) and self.rect.collidepoint(mouse_pos)
 
         # Smooth hover transition
-        target = 1.0 if self.is_hovered else 0.0
+        is_highlighted = self.is_hovered or self.is_focused
+        target = 1.0 if is_highlighted else 0.0
         self.hover_t += (target - self.hover_t) * self.transition_speed * dt
         self.hover_t = max(0.0, min(1.0, self.hover_t))
 

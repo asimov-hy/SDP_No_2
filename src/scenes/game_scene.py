@@ -418,7 +418,7 @@ class GameScene(BaseScene):
         Args:
             dt: Delta time in seconds
         """
-        mouse_pos = self.input_manager.get_mouse_pos()
+        mouse_pos = self.input_manager.get_effective_mouse_pos()
         self.ui.update(dt, mouse_pos)
 
     def _update_level_up(self, dt):
@@ -462,7 +462,7 @@ class GameScene(BaseScene):
         self.spawn_manager.cleanup()
 
         # UI update
-        mouse_pos = self.input_manager.get_mouse_pos()
+        mouse_pos = self.input_manager.get_effective_mouse_pos()
         self.ui.update(dt, mouse_pos)
 
     # ===========================================================

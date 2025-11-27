@@ -67,6 +67,7 @@ class MainLoop:
         self.ui_manager = UIManager(
             self.display,
             self.draw_manager,
+            input_manager=self.input_manager,
             game_width=Display.WIDTH,
             game_height=Display.HEIGHT
         )

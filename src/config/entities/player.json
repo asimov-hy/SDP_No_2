@@ -4,7 +4,7 @@
   "core_attributes": {
     "_notes": "Defines base physics and behavior values.",
     "scale": 1.0,
-    "health": 1,
+    "health": 1000,
     "hitbox_scale": 0.85,
 
     "speed": 300,
@@ -63,7 +63,7 @@
 
   "combat": {
     "_notes": "Shooting and bullet configuration",
-    "shoot_cooldown": 0.1,
+    "shoot_cooldown": 0.01,
     "bullet_speed": 900
   },
 

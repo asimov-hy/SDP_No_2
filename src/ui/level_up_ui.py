@@ -37,9 +37,9 @@ class LevelUpUI:
 
         # Upgrade choices
         self.upgrades = [
-            {"name": "Health +1", "color": (255, 100, 100), "action": "health"},
-            {"name": "Damage +10%", "color": (100, 255, 100), "action": "damage"},
-            {"name": "Speed +10%", "color": (100, 150, 255), "action": "speed"}
+            {"name": "Health +1", "color": (192, 192, 192), "action": "health"},
+            {"name": "Damage +10%", "color": (192, 192, 192), "action": "damage"},
+            {"name": "Speed +10%", "color": (192, 192, 192), "action": "speed"}
         ]
 
         # Button areas
@@ -92,13 +92,15 @@ class LevelUpUI:
         if not self.is_active:
             return
 
-        # Track mouse hover for visual feedback
+        # Track mouse hover
         mouse_pos = pygame.mouse.get_pos()
         self.hovered_index = None
 
         for i, button_rect in enumerate(self.buttons):
             if button_rect.collidepoint(mouse_pos):
                 self.hovered_index = i
+                # Auto-select on hover (optional - syncs keyboard with mouse)
+                self.selected_index = i
                 break
 
     def handle_input(self, input_manager):
@@ -193,14 +195,17 @@ class LevelUpUI:
 
             pygame.draw.rect(surface, upgrade["color"], local_rect, border_radius=5)
 
-            # Highlight selected button (keyboard)
-            if i == self.selected_index:
-                pygame.draw.rect(surface, (255, 255, 100), local_rect, 4, border_radius=5)
-            # Highlight hovered button (mouse)
-            elif i == self.hovered_index:
-                pygame.draw.rect(surface, (255, 255, 255), local_rect, 3, border_radius=5)
-            else:
-                pygame.draw.rect(surface, (255, 255, 255), local_rect, 1, border_radius=5)
+            # Use hover effect for both keyboard and mouse
+            is_active = (i == self.selected_index or i == self.hovered_index)
+
+            # Brighten color when active (hover effect)
+            button_color = upgrade["color"]
+            if is_active:
+                # Brighten by 30 RGB units
+                button_color = tuple(min(c + 30, 255) for c in button_color)
+
+            pygame.draw.rect(surface, button_color, local_rect, border_radius=5)
+            pygame.draw.rect(surface, (255, 255, 255), local_rect, 1, border_radius=5)  # Subtle border
 
             text_surface = self.button_font.render(upgrade["name"], True, (255, 255, 255))
             text_rect = text_surface.get_rect(center=local_rect.center)

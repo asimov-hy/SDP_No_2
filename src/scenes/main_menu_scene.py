@@ -47,7 +47,7 @@ class MainMenuScene(BaseScene):
         """Update menu logic."""
         self._update_background(dt)
 
-        mouse_pos = self.input_manager.get_mouse_pos()
+        mouse_pos = self.input_manager.get_effective_mouse_pos()
         self.ui.update(dt, mouse_pos)
 
     def draw(self, draw_manager):
