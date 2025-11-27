@@ -196,6 +196,7 @@ class BaseEnemy(BaseEntity):
         if self.death_state != LifecycleState.ALIVE:
             return
 
+        # print(f"{self.health} -> {self.health - amount}")
         self.health = max(0, self.health - amount)
 
         if self.health > 0:
@@ -214,6 +215,7 @@ class BaseEnemy(BaseEntity):
             self.on_death(source)
 
     def on_death(self, source):
+        self.death_state = LifecycleState.DYING
         self.layer = Layers.PARTICLES   # TODO: temporary measure -> later replace with seperate layer and death animation
         self.anim_manager.play("death")
 

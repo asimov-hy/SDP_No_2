@@ -12,6 +12,7 @@ from src.ui.core.anchor_resolver import AnchorResolver
 from .binding_system import BindingSystem
 from .ui_loader import UILoader
 from .ui_element import UIElement
+from src.audio.sound_manager import get_sound_manager
 
 
 class UIManager:
@@ -42,6 +43,8 @@ class UIManager:
 
         # State
         self.modal_stack: List[str] = []  # Stack of active modal screens
+        self._screen_animations: Dict[str, 'UISlideAnimation'] = {}  # Active animations
+        self._pending_hides: Dict[str, bool] = {}
 
     # ===================================================================
     # DrawManager Integration
@@ -79,13 +82,15 @@ class UIManager:
         root_element = self.loader.load(filename)
         self.register_screen(name, root_element)
 
-    def show_screen(self, name: str, modal: bool = False):
+    def show_screen(self, name: str, modal: bool = False, slide_from: str = None, slide_duration: float = 0.3):
         """
         Show a screen.
 
         Args:
             name: Screen identifier
             modal: If True, show as overlay on top of current screen
+            slide_from: Optional slide direction ('top', 'bottom', 'left', 'right')
+            slide_duration: Slide animation duration in seconds
         """
         if name not in self.screens:
             return
@@ -94,10 +99,10 @@ class UIManager:
 
         # Auto-assign layer based on modal state
         if modal:
-            self._set_auto_layer(screen, Layers.DEBUG)  # Modal overlays = layer 10
+            self._set_auto_layer(screen, Layers.MODAL)
             self.modal_stack.append(name)
         else:
-            self._set_auto_layer(screen, Layers.UI)  # Regular screens = layer 9
+            self._set_auto_layer(screen, Layers.UI)
             if self.active_screen:
                 self._on_screen_hide(self.active_screen)
 
@@ -108,12 +113,19 @@ class UIManager:
         if screen:
             screen.invalidate_position()
 
-    def hide_screen(self, name: Optional[str] = None):
+        # Start slide animation if specified
+        if slide_from:
+            from src.scenes.transitions.transitions import UISlideAnimation
+            self._screen_animations[name] = UISlideAnimation(slide_from, slide_duration)
+
+    def hide_screen(self, name: Optional[str] = None, slide_to: str = None, slide_duration: float = 0.3):
         """
         Hide a screen.
 
         Args:
-            name: Screen to hide. If None, hides active screen.
+            name: Screen to hide
+            slide_to: Optional slide direction ('top', 'bottom', 'left', 'right')
+            slide_duration: Slide animation duration
         """
         if name is None:
             name = self.active_screen
@@ -121,11 +133,22 @@ class UIManager:
         if not name:
             return
 
-        # Remove from modal stack if present
+        # Start slide-out animation if specified
+        if slide_to:
+            from src.scenes.transitions.transitions import UISlideAnimation
+            self._screen_animations[name] = UISlideAnimation(slide_to, slide_duration, reverse=True)
+            # Delay actual hide until animation completes
+            self._pending_hides[name] = True
+            return
+
+        # Immediate hide
+        self._do_hide_screen(name)
+
+    def _do_hide_screen(self, name: str):
+        """Actually hide the screen (after animation)."""
         if name in self.modal_stack:
             self.modal_stack.remove(name)
 
-        # Clear active screen if it's the one being hidden
         if name == self.active_screen:
             self._on_screen_hide(name)
             self.active_screen = None
@@ -253,6 +276,18 @@ class UIManager:
             dt: Delta time in seconds
             mouse_pos: Current mouse position
         """
+        # Update screen animations
+        completed = []
+        for name, anim in self._screen_animations.items():
+            if anim.update(dt):
+                completed.append(name)
+        for name in completed:
+            del self._screen_animations[name]
+            # Complete pending hides after slide-out
+            if name in self._pending_hides:
+                del self._pending_hides[name]
+                self._do_hide_screen(name)
+
         # Update HUD (always active)
         for element in self.hud_elements:
             self._update_element_tree(element, dt, mouse_pos)
@@ -296,30 +331,31 @@ class UIManager:
             return None
 
         mouse_pos = self.display.screen_to_game_pos(*event.pos)
+        action = None
 
         # Check modal screens first (top to bottom)
         for screen_name in reversed(self.modal_stack):
             screen = self.screens.get(screen_name)
             if screen:
                 action = self._handle_click_tree(screen, mouse_pos)
-                if action:
-                    return action
+                if action: break
 
         # Check active screen
-        if self.active_screen:
+        if not action and self.active_screen:
             screen = self.screens.get(self.active_screen)
             if screen:
                 action = self._handle_click_tree(screen, mouse_pos)
-                if action:
-                    return action
 
         # Check HUD
-        for element in self.hud_elements:
-            action = self._handle_click_tree(element, mouse_pos)
-            if action:
-                return action
+        if not action:
+            for element in self.hud_elements:
+                action = self._handle_click_tree(element, mouse_pos)
+                if action: break
 
-        return None
+        if action:
+            button_sound = get_sound_manager()
+            button_sound.play_bfx("button_click")
+        return action
 
     def _handle_click_tree(self, element: UIElement, mouse_pos: Tuple[int, int]) -> Optional[str]:
         """Recursively check element tree for clicks."""
@@ -360,21 +396,24 @@ class UIManager:
         if self.active_screen:
             screen = self.screens.get(self.active_screen)
             if screen:
-                self._draw_element_tree(screen, draw_manager)
+                offset = self._screen_animations.get(self.active_screen, None)
+                anim_offset = offset.offset if offset else (0, 0)
+                self._draw_element_tree(screen, draw_manager, anim_offset=anim_offset)
 
         # Draw modal screens (bottom to top)
         for screen_name in self.modal_stack:
             screen = self.screens.get(screen_name)
             if screen:
-                self._draw_element_tree(screen, draw_manager)
+                offset = self._screen_animations.get(screen_name, None)
+                anim_offset = offset.offset if offset else (0, 0)
+                self._draw_element_tree(screen, draw_manager, anim_offset=anim_offset)
 
-    def _draw_element_tree(self, element, draw_manager, parent=None):
+    def _draw_element_tree(self, element, draw_manager, parent=None, anim_offset=(0, 0)):
         """Recursively draw element and children."""
         if not element.visible:
             return
 
-        # NEW: Only resolve position if cache is invalid
-        # Parent invalidation cascades to children since their anchors may be relative
+        # Only resolve position if cache is invalid
         parent_invalid = parent and not getattr(parent, '_position_cache_valid', True)
 
         if not element._position_cache_valid or parent_invalid:
@@ -388,13 +427,16 @@ class UIManager:
         # Render surface
         surface = element.render_surface()
 
-        # Queue for drawing
-        draw_manager.queue_draw(surface, element.rect, element.layer)
+        # Apply animation offset to draw position
+        draw_rect = element.rect.move(anim_offset[0], anim_offset[1])
 
-        # Draw children
+        # Queue for drawing
+        draw_manager.queue_draw(surface, draw_rect, element.layer)
+
+        # Draw children (pass offset down)
         if hasattr(element, 'children'):
             for child in element.children:
-                self._draw_element_tree(child, draw_manager, parent=element)
+                self._draw_element_tree(child, draw_manager, parent=element, anim_offset=anim_offset)
 
     def _set_auto_layer(self, element, layer):
         """

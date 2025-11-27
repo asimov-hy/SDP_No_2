@@ -1,0 +1,209 @@
+{
+  "background": {
+    "layers": [
+      {
+        "image": "assets/images/maps/test_background.png"
+      }
+    ]
+  },
+  "stages": [
+    {
+      "name": "Waypoint Test Level - Pure Waypoint Enemies",
+      "exit_trigger": "all_waves_cleared",
+      "timeline": {
+        "1.0": [
+          {
+            "enemy": "waypoint",
+            "spawn_edge": "top",
+            "spawn_position": 0.3,
+            "spawn_offset_y": -50,
+            "count": 1,
+            "enemy_params": {
+              "waypoints": [
+                [200, 150],
+                [1080, 150],
+                [1080, 570],
+                [200, 570]
+              ]
+            }
+          }
+        ],
+        "3.0": [
+          {
+            "enemy": "waypoint",
+            "spawn_edge": "left",
+            "spawn_position": 0.5,
+            "spawn_offset_x": -50,
+            "count": 1,
+            "enemy_params": {
+              "waypoints": [
+                [640, 100],
+                [1100, 360],
+                [640, 620],
+                [180, 360]
+              ]
+            }
+          }
+        ],
+        "5.0": [
+          {
+            "enemy": "waypoint",
+            "spawn_edge": "top",
+            "spawn_position": 0.2,
+            "spawn_offset_y": -50,
+            "count": 1,
+            "enemy_params": {
+              "waypoints": [
+                [100, 100],
+                [640, 100],
+                [640, 360]
+              ]
+            }
+          },
+          {
+            "enemy": "waypoint",
+            "spawn_edge": "top",
+            "spawn_position": 0.8,
+            "spawn_offset_y": -50,
+            "count": 1,
+            "enemy_params": {
+              "waypoints": [
+                [1180, 100],
+                [640, 100],
+                [640, 360]
+              ]
+            }
+          }
+        ],
+        "8.0": [
+          {
+            "enemy": "waypoint",
+            "formation": "line",
+            "spawn_edge": "top",
+            "formation_config": {
+              "spacing": 200
+            },
+            "spawn_offset_y": -50,
+            "count": 3,
+            "enemy_params": {
+              "waypoints": [
+                [100, 200],
+                [1180, 200],
+                [1180, 500],
+                [100, 500]
+              ]
+            }
+          }
+        ],
+        "11.0": [
+          {
+            "enemy": "waypoint",
+            "spawn_edge": "left",
+            "spawn_position": 0.3,
+            "count": 1,
+            "enemy_params": {
+              "waypoints": [
+                [200, 200],
+                [1080, 200],
+                [200, 520],
+                [1080, 520]
+              ]
+            }
+          }
+        ],
+        "14.0": [
+          {
+            "enemy": "waypoint",
+            "spawn_edge": "left",
+            "spawn_position": 0.5,
+            "count": 1,
+            "enemy_params": {
+              "waypoints": [
+                [100, 360],
+                [1180, 360],
+                [100, 360]
+              ]
+            }
+          }
+        ],
+        "17.0": [
+          {
+            "enemy": "waypoint",
+            "spawn_edge": "top",
+            "spawn_position": 0.25,
+            "count": 1,
+            "enemy_params": {
+              "waypoints": [
+                [320, 150],
+                [960, 150],
+                [960, 570],
+                [320, 570]
+              ]
+            }
+          }
+        ],
+        "20.0": [
+          {
+            "enemy": "waypoint",
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "count": 1,
+            "enemy_params": {
+              "waypoints": [
+                [640, 100],
+                [200, 360],
+                [640, 620],
+                [1080, 360]
+              ]
+            }
+          }
+        ],
+        "23.0": [
+          {
+            "enemy": "waypoint",
+            "formation": "line",
+            "spawn_edge": "left",
+            "formation_config": {
+              "spacing": 150
+            },
+            "spawn_offset_x": -50,
+            "count": 4,
+            "enemy_params": {
+              "waypoints": [
+                [300, 360],
+                [980, 360],
+                [300, 360]
+              ]
+            }
+          }
+        ],
+        "26.0": [
+          {
+            "enemy": "waypoint",
+            "spawn_edge": "top",
+            "spawn_position": 0.15,
+            "count": 1,
+            "enemy_params": {
+              "waypoints": [
+                [150, 150],
+                [1130, 570]
+              ]
+            }
+          },
+          {
+            "enemy": "waypoint",
+            "spawn_edge": "top",
+            "spawn_position": 0.85,
+            "count": 1,
+            "enemy_params": {
+              "waypoints": [
+                [1130, 150],
+                [150, 570]
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

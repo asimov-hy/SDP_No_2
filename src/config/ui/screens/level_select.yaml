@@ -1,7 +1,7 @@
 level_select:
   type: container
   size: [1280, 720]
-  background: [20, 20, 30, 255]
+#  background: [20, 20, 30, 255]
   parent_anchor: center
   self_anchor: center
   layer: Layers.UI

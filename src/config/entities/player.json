@@ -4,7 +4,7 @@
   "core_attributes": {
     "_notes": "Defines base physics and behavior values.",
     "scale": 1.0,
-    "health": 2,
+    "health": 10000,
     "hitbox_scale": 0.85,
 
     "speed": 300,
@@ -20,6 +20,11 @@
 
     "sprite": {
       "path": "assets/images/sprites/player/robot_Garda.png"
+    },
+
+    "bullet": {
+      "path": "assets/images/sprites/projectiles/plasma_red.png",
+      "size": [16, 32]
     },
 
     "default_shape": {
@@ -53,6 +58,25 @@
     "iframe": {
       "duration": 2,
       "interaction_state": "INTANGIBLE"
+    }
+  },
+
+  "combat": {
+    "_notes": "Shooting and bullet configuration",
+    "shoot_cooldown": 0.1,
+    "bullet_speed": 900
+  },
+
+  "progression": {
+    "_notes": "Leveling and experience system",
+    "starting_level": 1,
+    "starting_exp": 0,
+    "initial_exp_required": 500,
+    "exp_formula": {
+      "base": 30,
+      "multiplier": 2.0,
+      "max_level": 200,
+      "max_exp_cap": 999999
     }
   }
 }

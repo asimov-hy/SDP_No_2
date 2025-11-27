@@ -1,55 +1,72 @@
 player_hud:
   type: container
   size: [1280, 720]
-  position:
-    parent_anchor: center
-    size: [1280, 720]
-
+  parent_anchor: center
+  self_anchor: center
+  layer: Layers.UI
   children:
 
-    # Main HUD frame
     - type: container
-      id: "hud_frame"
-      position:
-        parent_anchor: bottom
-        self_anchor: bottom
-        offset: [0, -0]
-      graphic:
-        image: "ui/bars/main_bar.png"
-        image_scale: 1.0
+      id: "left_main_bar"
+      size: [383, 72]
+      parent_anchor: top_left
+      self_anchor: top_left
+      offset: [0, 650]
+      image: "ui/bars/left_bar.png"
 
-      children:
-        # EXP frame
-        - type: container
-          id: "exp_frame"
-          position:
-            parent_anchor: "#hud_frame:left"
-            self_anchor: left
-            offset: [100, 0]
-          graphic:
-            image: "ui/bars/exp_frame.png"
-            image_scale: 1.0
+    - type: container
+      id: "exp_frame"
+      size: [300, 78]
+      parent_anchor: top_left
+      self_anchor: top_left
+      offset: [3, 4]
+      image: "ui/bars/exp_frame.png"
 
-          children:
-            # EXP bar
-            - type: container
-              id: "exp_bar"
-              position:
-                parent_anchor: "#exp_frame:left"
-                self_anchor: left
-                offset: [10, 0]
-              graphic:
-                image: "ui/bars/exp_bar.png"
-                image_scale: 1.0
-                layer: Layers.UI
+    - type: bar
+      id: "exp_bar"
+      size: [260, 32]
+      parent_anchor: top_left
+      self_anchor: top_left
+      offset: [30, 28]
 
-        # Health gauge
-        - type: container
-          id: "health_gauge"
-          position:
-            parent_anchor: "#hud_frame:right"
-            self_anchor: right
-            offset: [-100, 0]
-          graphic:
-            image: "ui/health/health_gauge.png"
-            image_scale: 1.0
+      image: "ui/bars/exp_bar.png"
+      background: [0, 0, 0, 0]
+      animated: true
+      direction: horizontal
+
+      bind: player.exp
+      bind_max: player.max_exp
+      max_value: 400
+
+    - type: container
+      id: "right_main_bar"
+      size: [383, 72]
+      parent_anchor: top_left
+      self_anchor: top_left
+      offset: [900, 650]
+      image: "ui/bars/right_bar.png"
+
+    - type: container
+      id: "health_gauge"
+      size: [150, 105]
+      parent_anchor: top_left
+      self_anchor: top_left
+      offset: [1130, 615]
+      image: "ui/health/health_gauge.png"
+
+
+    - type: needle
+      id: "health_needle"
+      size: [200, 200]
+      parent_anchor: top_left
+      self_anchor: top_left
+      offset: [1106, 586]
+      image: "ui/health/health_needle.png"
+
+      bind: player.health
+      bind_max: player.max_health
+
+      min_value: 1
+      max_value: 3
+      min_angle: -80
+      max_angle: 80

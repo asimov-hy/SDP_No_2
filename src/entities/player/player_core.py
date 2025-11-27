@@ -11,7 +11,7 @@ from src.core.runtime.game_settings import Display, Layers
 from src.core.debug.debug_logger import DebugLogger
 from src.core.services.config_manager import load_config
 from src.core.services.event_manager import get_events, EnemyDiedEvent
-from src.core.runtime.session_stats import update_session_stats
+from src.core.runtime.session_stats import get_session_stats
 
 from src.entities.base_entity import BaseEntity
 from src.entities.state_manager import StateManager
@@ -63,8 +63,14 @@ class Player(BaseEntity):
         cfg = load_config("player.json", {})
         self.cfg = cfg
 
-        if "core_attributes" not in cfg or "render" not in cfg or "health_states" not in cfg:
-            raise ValueError("Invalid player.json: missing required sections")
+        _REQUIRED_SECTIONS = ("core_attributes", "render", "health_states")
+        missing = [s for s in _REQUIRED_SECTIONS if s not in cfg]
+        if missing:
+            DebugLogger.fail(
+                f"player.json missing required sections: {missing}",
+                category="loading"
+            )
+            raise ValueError(f"Invalid player.json: missing {missing}")
 
         core = cfg["core_attributes"]
         render = cfg["render"]
@@ -84,8 +90,7 @@ class Player(BaseEntity):
                 # Calculate scale factor from original image size
                 if sprite_path and os.path.exists(sprite_path):
                     temp_img = pygame.image.load(sprite_path).convert_alpha()
-                    scale = (size[0] / temp_img.get_width(), size[1] / temp_img.get_height())
-                    image = BaseEntity.load_and_scale_image(sprite_path, scale)
+                    image = pygame.transform.scale(temp_img, size)
 
                 else:
                     DebugLogger.warn(f"Missing sprite: {sprite_path}, using fallback.")
@@ -121,14 +126,19 @@ class Player(BaseEntity):
         # 4. Core Stats
         # ========================================
         self.velocity = pygame.Vector2(0, 0)
+        self.virtual_pos = pygame.Vector2(x, y)
+        self.clamped_x = False
+        self.clamped_y = False
+
         self.base_speed = core["speed"]
         self.health = core["health"]
         self.max_health = self.health
 
-        # Player stats
-        self.exp = 0
-        self.level = 1
-        self.exp_required = 500
+        # Player stats - load from progression config
+        prog_cfg = cfg.get("progression", {})
+        self.exp = prog_cfg.get("starting_exp", 0)
+        self.level = prog_cfg.get("starting_level", 1)
+        self.exp_required = prog_cfg.get("initial_exp_required", 500)
 
         self.visible = True
         self.layer = Layers.PLAYER
@@ -178,21 +188,26 @@ class Player(BaseEntity):
 
         self._bullet_manager = None
         self._shooting_enabled = False
-        self.base_shoot_cooldown = 0.1
+        combat_cfg = cfg.get("combat", {})
+        self.base_shoot_cooldown = combat_cfg.get("shoot_cooldown", 0.5)
+        self.bullet_speed = combat_cfg.get("bullet_speed", 900)
         self.shoot_timer = 0.0
 
-        # ========================================
-        # Load Player Bullet Sprite
-        # ========================================
-        bullet_path = "assets/images/sprites/projectiles/100H.png"
-        temp_img = pygame.image.load(bullet_path).convert_alpha() if os.path.exists(bullet_path) else None
-        if temp_img:
-            scale = (16 / temp_img.get_width(), 32 / temp_img.get_height())
-            self.bullet_image = BaseEntity.load_and_scale_image(bullet_path, scale)
-        else:
-            DebugLogger.warn(f"Missing bullet sprite: {bullet_path}")
-            self.bullet_image = pygame.Surface((8, 16), pygame.SRCALPHA)
-            pygame.draw.rect(self.bullet_image, (255, 255, 100), (0, 0, 8, 16))
+        # # ========================================
+        # # Load Player Bullet Sprite
+        # # ========================================
+        # bullet_cfg = render.get("bullet", {})
+        # bullet_path = bullet_cfg.get("path", "assets/images/null.png")
+        # bullet_size = tuple(bullet_cfg.get("size", [16, 32]))
+        #
+        # temp_img = pygame.image.load(bullet_path).convert_alpha() if os.path.exists(bullet_path) else None
+        # if temp_img:
+        #     scale = (bullet_size[0] / temp_img.get_width(), bullet_size[1] / temp_img.get_height())
+        #     self.bullet_image = BaseEntity.load_and_scale_image(bullet_path, scale)
+        # else:
+        #     DebugLogger.warn(f"Missing bullet sprite: {bullet_path}")
+        #     self.bullet_image = pygame.Surface(bullet_size, pygame.SRCALPHA)
+        #     pygame.draw.rect(self.bullet_image, (255, 255, 100), (0, 0, *bullet_size))
 
         # ========================================
         # 7. Global Ref & Status
@@ -288,7 +303,7 @@ class Player(BaseEntity):
 
         self.exp += exp_gain
 
-        stats = update_session_stats()
+        stats = get_session_stats()
         stats.total_exp_gained += exp_gain
 
         # Handle multiple level-ups
@@ -305,12 +320,18 @@ class Player(BaseEntity):
         self.level += 1
 
         # Cap at reasonable max to prevent overflow
-        exp_calc = 30 * (2.0 ** min(self.level - 1, 200))
-        self.exp_required = min(int(exp_calc), 999999)
+        formula = self.cfg.get("progression", {}).get("exp_formula", {})
+        base = formula.get("base", 30)
+        multiplier = formula.get("multiplier", 2.0)
+        max_level = formula.get("max_level", 200)
+        max_exp_cap = formula.get("max_exp_cap", 999999)
+
+        exp_calc = base * (multiplier ** min(self.level - 1, max_level))
+        self.exp_required = min(int(exp_calc), max_exp_cap)
 
         self.exp = overflow
 
-        stats = update_session_stats()
+        stats = get_session_stats()
         stats.max_level_reached = max(stats.max_level_reached, self.level)
 
         DebugLogger.state(
@@ -341,3 +362,17 @@ class Player(BaseEntity):
         """Set manager and synchronize shooting state."""
         self._bullet_manager = manager
         self._shooting_enabled = manager is not None
+
+    def get_bullet_config(self) -> dict:
+        """Return bullet configuration for BulletManager registration."""
+        render = self.cfg.get("render", {})
+        bullet_cfg = render.get("bullet", {})
+        combat_cfg = self.cfg.get("combat", {})
+
+        return {
+            "path": bullet_cfg.get("path"),
+            "size": bullet_cfg.get("size", [16, 32]),
+            "damage": combat_cfg.get("bullet_damage", 1),
+            "color": (255, 255, 100),  # Fallback color
+            "radius": 4
+        }

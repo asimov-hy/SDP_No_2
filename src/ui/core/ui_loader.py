@@ -144,6 +144,9 @@ class UILoader:
         if element_type == "button":
             from ..elements.button import UIButton
             return UIButton
+        elif element_type == "needle":
+            from ..elements.needle import UINeedle
+            return UINeedle
         elif element_type == "label":
             from ..elements.label import UILabel
             return UILabel

@@ -1,0 +1,110 @@
+{
+  "background": {
+    "layers": [
+      {
+        "image": "assets/images/maps/test_background.png"
+      }
+    ]
+  },
+  "stages": [
+    {
+      "name": "Shooter Test - 4 Waypoint Shooters",
+      "exit_trigger": "all_waves_cleared",
+      "timeline": {
+        "1.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "spawn_edge": "top",
+            "spawn_position": 0.2,
+            "spawn_offset_y": -50,
+            "count": 1,
+            "enemy_params": {
+              "waypoints": [
+                [200, 150],
+                [500, 150],
+                [500, 350],
+                [200, 350]
+              ],
+              "shoot_interval": 1.0
+            }
+          }
+        ],
+        "3.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "spawn_edge": "top",
+            "spawn_position": 0.8,
+            "spawn_offset_y": -50,
+            "count": 1,
+            "enemy_params": {
+              "waypoints": [
+                [1080, 150],
+                [780, 150],
+                [780, 350],
+                [1080, 350]
+              ],
+              "shoot_interval": 1.0
+            }
+          }
+        ],
+        "5.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "spawn_edge": "left",
+            "spawn_position": 0.3,
+            "spawn_offset_x": -50,
+            "count": 1,
+            "enemy_params": {
+              "waypoints": [
+                [300, 200],
+                [980, 200],
+                [980, 520],
+                [300, 520]
+              ],
+              "shoot_interval": 1.0
+            }
+          }
+        ],
+        "7.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "spawn_edge": "right",
+            "spawn_position": 0.7,
+            "spawn_offset_x": 50,
+            "count": 1,
+            "enemy_params": {
+              "waypoints": [
+                [640, 100],
+                [200, 360],
+                [640, 620],
+                [1080, 360]
+              ],
+              "shoot_interval": 1.0
+            }
+          }
+        ],
+        "10.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "formation": "line",
+            "spawn_edge": "top",
+            "formation_config": {
+              "spacing": 300
+            },
+            "spawn_offset_y": -50,
+            "count": 2,
+            "enemy_params": {
+              "waypoints": [
+                [400, 200],
+                [880, 200],
+                [880, 500],
+                [400, 500]
+              ],
+              "shoot_interval": 1.0
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -476,6 +476,6 @@ class SpawnManager:
             self._return_to_pool(entity)
 
         self.entities.clear()
-        # Note: Keep _validated_types - entity classes don't change between levels
+        # Note: Keep _validated_types - entity classes don't change between missions
         # Clear only if you want to re-validate (e.g., for hot-reload debugging)
         DebugLogger.system("SpawnManager reset (pools preserved)", category="entity_spawn")

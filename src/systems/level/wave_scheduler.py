@@ -23,16 +23,29 @@ from src.entities.entity_state import LifecycleState
 class WaveScheduler:
     """Handles wave spawning, timing, and position calculation."""
 
-    def __init__(self, spawn_manager, player_ref=None):
+    ALLOWED_PARAMS = {
+        'waypoints',
+        'direction',
+        'player_ref',
+        'spawn_edge',
+        # Waypoint shooter params
+        'shoot_interval',
+        'bullet_speed',
+        'waypoint_speed',
+    }
+
+    def __init__(self, spawn_manager, player_ref=None, bullet_manager=None):
         """
         Initialize wave scheduler.
 
         Args:
             spawn_manager: SpawnManager for entity creation
             player_ref: Player entity reference for homing/targeting
+            bullet_manager: BulletManager for shooting enemies
         """
         self.spawner = spawn_manager
         self.player = player_ref
+        self.bullet_manager = bullet_manager
 
         # Wave state
         self.waves = []
@@ -126,7 +139,7 @@ class WaveScheduler:
         if "enemy" in wave:
             category = "enemy"
             entity_type = wave.get("enemy", "straight")
-            entity_params = wave.get("enemy_params", {})
+            entity_params = self._filter_enemy_params(wave.get("enemy_params", {}))
         elif "pickup" in wave:
             category = "pickup"
             entity_type = wave.get("pickup", "health")
@@ -179,9 +192,14 @@ class WaveScheduler:
             needs_position_calc, movement_params = self._parse_movement_config(wave)
 
             # Inject player reference for homing - check both movement type AND enemy type
-            if entity_type == "homing":
+            if entity_type.startswith("homing"):
                 movement_params["player_ref"] = self.player
                 base_params["player_ref"] = self.player
+
+            # Inject references for waypoint_shooter
+            if entity_type == "waypoint_shooter":
+                base_params["player_ref"] = self.player
+                base_params["bullet_manager"] = self.bullet_manager
 
             # Merge movement params with priority system:
             # 1. Explicit enemy_params.direction (highest priority)
@@ -661,3 +679,26 @@ class WaveScheduler:
                 category="level"
             )
             return []
+
+    def _filter_enemy_params(self, params: dict) -> dict:
+        """
+        Filter enemy_params to only allow level-specific overrides.
+        Blocks stat overrides (health, speed, scale) - use enemies.json instead.
+
+        Args:
+            params: Raw enemy_params from level JSON
+
+        Returns:
+            Filtered params with only positioning/behavior data
+        """
+        filtered = {k: v for k, v in params.items() if k in self.ALLOWED_PARAMS}
+
+        # Log blocked overrides
+        blocked = set(params.keys()) - set(filtered.keys())
+        if blocked:
+            DebugLogger.trace(
+                f"Blocked stat overrides: {blocked} (use enemies.json)",
+                category="level"
+            )
+
+        return filtered
