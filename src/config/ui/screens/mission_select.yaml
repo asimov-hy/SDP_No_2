@@ -5,7 +5,10 @@ level_select:
   parent_anchor: center_left
   self_anchor: center_left
   offset: [0, 0]
-  background: [32, 32, 32, 100]
+  background:
+    type: gradient
+    direction: horizontal
+    colors: [ [ 0, 0, 0, 200 ], [ 32, 32, 32, 0 ] ]
   border: 2
   border_color: [100, 100, 120, 0]
   border_radius: 10

@@ -136,6 +136,19 @@ class UIButton(UIElement):
         else:
             if isinstance(self.color, GradientColor):
                 self._fill_color(surf, self.color)
+                # Apply hover tint overlay matching gradient's alpha pattern
+                if self.hover_t > 0.01:
+                    tint_surf = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+                    base_tint_alpha = int(100 * self.hover_t)
+                    # Build tint gradient that respects original alpha falloff
+                    tint_colors = []
+                    for c in self.color.colors:
+                        original_alpha = c[3] if len(c) > 3 else 255
+                        scaled_alpha = int((original_alpha / 255) * base_tint_alpha)
+                        tint_colors.append((255, 255, 255, scaled_alpha))
+                    tint_gradient = GradientColor(colors=tint_colors, direction=self.color.direction)
+                    self._fill_color(tint_surf, tint_gradient)
+                    surf.blit(tint_surf, (0, 0))
             elif self.border_radius > 0:
                 pygame.draw.rect(surf, color, surf.get_rect(), border_radius=self.border_radius)
             else:
