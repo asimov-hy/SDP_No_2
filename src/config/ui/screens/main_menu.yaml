@@ -4,6 +4,16 @@ main_menu:
   parent_anchor: center
   layer: Layers.UI
 
+  particles:
+    - preset: "ember"
+      spawn_area: [ 10, 700, 400, 30 ]
+      direction: [ 1, -1 ]
+      speed: [ 30, 75 ]
+      lifetime: [3.0, 13.0]
+      max_particles: 80
+      spawn_rate: 25
+      "spread_growth": 4.0
+
   children:
     # Title
     - type: label
@@ -63,9 +73,6 @@ main_menu:
         type: gradient
         direction: horizontal
         colors: [ [96, 96, 96, 200], [96, 96, 96, 0] ]
-#      border: 3
-#      border_color: [100, 160, 255, 0]
-#      border_radius: 10
       font_size: 25
       text_align: left
       text_padding: 20
@@ -84,9 +91,6 @@ main_menu:
         type: gradient
         direction: horizontal
         colors: [ [96, 96, 96, 200], [96, 96, 96, 0] ]
-#      border: 3
-#      border_color: [100, 160, 255, 0]
-#      border_radius: 10
       font_size: 25
       text_align: left
       text_padding: 20

@@ -1,14 +1,14 @@
 level_select:
   type: container
-  size: [550, 730]
+  size: [560, 730]
 #  background: [20, 20, 30, 255]
   parent_anchor: center_left
   self_anchor: center_left
-  offset: [0, 0]
+  offset: [-10, 0]
   background:
     type: gradient
     direction: horizontal
-    colors: [ [ 0, 0, 0, 200 ], [ 32, 32, 32, 0 ] ]
+    colors: [ [ 20, 20, 20, 255 ], [ 32, 32, 32, 0 ] ]
   border: 2
   border_color: [100, 100, 120, 0]
   border_radius: 10
@@ -89,7 +89,7 @@ level_select:
       size: [80, 40]
       parent_anchor: "#level_btn_2:bottom_left"
       self_anchor: top_left
-      offset: [0, 120]
+      offset: [10, 120]
       color:
         type: gradient
         direction: horizontal
