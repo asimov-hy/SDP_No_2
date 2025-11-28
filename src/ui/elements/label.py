@@ -7,7 +7,7 @@ Text label element with formatting and binding support.
 import pygame
 from typing import Tuple, Optional, Any
 
-from ..core.ui_element import UIElement
+from ..core.ui_element import UIElement, GradientColor
 from ..core.ui_loader import register_element
 
 
@@ -62,11 +62,16 @@ class UILabel(UIElement):
         # Get text to display
         display_text = self._get_display_text()
 
-        # Render text
-        text_surf = self.font.render(display_text, True, self.text_color[:3])
+        # In _build_surface:
+        if isinstance(self.text_color, GradientColor):
+            text_color_rgb = (255, 255, 255)  # fallback - gradients don't work on text
+        else:
+            text_color_rgb = self.text_color[:3]
+
+        text_surf = self.font.render(display_text, True, text_color_rgb)
 
         # Apply alpha if 4th value exists in RGBA
-        if len(self.text_color) == 4:
+        if not isinstance(self.text_color, GradientColor) and len(self.text_color) == 4:
             text_surf.set_alpha(self.text_color[3])
 
         # Create surface
@@ -74,7 +79,7 @@ class UILabel(UIElement):
 
         # Background
         if self.background:
-            surf.fill(self.background)
+            self._fill_color(surf, self.background)
 
         # Position text using base class helper
         text_rect = self._get_text_position(text_surf, surf.get_rect())

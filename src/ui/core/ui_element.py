@@ -5,8 +5,16 @@ Base class for all ui elements with surface caching and dirty flag optimization.
 """
 
 import pygame
-from typing import Optional, Dict, Any, List, Tuple
+from typing import Optional, Dict, Any, List, Tuple, Union
+from dataclasses import dataclass
 from src.core.runtime.game_settings import Layers
+
+
+@dataclass
+class GradientColor:
+    """Gradient color with direction and color stops."""
+    colors: List[Tuple[int, ...]]
+    direction: str = 'horizontal'
 
 
 class UIElement:
@@ -137,10 +145,17 @@ class UIElement:
             cls._font_cache[size] = pygame.font.Font(None, size)
         return cls._font_cache[size]
 
-    def _parse_color(self, color) -> Optional[Tuple[int, ...]]:
-        """Parse color from various formats."""
+    def _parse_color(self, color) -> Optional[Union[Tuple[int, ...], GradientColor]]:
+        """Parse color from various formats (solid or gradient)."""
         if color is None:
             return None
+
+        # Gradient dict format
+        if isinstance(color, dict) and color.get('type') == 'gradient':
+            return GradientColor(
+                colors=[tuple(c) for c in color.get('colors', [[0, 0, 0], [255, 255, 255]])],
+                direction=color.get('direction', 'horizontal')
+            )
 
         if isinstance(color, str):
             # Hex color
@@ -150,19 +165,7 @@ class UIElement:
                     return tuple(int(color[i:i + 2], 16) for i in (0, 2, 4))
                 elif len(color) == 8:
                     return tuple(int(color[i:i + 2], 16) for i in (0, 2, 4, 6))
-
-            # Named colors
-            named_colors = {
-                'red': (255, 0, 0),
-                'green': (0, 255, 0),
-                'blue': (0, 0, 255),
-                'white': (255, 255, 255),
-                'black': (0, 0, 0),
-                'yellow': (255, 255, 0),
-                'cyan': (0, 255, 255),
-                'magenta': (255, 0, 255),
-            }
-            return named_colors.get(color.lower(), (255, 255, 255))
+            return (255, 255, 255)  # fallback for invalid string
 
         return tuple(color)
 
@@ -171,6 +174,55 @@ class UIElement:
         if isinstance(alpha, (int, float)):
             return int(max(0, min(255, alpha)))
         return 255
+
+    def _fill_gradient(self, surface: pygame.Surface, gradient: GradientColor, rect: pygame.Rect = None):
+        """Fill surface/rect with gradient colors."""
+        rect = rect or surface.get_rect()
+        colors = gradient.colors
+
+        if len(colors) < 2:
+            surface.fill(colors[0] if colors else (0, 0, 0), rect)
+            return
+
+        c1, c2 = colors[0], colors[1]
+
+        if gradient.direction == 'horizontal':
+            for x in range(rect.width):
+                t = x / max(rect.width - 1, 1)
+                r = int(c1[0] + (c2[0] - c1[0]) * t)
+                g = int(c1[1] + (c2[1] - c1[1]) * t)
+                b = int(c1[2] + (c2[2] - c1[2]) * t)
+                a = 255
+                if len(c1) > 3 and len(c2) > 3:
+                    a = int(c1[3] + (c2[3] - c1[3]) * t)
+
+                pygame.draw.line(surface, (r, g, b, a),
+                                 (rect.x + x, rect.y),
+                                 (rect.x + x, rect.y + rect.height - 1))
+        else:  # vertical
+            for y in range(rect.height):
+                t = y / max(rect.height - 1, 1)
+                r = int(c1[0] + (c2[0] - c1[0]) * t)
+                g = int(c1[1] + (c2[1] - c1[1]) * t)
+                b = int(c1[2] + (c2[2] - c1[2]) * t)
+                a = 255
+                if len(c1) > 3 and len(c2) > 3:
+                    a = int(c1[3] + (c2[3] - c1[3]) * t)
+
+                pygame.draw.line(surface, (r, g, b, a),
+                                 (rect.x, rect.y + y),
+                                 (rect.x + rect.width - 1, rect.y + y))
+
+    def _fill_color(self, surface: pygame.Surface, color: Union[Tuple[int, ...], GradientColor],
+                    rect: pygame.Rect = None):
+        """Fill with either solid color or gradient."""
+        if isinstance(color, GradientColor):
+            self._fill_gradient(surface, color, rect)
+        else:
+            if rect:
+                surface.fill(color, rect)
+            else:
+                surface.fill(color)
 
     def set_draw_manager(self, draw_manager):
         """Store reference to DrawManager for image loading."""
@@ -285,7 +337,7 @@ class UIElement:
         if image:
             surf.blit(image, (0, 0))
         elif self.background:
-            surf.fill(self.background)
+            self._fill_color(surf, self.background)
 
         # Border
         if self.border > 0:

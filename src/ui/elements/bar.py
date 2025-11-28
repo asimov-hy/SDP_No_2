@@ -50,7 +50,7 @@ class UIBar(UIElement):
         surf = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
 
         if self.bg_color:
-            surf.fill(self.bg_color)
+            self._fill_color(surf, self.bg_color)
 
         fill_ratio = self.visual_value / self.max_value if self._max_value_valid else 0
         fill_ratio = max(0.0, min(1.0, fill_ratio))
@@ -67,9 +67,21 @@ class UIBar(UIElement):
                     fill_y = self.height - fill_height
                     area = pygame.Rect(0, fill_y, self.width, fill_height)
                     surf.blit(image, (0, fill_y), area)
-
+        else:
+            # No image - use fill_color for the bar
+            if self.direction == 'horizontal':
+                fill_width = int(self.width * fill_ratio)
+                if fill_width > 0:
+                    fill_rect = pygame.Rect(0, 0, fill_width, self.height)
+                    self._fill_color(surf, self.fill_color, fill_rect)
+            else:
+                fill_height = int(self.height * fill_ratio)
+                if fill_height > 0:
+                    fill_y = self.height - fill_height
+                    fill_rect = pygame.Rect(0, fill_y, self.width, fill_height)
+                    self._fill_color(surf, self.fill_color, fill_rect)
 
         if self.border > 0:
-             pygame.draw.rect(surf, self.border_color, surf.get_rect(), self.border)
+            pygame.draw.rect(surf, self.border_color, surf.get_rect(), self.border)
 
         return surf

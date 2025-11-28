@@ -7,7 +7,7 @@ Interactive button element with hover effects.
 import pygame
 from typing import Dict, Tuple, Optional
 
-from ..core.ui_element import UIElement
+from ..core.ui_element import UIElement, GradientColor
 from ..core.ui_loader import register_element
 
 
@@ -43,13 +43,17 @@ class UIButton(UIElement):
                 self.hover_config.get('pressed_color', tuple(max(c - 40, 0) for c in self.color[:3]))
             )
         else:
-            # Default hover colors based on base color
-            base_rgb = self.color[:3]
+            # Default hover colors based on base color (gradients not supported for hover)
+            if isinstance(self.color, GradientColor):
+                base_rgb = (100, 100, 100)  # fallback for gradient
+            else:
+                base_rgb = self.color[:3]
+
             self.hover_color = tuple(min(c + 30, 255) for c in base_rgb)
             self.pressed_color = tuple(max(c - 40, 0) for c in base_rgb)
 
             # Preserve alpha if RGBA
-            if len(self.color) == 4:
+            if not isinstance(self.color, GradientColor) and len(self.color) == 4:
                 self.hover_color = (*self.hover_color, self.color[3])
                 self.pressed_color = (*self.pressed_color, self.color[3])
 
@@ -111,6 +115,9 @@ class UIButton(UIElement):
             color = (80, 80, 80)
         elif self.is_pressed:
             color = self.pressed_color
+        elif isinstance(self.color, GradientColor):
+            # Can't lerp gradients - lerp between fallback and hover
+            color = self._lerp_color((100, 100, 100), self.hover_color, self.hover_t)
         else:
             color = self._lerp_color(self.color, self.hover_color, self.hover_t)
 
@@ -125,9 +132,11 @@ class UIButton(UIElement):
                 tint_surf.fill((*color, tint_alpha))
                 surf.blit(tint_surf, (0, 0))
         elif self.background:
-            surf.fill(self.background)
+            self._fill_color(surf, self.background)
         else:
-            if self.border_radius > 0:
+            if isinstance(self.color, GradientColor):
+                self._fill_color(surf, self.color)
+            elif self.border_radius > 0:
                 pygame.draw.rect(surf, color, surf.get_rect(), border_radius=self.border_radius)
             else:
                 surf.fill(color)
