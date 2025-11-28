@@ -15,14 +15,14 @@ main_menu:
       layer: Layers.UI
       #graphic
       text: "202X"
-      font_size: 220
+      font_size: 170
       size: [600, 150]
       text_color: [220, 240, 255, 240]
 
     # Subtitle
     - type: label
       id: "subtitle"
-      text: "War for the Future"
+      text: "Machine"
       size: [400, 40]
       parent_anchor: "#title:bottom_right"
       self_anchor: top_right
@@ -34,9 +34,9 @@ main_menu:
     # Start button
     - type: button
       id: "start_button"
-      text: "START GAME"
+      text: "START"
       action: "start_game"
-      size: [320, 65]
+      size: [320, 50]
       parent_anchor: "#title:bottom_center"
       self_anchor: top_center
       offset: [-50, 80]
@@ -44,7 +44,10 @@ main_menu:
         type: gradient
         direction: horizontal
         colors: [ [96, 96, 96, 200], [96, 96, 96, 0] ]
-      font_size: 30
+      font_size: 25
+#      text_color: [32, 32, 32]
+      text_align: left
+      text_padding: 20
       layer: Layers.UI
 
     # Settings button
@@ -52,7 +55,7 @@ main_menu:
       id: "settings_button"
       text: "SETTINGS"
       action: "settings"
-      size: [320, 58]
+      size: [320, 50]
       parent_anchor: "#start_button:bottom_center"
       self_anchor: top_center
       offset: [0, 18]
@@ -63,7 +66,9 @@ main_menu:
 #      border: 3
 #      border_color: [100, 160, 255, 0]
 #      border_radius: 10
-      font_size: 30
+      font_size: 25
+      text_align: left
+      text_padding: 20
       layer: Layers.UI
 
     # Quit button
@@ -71,7 +76,7 @@ main_menu:
       id: "quit_button"
       text: "QUIT"
       action: "quit"
-      size: [320, 58]
+      size: [320, 50]
       parent_anchor: "#settings_button:bottom_center"
       self_anchor: top_center
       offset: [0, 18]
@@ -82,7 +87,9 @@ main_menu:
 #      border: 3
 #      border_color: [100, 160, 255, 0]
 #      border_radius: 10
-      font_size: 30
+      font_size: 25
+      text_align: left
+      text_padding: 20
       layer: Layers.UI
 
     # Version label

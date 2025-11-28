@@ -23,6 +23,15 @@ class Display:
     }
     DEFAULT_WINDOW_SIZE: str = "small"
 
+# ===========================================================
+# Font Configuration
+# ===========================================================
+
+class Fonts:
+    DIR: str = "assets/fonts"
+    DEFAULT: str = "ScienceGothic_Condensed-Light.ttf"
+    FALLBACK: str = None
+
 
 # ===========================================================
 # Physics & Timing

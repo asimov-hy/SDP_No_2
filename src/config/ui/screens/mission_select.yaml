@@ -36,11 +36,13 @@ level_select:
       parent_anchor: "#title:bottom_left"
       self_anchor: top_left
       offset: [100, 60]
-      color: [96, 96, 96, 100]
-      border: 2
-      border_color: [100, 140, 220, 0]
-      border_radius: 8
+      color:
+        type: gradient
+        direction: horizontal
+        colors: [ [96, 96, 96, 200], [96, 96, 96, 0] ]
       font_size: 36
+      text_align: left
+      text_padding: 40
       layer: Layers.UI
 
     # Level Button 2
@@ -52,11 +54,13 @@ level_select:
       parent_anchor: "#level_btn_0:bottom"
       self_anchor: top_center
       offset: [0, 20]
-      color: [96, 96, 96, 100]
-      border: 2
-      border_color: [100, 140, 220, 0]
-      border_radius: 8
+      color:
+        type: gradient
+        direction: horizontal
+        colors: [ [96, 96, 96, 200], [96, 96, 96, 0] ]
       font_size: 36
+      text_align: left
+      text_padding: 40
       layer: Layers.UI
 
     # Level Button 3
@@ -68,11 +72,13 @@ level_select:
       parent_anchor: "#level_btn_1:bottom"
       self_anchor: top_center
       offset: [0, 20]
-      color: [96, 96, 96, 100]
-      border: 2
-      border_color: [100, 140, 0, 0]
-      border_radius: 8
+      color:
+        type: gradient
+        direction: horizontal
+        colors: [ [96, 96, 96, 200], [96, 96, 96, 0] ]
       font_size: 36
+      text_align: left
+      text_padding: 40
       layer: Layers.UI
 
     # Back button
@@ -80,13 +86,13 @@ level_select:
       id: "btn_back"
       text: "BACK"
       action: "back"
-      size: [150, 60]
+      size: [80, 40]
       parent_anchor: "#level_btn_2:bottom_left"
       self_anchor: top_left
       offset: [0, 120]
-      color: [96, 96, 96, 100]
-      border: 2
-      border_color: [150, 80, 80, 0]
-      border_radius: 8
+      color:
+        type: gradient
+        direction: horizontal
+        colors: [ [96, 96, 96, 200], [96, 96, 96, 0] ]
       font_size: 18
       layer: Layers.UI

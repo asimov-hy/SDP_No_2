@@ -7,7 +7,7 @@ settings:
   offset: [50, 0]
   background: [32, 32, 32, 100]
   border: 2
-  border_color: [100, 100, 120]
+  border_color: [100, 100, 100]
   border_radius: 10
   layer: Layers.UI
 
@@ -16,12 +16,13 @@ settings:
     - type: label
       id: "title"
       text: "SETTINGS"
-      size: [700, 60]
-      parent_anchor: "#settings_root:top_left"
-      self_anchor: top_left
-      offset: [-200, -30]
-      font_size: 48
-      color: [255, 255, 255]
+      size: [200, 60]
+      parent_anchor: "#settings_root:top_center"
+      self_anchor: top_center
+      offset: [0, -30]
+      font_size: 32
+      font_color: [255, 255, 255]
+      background: [ 32, 32, 32, 0 ]
       layer: Layers.UI
 
     # Display Section Label
@@ -32,8 +33,8 @@ settings:
       parent_anchor: "#settings_root:top_center"
       self_anchor: top_center
       offset: [100, 30]
-      font_size: 32
-      color: [200, 200, 255]
+      font_size: 24
+      color: [200, 200, 200]
       text_align: left
       layer: Layers.UI
 
@@ -58,10 +59,10 @@ settings:
       id: "window_label"
       text: "Window Size:"
       size: [150, 40]
-      parent_anchor: "#fullscreen_button:bottom_left"
+      parent_anchor: "#display_title:bottom_left"
       self_anchor: top_left
-      offset: [0, 20]
-      font_size: 20
+      offset: [0, 100]
+      font_size: 24
       color: [200, 200, 200]
       text_align: left
       layer: Layers.UI
@@ -74,7 +75,7 @@ settings:
       size: [120, 45]
       parent_anchor: "#window_label:bottom_left"
       self_anchor: top_left
-      offset: [0, 10]
+      offset: [20, 20]
       color: [96, 96, 96, 100]
       font_size: 20
       border: 2
@@ -88,8 +89,8 @@ settings:
       text: "1080p"
       action: "window_size_medium"
       size: [120, 45]
-      parent_anchor: "#window_size_small:top_right"
-      self_anchor: top_left
+      parent_anchor: "#window_size_small:right"
+      self_anchor: left
       offset: [15, 0]
       color: [96, 96, 96, 100]
       font_size: 20
@@ -122,8 +123,8 @@ settings:
       parent_anchor: "#window_size_small:bottom_left"
       self_anchor: top_left
       offset: [-20, 40]
-      font_size: 32
-      color: [200, 200, 255]
+      font_size: 24
+      color: [200, 200, 200]
       text_align: left
       layer: Layers.UI
 

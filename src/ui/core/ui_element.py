@@ -5,9 +5,10 @@ Base class for all ui elements with surface caching and dirty flag optimization.
 """
 
 import pygame
+import os
 from typing import Optional, Dict, Any, List, Tuple, Union
 from dataclasses import dataclass
-from src.core.runtime.game_settings import Layers
+from src.core.runtime.game_settings import Layers, Fonts
 
 
 @dataclass
@@ -20,7 +21,7 @@ class GradientColor:
 class UIElement:
     """Base ui element with cached rendering and position management."""
 
-    _font_cache: Dict[int, pygame.font.Font] = {}
+    _font_cache: Dict[Tuple[str, int], pygame.font.Font] = {}
 
     def __init__(self, config: Dict[str, Any]):
         """
@@ -85,6 +86,15 @@ class UIElement:
 
         self.padding = position_dict.get('padding', 0)
 
+        # Text padding (for text alignment spacing)
+        text_padding = position_dict.get('text_padding', 10)
+        if isinstance(text_padding, (list, tuple)):
+            self.text_padding_left = text_padding[0]
+            self.text_padding_right = text_padding[1] if len(text_padding) > 1 else text_padding[0]
+        else:
+            self.text_padding_left = text_padding
+            self.text_padding_right = text_padding
+
         # === VISUAL GROUP ===
         # Color (can be RGB or RGBA)
         self.color = self._parse_color(graphic_dict.get('color', [100, 100, 100]))
@@ -109,6 +119,14 @@ class UIElement:
         self.border = graphic_dict.get('border', 0)
         self.border_color = self._parse_color(graphic_dict.get('border_color', [255, 255, 255]))
         self.border_radius = graphic_dict.get('border_radius', 0)
+
+        # Text properties (used by label, button, etc.)
+        self.text = graphic_dict.get('text', '')
+        self.font_size = graphic_dict.get('font_size', 24)
+        self.font_path = graphic_dict.get('font')  # Optional per-element override
+        self.font = self._get_cached_font(self.font_size, self.font_path)
+        text_color = graphic_dict.get('text_color', [255, 255, 255])
+        self.text_color = self._parse_color(text_color)
 
         # State (default to true)
         self.visible = graphic_dict.get('visible', True)
@@ -139,11 +157,21 @@ class UIElement:
         self.parent: Optional['UIElement'] = None
 
     @classmethod
-    def _get_cached_font(cls, size: int) -> pygame.font.Font:
-        """Get or create cached font by size."""
-        if size not in cls._font_cache:
-            cls._font_cache[size] = pygame.font.Font(None, size)
-        return cls._font_cache[size]
+    def _get_cached_font(cls, size: int, font_name: str = None) -> pygame.font.Font:
+        """Get or create cached font by name and size."""
+        if font_name is None:
+            font_name = Fonts.DEFAULT
+
+        # Build full path
+        font_path = os.path.join(Fonts.DIR, font_name) if font_name else None
+
+        cache_key = (font_path, size)
+        if cache_key not in cls._font_cache:
+            try:
+                cls._font_cache[cache_key] = pygame.font.Font(font_path, size)
+            except (FileNotFoundError, pygame.error):
+                cls._font_cache[cache_key] = pygame.font.Font(Fonts.FALLBACK, size)
+        return cls._font_cache[cache_key]
 
     def _parse_color(self, color) -> Optional[Union[Tuple[int, ...], GradientColor]]:
         """Parse color from various formats (solid or gradient)."""
@@ -374,12 +402,11 @@ class UIElement:
         Returns:
             Positioned text rect
         """
-        padding = 10  # Padding from edges
-
         if self.text_align == 'left':
-            return text_surf.get_rect(midleft=(padding, container_rect.height // 2))
+            return text_surf.get_rect(midleft=(self.text_padding_left, container_rect.height // 2))
         elif self.text_align == 'right':
-            return text_surf.get_rect(midright=(container_rect.width - padding, container_rect.height // 2))
+            return text_surf.get_rect(
+                midright=(container_rect.width - self.text_padding_right, container_rect.height // 2))
         else:  # center (default)
             return text_surf.get_rect(center=(container_rect.width // 2, container_rect.height // 2))
 
