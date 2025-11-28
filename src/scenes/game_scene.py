@@ -35,6 +35,8 @@ from src.core.services.event_manager import get_events, EnemyDiedEvent
 # Entities
 from src.entities.entity_state import LifecycleState
 
+from src.graphics.particles.particle_manager import ParticleEmitter
+
 # Scenes
 from src.scenes.base_scene import BaseScene
 from src.scenes.scene_state import SceneState
@@ -222,6 +224,7 @@ class GameScene(BaseScene):
 
         Called before transitioning to another scene.
         """
+        ParticleEmitter.clear_all()
         self._clear_background()
         self.ui.clear_hud()
         self.ui.hide_screen("game_over")
@@ -399,6 +402,8 @@ class GameScene(BaseScene):
         # --- Active Gameplay ---
         self._update_gameplay(dt)
 
+        ParticleEmitter.update_all(dt)
+
     def _check_player_death(self):
         """
         Check and handle player death.
@@ -500,6 +505,8 @@ class GameScene(BaseScene):
         self.player.draw(draw_manager)
         self.spawn_manager.draw()
         self.bullet_manager.draw(draw_manager)
+
+        ParticleEmitter.render_all(draw_manager)
 
         # Overlay (between game and UI)
         self.overlay.draw(draw_manager)

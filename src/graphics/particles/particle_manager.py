@@ -257,19 +257,17 @@ class ParticleEmitter:
         ]
 
     @classmethod
-    def render_all(cls, surface):
+    def render_all(cls, draw_manager, layer=Layers.PARTICLES):
         """Render all active particles (call once per frame)."""
         for p in cls._active_particles:
             sprite = SpriteCache.get_sprite(p.color, p.size, p.glow)
 
-            # Apply alpha
             if p.alpha < 255:
                 sprite = sprite.copy()
                 sprite.set_alpha(p.alpha)
 
-            # Center sprite on particle position
             rect = sprite.get_rect(center=(int(p.x), int(p.y)))
-            surface.blit(sprite, rect)
+            draw_manager.queue_draw(sprite, rect, layer=layer)
 
     @classmethod
     def clear_all(cls):
