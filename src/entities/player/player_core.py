@@ -135,10 +135,10 @@ class Player(BaseEntity):
         self.max_health = self.health
 
         # Player stats - load from progression config
-        prog_cfg = cfg.get("progression", {})
-        self.exp = prog_cfg.get("starting_exp", 0)
-        self.level = prog_cfg.get("starting_level", 1)
-        self.exp_required = prog_cfg.get("initial_exp_required", 500)
+        self.exp = 0
+        self.level = 1
+        self._exp_table = self._build_exp_table()
+        self.exp_required = self._exp_table[self.level]
 
         self.visible = True
         self.layer = Layers.PLAYER
@@ -232,6 +232,20 @@ class Player(BaseEntity):
         scale = (size[0] / temp_img.get_width(), size[1] / temp_img.get_height())
         return BaseEntity.load_and_scale_image(path, scale)
 
+    @staticmethod
+    def _build_exp_table():
+        """Build exp lookup table once at init."""
+        base = 100
+        multiplier = 1.5
+        max_level = 200
+        max_exp_cap = 999999
+
+        table = [0]
+        for lvl in range(1, max_level + 2):
+            exp = min(int(base * (multiplier ** (lvl - 1))), max_exp_cap)
+            table.append(exp)
+        return table
+
     # ===========================================================
     # Frame Cycle
     # ===========================================================
@@ -302,17 +316,7 @@ class Player(BaseEntity):
     def _level_up(self):
         overflow = self.exp - self.exp_required
         self.level += 1
-
-        # Cap at reasonable max to prevent overflow
-        formula = self.cfg.get("progression", {}).get("exp_formula", {})
-        base = formula.get("base", 30)
-        multiplier = formula.get("multiplier", 2.0)
-        max_level = formula.get("max_level", 200)
-        max_exp_cap = formula.get("max_exp_cap", 999999)
-
-        exp_calc = base * (multiplier ** min(self.level - 1, max_level))
-        self.exp_required = min(int(exp_calc), max_exp_cap)
-
+        self.exp_required = self._exp_table[min(self.level, len(self._exp_table) - 1)]
         self.exp = overflow
 
         stats = get_session_stats()
