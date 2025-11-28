@@ -593,6 +593,9 @@ class GameScene(BaseScene):
         # Show the game over screen
         self.ui.show_screen("game_over", modal=True)
 
+        # Enable keyboard navigation for game over UI
+        self.input_manager.set_context("ui")
+
         DebugLogger.state(f"Game over shown (victory={victory})", category="game")
 
     def _update_game_over_title(self, victory: bool):

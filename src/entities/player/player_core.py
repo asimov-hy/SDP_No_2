@@ -193,22 +193,6 @@ class Player(BaseEntity):
         self.bullet_speed = combat_cfg.get("bullet_speed", 900)
         self.shoot_timer = 0.0
 
-        # # ========================================
-        # # Load Player Bullet Sprite
-        # # ========================================
-        # bullet_cfg = render.get("bullet", {})
-        # bullet_path = bullet_cfg.get("path", "assets/images/null.png")
-        # bullet_size = tuple(bullet_cfg.get("size", [16, 32]))
-        #
-        # temp_img = pygame.image.load(bullet_path).convert_alpha() if os.path.exists(bullet_path) else None
-        # if temp_img:
-        #     scale = (bullet_size[0] / temp_img.get_width(), bullet_size[1] / temp_img.get_height())
-        #     self.bullet_image = BaseEntity.load_and_scale_image(bullet_path, scale)
-        # else:
-        #     DebugLogger.warn(f"Missing bullet sprite: {bullet_path}")
-        #     self.bullet_image = pygame.Surface(bullet_size, pygame.SRCALPHA)
-        #     pygame.draw.rect(self.bullet_image, (255, 255, 100), (0, 0, *bullet_size))
-
         # ========================================
         # 7. Global Ref & Status
         # ========================================
