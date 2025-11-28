@@ -22,6 +22,8 @@ Features:
 # Imports
 # ===========================================================
 
+import pygame
+
 # Core - Debug & Settings
 from src.core.debug.debug_logger import DebugLogger
 from src.core.runtime.game_settings import Debug
@@ -50,6 +52,7 @@ from src.scenes.level_up_screen import LevelUp
 # ===========================================================
 
 MAPS_PATH = "assets/images/maps/"
+BGM_PATH = "assets/audio/bgm/"
 
 # Default background for levels without explicit config
 DEFAULT_BACKGROUND = {
@@ -63,6 +66,7 @@ DEFAULT_BACKGROUND = {
 }
 
 # Game over timing configuration
+DEFAULT_MUSIC = "IngameBGM"
 GAME_OVER_DELAY = 1.5           # Seconds before game over screen appears
 GAME_OVER_FADE_SPEED = 200      # Overlay fade speed (lower = slower)
 STAT_REVEAL_DELAY = 0.4         # Seconds between each stat reveal
@@ -196,8 +200,6 @@ class GameScene(BaseScene):
         Called after transition completes. Sets up audio, UI, and starts level.
         """
         # Audio
-        sound_manager = self.services.get_global("sound_manager")
-        sound_manager.play_bgm("game_bgm", loop=-1)
 
         # UI setup
         self.ui.register_binding('player', self.player)
@@ -282,6 +284,7 @@ class GameScene(BaseScene):
         level_data = self.level_manager.get_current_level_data()
         if level_data:
             self._load_level_background(level_data)
+            self._load_level_music(level_data)
 
     def _load_level_background(self, level_data):
         """
@@ -309,6 +312,26 @@ class GameScene(BaseScene):
             bg_config = DEFAULT_BACKGROUND
 
         self._setup_background(bg_config)
+
+    def _load_level_music(self, level_data):
+        """
+        Load music from level data.
+
+        Args:
+            level_data: Level data dict with optional 'music' key (filename only)
+        """
+        sound_manager = self.services.get_global("sound_manager")
+        music_file = level_data.get("music")
+
+        if music_file:
+            route = BGM_PATH + music_file
+            pygame.mixer.music.load(route)
+            volume = sound_manager.master_volume * sound_manager.bgm_volume
+            pygame.mixer.music.set_volume(volume)
+            pygame.mixer.music.play(loops=-1)
+            sound_manager.current_bgm_id = music_file
+        else:
+            sound_manager.play_bgm("game_bgm", loop=-1)  # Default
 
     # ===========================================================
     # Update Loop

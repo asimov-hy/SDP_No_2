@@ -3,8 +3,8 @@
 
   "core_attributes": {
     "_notes": "Defines base physics and behavior values.",
-    "scale": 1.0,
-    "health": 1,
+    "scale": 0.9,
+    "health": 1000,
     "hitbox_scale": 0.85,
 
     "speed": 300,
