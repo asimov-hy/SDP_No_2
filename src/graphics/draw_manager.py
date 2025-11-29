@@ -45,6 +45,12 @@ class DrawManager:
         self.debug_hitboxes = []
         self.debug_obbs = []
 
+        # Screen shake
+        self.shake_offset = (0, 0)
+        self.shake_timer = 0.0
+        self.shake_intensity = 0.0
+        self.shake_duration = 0.0
+
         DebugLogger.init_entry("DrawManager")
 
     # ===========================================================
@@ -189,6 +195,25 @@ class DrawManager:
             layer_items.clear()
         self.debug_hitboxes.clear()
         self.debug_obbs.clear()
+
+    def trigger_shake(self, intensity=8.0, duration=0.3):
+        """Start screen shake effect."""
+        self.shake_intensity = intensity
+        self.shake_duration = duration
+        self.shake_timer = duration
+
+    def update_shake(self, dt):
+        """Update screen shake (call each frame)."""
+        if self.shake_timer > 0:
+            self.shake_timer -= dt
+            t = self.shake_timer / self.shake_duration if self.shake_duration > 0 else 0
+            import math
+            self.shake_offset = (
+                int(math.sin(self.shake_timer * 50) * self.shake_intensity * t),
+                int(math.cos(self.shake_timer * 40) * self.shake_intensity * t)
+            )
+        else:
+            self.shake_offset = (0, 0)
 
     def queue_draw(self, surface, rect, layer=0):
         """
@@ -370,7 +395,11 @@ class DrawManager:
         # Render layers
         for layer in self._layer_keys_cache:
             if layer in self.surface_layers and self.surface_layers[layer]:
-                target_surface.blits(self.surface_layers[layer])
+                if self.shake_offset != (0, 0):
+                    shifted = [(surf, rect.move(self.shake_offset)) for surf, rect in self.surface_layers[layer]]
+                    target_surface.blits(shifted)
+                else:
+                    target_surface.blits(self.surface_layers[layer])
 
             if layer in self.shape_layers:
                 for shape_type, rect, color, kwargs in self.shape_layers[layer]:

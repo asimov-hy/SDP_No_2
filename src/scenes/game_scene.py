@@ -30,7 +30,7 @@ from src.core.runtime.game_settings import Debug
 
 # Core - Runtime & Services
 from src.core.runtime.session_stats import get_session_stats
-from src.core.services.event_manager import get_events, EnemyDiedEvent
+from src.core.services.event_manager import get_events, EnemyDiedEvent, ScreenShakeEvent
 
 # Entities
 from src.entities.entity_state import LifecycleState
@@ -214,6 +214,9 @@ class GameScene(BaseScene):
         self._game_over_delay_timer = 0.0
         self._stat_reveal_queue = []
         get_session_stats().reset()
+
+        # Subscribe to screen shake events
+        get_events().subscribe(ScreenShakeEvent, self._on_screen_shake)
 
         # Start level
         self._start_level()
@@ -462,6 +465,9 @@ class GameScene(BaseScene):
         # Track play time
         get_session_stats().add_time(dt)
 
+        # Update screen shake
+        self.draw_manager.update_shake(dt)
+
         # Background parallax
         player_pos = (self.player.virtual_pos.x, self.player.virtual_pos.y)
         self._update_background(dt, player_pos)
@@ -586,6 +592,10 @@ class GameScene(BaseScene):
 
         sound_manager = self.services.get_global("sound_manager")
         sound_manager.play_bfx("enemy_destroy")
+
+    def _on_screen_shake(self, event):
+        """Handle screen shake event."""
+        self.draw_manager.trigger_shake(event.intensity, event.duration)
 
     # ===========================================================
     # Game Over System

@@ -18,7 +18,8 @@
     "shoot_cooldown": 0.2,
     "bullet_damage": 1,
     "bullet_speed": 900,
-    "collision_damage": 1
+    "collision_damage": 1,
+    "collision_knockback": 200
   },
 
   "render": {
@@ -62,8 +63,12 @@
   },
 
   "state_effects": {
+    "knockback": {
+        "duration": 0.15,
+        "interaction_state": "DEFAULT"
+    },
     "stun": {
-      "duration": 0.5,
+      "duration": 1,
       "interaction_state": "INTANGIBLE",
       "knockback_strength": 600,
       "next_state": "recovery"
@@ -72,7 +77,6 @@
       "duration": 2.5,
       "interaction_state": "DEFAULT",
       "damage_reduction": 0.5,
-      "extend_on_hit": 1.0,
       "debuffs": {
         "speed": { "multiplier": 0.5 },
         "fire_rate": { "multiplier": 0.6 }
