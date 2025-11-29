@@ -53,5 +53,23 @@
     "spread": 360,
     "shrink": true,
     "glow": true
+  },
+  "shield_shimmer": {
+    "colors": [[100, 200, 255], [150, 230, 255], [200, 255, 255]],
+    "size_range": [3, 6],
+    "speed_range": [30, 80],
+    "lifetime": [0.3, 0.6],
+    "spread": 360,
+    "shrink": true,
+    "glow": true
+  },
+  "shield_impact": {
+    "colors": [[150, 220, 255], [200, 240, 255], [255, 255, 255]],
+    "size_range": [4, 8],
+    "speed_range": [150, 300],
+    "lifetime": [0.2, 0.4],
+    "spread": 120,
+    "shrink": true,
+    "glow": true
   }
 }

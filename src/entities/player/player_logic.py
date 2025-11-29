@@ -41,20 +41,27 @@ def damage_collision(player, other):
         DebugLogger.trace(f"Invalid damage value {damage}", category="collision")
         return
 
-    # Check RECOVERY state for reduction + extension
+    # Check RECOVERY state - shield blocks damage entirely
     in_recovery_state = player.state_manager.has_state(PlayerEffectState.RECOVERY)
 
     if in_recovery_state:
         recovery_cfg = player.state_manager.get_state_config(PlayerEffectState.RECOVERY)
+        knockback = recovery_cfg.get("shield_knockback", 300)
 
-        # Apply damage reduction
-        reduction = recovery_cfg.get("damage_reduction", 0.0)
-        damage = damage * (1.0 - reduction)
+        # Calculate knockback direction
+        dx = player.pos.x - other.pos.x
+        dy = player.pos.y - other.pos.y
+        length = (dx * dx + dy * dy) ** 0.5
+        if length > 0:
+            player.velocity.x = (dx / length) * knockback
+            player.velocity.y = (dy / length) * knockback
 
-        DebugLogger.trace(
-            f"RECOVERY state: {reduction * 100:.0f}% reduction, +{extend_time}s",
-            category="collision"
-        )
+        # Shield impact visual
+        ParticleEmitter.burst("shield_impact", player.rect.center, count=8,
+                              direction=(dx, dy) if length > 0 else None)
+
+        DebugLogger.trace(f"SHIELD BLOCK - knockback applied", category="collision")
+        return  # Block all damage
 
     # Apply damage
     prev_health = player.health
@@ -100,11 +107,6 @@ def damage_collision(player, other):
         target_state = "normal"
 
     previous_state = player._current_sprite
-
-    # Already in RECOVERY - just flash, skip stress
-    if in_recovery_state:
-        _apply_recovery_hit(player, previous_state, target_state)
-        return
 
     # Check stress threshold
     if player.stress >= player.stress_threshold:

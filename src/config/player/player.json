@@ -76,10 +76,10 @@
     "recovery": {
       "duration": 2.5,
       "interaction_state": "DEFAULT",
-      "damage_reduction": 0.5,
+      "shield_knockback": 350,
       "debuffs": {
         "speed": { "multiplier": 0.5 },
-        "fire_rate": { "multiplier": 0.6 }
+        "fire_rate": { "multiplier": 0.3 }
       }
     }
   },

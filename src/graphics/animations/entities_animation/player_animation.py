@@ -109,25 +109,42 @@ def stun_player(entity, t):
 @register("player", "recovery")
 def recovery_player(entity, t):
     """
-    DAMAGED state: Red tint + slow pulse.
-    Called during debuff phase.
+    RECOVERY state: Orange/yellow pulse + shield bubble overlay.
+    Shield blinks rapidly at end to warn player.
     """
     # Cache base image
     if not hasattr(entity, "_base_image") or entity._base_image is None:
         entity._base_image = entity.image.copy()
 
     base = entity._base_image
-    tinted = base.copy()
-
-    # Pulsing orange/yellow tint
     elapsed = entity.anim_context.get("elapsed_time", 0)
-    pulse = 0.5 + 0.5 * math.sin(elapsed * 4)
-    orange = int(80 + 40 * pulse)
-    yellow = int(40 + 20 * pulse)
 
+    # === Player tint: pulsing orange/yellow ===
+    tinted = base.copy()
+    pulse = 0.5 + 0.5 * math.sin(elapsed * 4)
+    orange = int(60 + 30 * pulse)
+    yellow = int(30 + 20 * pulse)
     tinted.fill((orange, yellow, 0), special_flags=pygame.BLEND_RGB_ADD)
 
+    # === Shield bubble overlay ===
+    shield_visible = True
+
+    # Warning phase: rapid blink in last 30%
+    if t > 0.7:
+        blink_rate = 0.08
+        shield_visible = int(elapsed / blink_rate) % 2 == 0
+
+    if shield_visible:
+        _draw_shield_bubble(tinted, alpha=80 + int(40 * pulse))
+
     entity.image = tinted
+
+    # Emit occasional shield particles
+    ctx = entity.anim_context
+    particle_key = int(elapsed * 8)
+    if particle_key % 4 == 0 and ctx.get("_last_particle_time", -1) != particle_key:
+        ctx["_last_particle_time"] = particle_key
+        ParticleEmitter.burst("shield_shimmer", entity.rect.center, count=2)
 
     # Cleanup at end
     if t >= 1.0:
@@ -135,3 +152,30 @@ def recovery_player(entity, t):
         entity.image.set_alpha(255)
         if hasattr(entity, '_base_image'):
             del entity._base_image
+
+
+def _draw_shield_bubble(surface, alpha=100, color=(100, 200, 255)):
+    """
+    Draw a shield bubble overlay on a surface.
+    Reusable for items or other effects.
+    """
+    w, h = surface.get_size()
+    center = (w // 2, h // 2)
+    radius = max(w, h) // 2 + 16
+
+    # Create shield surface with transparency
+    shield_surf = pygame.Surface((w, h), pygame.SRCALPHA)
+
+    # Outer glow ring
+    glow_color = (*color, alpha // 3)
+    pygame.draw.circle(shield_surf, glow_color, center, radius + 2, 4)
+
+    # Main shield ring
+    ring_color = (*color, alpha)
+    pygame.draw.circle(shield_surf, ring_color, center, radius, 2)
+
+    # Inner highlight
+    highlight_color = (min(255, color[0] + 50), min(255, color[1] + 50), min(255, color[2] + 50), alpha // 2)
+    pygame.draw.circle(shield_surf, highlight_color, center, radius - 3, 1)
+
+    surface.blit(shield_surf, (0, 0))
