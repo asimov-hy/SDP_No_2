@@ -69,7 +69,7 @@ DEFAULT_BACKGROUND = {
 
 # Game over timing configuration
 DEFAULT_MUSIC = "IngameBGM"
-GAME_OVER_DELAY = 1.5           # Seconds before game over screen appears
+GAME_OVER_DELAY = 2           # Seconds before game over screen appears
 GAME_OVER_FADE_SPEED = 200      # Overlay fade speed (lower = slower)
 STAT_REVEAL_DELAY = 0.4         # Seconds between each stat reveal
 
@@ -411,12 +411,13 @@ class GameScene(BaseScene):
         Returns:
             bool: True if player died and game over triggered
         """
-        if not self.game_over_shown and self.player.death_state == LifecycleState.DEAD:
-            # Hide level up UI if open
+        if not self.game_over_shown and not self._game_over_pending and self.player.death_state == LifecycleState.DEAD:
             if self.level_up_ui.is_active:
                 self.level_up_ui.hide()
-            # Start game over sequence (no delay on death)
-            self._show_game_over(victory=False)
+            # Start delayed game over sequence
+            self._game_over_pending = True
+            self._game_over_victory = False
+            self._game_over_delay_timer = GAME_OVER_DELAY
             return True
         return False
 
