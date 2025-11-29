@@ -1,0 +1,39 @@
+{
+  "ember": {
+    "colors": [[255, 120, 40], [255, 80, 20], [255, 160, 60]],
+    "size_range": [2, 5],
+    "speed_range": [40, 100],
+    "lifetime": [2.0, 4.0],
+    "direction": [0, -1],
+    "spread": 30,
+    "wobble": 40,
+    "glow": true
+  },
+  "fire_trail": {
+    "colors": [[255, 200, 50], [255, 120, 30], [255, 60, 10]],
+    "size_range": [3, 7],
+    "speed_range": [20, 60],
+    "lifetime": [0.3, 0.6],
+    "spread": 25,
+    "wobble": 15,
+    "shrink": true,
+    "glow": true
+  },
+  "damage": {
+    "colors": [[255, 255, 255], [255, 220, 100], [255, 180, 50]],
+    "size_range": [8, 16],
+    "speed_range": [350, 700],
+    "lifetime": [0.2, 0.4],
+    "spread": 360,
+    "shrink": true
+  },
+  "damage_player": {
+    "colors": [[200, 230, 255], [150, 200, 255], [255, 255, 255]],
+    "size_range": [4, 8],
+    "speed_range": [350, 700],
+    "lifetime": [0.4, 0.8],
+    "spread": 90,
+    "shrink": true,
+    "glow": true
+  }
+}

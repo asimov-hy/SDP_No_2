@@ -17,6 +17,7 @@ from src.core.debug.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import LifecycleState, InteractionState
 from src.entities.entity_types import CollisionTags, EntityCategory
+from src.graphics.particles.particle_manager import ParticleEmitter
 from src.systems.entity_management.entity_registry import EntityRegistry
 from src.core.services.event_manager import get_events, EnemyDiedEvent, NukeUsedEvent
 
@@ -148,7 +149,7 @@ class BaseEnemy(BaseEntity):
         Optional visual or behavioral response when the enemy takes damage.
         Override in subclasses for hit flash, particles, etc.
         """
-        pass
+        ParticleEmitter.burst("damage", self.pos, count=6)
 
     def _on_anim_complete(self, entity, anim_name):
         """Callback for animation completion."""
@@ -196,6 +197,7 @@ class BaseEnemy(BaseEntity):
         if self.death_state != LifecycleState.ALIVE:
             return
 
+        # print(f"{self.health} -> {self.health - amount}")
         self.health = max(0, self.health - amount)
 
         if self.health > 0:
@@ -214,6 +216,7 @@ class BaseEnemy(BaseEntity):
             self.on_death(source)
 
     def on_death(self, source):
+        self.death_state = LifecycleState.DYING
         self.layer = Layers.PARTICLES   # TODO: temporary measure -> later replace with seperate layer and death animation
         self.anim_manager.play("death")
 

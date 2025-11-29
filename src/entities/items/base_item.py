@@ -40,7 +40,7 @@ class BaseItem(BaseEntity):
         EntityRegistry.auto_register(cls)
 
     def __init__(self, x, y, item_data=None, image=None, shape_data=None,
-                 draw_manager=None, speed=500, despawn_y=None, lifetime=5.0, bounce=True):
+                 draw_manager=None, speed=300, despawn_y=None, lifetime=7.0, bounce=True):
         """
         Initialize a base item entity.
 
@@ -116,6 +116,22 @@ class BaseItem(BaseEntity):
 
         # Timer despawn
         self.lifetime_timer += dt
+
+        # life time blink
+        life_ratio = self.lifetime_timer / self.lifetime
+
+        if life_ratio > 0.7:
+            blink_speed = 4 * (life_ratio ** 3)
+
+            if int(self.lifetime_timer * blink_speed) % 2 == 0:
+                self.image.set_alpha(255)
+
+            else:
+                self.image.set_alpha(60)
+
+        else:
+            self.image.set_alpha(255)
+
         if self.lifetime_timer >= self.lifetime:
             self.mark_dead(immediate=True)
             return

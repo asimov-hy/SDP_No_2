@@ -3,25 +3,17 @@ pause_menu:
   size: [1280, 720]
   parent_anchor: center
   self_anchor: center
-  background: [20, 20, 30, 100]
 
   children:
-    # Semi-transparent overlay
-    - type: container
-      width: 1280
-      height: 720
-      anchor: center
-      background: [0, 0, 0, 180]
-      layer: Layers.UI
-
     # Pause menu box
     - type: container
-      width: 400
-      height: 500
-      anchor: center
-      background: [40, 40, 50]
+      id: "pause_menu_box"
+      size: [600, 350]
+      parent_anchor: center
+      self_anchor: center
+      background: [40, 40, 40, 100]
       border: 3
-      border_color: [100, 100, 120]
+      border_color: [100, 100, 100]
       border_radius: 10
       layer: Layers.UI
 
@@ -30,10 +22,10 @@ pause_menu:
         - type: label
           id: "title"
           text: "PAUSED"
-          width: 400
-          height: 60
-          anchor: top_center
-          offset: [0, 40]
+          size: [600, 60]
+          parent_anchor: "#pause_menu_box:middle"
+          anchor: middle
+          offset: [0, 30]
           font_size: 48
           color: [255, 255, 255]
           text_align: center
@@ -44,14 +36,13 @@ pause_menu:
           id: "resume_button"
           text: "RESUME"
           action: "resume"
-          width: 300
-          height: 60
+          size: [400, 60]
           anchor: "#title:bottom"
           align: top_center
           offset: [0, 60]
-          color: [60, 100, 180]
+          color: [180, 180, 180, 200]
           border: 2
-          border_color: [100, 140, 220]
+          border_color: [220, 220, 220]
           border_radius: 8
           font_size: 28
           layer: Layers.UI
@@ -61,8 +52,7 @@ pause_menu:
           id: "main_menu_button"
           text: "MAIN MENU"
           action: "quit"
-          width: 300
-          height: 60
+          size: [400, 60]
           anchor: "#resume_button:bottom"
           align: top_center
           offset: [0, 20]

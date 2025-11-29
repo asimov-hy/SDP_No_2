@@ -1,8 +1,32 @@
 import pygame
 
+from src.core.debug.debug_logger import DebugLogger
+
+INSTANCE = None
+
+def get_sound_manager():
+    global INSTANCE
+    return INSTANCE
+
 
 class SoundManager:
+    ASSET_PATHS = {
+        "bgm": {
+            "menu_bgm": "assets/audio/bgm/MainMenuBGM.wav",
+            "game_bgm": "assets/audio/bgm/IngameBGM.wav",
+            "game_clear": "assets/audio/bgm/GameClear.wav",
+            "game_over": "assets/audio/bgm/GameOver.wav",
+        },
+        "bfx": {
+            "enemy_destroy": "assets/audio/bfx/EnemyDestroy.wav",
+            "player_destroy": "assets/audio/bfx/PlayerDestroy.wav",
+            "player_shoot": "assets/audio/bfx/PlayerShoot.wav",
+            "button_click": "assets/audio/ui/ButtonClick.wav",
+        }
+    }
     def __init__(self):
+        global INSTANCE
+        INSTANCE = self
         pygame.init()
         pygame.mixer.init()
         self.bfx = {}
@@ -10,6 +34,18 @@ class SoundManager:
         self.bfx_volume = 1.0
         self.bgm_volume = 1.0
         self.master_volume = 1.0
+        self.load_assets()
+
+        self.current_bgm = None
+        self.current_bgm_id = None
+
+    def load_assets(self):
+        # DebugLogger.init("Loading Audio Assets...")
+        for name, path in self.ASSET_PATHS["bgm"].items(): # load BGM
+            self.load_bgm(name, path)
+        for name, path in self.ASSET_PATHS["bfx"].items(): # load BFX / UI sound
+            self.load_bfx(name, path)
+
 
     def volume_scale(self, level): # log scale volume control(0-100)
         if level < 0:
@@ -23,7 +59,6 @@ class SoundManager:
         volume = self.master_volume * self.bfx_volume
         bfx_sound.set_volume(volume)
 
-
     def load_bgm(self, name, route): # load BGM route
         self.bgm[name] = route
 
@@ -32,14 +67,21 @@ class SoundManager:
         bfx.play()
 
     def play_bgm(self, name, loop): # play BGM
+        if self.current_bgm_id == name:
+            return
+        if self.current_bgm:
+                self.stop_bgm()
+
         route = self.bgm[name]
         pygame.mixer.music.load(route)
         volume = self.master_volume * self.bgm_volume
         pygame.mixer.music.set_volume(volume)
         pygame.mixer.music.play(loops=loop)
+        self.current_bgm_id = name
 
     def stop_bgm(self): # stop BGM
         pygame.mixer.music.stop()
+        self.current_bgm_id = None
 
     # Set BFX volume (0 - 100)
     def set_bfx_volume(self, level):

@@ -5,10 +5,21 @@ Settings/options menu - controls, audio, display.
 """
 
 from src.scenes.base_scene import BaseScene
+from src.scenes.transitions.transitions import FadeTransition
 
 
 class SettingsScene(BaseScene):
     """Settings menu scene."""
+
+    BACKGROUNDS_PATH = "assets/images/backgrounds/"
+
+    BACKGROUND_CONFIG = {
+        "layers": [{
+            "image": BACKGROUNDS_PATH + "settings_menu.png",
+            "scroll_speed": [0, 0],
+            "parallax": [0, 0]
+        }]
+    }
 
     def __init__(self, services, caller_scene=None):
         super().__init__(services)
@@ -23,16 +34,22 @@ class SettingsScene(BaseScene):
 
     def on_enter(self):
         """Load settings UI."""
+        self._setup_background(self.BACKGROUND_CONFIG)
+
         self.ui.load_screen("settings", "screens/settings.yaml")
         self.ui.show_screen("settings")
 
     def on_exit(self):
         """Called when leaving scene."""
+        self._clear_background()
+
         self.ui.hide_screen("settings")
 
     def update(self, dt: float):
         """Update settings UI."""
-        mouse_pos = self.input_manager.get_mouse_pos()
+        self._update_background(dt)
+
+        mouse_pos = self.input_manager.get_effective_mouse_pos()
         self.ui.update(dt, mouse_pos)
 
     def draw(self, draw_manager):
@@ -50,7 +67,7 @@ class SettingsScene(BaseScene):
             else:
                 # Return to main menu
                 target = self.caller_scene if self.caller_scene else "MainMenu"
-                self.scene_manager.set_scene(target)
+                self.scene_manager.set_scene("MainMenu", transition=FadeTransition(0.3))
 
         elif action == "toggle_fullscreen":
             # Toggle fullscreen via display manager

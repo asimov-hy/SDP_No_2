@@ -34,18 +34,17 @@ SDP-202X/
 │  ├─ audio/
 │  │  ├─ bfx/
 │  │  │  ├─ EnemyDestroy.wav
-│  │  │  ├─ GameClear.wav
-│  │  │  ├─ GameOver.wav
 │  │  │  ├─ PlayerDestroy.wav
 │  │  │  └─ PlayerShoot.wav
 │  │  │
 │  │  ├─ bgm/
+│  │  │  ├─ GameClear.wav
+│  │  │  ├─ GameOver.wav
 │  │  │  ├─ IngameBGM.wav
-│  │  │  ├─ IngameBGM2.wav
 │  │  │  └─ MainMenuBGM.wav
 │  │  │
 │  │  └─ ui/
-│  │     └─ switch.ogg
+│  │     └─ ButtonClick.wav
 │  │
 │  └─ images/
 │     ├─ null.png
@@ -64,12 +63,21 @@ SDP-202X/
 │     │  ├─ battle_stage2.png
 │     │  ├─ battle_stage3.png
 │     │  ├─ battle_stage4.png
-│     │  └─ boss_stage.png
+│     │  ├─ boss_stage.png
+│     │  ├─ cloud_layer.png
+│     │  ├─ main_menu.png
+│     │  ├─ mission_select.png
+│     │  ├─ settings.png
+│     │  ├─ settings_menu.png
+│     │  └─ test_background.png
 │     │
 │     ├─ sprites/
 │     │  ├─ enemies/
 │     │  │  ├─ enemy_basic.png
-│     │  │  └─ missile.png
+│     │  │  ├─ enemy_homing.png
+│     │  │  ├─ enemy_waypoint.png
+│     │  │  ├─ missile.png
+│     │  │  └─ waypoint_shooter.png
 │     │  │
 │     │  ├─ items/
 │     │  │  ├─ health_pack.png
@@ -82,13 +90,16 @@ SDP-202X/
 │     │  │
 │     │  └─ projectiles/
 │     │     ├─ 100H.png
-│     │     └─ m107.png
+│     │     ├─ m107.png
+│     │     ├─ plasma_green.png
+│     │     └─ plasma_red.png
 │     │
 │     └─ ui/
 │        ├─ bars/
-│        │  ├─ current_exp.png
 │        │  ├─ exp_bar.png
-│        │  └─ main_bar.png
+│        │  ├─ exp_frame.png
+│        │  ├─ left_bar.png
+│        │  └─ right_bar.png
 │        │
 │        └─ health/
 │           ├─ health_gauge.png
@@ -102,7 +113,8 @@ SDP-202X/
    │  └─ sound_manager.py
    │
    ├─ config/
-   │  ├─ campaigns.json
+   │  ├─ animations/
+   │  │  └─ animations.json
    │  │
    │  ├─ entities/
    │  │  ├─ bullets.json
@@ -110,22 +122,23 @@ SDP-202X/
    │  │  ├─ items.json
    │  │  └─ player.json
    │  │
-   │  ├─ levels/
-   │  │  ├─ Demo_Level.json
-   │  │  ├─ Test_Homing.json
-   │  │  └─ level1.json
+   │  ├─ missions/
+   │  │  ├─ 1_Tutorial.json
+   │  │  ├─ 2_Mission.json
+   │  │  ├─ 3_Boss.json
+   │  │  ├─ Campaigns.json
+   │  │  └─ test_shooter.json
    │  │
    │  └─ ui/
    │     ├─ hud/
    │     │  ├─ debug_hud.yaml
-   │     │  ├─ game_over.yaml
-   │     │  ├─ gameplay_hud.yaml
-   │     │  ├─ pause_hud.yaml
    │     │  └─ player_hud.yaml
    │     │
    │     └─ screens/
-   │        ├─ campaign_select.yaml
+   │        ├─ game_over.yaml
+   │        ├─ level_select.yaml
    │        ├─ main_menu.yaml
+   │        ├─ pause_screen.yaml
    │        └─ settings.yaml
    │
    ├─ core/
@@ -138,8 +151,8 @@ SDP-202X/
    │  │
    │  ├─ runtime/
    │  │  ├─ __init__.py
-   │  │  ├─ game_loop.py
    │  │  ├─ game_settings.py
+   │  │  ├─ main_loop.py
    │  │  └─ session_stats.py
    │  │
    │  └─ services/
@@ -168,8 +181,9 @@ SDP-202X/
    │  │  ├─ __init__.py
    │  │  ├─ base_enemy.py
    │  │  ├─ enemy_homing.py
-   │  │  ├─ enemy_shooter.py
-   │  │  └─ enemy_straight.py
+   │  │  ├─ enemy_straight.py
+   │  │  ├─ enemy_waypoint.py
+   │  │  └─ waypoint_shooter.py
    │  │
    │  ├─ environments/
    │  │  ├─ __init__.py
@@ -191,10 +205,12 @@ SDP-202X/
    │
    ├─ graphics/
    │  ├─ __init__.py
+   │  ├─ background_manager.py
    │  ├─ draw_manager.py
    │  │
    │  └─ animations/
    │     ├─ __init__.py
+   │     ├─ animation_data.py
    │     ├─ animation_manager.py
    │     ├─ animation_registry.py
    │     │
@@ -213,9 +229,9 @@ SDP-202X/
    ├─ scenes/
    │  ├─ __init__.py
    │  ├─ base_scene.py
-   │  ├─ campaign_select_scene.py
    │  ├─ game_scene.py
    │  ├─ main_menu_scene.py
+   │  ├─ mission_select_scene.py
    │  ├─ scene_state.py
    │  ├─ settings_scene.py
    │  │
@@ -251,6 +267,7 @@ SDP-202X/
    │
    └─ ui/
       ├─ __init__.py
+      ├─ level_up_ui.py
       │
       ├─ core/
       │  ├─ __init__.py
@@ -265,5 +282,6 @@ SDP-202X/
          ├─ bar.py
          ├─ button.py
          ├─ container.py
-         └─ label.py
+         ├─ label.py
+         └─ needle.py
 ```

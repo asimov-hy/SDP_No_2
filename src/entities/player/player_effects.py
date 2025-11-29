@@ -28,9 +28,24 @@ def effect_handler(effect_name: str):
 # ===========================================================
 # effects Handlers
 # ===========================================================
+def _validate_effect(effect_data: dict, required: list, effect_name: str) -> bool:
+    """Validate effect_data has required keys with correct types."""
+    for key, expected_type in required:
+        val = effect_data.get(key)
+        if val is None:
+            DebugLogger.warn(f"{effect_name}: missing '{key}'", category="item")
+            return False
+        if not isinstance(val, expected_type):
+            DebugLogger.warn(f"{effect_name}: '{key}' should be {expected_type.__name__}", category="item")
+            return False
+    return True
+
 @effect_handler("ADD_HEALTH")
 def handle_ADD_HEALTH(player, effect_data):
     """Add health to player (capped at max_health)."""
+    if not _validate_effect(effect_data, [("amount", (int, float))], "ADD_HEALTH"):
+        return
+
     amount = effect_data.get("amount", 0)
     old_health = player.health
     player.health = min(player.max_health, player.health + amount)
@@ -43,6 +58,9 @@ def handle_ADD_HEALTH(player, effect_data):
 @effect_handler("SPEED_BOOST")
 def handle_SPEED_BOOST(player, effect_data):
     """Temporarily multiply player movement speed."""
+    if not _validate_effect(effect_data, [("multiplier", (int, float)), ("duration", (int, float))], "SPEED_BOOST"):
+        return
+
     multiplier = effect_data.get("multiplier", 1.0)
     duration = effect_data.get("duration", 5.0)
     stack_type = effect_data.get("stack_type", "MULTIPLY")
@@ -57,6 +75,9 @@ def handle_SPEED_BOOST(player, effect_data):
 @effect_handler("MULTIPLY_FIRE_RATE")
 def handle_MULTIPLY_FIRE_RATE(player, effect_data):
     """Temporarily multiply player fire rate."""
+    if not _validate_effect(effect_data, [("multiplier", (int, float)), ("duration", (int, float))], "MULTIPLY_FIRE_RATE"):
+        return
+
     multiplier = effect_data.get("multiplier", 1.0)
     duration = effect_data.get("duration", 5.0)
     stack_type = effect_data.get("stack_type", "MULTIPLY")

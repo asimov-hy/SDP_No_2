@@ -11,7 +11,7 @@ from src.core.runtime.game_settings import Display, Layers
 from src.core.debug.debug_logger import DebugLogger
 from src.core.services.config_manager import load_config
 from src.core.services.event_manager import get_events, EnemyDiedEvent
-from src.core.runtime.session_stats import update_session_stats
+from src.core.runtime.session_stats import get_session_stats
 
 from src.entities.base_entity import BaseEntity
 from src.entities.state_manager import StateManager
@@ -63,8 +63,14 @@ class Player(BaseEntity):
         cfg = load_config("player.json", {})
         self.cfg = cfg
 
-        if "core_attributes" not in cfg or "render" not in cfg or "health_states" not in cfg:
-            raise ValueError("Invalid player.json: missing required sections")
+        _REQUIRED_SECTIONS = ("core_attributes", "render", "health_states")
+        missing = [s for s in _REQUIRED_SECTIONS if s not in cfg]
+        if missing:
+            DebugLogger.fail(
+                f"player.json missing required sections: {missing}",
+                category="loading"
+            )
+            raise ValueError(f"Invalid player.json: missing {missing}")
 
         core = cfg["core_attributes"]
         render = cfg["render"]
@@ -84,8 +90,7 @@ class Player(BaseEntity):
                 # Calculate scale factor from original image size
                 if sprite_path and os.path.exists(sprite_path):
                     temp_img = pygame.image.load(sprite_path).convert_alpha()
-                    scale = (size[0] / temp_img.get_width(), size[1] / temp_img.get_height())
-                    image = BaseEntity.load_and_scale_image(sprite_path, scale)
+                    image = pygame.transform.scale(temp_img, size)
 
                 else:
                     DebugLogger.warn(f"Missing sprite: {sprite_path}, using fallback.")
@@ -121,14 +126,19 @@ class Player(BaseEntity):
         # 4. Core Stats
         # ========================================
         self.velocity = pygame.Vector2(0, 0)
+        self.virtual_pos = pygame.Vector2(x, y)
+        self.clamped_x = False
+        self.clamped_y = False
+
         self.base_speed = core["speed"]
         self.health = core["health"]
         self.max_health = self.health
 
-        # Player stats
+        # Player stats - load from progression config
         self.exp = 0
         self.level = 1
-        self.exp_required = 500
+        self._exp_table = self._build_exp_table()
+        self.exp_required = self._exp_table[self.level]
 
         self.visible = True
         self.layer = Layers.PLAYER
@@ -178,21 +188,10 @@ class Player(BaseEntity):
 
         self._bullet_manager = None
         self._shooting_enabled = False
-        self.base_shoot_cooldown = 0.1
+        combat_cfg = cfg.get("combat", {})
+        self.base_shoot_cooldown = combat_cfg.get("shoot_cooldown", 0.5)
+        self.bullet_speed = combat_cfg.get("bullet_speed", 900)
         self.shoot_timer = 0.0
-
-        # ========================================
-        # Load Player Bullet Sprite
-        # ========================================
-        bullet_path = "assets/images/sprites/projectiles/100H.png"
-        temp_img = pygame.image.load(bullet_path).convert_alpha() if os.path.exists(bullet_path) else None
-        if temp_img:
-            scale = (16 / temp_img.get_width(), 32 / temp_img.get_height())
-            self.bullet_image = BaseEntity.load_and_scale_image(bullet_path, scale)
-        else:
-            DebugLogger.warn(f"Missing bullet sprite: {bullet_path}")
-            self.bullet_image = pygame.Surface((8, 16), pygame.SRCALPHA)
-            pygame.draw.rect(self.bullet_image, (255, 255, 100), (0, 0, 8, 16))
 
         # ========================================
         # 7. Global Ref & Status
@@ -232,6 +231,20 @@ class Player(BaseEntity):
         temp_img = pygame.image.load(path).convert_alpha()
         scale = (size[0] / temp_img.get_width(), size[1] / temp_img.get_height())
         return BaseEntity.load_and_scale_image(path, scale)
+
+    @staticmethod
+    def _build_exp_table():
+        """Build exp lookup table once at init."""
+        base = 100
+        multiplier = 1.5
+        max_level = 200
+        max_exp_cap = 999999
+
+        table = [0]
+        for lvl in range(1, max_level + 2):
+            exp = min(int(base * (multiplier ** (lvl - 1))), max_exp_cap)
+            table.append(exp)
+        return table
 
     # ===========================================================
     # Frame Cycle
@@ -288,7 +301,7 @@ class Player(BaseEntity):
 
         self.exp += exp_gain
 
-        stats = update_session_stats()
+        stats = get_session_stats()
         stats.total_exp_gained += exp_gain
 
         # Handle multiple level-ups
@@ -303,19 +316,10 @@ class Player(BaseEntity):
     def _level_up(self):
         overflow = self.exp - self.exp_required
         self.level += 1
-
-        # Cap at reasonable max to prevent overflow
-        if self.level == 1:
-            # Level 1 uses base 500
-            self.exp_required = 500
-        else:
-            # Level 2+ uses formula starting from 500
-            exp_calc = 500 * (2.0 ** min(self.level - 2, 200))
-            self.exp_required = min(int(exp_calc), 999999)
-
+        self.exp_required = self._exp_table[min(self.level, len(self._exp_table) - 1)]
         self.exp = overflow
 
-        stats = update_session_stats()
+        stats = get_session_stats()
         stats.max_level_reached = max(stats.max_level_reached, self.level)
 
         DebugLogger.state(
@@ -346,3 +350,17 @@ class Player(BaseEntity):
         """Set manager and synchronize shooting state."""
         self._bullet_manager = manager
         self._shooting_enabled = manager is not None
+
+    def get_bullet_config(self) -> dict:
+        """Return bullet configuration for BulletManager registration."""
+        render = self.cfg.get("render", {})
+        bullet_cfg = render.get("bullet", {})
+        combat_cfg = self.cfg.get("combat", {})
+
+        return {
+            "path": bullet_cfg.get("path"),
+            "size": bullet_cfg.get("size", [16, 32]),
+            "damage": combat_cfg.get("bullet_damage", 1),
+            "color": (255, 255, 100),  # Fallback color
+            "radius": 4
+        }

@@ -12,6 +12,7 @@ from src.core.services.event_manager import PlayerHealthEvent, FireRateEvent
 from src.entities.entity_state import LifecycleState
 from src.entities.entity_state import InteractionState
 from src.entities.player.player_state import PlayerEffectState
+from src.graphics.particles.particle_manager import ParticleEmitter
 
 
 # ===========================================================
@@ -49,6 +50,18 @@ def damage_collision(player, other):
         f"Player took {damage} damage ({prev_health} → {player.health})",
         category="collision"
     )
+
+    # Spawn damage particles
+    # Calculate direction from damage source
+    dx = player.pos.x - other.pos.x
+    dy = player.pos.y - other.pos.y
+    length = (dx * dx + dy * dy) ** 0.5
+    if length > 0:
+        direction = (dx / length, dy / length)
+    else:
+        direction = None
+
+    ParticleEmitter.burst("damage_player", player.pos, count=10, direction=direction)
 
     # Handle player death
     if player.health <= 0:
