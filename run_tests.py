@@ -40,8 +40,9 @@ class TestRunner(FileSystemEventHandler):
 
         # Only care about Python files in src/ or tests/
         file_path = Path(event.src_path)
+        file_path_str = str(file_path).replace('\\', '/')  # Convert to forward slashes for consistency
         if not (file_path.suffix == '.py' and
-                ('src/' in str(file_path) or 'tests/' in str(file_path))):
+                ('src/' in file_path_str or 'tests/' in file_path_str)):
             return
 
         # Debounce rapid file changes
