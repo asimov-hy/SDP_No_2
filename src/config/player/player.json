@@ -64,6 +64,8 @@
   "combat": {
     "_notes": "Shooting and bullet configuration",
     "shoot_cooldown": 0.2,
-    "bullet_speed": 900
+    "bullet_damage": 2,
+    "bullet_speed": 900,
+    "collision_damage": 1
   }
 }

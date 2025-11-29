@@ -191,6 +191,7 @@ class Player(BaseEntity):
         combat_cfg = cfg.get("combat", {})
         self.base_shoot_cooldown = combat_cfg.get("shoot_cooldown", 0.5)
         self.bullet_speed = combat_cfg.get("bullet_speed", 900)
+        self.damage = combat_cfg.get("collision_damage", 1)
         self.shoot_timer = 0.0
 
         # ========================================

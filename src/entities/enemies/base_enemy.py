@@ -197,7 +197,7 @@ class BaseEnemy(BaseEntity):
         if self.death_state != LifecycleState.ALIVE:
             return
 
-        # print(f"{self.health} -> {self.health - amount}")
+        print(f"{self.health} -> {self.health - amount}")
         self.health = max(0, self.health - amount)
 
         if self.health > 0:
@@ -250,13 +250,13 @@ class BaseEnemy(BaseEntity):
         tag = collision_tag if collision_tag is not None else getattr(other, "collision_tag", "unknown")
 
         if tag == "player_bullet":
-            self.take_damage(1, source="player_bullet")
+            self.take_damage(getattr(other, "damage", 1), source="player_bullet")
 
         elif tag == "player":
-            self.take_damage(1, source="player_contact")
+            self.take_damage(getattr(other, "damage", 1), source="player_contact")
 
         else:
-            DebugLogger.trace(f"[CollisionIgnored] {type(self).__name__} vs {tag}")
+            DebugLogger.trace(f"CollisionIgnored: {type(self).__name__} vs {tag}")
 
     def _auto_direction_from_edge(self, edge):
         """Auto-calculate direction based on spawn edge and position."""
