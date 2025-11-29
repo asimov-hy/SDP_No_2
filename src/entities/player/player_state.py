@@ -15,4 +15,5 @@ from enum import IntEnum, auto
 class PlayerEffectState(IntEnum):
     """Defines player-exclusive temporary effects."""
     NONE = 0
-    IFRAME = auto()
+    STUN = auto()  # Knockback, no input, invincible
+    RECOVERY = auto()  # Debuffed, invincible

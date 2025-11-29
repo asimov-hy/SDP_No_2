@@ -6,6 +6,8 @@ Player-specific animation definitions (Tier 2).
 All player animations centralized here for easy tuning.
 """
 
+import pygame
+import math
 from src.graphics.animations.animation_effects.death_animation import death_fade
 from src.graphics.animations.animation_effects.common_animation import blink, fade_color, flash_white, shake
 from src.graphics.particles.particle_manager import ParticleEmitter
@@ -75,3 +77,61 @@ def damage_player(entity, t):
     if t >= 1.0 and hasattr(entity, '_original_image'):
         entity.image = entity._original_image.copy()
         entity.image.set_alpha(255)
+
+# ============================================================
+# State Animation
+# ============================================================
+@register("player", "stun")
+def stun_player(entity, t):
+    """
+    STUN state: Strong white flash + fast blink.
+    Called during knockback phase.
+    """
+    # Cache base image
+    if not hasattr(entity, "_base_image") or entity._base_image is None:
+        entity._base_image = entity.image.copy()
+
+    # Red tint
+    base = entity._base_image
+    flash = base.copy()
+    flash.fill((255, 50, 50), special_flags=pygame.BLEND_RGB_ADD)
+
+    # Fast blink
+    elapsed = entity.anim_context.get("elapsed_time", 0)
+    if int(elapsed / 0.05) % 2 == 0:
+        flash.set_alpha(255)
+    else:
+        flash.set_alpha(80)
+
+    entity.image = flash
+
+
+@register("player", "recovery")
+def recovery_player(entity, t):
+    """
+    DAMAGED state: Red tint + slow pulse.
+    Called during debuff phase.
+    """
+    # Cache base image
+    if not hasattr(entity, "_base_image") or entity._base_image is None:
+        entity._base_image = entity.image.copy()
+
+    base = entity._base_image
+    tinted = base.copy()
+
+    # Pulsing orange/yellow tint
+    elapsed = entity.anim_context.get("elapsed_time", 0)
+    pulse = 0.5 + 0.5 * math.sin(elapsed * 4)
+    orange = int(80 + 40 * pulse)
+    yellow = int(40 + 20 * pulse)
+
+    tinted.fill((orange, yellow, 0), special_flags=pygame.BLEND_RGB_ADD)
+
+    entity.image = tinted
+
+    # Cleanup at end
+    if t >= 1.0:
+        entity.image = entity._base_image.copy()
+        entity.image.set_alpha(255)
+        if hasattr(entity, '_base_image'):
+            del entity._base_image

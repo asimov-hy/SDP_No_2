@@ -20,6 +20,7 @@ from src.entities.entity_types import CollisionTags, EntityCategory
 from .player_movement import update_movement
 from . import player_ability
 from .player_logic import damage_collision
+from .player_state import PlayerEffectState
 
 
 # ===========================================================
@@ -146,9 +147,17 @@ class Player(BaseEntity):
         self.category = EntityCategory.PLAYER
         self.state = InteractionState.DEFAULT
 
-        # ========================================
+        # Stress system
+        stress_cfg = cfg.get("stress", {})
+        self.stress = 0.0
+        self.stress_max = stress_cfg.get("max", 10.0)
+        self.stress_threshold = stress_cfg.get("threshold", 8.0)
+        self.stress_decay_rate = stress_cfg.get("decay_rate", 4.0)
+        self.stress_grace_period = stress_cfg.get("grace_period", 1.0)
+        self.stress_per_damage = stress_cfg.get("per_damage", 1.0)
+        self._time_since_damage = 0.0
+
         # 5. Visual State System
-        # ========================================
         self.health_thresholds = health_cfg["thresholds"]
         self._threshold_moderate = self.health_thresholds["moderate"]
         self._threshold_critical = self.health_thresholds["critical"]
@@ -254,9 +263,7 @@ class Player(BaseEntity):
         """Update player components."""
 
         if self.death_state == LifecycleState.DYING:
-            # Update animation; returns True when finished
             if self.anim_manager.update(dt):
-                # Finalize death
                 self.mark_dead(immediate=True)
                 DebugLogger.state("Player death animation complete", category="player")
             return
@@ -264,15 +271,30 @@ class Player(BaseEntity):
         if self.death_state != LifecycleState.ALIVE:
             return
 
+        # Track STUN state before update
+        was_stunned = self.state_manager.has_state(PlayerEffectState.STUN)
+
         self.anim_manager.update(dt)
         self.state_manager.update(dt)
+        self._update_stress(dt)
 
-        # self.input_manager.update()
+        # Detect STUN → RECOVERY transition, start recovery animation
+        if was_stunned and not self.state_manager.has_state(PlayerEffectState.STUN):
+            if self.state_manager.has_state(PlayerEffectState.RECOVERY):
+                recovery_cfg = self.state_manager.state_config.get("recovery", {})
+                self.anim_manager.play("recovery", duration=recovery_cfg.get("duration", 2.5))
+
         update_movement(self, dt)
 
-        # 4. Ability logic
         if self._bullet_manager:
             player_ability.update_shooting(self, dt)
+
+    def _update_stress(self, dt):
+        """Decay stress after grace period."""
+        self._time_since_damage += dt
+
+        if self._time_since_damage >= self.stress_grace_period and self.stress > 0:
+            self.stress = max(0.0, self.stress - self.stress_decay_rate * dt)
 
     def draw(self, draw_manager):
         """Render player if visible."""
