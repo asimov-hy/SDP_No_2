@@ -22,16 +22,20 @@ Features:
 # Imports
 # ===========================================================
 
+import pygame
+
 # Core - Debug & Settings
 from src.core.debug.debug_logger import DebugLogger
 from src.core.runtime.game_settings import Debug
 
 # Core - Runtime & Services
 from src.core.runtime.session_stats import get_session_stats
-from src.core.services.event_manager import get_events, EnemyDiedEvent
+from src.core.services.event_manager import get_events, EnemyDiedEvent, ScreenShakeEvent
 
 # Entities
 from src.entities.entity_state import LifecycleState
+
+from src.graphics.particles.particle_manager import ParticleEmitter
 
 # Scenes
 from src.scenes.base_scene import BaseScene
@@ -42,12 +46,15 @@ from src.scenes.transitions.transitions import FadeTransition, UIFadeOverlay
 from src.systems.game_system_initializer import GameSystemInitializer
 
 # UI
-from src.ui.level_up_ui import LevelUpUI
+from src.scenes.level_up_screen import LevelUp
 
 
 # ===========================================================
 # Constants
 # ===========================================================
+
+MAPS_PATH = "assets/images/maps/"
+BGM_PATH = "assets/audio/bgm/"
 
 # Default background for levels without explicit config
 DEFAULT_BACKGROUND = {
@@ -61,7 +68,8 @@ DEFAULT_BACKGROUND = {
 }
 
 # Game over timing configuration
-GAME_OVER_DELAY = 1.5           # Seconds before game over screen appears
+DEFAULT_MUSIC = "IngameBGM"
+GAME_OVER_DELAY = 2           # Seconds before game over screen appears
 GAME_OVER_FADE_SPEED = 200      # Overlay fade speed (lower = slower)
 STAT_REVEAL_DELAY = 0.4         # Seconds between each stat reveal
 
@@ -146,7 +154,7 @@ class GameScene(BaseScene):
 
     def _init_level_up_ui(self):
         """Initialize level up UI overlay."""
-        self.level_up_ui = LevelUpUI(self.player)
+        self.level_up_ui = LevelUp(self.player, self.ui)
         self.level_up_ui.on_close = lambda: self.input_manager.set_context("gameplay")
         self.last_player_level = self.player.level
 
@@ -194,8 +202,6 @@ class GameScene(BaseScene):
         Called after transition completes. Sets up audio, UI, and starts level.
         """
         # Audio
-        sound_manager = self.services.get_global("sound_manager")
-        sound_manager.play_bgm("game_bgm", loop=-1)
 
         # UI setup
         self.ui.register_binding('player', self.player)
@@ -209,6 +215,9 @@ class GameScene(BaseScene):
         self._stat_reveal_queue = []
         get_session_stats().reset()
 
+        # Subscribe to screen shake events
+        get_events().subscribe(ScreenShakeEvent, self._on_screen_shake)
+
         # Start level
         self._start_level()
 
@@ -218,6 +227,7 @@ class GameScene(BaseScene):
 
         Called before transitioning to another scene.
         """
+        ParticleEmitter.clear_all()
         self._clear_background()
         self.ui.clear_hud()
         self.ui.hide_screen("game_over")
@@ -280,6 +290,7 @@ class GameScene(BaseScene):
         level_data = self.level_manager.get_current_level_data()
         if level_data:
             self._load_level_background(level_data)
+            self._load_level_music(level_data)
 
     def _load_level_background(self, level_data):
         """
@@ -293,8 +304,12 @@ class GameScene(BaseScene):
         if "background" in level_data:
             bg_config = {"layers": []}
             for layer in level_data["background"].get("layers", []):
+                image = layer.get("image", default_layer["image"])
+                if image and not image.startswith("assets/"):
+                    image = MAPS_PATH + image
+
                 merged = {
-                    "image": layer.get("image", default_layer["image"]),
+                    "image": image,
                     "scroll_speed": layer.get("scroll_speed", default_layer["scroll_speed"]),
                     "parallax": layer.get("parallax", default_layer["parallax"])
                 }
@@ -303,6 +318,26 @@ class GameScene(BaseScene):
             bg_config = DEFAULT_BACKGROUND
 
         self._setup_background(bg_config)
+
+    def _load_level_music(self, level_data):
+        """
+        Load music from level data.
+
+        Args:
+            level_data: Level data dict with optional 'music' key (filename only)
+        """
+        sound_manager = self.services.get_global("sound_manager")
+        music_file = level_data.get("music")
+
+        if music_file:
+            route = BGM_PATH + music_file
+            pygame.mixer.music.load(route)
+            volume = sound_manager.master_volume * sound_manager.bgm_volume
+            pygame.mixer.music.set_volume(volume)
+            pygame.mixer.music.play(loops=-1)
+            sound_manager.current_bgm_id = music_file
+        else:
+            sound_manager.play_bgm("game_bgm", loop=-1)  # Default
 
     # ===========================================================
     # Update Loop
@@ -354,7 +389,9 @@ class GameScene(BaseScene):
             return
 
         if self.level_up_ui.is_active:
-            self._update_level_up(dt)
+            if self.input_manager.context != "ui":
+                self.input_manager.set_context("ui")
+            self._update_ui_only(dt)
             return
 
         # --- Level Up Trigger Check ---
@@ -368,6 +405,8 @@ class GameScene(BaseScene):
         # --- Active Gameplay ---
         self._update_gameplay(dt)
 
+        ParticleEmitter.update_all(dt)
+
     def _check_player_death(self):
         """
         Check and handle player death.
@@ -375,12 +414,13 @@ class GameScene(BaseScene):
         Returns:
             bool: True if player died and game over triggered
         """
-        if not self.game_over_shown and self.player.death_state == LifecycleState.DEAD:
-            # Hide level up UI if open
+        if not self.game_over_shown and not self._game_over_pending and self.player.death_state == LifecycleState.DEAD:
             if self.level_up_ui.is_active:
                 self.level_up_ui.hide()
-            # Start game over sequence (no delay on death)
-            self._show_game_over(victory=False)
+            # Start delayed game over sequence
+            self._game_over_pending = True
+            self._game_over_victory = False
+            self._game_over_delay_timer = GAME_OVER_DELAY
             return True
         return False
 
@@ -412,21 +452,8 @@ class GameScene(BaseScene):
         Args:
             dt: Delta time in seconds
         """
-        mouse_pos = self.input_manager.get_mouse_pos()
+        mouse_pos = self.input_manager.get_effective_mouse_pos()
         self.ui.update(dt, mouse_pos)
-
-    def _update_level_up(self, dt):
-        """
-        Update level up UI state.
-
-        Args:
-            dt: Delta time in seconds
-        """
-        if self.input_manager.context != "ui":
-            self.input_manager.set_context("ui")
-
-        self.level_up_ui.handle_input(self.input_manager)
-        self.level_up_ui.update(dt)
 
     def _update_gameplay(self, dt):
         """
@@ -437,6 +464,9 @@ class GameScene(BaseScene):
         """
         # Track play time
         get_session_stats().add_time(dt)
+
+        # Update screen shake
+        self.draw_manager.update_shake(dt)
 
         # Background parallax
         player_pos = (self.player.virtual_pos.x, self.player.virtual_pos.y)
@@ -456,7 +486,7 @@ class GameScene(BaseScene):
         self.spawn_manager.cleanup()
 
         # UI update
-        mouse_pos = self.input_manager.get_mouse_pos()
+        mouse_pos = self.input_manager.get_effective_mouse_pos()
         self.ui.update(dt, mouse_pos)
 
     # ===========================================================
@@ -472,9 +502,8 @@ class GameScene(BaseScene):
             2. Enemies (via spawn_manager)
             3. Bullets
             4. Overlay (dark tint for pause/game over)
-            5. UI elements
-            6. Level up UI
-            7. Debug overlays (if enabled)
+            5. UI elements (includes level_up when active)
+            6. Debug overlays (if enabled)
 
         Args:
             draw_manager: DrawManager for queuing draws
@@ -484,12 +513,13 @@ class GameScene(BaseScene):
         self.spawn_manager.draw()
         self.bullet_manager.draw(draw_manager)
 
+        ParticleEmitter.render_all(draw_manager)
+
         # Overlay (between game and UI)
         self.overlay.draw(draw_manager)
 
-        # UI layers
+        # UI layers (includes level_up screen when active)
         self.ui.draw(draw_manager)
-        self.level_up_ui.draw(draw_manager)
 
         # Debug overlays
         if Debug.HITBOX_VISIBLE:
@@ -506,12 +536,7 @@ class GameScene(BaseScene):
         Args:
             event: pygame event object
         """
-        # Level up UI has priority
-        if self.level_up_ui.is_active:
-            if self.level_up_ui.handle_event(event):
-                return
-
-        # UI event handling
+        # UI event handling (includes level_up when active)
         action = self.ui.handle_event(event)
         self._handle_ui_action(action)
 
@@ -522,6 +547,13 @@ class GameScene(BaseScene):
         Args:
             action: Action string from UI button
         """
+        if action is None:
+            return
+
+        # Let level_up handle upgrade actions
+        if self.level_up_ui.handle_action(action):
+            return
+
         if action == "resume":
             self.scene_manager.resume_active_scene()
         elif action in ("quit", "return_to_menu"):
@@ -561,6 +593,10 @@ class GameScene(BaseScene):
         sound_manager = self.services.get_global("sound_manager")
         sound_manager.play_bfx("enemy_destroy")
 
+    def _on_screen_shake(self, event):
+        """Handle screen shake event."""
+        self.draw_manager.trigger_shake(event.intensity, event.duration)
+
     # ===========================================================
     # Game Over System
     # ===========================================================
@@ -597,6 +633,9 @@ class GameScene(BaseScene):
 
         # Show the game over screen
         self.ui.show_screen("game_over", modal=True)
+
+        # Enable keyboard navigation for game over UI
+        self.input_manager.set_context("ui")
 
         DebugLogger.state(f"Game over shown (victory={victory})", category="game")
 

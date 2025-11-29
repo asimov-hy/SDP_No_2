@@ -20,6 +20,7 @@ from src.entities.entity_types import CollisionTags, EntityCategory
 from .player_movement import update_movement
 from . import player_ability
 from .player_logic import damage_collision
+from .player_state import PlayerEffectState
 
 
 # ===========================================================
@@ -135,10 +136,10 @@ class Player(BaseEntity):
         self.max_health = self.health
 
         # Player stats - load from progression config
-        prog_cfg = cfg.get("progression", {})
-        self.exp = prog_cfg.get("starting_exp", 0)
-        self.level = prog_cfg.get("starting_level", 1)
-        self.exp_required = prog_cfg.get("initial_exp_required", 500)
+        self.exp = 0
+        self.level = 1
+        self._exp_table = self._build_exp_table()
+        self.exp_required = self._exp_table[self.level]
 
         self.visible = True
         self.layer = Layers.PLAYER
@@ -146,9 +147,17 @@ class Player(BaseEntity):
         self.category = EntityCategory.PLAYER
         self.state = InteractionState.DEFAULT
 
-        # ========================================
+        # Stress system
+        stress_cfg = cfg.get("stress", {})
+        self.stress = 0.0
+        self.stress_max = stress_cfg.get("max", 10.0)
+        self.stress_threshold = stress_cfg.get("threshold", 8.0)
+        self.stress_decay_rate = stress_cfg.get("decay_rate", 4.0)
+        self.stress_grace_period = stress_cfg.get("grace_period", 1.0)
+        self.stress_per_damage = stress_cfg.get("per_damage", 1.0)
+        self._time_since_damage = 0.0
+
         # 5. Visual State System
-        # ========================================
         self.health_thresholds = health_cfg["thresholds"]
         self._threshold_moderate = self.health_thresholds["moderate"]
         self._threshold_critical = self.health_thresholds["critical"]
@@ -191,23 +200,8 @@ class Player(BaseEntity):
         combat_cfg = cfg.get("combat", {})
         self.base_shoot_cooldown = combat_cfg.get("shoot_cooldown", 0.5)
         self.bullet_speed = combat_cfg.get("bullet_speed", 900)
+        self.damage = combat_cfg.get("collision_damage", 1)
         self.shoot_timer = 0.0
-
-        # # ========================================
-        # # Load Player Bullet Sprite
-        # # ========================================
-        # bullet_cfg = render.get("bullet", {})
-        # bullet_path = bullet_cfg.get("path", "assets/images/null.png")
-        # bullet_size = tuple(bullet_cfg.get("size", [16, 32]))
-        #
-        # temp_img = pygame.image.load(bullet_path).convert_alpha() if os.path.exists(bullet_path) else None
-        # if temp_img:
-        #     scale = (bullet_size[0] / temp_img.get_width(), bullet_size[1] / temp_img.get_height())
-        #     self.bullet_image = BaseEntity.load_and_scale_image(bullet_path, scale)
-        # else:
-        #     DebugLogger.warn(f"Missing bullet sprite: {bullet_path}")
-        #     self.bullet_image = pygame.Surface(bullet_size, pygame.SRCALPHA)
-        #     pygame.draw.rect(self.bullet_image, (255, 255, 100), (0, 0, *bullet_size))
 
         # ========================================
         # 7. Global Ref & Status
@@ -248,6 +242,20 @@ class Player(BaseEntity):
         scale = (size[0] / temp_img.get_width(), size[1] / temp_img.get_height())
         return BaseEntity.load_and_scale_image(path, scale)
 
+    @staticmethod
+    def _build_exp_table():
+        """Build exp lookup table once at init."""
+        base = 100
+        multiplier = 1.5
+        max_level = 200
+        max_exp_cap = 999999
+
+        table = [0]
+        for lvl in range(1, max_level + 2):
+            exp = min(int(base * (multiplier ** (lvl - 1))), max_exp_cap)
+            table.append(exp)
+        return table
+
     # ===========================================================
     # Frame Cycle
     # ===========================================================
@@ -255,9 +263,7 @@ class Player(BaseEntity):
         """Update player components."""
 
         if self.death_state == LifecycleState.DYING:
-            # Update animation; returns True when finished
             if self.anim_manager.update(dt):
-                # Finalize death
                 self.mark_dead(immediate=True)
                 DebugLogger.state("Player death animation complete", category="player")
             return
@@ -265,15 +271,30 @@ class Player(BaseEntity):
         if self.death_state != LifecycleState.ALIVE:
             return
 
+        # Track STUN state before update
+        was_stunned = self.state_manager.has_state(PlayerEffectState.STUN)
+
         self.anim_manager.update(dt)
         self.state_manager.update(dt)
+        self._update_stress(dt)
 
-        # self.input_manager.update()
+        # Detect STUN → RECOVERY transition, start recovery animation
+        if was_stunned and not self.state_manager.has_state(PlayerEffectState.STUN):
+            if self.state_manager.has_state(PlayerEffectState.RECOVERY):
+                recovery_cfg = self.state_manager.state_config.get("recovery", {})
+                self.anim_manager.play("recovery", duration=recovery_cfg.get("duration", 2.5))
+
         update_movement(self, dt)
 
-        # 4. Ability logic
         if self._bullet_manager:
             player_ability.update_shooting(self, dt)
+
+    def _update_stress(self, dt):
+        """Decay stress after grace period."""
+        self._time_since_damage += dt
+
+        if self._time_since_damage >= self.stress_grace_period and self.stress > 0:
+            self.stress = max(0.0, self.stress - self.stress_decay_rate * dt)
 
     def draw(self, draw_manager):
         """Render player if visible."""
@@ -318,17 +339,7 @@ class Player(BaseEntity):
     def _level_up(self):
         overflow = self.exp - self.exp_required
         self.level += 1
-
-        # Cap at reasonable max to prevent overflow
-        formula = self.cfg.get("progression", {}).get("exp_formula", {})
-        base = formula.get("base", 30)
-        multiplier = formula.get("multiplier", 2.0)
-        max_level = formula.get("max_level", 200)
-        max_exp_cap = formula.get("max_exp_cap", 999999)
-
-        exp_calc = base * (multiplier ** min(self.level - 1, max_level))
-        self.exp_required = min(int(exp_calc), max_exp_cap)
-
+        self.exp_required = self._exp_table[min(self.level, len(self._exp_table) - 1)]
         self.exp = overflow
 
         stats = get_session_stats()

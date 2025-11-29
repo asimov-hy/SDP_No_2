@@ -123,3 +123,19 @@ def sprite_cycle(entity, t):
     frame_idx = min(int(t * len(frames)), len(frames) - 1)
     entity.image = frames[frame_idx]
     entity.rect = entity.image.get_rect(center=entity.rect.center)
+
+
+def shake(entity, t, intensity=4, frequency=30):
+    """Shake entity position. Stores original pos on first call."""
+    if not hasattr(entity, '_shake_origin'):
+        entity._shake_origin = entity.rect.center
+
+    if t < 1.0:
+        import math
+        offset_x = int(math.sin(t * frequency * math.pi) * intensity * (1 - t))
+        offset_y = int(math.cos(t * frequency * math.pi * 0.7) * intensity * (1 - t))
+        entity.rect.center = (entity._shake_origin[0] + offset_x,
+                              entity._shake_origin[1] + offset_y)
+    else:
+        entity.rect.center = entity._shake_origin
+        del entity._shake_origin

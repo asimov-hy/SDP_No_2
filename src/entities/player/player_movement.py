@@ -12,6 +12,7 @@ Responsibilities
 
 import pygame
 from src.core.runtime.game_settings import Display
+from src.entities.player.player_state import PlayerEffectState
 
 VELOCITY_SMOOTHING_RATE = 8.0
 EDGE_PARALLAX_BOOST = 2.5  # parallax boost Multiplier when clamped
@@ -25,7 +26,11 @@ def update_movement(player, dt):
         dt (float): Delta time since the last frame (in seconds).
     """
 
-    move_vec = player.input.move()
+    if player.state_manager.has_state(PlayerEffectState.STUN) or \
+            player.state_manager.has_state(PlayerEffectState.KNOCKBACK):
+        move_vec = pygame.Vector2(0, 0)
+    else:
+        move_vec = player.input.move()
 
     # -------------------------------------------------------
     # Retrieve movement parameters from config

@@ -8,6 +8,7 @@ Handles player combat-related systems:
 
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.bullets.bullet_straight import StraightBullet
+from src.entities.player.player_state import PlayerEffectState
 
 
 # ===========================================================
@@ -16,6 +17,9 @@ from src.entities.bullets.bullet_straight import StraightBullet
 def update_shooting(player, dt: float):
     """Handle the player's shooting behavior and cooldown timing."""
     # Accumulate time toward next allowed shot
+    if player.state_manager.has_state(PlayerEffectState.STUN):
+        return
+
     player.shoot_timer = min(player.shoot_timer + dt, player.shoot_cooldown)
 
     if player.input.held("attack") and player.shoot_timer >= player.shoot_cooldown:
