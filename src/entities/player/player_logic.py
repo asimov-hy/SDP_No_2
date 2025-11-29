@@ -105,7 +105,7 @@ def on_death(player):
     DebugLogger.state("Player death triggered", category="player")
 
     # Start the death animation
-    player.anim_manager.play("death", duration=1.0)
+    player.anim_manager.play("death", duration=2.0)
 
     # Enter DYING state (BaseEntity handles this)
     player.mark_dead()

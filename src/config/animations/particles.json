@@ -35,5 +35,23 @@
     "spread": 90,
     "shrink": true,
     "glow": true
+  },
+  "player_death_buildup": {
+    "colors": [[255, 255, 255], [200, 230, 255], [150, 200, 255]],
+    "size_range": [8, 14],
+    "speed_range": [100, 250],
+    "lifetime": [0.4, 0.8],
+    "spread": 360,
+    "shrink": true,
+    "glow": true
+  },
+  "player_death_explode": {
+    "colors": [[255, 255, 255], [200, 230, 255], [150, 200, 255]],
+    "size_range": [12, 24],
+    "speed_range": [300, 600],
+    "lifetime": [0.6, 1.2],
+    "spread": 360,
+    "shrink": true,
+    "glow": true
   }
 }

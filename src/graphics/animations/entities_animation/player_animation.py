@@ -7,7 +7,8 @@ All player animations centralized here for easy tuning.
 """
 
 from src.graphics.animations.animation_effects.death_animation import death_fade
-from src.graphics.animations.animation_effects.common_animation import blink, fade_color, flash_white
+from src.graphics.animations.animation_effects.common_animation import blink, fade_color, flash_white, shake
+from src.graphics.particles.particle_manager import ParticleEmitter
 from src.core.debug.debug_logger import DebugLogger
 from src.graphics.animations.animation_registry import register
 
@@ -18,13 +19,27 @@ from src.graphics.animations.animation_registry import register
 @register("player", "death")
 def death_player(entity, t):
     """
-    Standard player death: fade out over 1 second.
-
-    Args:
-        entity: Player instance
-        t: Normalized time (0.0 to 1.0)
+    Player death: long shake with particles -> explosion + disappear.
     """
-    return death_fade(entity, t)
+    ctx = getattr(entity, 'anim_context', {})
+
+    # Phase 1: Shake with particles (0.0 - 0.8)
+    if t < 0.8:
+        shake(entity, t / 0.8, intensity=8, frequency=50)
+
+        if not hasattr(entity, '_death_emit_timer'):
+            entity._death_emit_timer = 0
+        entity._death_emit_timer += 1
+        if entity._death_emit_timer % 3 == 0:
+            ParticleEmitter.burst("player_death_buildup", entity.rect.center, count=4)
+
+    # Phase 2: Explosion + disappear (at 0.8)
+    if t >= 0.8 and not ctx.get('_exploded', False):
+        ctx['_exploded'] = True
+        ParticleEmitter.burst("player_death_explode", entity.rect.center, count=35)
+        entity.image.set_alpha(0)  # Instant disappear
+        if hasattr(entity, '_death_emit_timer'):
+            del entity._death_emit_timer
 
 
 # ============================================================
