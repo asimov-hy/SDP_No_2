@@ -8,7 +8,7 @@ They handle player-exclusive logic like i-frames, death cleanup, and visuals.
 """
 
 from src.core.debug.debug_logger import DebugLogger
-from src.core.services.event_manager import PlayerHealthEvent, FireRateEvent
+from src.core.services.event_manager import PlayerHealthEvent, FireRateEvent, get_events, ScreenShakeEvent
 from src.entities.entity_state import LifecycleState
 from src.entities.entity_state import InteractionState
 from src.entities.player.player_state import PlayerEffectState
@@ -51,11 +51,6 @@ def damage_collision(player, other):
         reduction = recovery_cfg.get("damage_reduction", 0.0)
         damage = damage * (1.0 - reduction)
 
-        # Extend duration
-        extend_time = recovery_cfg.get("extend_on_hit", 0.0)
-        if extend_time > 0:
-            player.state_manager.extend_state(PlayerEffectState.RECOVERY, extend_time)
-
         DebugLogger.trace(
             f"RECOVERY state: {reduction * 100:.0f}% reduction, +{extend_time}s",
             category="collision"
@@ -76,10 +71,17 @@ def damage_collision(player, other):
     DebugLogger.trace(f"Stress: {player.stress:.1f}/{player.stress_threshold}", category="collision")
 
     # Calculate knockback direction
-    dx = player.pos.x - other.pos.x
-    dy = player.pos.y - other.pos.y
+    dx = other.pos.x - player.pos.x
+    dy = other.pos.y - player.pos.y
     length = (dx * dx + dy * dy) ** 0.5
     direction = (dx / length, dy / length) if length > 0 else None
+
+    # Apply collision knockback (enemy body contact only)
+    if getattr(other, "collision_tag", None) == "enemy":
+        if player.stress < player.stress_threshold:  # Won't trigger STUN
+            collision_kb = player.cfg.get("combat", {}).get("collision_knockback", 200)
+            player.apply_knockback(direction, collision_kb)
+            player.state_manager.timed_state(PlayerEffectState.KNOCKBACK)
 
     # Spawn particles
     ParticleEmitter.burst("damage_player", player.pos, count=10, direction=direction)
@@ -128,16 +130,15 @@ def _apply_light_damage(player, previous_state, target_state):
 
 def _apply_heavy_damage(player, previous_state, target_state, direction):
     """STUN → DAMAGED chain."""
+    get_events().dispatch(ScreenShakeEvent(intensity=12.0, duration=0.4))
     stun_cfg = player.state_manager.state_config.get("stun", {})
     stun_duration = stun_cfg.get("duration", 0.5)
     knockback = stun_cfg.get("knockback_strength", 400)
 
     DebugLogger.state(f"HEAVY damage! Entering STUN", category="animation")
 
-    # Apply knockback
-    if direction:
-        player.velocity.x = direction[0] * knockback
-        player.velocity.y = direction[1] * knockback
+    # Apply stun knockback (replaces collision knockback with stronger force)
+    player.apply_knockback(direction, knockback)
 
     # Play STUN animation (short, white flash)
     player.anim_manager.play(

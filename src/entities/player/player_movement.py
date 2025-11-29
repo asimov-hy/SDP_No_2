@@ -26,7 +26,8 @@ def update_movement(player, dt):
         dt (float): Delta time since the last frame (in seconds).
     """
 
-    if player.state_manager.has_state(PlayerEffectState.STUN):
+    if player.state_manager.has_state(PlayerEffectState.STUN) or \
+            player.state_manager.has_state(PlayerEffectState.KNOCKBACK):
         move_vec = pygame.Vector2(0, 0)
     else:
         move_vec = player.input.move()

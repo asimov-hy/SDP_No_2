@@ -383,5 +383,6 @@ class StateManager:
             next_effect = effect_class[state_name.upper()]
             self.timed_state(next_effect)
             DebugLogger.state(f"State chain: {current_effect.name} → {next_effect.name}")
+
         except KeyError:
             DebugLogger.warn(f"Unknown next_state: {state_name}")
