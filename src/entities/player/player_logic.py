@@ -41,27 +41,10 @@ def damage_collision(player, other):
         DebugLogger.trace(f"Invalid damage value {damage}", category="collision")
         return
 
-    # Check RECOVERY state - shield blocks damage entirely
-    in_recovery_state = player.state_manager.has_state(PlayerEffectState.RECOVERY)
-
-    if in_recovery_state:
-        recovery_cfg = player.state_manager.get_state_config(PlayerEffectState.RECOVERY)
-        knockback = recovery_cfg.get("shield_knockback", 300)
-
-        # Calculate knockback direction
-        dx = player.pos.x - other.pos.x
-        dy = player.pos.y - other.pos.y
-        length = (dx * dx + dy * dy) ** 0.5
-        if length > 0:
-            player.velocity.x = (dx / length) * knockback
-            player.velocity.y = (dy / length) * knockback
-
-        # Shield impact visual
-        ParticleEmitter.burst("shield_impact", player.rect.center, count=8,
-                              direction=(dx, dy) if length > 0 else None)
-
-        DebugLogger.trace(f"SHIELD BLOCK - knockback applied", category="collision")
-        return  # Block all damage
+    # RECOVERY state - shield entity handles collisions, skip damage
+    if player.state_manager.has_state(PlayerEffectState.RECOVERY):
+        DebugLogger.trace("Player in RECOVERY - shield handles collisions", category="collision")
+        return
 
     # Apply damage
     prev_health = player.health
@@ -71,10 +54,9 @@ def damage_collision(player, other):
         category="collision"
     )
 
-    # Accumulate stress (skip if in RECOVERY)
-    if not in_recovery_state:
-        player.stress = min(player.stress_max, player.stress + damage * player.stress_per_damage)
-        player._time_since_damage = 0.0
+    # Accumulate stress (we already returned early if in RECOVERY)
+    player.stress = min(player.stress_max, player.stress + damage * player.stress_per_damage)
+    player._time_since_damage = 0.0
     DebugLogger.trace(f"Stress: {player.stress:.1f}/{player.stress_threshold}", category="collision")
 
     # Calculate knockback direction
@@ -87,7 +69,9 @@ def damage_collision(player, other):
     if getattr(other, "collision_tag", None) == "enemy":
         if player.stress < player.stress_threshold:  # Won't trigger STUN
             collision_kb = player.cfg.get("combat", {}).get("collision_knockback", 200)
-            player.apply_knockback(direction, collision_kb)
+            # Negate direction to push AWAY from enemy (direction points toward enemy for particles)
+            knockback_dir = (-direction[0], -direction[1]) if direction else None
+            player.apply_knockback(knockback_dir, collision_kb)
             player.state_manager.timed_state(PlayerEffectState.KNOCKBACK)
 
     # Spawn particles
@@ -140,7 +124,8 @@ def _apply_heavy_damage(player, previous_state, target_state, direction):
     DebugLogger.state(f"HEAVY damage! Entering STUN", category="animation")
 
     # Apply stun knockback (replaces collision knockback with stronger force)
-    player.apply_knockback(direction, knockback)
+    knockback_dir = (-direction[0], -direction[1]) if direction else None
+    player.apply_knockback(knockback_dir, knockback)
 
     # Play STUN animation (short, white flash)
     player.anim_manager.play(

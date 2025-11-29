@@ -12,11 +12,13 @@ from src.core.debug.debug_logger import DebugLogger
 from src.core.services.config_manager import load_config
 from src.core.services.event_manager import get_events, EnemyDiedEvent
 from src.core.runtime.session_stats import get_session_stats
+from src.core.services.service_locator import ServiceLocator
 
 from src.entities.base_entity import BaseEntity
 from src.entities.state_manager import StateManager
 from src.entities.entity_state import LifecycleState, InteractionState
 from src.entities.entity_types import CollisionTags, EntityCategory
+from src.entities.items.shield import Shield
 from .player_movement import update_movement
 from . import player_ability
 from .player_logic import damage_collision
@@ -209,6 +211,7 @@ class Player(BaseEntity):
         self._rotation_enabled = False  # Players don't rotate
         self._death_frames = []  # No death animation frames for player
         self.state_manager = StateManager(self, cfg.get("state_effects", {}))
+        self._shield = None
 
         get_events().subscribe(EnemyDiedEvent, self._on_enemy_died)
 
@@ -273,21 +276,88 @@ class Player(BaseEntity):
 
         # Track STUN state before update
         was_stunned = self.state_manager.has_state(PlayerEffectState.STUN)
+        in_recovery = self.state_manager.has_state(PlayerEffectState.RECOVERY)
 
         self.anim_manager.update(dt)
         self.state_manager.update(dt)
         self._update_stress(dt)
 
-        # Detect STUN → RECOVERY transition, start recovery animation
+        # Detect STUN → RECOVERY transition
         if was_stunned and not self.state_manager.has_state(PlayerEffectState.STUN):
             if self.state_manager.has_state(PlayerEffectState.RECOVERY):
                 recovery_cfg = self.state_manager.state_config.get("recovery", {})
                 self.anim_manager.play("recovery", duration=recovery_cfg.get("duration", 2.5))
+                self._spawn_shield()  # ADD
+
+        # Update shield state
+        self._update_shield(dt)  # ADD
 
         update_movement(self, dt)
 
         if self._bullet_manager:
             player_ability.update_shooting(self, dt)
+
+    def _spawn_shield(self):
+        """Spawn shield entity for RECOVERY state."""
+        if self._shield is not None:
+            return
+
+        recovery_cfg = self.state_manager.state_config.get("recovery", {})
+        radius = recovery_cfg.get("shield_radius", 56)
+        knockback = recovery_cfg.get("shield_knockback", 350)
+
+        self._shield = Shield(self, radius=radius, knockback_strength=knockback)
+
+        # Register with collision manager
+        collision_mgr = ServiceLocator.get("collision_manager")
+        if collision_mgr:
+            collision_mgr.register_hitbox(self._shield, shape="circle")
+
+        # Add to spawn_manager for collision detection
+        spawn_mgr = ServiceLocator.get("spawn_manager")
+        if spawn_mgr:
+            spawn_mgr.entities.append(self._shield)
+
+        DebugLogger.state("Shield spawned", category="player")
+
+    def _despawn_shield(self):
+        """Remove shield entity."""
+        if self._shield is None:
+            return
+
+        # Unregister hitbox
+        collision_mgr = ServiceLocator.get("collision_manager")
+        if collision_mgr:
+            collision_mgr.unregister_hitbox(self._shield)
+
+        # Remove from spawn_manager
+        spawn_mgr = ServiceLocator.get("spawn_manager")
+        if spawn_mgr and self._shield in spawn_mgr.entities:
+            spawn_mgr.entities.remove(self._shield)
+
+        self._shield.kill()
+        self._shield = None
+        DebugLogger.state("Shield despawned", category="player")
+
+    def _update_shield(self, dt):
+        """Update shield lifecycle and state."""
+        in_recovery = self.state_manager.has_state(PlayerEffectState.RECOVERY)
+
+        if in_recovery and self._shield is not None:
+            self._shield.update(dt)
+
+            # Warning blink in last 30% of recovery
+            remaining = self.state_manager.get_remaining_time(PlayerEffectState.RECOVERY)
+            recovery_cfg = self.state_manager.state_config.get("recovery", {})
+            duration = recovery_cfg.get("duration", 2.5)
+
+            if remaining < duration * 0.3:
+                self._shield.set_warning_blink(True)
+            else:
+                self._shield.set_warning_blink(False)
+
+        elif not in_recovery and self._shield is not None:
+            self._despawn_shield()
 
     def _update_stress(self, dt):
         """Decay stress after grace period."""
@@ -300,6 +370,11 @@ class Player(BaseEntity):
         """Render player if visible."""
         if not self.visible:
             return
+
+        # Draw shield behind player
+        if self._shield is not None:
+            self._shield.draw(draw_manager)
+
         super().draw(draw_manager)
 
     def on_collision(self, other, collision_tag=None):

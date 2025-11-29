@@ -76,6 +76,7 @@
     "recovery": {
       "duration": 2.5,
       "interaction_state": "DEFAULT",
+      "shield_radius": 56,
       "shield_knockback": 350,
       "debuffs": {
         "speed": { "multiplier": 0.5 },
