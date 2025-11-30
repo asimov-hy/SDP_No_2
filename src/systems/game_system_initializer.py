@@ -55,6 +55,10 @@ class GameSystemInitializer(SystemInitializer):
         spawn_systems = self._init_spawning(systems['collision_manager'])
         systems.update(spawn_systems)
 
+        # Link managers to player for shield system
+        systems['player']._collision_manager = systems['collision_manager']
+        systems['player']._spawn_manager = systems['spawn_manager']
+
         # Level system (depends on spawn + player)
         systems['level_manager'] = self._init_level_system(
             systems['spawn_manager'],

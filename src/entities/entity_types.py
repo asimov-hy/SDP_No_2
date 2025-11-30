@@ -45,3 +45,5 @@ class CollisionTags:
 
     HAZARD = "hazard"
     ENVIRONMENT = "environment"
+
+    SHIELD = "shield"

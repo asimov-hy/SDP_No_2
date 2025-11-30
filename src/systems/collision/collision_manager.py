@@ -44,6 +44,8 @@ class CollisionManager:
             ("player_bullet", "enemy"),
             ("enemy_bullet", "player"),
             # ("player_bullet", "enemy_bullet"),
+            ("shield", "enemy"),
+            ("shield", "enemy_bullet"),
         }
 
         self.hitboxes = {}

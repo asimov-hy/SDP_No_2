@@ -53,5 +53,80 @@
     "spread": 360,
     "shrink": true,
     "glow": true
+  },
+  "shield_shimmer": {
+    "colors": [[100, 200, 255], [150, 230, 255], [200, 255, 255]],
+    "size_range": [3, 6],
+    "speed_range": [30, 80],
+    "lifetime": [0.3, 0.6],
+    "spread": 360,
+    "shrink": true,
+    "glow": true
+  },
+  "shield_impact": {
+    "colors": [[150, 220, 255], [200, 240, 255], [255, 255, 255]],
+    "size_range": [4, 8],
+    "speed_range": [150, 300],
+    "lifetime": [0.2, 0.4],
+    "spread": 120,
+    "shrink": true,
+    "glow": true
+  },
+  "spread_charge_inward": {
+    "colors": [[100, 200, 255]],
+    "size_range": [4, 8],
+    "speed_range": [150, 250],
+    "lifetime": [0.2, 0.4],
+    "spread": 0,
+    "shrink": true,
+    "glow": true
+  },
+  "spread_charge_full": {
+    "colors": [[255, 255, 100], [255, 220, 50], [255, 255, 255]],
+    "size_range": [6, 12],
+    "speed_range": [150, 300],
+    "lifetime": [0.4, 0.7],
+    "spread": 360,
+    "shrink": true,
+    "glow": true
+  },
+  "spread_charge_fail": {
+    "colors": [[255, 100, 100], [200, 50, 50], [150, 80, 80]],
+    "size_range": [4, 8],
+    "speed_range": [100, 200],
+    "lifetime": [0.3, 0.5],
+    "spread": 360,
+    "shrink": true,
+    "glow": false
+  },
+  "item_heal": {
+    "colors": [[100, 255, 100], [150, 255, 150], [200, 255, 200]],
+    "size_range": [4, 8],
+    "speed_range": [100, 200],
+    "lifetime": [0.4, 0.7],
+    "spread": 360,
+    "shrink": true,
+    "glow": true,
+    "fade_delay": 0.5
+  },
+  "item_fire_rate": {
+    "colors": [[255, 200, 50], [255, 150, 30], [255, 100, 10]],
+    "size_range": [3, 6],
+    "speed_range": [40, 80],
+    "lifetime": [0.3, 0.5],
+    "spread": 360,
+    "shrink": true,
+    "glow": true,
+    "fade_delay": 0.5
+  },
+  "item_speed": {
+    "colors": [[100, 220, 255], [150, 240, 255], [200, 255, 255]],
+    "size_range": [3, 6],
+    "speed_range": [40, 80],
+    "lifetime": [0.3, 0.5],
+    "spread": 360,
+    "shrink": true,
+    "glow": true,
+    "fade_delay": 0.5
   }
 }
