@@ -12,7 +12,6 @@ from src.core.debug.debug_logger import DebugLogger
 from src.core.services.config_manager import load_config
 from src.core.services.event_manager import get_events, EnemyDiedEvent
 from src.core.runtime.session_stats import get_session_stats
-from src.core.services.service_locator import ServiceLocator
 
 from src.entities.base_entity import BaseEntity
 from src.entities.state_manager import StateManager
@@ -212,6 +211,8 @@ class Player(BaseEntity):
         self._death_frames = []  # No death animation frames for player
         self.state_manager = StateManager(self, cfg.get("state_effects", {}))
         self._shield = None
+        self._collision_manager = None
+        self._spawn_manager = None
 
         get_events().subscribe(EnemyDiedEvent, self._on_enemy_died)
 
@@ -309,14 +310,12 @@ class Player(BaseEntity):
         self._shield = Shield(self, radius=radius, knockback_strength=knockback)
 
         # Register with collision manager
-        collision_mgr = ServiceLocator.get("collision_manager")
-        if collision_mgr:
-            collision_mgr.register_hitbox(self._shield, shape="circle")
+        if self._collision_manager:
+            self._collision_manager.register_hitbox(self._shield, shape="circle")
 
         # Add to spawn_manager for collision detection
-        spawn_mgr = ServiceLocator.get("spawn_manager")
-        if spawn_mgr:
-            spawn_mgr.entities.append(self._shield)
+        if self._spawn_manager:
+            self._spawn_manager.entities.append(self._shield)
 
         DebugLogger.state("Shield spawned", category="player")
 
@@ -326,14 +325,12 @@ class Player(BaseEntity):
             return
 
         # Unregister hitbox
-        collision_mgr = ServiceLocator.get("collision_manager")
-        if collision_mgr:
-            collision_mgr.unregister_hitbox(self._shield)
+        if self._collision_manager:
+            self._collision_manager.unregister_hitbox(self._shield)
 
         # Remove from spawn_manager
-        spawn_mgr = ServiceLocator.get("spawn_manager")
-        if spawn_mgr and self._shield in spawn_mgr.entities:
-            spawn_mgr.entities.remove(self._shield)
+        if self._spawn_manager and self._shield in self._spawn_manager.entities:
+            self._spawn_manager.entities.remove(self._shield)
 
         self._shield.kill()
         self._shield = None
