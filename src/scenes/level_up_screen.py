@@ -81,6 +81,9 @@ class LevelUp:
         for i, upgrade in enumerate(self.current_choices):
             button = self.ui_manager.find_element_by_id("level_up", f"upgrade_slot_{i}")
             if button:
+                # Reset focus state
+                button.is_focused = False
+                button.hover_t = 0.0
                 # Update visuals
                 button.text = upgrade["name"]
                 button.color = upgrade["color"]
