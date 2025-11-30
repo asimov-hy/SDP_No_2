@@ -198,11 +198,32 @@ class Player(BaseEntity):
 
         self._bullet_manager = None
         self._shooting_enabled = False
+
         combat_cfg = cfg.get("combat", {})
-        self.base_shoot_cooldown = combat_cfg.get("shoot_cooldown", 0.5)
-        self.bullet_speed = combat_cfg.get("bullet_speed", 900)
-        self.damage = combat_cfg.get("collision_damage", 1)
+
+        # Primary attack
+        primary = combat_cfg.get("primary", {})
+        self.base_shoot_cooldown = primary.get("cooldown", 0.2)
+        self.bullet_speed = primary.get("speed", 900)
+        self.bullet_damage = primary.get("damage", 1)
         self.shoot_timer = 0.0
+
+        # Secondary attack (spread shot)
+        secondary = combat_cfg.get("secondary", {})
+        self.spread_cooldown = secondary.get("cooldown", 1.5)
+        self.spread_damage = secondary.get("damage", 0.5)
+        self.spread_speed = secondary.get("speed", 700)
+        self.spread_charge_levels = secondary.get("charge_levels", [
+            {"time": 0.0, "count": 3, "angle": 15}
+        ])
+        self.spread_timer = self.spread_cooldown
+        self.spread_charge = 0.0
+        self.spread_charging = False
+
+        # Collision
+        collision = combat_cfg.get("collision", {})
+        self.damage = collision.get("damage", 1)
+        self.knockback = collision.get("knockback", 200)
 
         # ========================================
         # 7. Global Ref & Status
@@ -297,6 +318,7 @@ class Player(BaseEntity):
 
         if self._bullet_manager:
             player_ability.update_shooting(self, dt)
+            player_ability.update_spread_shot(self, dt)
 
     def _spawn_shield(self):
         """Spawn shield entity for RECOVERY state."""
@@ -450,12 +472,12 @@ class Player(BaseEntity):
         """Return bullet configuration for BulletManager registration."""
         render = self.cfg.get("render", {})
         bullet_cfg = render.get("bullet", {})
-        combat_cfg = self.cfg.get("combat", {})
+        primary = self.cfg.get("combat", {}).get("primary", {})
 
         return {
             "path": bullet_cfg.get("path"),
             "size": bullet_cfg.get("size", [16, 32]),
-            "damage": combat_cfg.get("bullet_damage", 1),
-            "color": (255, 255, 100),  # Fallback color
+            "damage": primary.get("damage", 1),
+            "color": (255, 255, 100),
             "radius": 4
         }
