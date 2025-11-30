@@ -47,6 +47,9 @@ class UIManager:
         self._screen_animations: Dict[str, 'UISlideAnimation'] = {}  # Active animations
         self._pending_hides: Dict[str, bool] = {}
 
+        # HUD slide animation tracking
+        self._hud_sliding = False
+
         # Focus navigation
         self.focusables: List[UIElement] = []  # Flat list of focusable buttons
         self.focus_index: int = -1  # -1 = none focused
@@ -340,6 +343,78 @@ class UIManager:
         self.hud_elements.clear()
 
     # ===================================================================
+    # HUD Animation
+    # ===================================================================
+
+    ANCHOR_TO_OFFSET = {
+        "top_left": (-150, -100),
+        "top_center": (0, -100),
+        "top_right": (150, -100),
+        "center_left": (-150, 0),
+        "center": (0, 0),
+        "center_right": (150, 0),
+        "bottom_left": (-150, 100),
+        "bottom_center": (0, 100),
+        "bottom_right": (150, 100),
+    }
+
+    def slide_in_hud(self, duration: float = 0.4, stagger: float = 0.05):
+        """
+        Slide all HUD elements from their anchor edges.
+
+        Args:
+            duration: Animation duration per element
+            stagger: Delay between each element
+        """
+        elements = self._get_sorted_hud_elements()
+
+        for i, element in enumerate(elements):
+            anchor = getattr(element, 'parent_anchor', 'center')
+            offset = self.ANCHOR_TO_OFFSET.get(anchor, (0, -100))
+            delay = i * stagger
+            element.start_slide_in(offset, duration, delay)
+
+        self._hud_sliding = True
+
+    def _get_sorted_hud_elements(self) -> List[UIElement]:
+        """Get HUD elements sorted by position (top-left to bottom-right)."""
+        elements = []
+        self._flatten_elements(self.hud_elements, elements)
+        # Sort by Y then X for natural top-to-bottom, left-to-right order
+        elements.sort(key=lambda e: (e.rect.y if e.rect else 0, e.rect.x if e.rect else 0))
+        return elements
+
+    def _flatten_elements(self, items: List, result: List):
+        """Recursively flatten element tree."""
+        for item in items:
+            result.append(item)
+            if hasattr(item, 'children'):
+                self._flatten_elements(item.children, result)
+
+    def has_active_hud_animations(self) -> bool:
+        """Check if any HUD elements are still animating."""
+        if not self._hud_sliding:
+            return False
+
+        elements = []
+        self._flatten_elements(self.hud_elements, elements)
+
+        for element in elements:
+            if element.is_sliding:
+                return True
+
+        self._hud_sliding = False
+        return False
+
+    def update_hud_animations(self, dt: float):
+        """Update all HUD slide animations."""
+        elements = []
+        self._flatten_elements(self.hud_elements, elements)
+
+        for element in elements:
+            element.update_slide(dt)
+
+    # ===================================================================
     # Element Lookup
     # ===================================================================
 
@@ -403,6 +478,9 @@ class UIManager:
             dt: Delta time in seconds
             mouse_pos: Current mouse position
         """
+        # Update HUD animations
+        self.update_hud_animations(dt)
+
         # Handle keyboard/controller navigation
         if self.input_manager:
             self._handle_navigation()

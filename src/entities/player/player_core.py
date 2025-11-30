@@ -132,6 +132,9 @@ class Player(BaseEntity):
         self.clamped_x = False
         self.clamped_y = False
 
+        # Cutscene control
+        self.input_locked = False
+
         self.base_speed = core["speed"]
         self.health = core["health"]
         self.max_health = self.health
@@ -325,11 +328,15 @@ class Player(BaseEntity):
         self._update_shield(dt)
         self._update_item_shield(dt)
 
-        update_movement(self, dt)
+        if not self.input_locked:
+            update_movement(self, dt)
 
-        if self._bullet_manager:
-            player_ability.update_shooting(self, dt)
-            player_ability.update_spread_shot(self, dt)
+            if self._bullet_manager:
+                player_ability.update_shooting(self, dt)
+                player_ability.update_spread_shot(self, dt)
+        else:
+            # Still update animation during cutscenes
+            pass
 
     def _spawn_shield(self, slot="recovery", duration=None, radius=56, knockback=350,
                       can_damage=False, damage=0, color=(100, 200, 255)):

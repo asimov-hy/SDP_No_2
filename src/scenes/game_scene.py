@@ -30,7 +30,7 @@ from src.core.runtime.game_settings import Debug
 
 # Core - Runtime & Services
 from src.core.runtime.session_stats import get_session_stats
-from src.core.services.event_manager import get_events, EnemyDiedEvent, ScreenShakeEvent
+from src.core.services.event_manager import get_events, EnemyDiedEvent, ScreenShakeEvent, SpawnPauseEvent
 
 # Entities
 from src.entities.entity_state import LifecycleState
@@ -41,6 +41,10 @@ from src.graphics.particles.particle_manager import ParticleEmitter
 from src.scenes.base_scene import BaseScene
 from src.scenes.scene_state import SceneState
 from src.scenes.transitions.transitions import FadeTransition, UIFadeOverlay
+from src.scenes.cutscenes import (
+    CutsceneManager, ActionGroup, DelayAction, CallbackAction,
+    LockInputAction, MoveEntityAction, TextFlashAction, UISlideInAction
+)
 
 # Systems
 from src.systems.game_system_initializer import GameSystemInitializer
@@ -126,6 +130,10 @@ class GameScene(BaseScene):
 
         # Overlay for pause/game over (semi-transparent dark tint)
         self.overlay = UIFadeOverlay(color=(0, 0, 0), max_alpha=150)
+
+        # Cutscene system
+        self.cutscene_manager = CutsceneManager()
+        self._intro_complete = False
 
         # --- Event Subscriptions ---
         self.level_manager.on_level_complete = self._on_level_complete
@@ -220,8 +228,11 @@ class GameScene(BaseScene):
         # Subscribe to screen shake events
         get_events().subscribe(ScreenShakeEvent, self._on_screen_shake)
 
-        # Start level
+        # Start level (loads but doesn't spawn yet)
         self._start_level()
+
+        # Play intro cutscene
+        self._play_intro_cutscene()
 
     def on_exit(self):
         """
@@ -246,6 +257,73 @@ class GameScene(BaseScene):
         self.resume_background()
         self.overlay.fade_out(speed=400)
         self.ui.hide_screen("pause", slide_to="top", slide_duration=0.25)
+
+    # ===========================================================
+    # Intro Cutscene
+    # ===========================================================
+
+    def _play_intro_cutscene(self):
+        """Build and play level intro cutscene."""
+        from src.core.runtime.game_settings import Display
+
+        # Pause spawning during intro
+        get_events().emit(SpawnPauseEvent(paused=True))
+
+        # Player start/end positions
+        start_y = Display.HEIGHT + 50
+        end_y = Display.HEIGHT * 0.75
+        center_x = Display.WIDTH / 2
+
+        actions = [
+            # Phase 1: Lock input, position player off-screen
+            ActionGroup([
+                LockInputAction(self.player, locked=True),
+                CallbackAction(self._position_player_offscreen),
+            ]),
+
+            # Phase 2: Player flies in
+            MoveEntityAction(
+                entity=self.player,
+                start_pos=(center_x, start_y),
+                end_pos=(center_x, end_y),
+                duration=1.0,
+                easing="ease_out"
+            ),
+
+            # Phase 3: UI slides in
+            UISlideInAction(self.ui, duration=0.4, stagger=0.08),
+
+            # Phase 4: Mission text
+            TextFlashAction("MISSION START", duration=1.5, fade_in=0.3, fade_out=0.3),
+
+            # Phase 5: Enable gameplay
+            ActionGroup([
+                LockInputAction(self.player, locked=False),
+                CallbackAction(self._on_intro_complete),
+            ]),
+        ]
+
+        self.cutscene_manager.play(actions)
+
+    def _on_intro_complete(self):
+        """Called when intro cutscene finishes."""
+        self._intro_complete = True
+        # Resume spawning
+        get_events().emit(SpawnPauseEvent(paused=False))
+
+    def _position_player_offscreen(self):
+        """Move player to starting position off-screen."""
+        from src.core.runtime.game_settings import Display
+        self.player.rect.centerx = Display.WIDTH / 2
+        self.player.rect.centery = Display.HEIGHT + 50
+        self.player.virtual_pos.x = self.player.rect.centerx
+        self.player.virtual_pos.y = self.player.rect.centery
+
+    def _on_intro_complete(self):
+        """Called when intro cutscene finishes."""
+        self._intro_complete = True
+        # Now start spawning enemies
+        self.spawn_manager.active = True
 
     # ===========================================================
     # Level Loading
@@ -363,6 +441,15 @@ class GameScene(BaseScene):
         """
         # --- Always Update ---
         self.overlay.update(dt)
+
+        # --- Cutscene Update ---
+        if self.cutscene_manager.is_playing:
+            self.cutscene_manager.update(dt)
+            # Still update visuals during cutscene
+            self._update_background(dt)
+            self.player.anim_manager.update(dt)
+            self.ui.update(dt, self.input_manager.get_effective_mouse_pos())
+            return
 
         # --- Game Over Delay ---
         # Wait before showing game over screen (lets player see final moments)
@@ -529,6 +616,9 @@ class GameScene(BaseScene):
 
         # UI layers (includes level_up screen when active)
         self.ui.draw(draw_manager)
+
+        # Cutscene overlays (text, etc)
+        self.cutscene_manager.draw(draw_manager)
 
         # Debug overlays
         if Debug.HITBOX_VISIBLE:
