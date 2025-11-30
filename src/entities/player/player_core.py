@@ -237,6 +237,10 @@ class Player(BaseEntity):
         self._death_frames = []  # No death animation frames for player
         self.state_manager = StateManager(self, cfg.get("state_effects", {}))
         self._shield = None
+        self._item_shield = None
+        self._item_shield_timer = 0.0
+        self._item_shield_duration = 0.0
+
         self._collision_manager = None
         self._spawn_manager = None
 
@@ -318,7 +322,8 @@ class Player(BaseEntity):
                 self._spawn_shield()  # ADD
 
         # Update shield state
-        self._update_shield(dt)  # ADD
+        self._update_shield(dt)
+        self._update_item_shield(dt)
 
         update_movement(self, dt)
 
@@ -326,26 +331,53 @@ class Player(BaseEntity):
             player_ability.update_shooting(self, dt)
             player_ability.update_spread_shot(self, dt)
 
-    def _spawn_shield(self):
-        """Spawn shield entity for RECOVERY state."""
-        if self._shield is not None:
-            return
+    def _spawn_shield(self, slot="recovery", duration=None, radius=56, knockback=350,
+                      can_damage=False, damage=0, color=(100, 200, 255)):
+        """Spawn shield to specified slot."""
+        # Check slot
+        if slot == "recovery":
+            if self._shield is not None:
+                return
+        elif slot == "item":
+            if self._item_shield is not None:
+                return
 
-        recovery_cfg = self.state_manager.state_config.get("recovery", {})
-        radius = recovery_cfg.get("shield_radius", 56)
-        knockback = recovery_cfg.get("shield_knockback", 350)
+        shield = Shield(
+            self,
+            radius=radius,
+            color=color,
+            knockback_strength=knockback,
+            can_damage=can_damage,
+            damage_amount=damage
+        )
 
-        self._shield = Shield(self, radius=radius, knockback_strength=knockback)
-
-        # Register with collision manager
+        # Register
         if self._collision_manager:
-            self._collision_manager.register_hitbox(self._shield, shape="circle")
-
-        # Add to spawn_manager for collision detection
+            self._collision_manager.register_hitbox(shield, shape="circle")
         if self._spawn_manager:
-            self._spawn_manager.entities.append(self._shield)
+            self._spawn_manager.entities.append(shield)
 
-        DebugLogger.state("Shield spawned", category="player")
+        # Assign to slot
+        if slot == "recovery":
+            self._shield = shield
+        else:
+            self._item_shield = shield
+            self._item_shield_timer = 0.0
+            self._item_shield_duration = duration or 5.0
+
+        DebugLogger.state(f"{slot.capitalize()} shield spawned", category="player")
+
+    def spawn_item_shield(self, duration, radius=56, knockback=150, damage=1, color=(100, 255, 150)):
+        """Spawn item-based shield with damage capability."""
+        self._spawn_shield(
+            slot="item",
+            duration=duration,
+            radius=radius,
+            knockback=knockback,
+            can_damage=True,
+            damage=damage,
+            color=color
+        )
 
     def _despawn_shield(self):
         """Remove shield entity."""
@@ -383,6 +415,45 @@ class Player(BaseEntity):
 
         elif not in_recovery and self._shield is not None:
             self._despawn_shield()
+
+    def extend_item_shield(self, extra_duration):
+        """Extend active item shield duration."""
+        if self._item_shield is not None:
+            self._item_shield_duration += extra_duration
+
+    def _despawn_item_shield(self):
+        """Remove item shield entity."""
+        if self._item_shield is None:
+            return
+
+        if self._collision_manager:
+            self._collision_manager.unregister_hitbox(self._item_shield)
+
+        self._item_shield.kill()
+        self._item_shield = None
+        self._item_shield_timer = 0.0
+        self._item_shield_duration = 0.0
+        DebugLogger.state("Item shield despawned", category="player")
+
+    def _update_item_shield(self, dt):
+        """Update item shield lifecycle."""
+        if self._item_shield is None:
+            return
+
+        self._item_shield_timer += dt
+        self._item_shield.update(dt)
+
+        remaining = self._item_shield_duration - self._item_shield_timer
+
+        # Warning blink in last 30%
+        if remaining < self._item_shield_duration * 0.3:
+            self._item_shield.set_warning_blink(True)
+        else:
+            self._item_shield.set_warning_blink(False)
+
+        # Expired
+        if self._item_shield_timer >= self._item_shield_duration:
+            self._despawn_item_shield()
 
     def _update_stress(self, dt):
         """Decay stress after grace period."""
@@ -427,9 +498,11 @@ class Player(BaseEntity):
         if not self.visible:
             return
 
-        # Draw shield behind player
+        # Draw shields behind player
         if self._shield is not None:
             self._shield.draw(draw_manager)
+        if self._item_shield is not None:
+            self._item_shield.draw(draw_manager)
 
         super().draw(draw_manager)
 

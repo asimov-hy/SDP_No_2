@@ -106,6 +106,35 @@ def handle_USE_NUKE(player, effect_data):
     DebugLogger.action("NUKE ACTIVATED! Clearing screen...", category="item")
 
 
+@effect_handler("SPAWN_SHIELD")
+def handle_SPAWN_SHIELD(player, effect_data):
+    """Spawn or extend item shield duration."""
+    if not _validate_effect(effect_data, [("duration", (int, float))], "SPAWN_SHIELD"):
+        return
+
+    duration = effect_data.get("duration", 5.0)
+    radius = effect_data.get("radius", 56)
+    knockback = effect_data.get("knockback", 150)
+    damage = effect_data.get("damage", 1)
+    color = tuple(effect_data.get("color", [100, 255, 150]))
+
+    # Check if item shield already active
+    if player._item_shield is not None:
+        # Extend by half duration
+        player.extend_item_shield(duration * 0.5)
+        DebugLogger.action(f"Shield extended by {duration * 0.5}s", category="item")
+    else:
+        # Spawn new shield
+        player.spawn_item_shield(
+            duration=duration,
+            radius=radius,
+            knockback=knockback,
+            damage=damage,
+            color=color
+        )
+        DebugLogger.action(f"Item shield spawned for {duration}s", category="item")
+
+
 # ===========================================================
 # effects Dispatcher
 # ===========================================================

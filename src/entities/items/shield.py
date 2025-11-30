@@ -19,18 +19,23 @@ from src.graphics.particles.particle_manager import ParticleEmitter
 class Shield(BaseEntity):
     """Protective shield that follows owner and handles collisions."""
 
-    def __init__(self, owner, radius=56, color=(100, 200, 255), knockback_strength=350):
+    def __init__(self, owner, radius=56, color=(100, 200, 255), knockback_strength=350,
+                 can_damage=False, damage_amount=0):
         """
         Args:
             owner: Entity to follow (Player, Item carrier, etc.)
             radius: Shield collision/visual radius
             color: Shield RGB color
             knockback_strength: Force applied to owner on enemy contact
+            can_damage: If True, deals damage to enemies on contact
+            damage_amount: Damage dealt to enemies (if can_damage)
         """
         self.owner = owner
         self.radius = radius
         self.color = color
         self.knockback_strength = knockback_strength
+        self.can_damage = can_damage
+        self.damage_amount = damage_amount
 
         # Create transparent surface for hitbox
         size = radius * 2
@@ -122,7 +127,7 @@ class Shield(BaseEntity):
         DebugLogger.trace("Shield blocked bullet", category="collision")
 
     def _on_enemy_hit(self, enemy):
-        """Push owner away from enemy, no damage to enemy."""
+        """Push owner away from enemy, optionally damage enemy."""
         if self.owner is None:
             return
 
@@ -134,6 +139,12 @@ class Shield(BaseEntity):
         if length > 0:
             direction = (dx / length, dy / length)
             self.owner.apply_knockback(direction, self.knockback_strength)
+
+        # Deal damage if item shield
+        if self.can_damage and self.damage_amount > 0:
+            if hasattr(enemy, 'take_damage'):
+                enemy.take_damage(self.damage_amount)
+                DebugLogger.trace(f"Shield dealt {self.damage_amount} damage", category="collision")
 
         # Visual feedback
         ParticleEmitter.burst("shield_impact", self.rect.center, count=8,

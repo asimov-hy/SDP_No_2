@@ -70,5 +70,27 @@
         "type": "USE_NUKE"
       }
     ]
+  },
+  "shield": {
+    "name": "Shield",
+    "asset_path": "shield.png",
+    "scale": 1.0,
+    "drop_weight": 600,
+    "particle_preset": "item_shield",
+    "physics": {
+      "velo_x": 0,
+      "velo_y": 140,
+      "hitbox_scale": 0.85
+    },
+    "effects": [
+      {
+        "type": "SPAWN_SHIELD",
+        "duration": 5,
+        "radius": 56,
+        "knockback": 150,
+        "damage": 1,
+        "color": [100, 255, 150]
+      }
+    ]
   }
 }
