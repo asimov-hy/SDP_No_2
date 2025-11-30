@@ -393,11 +393,22 @@ class Player(BaseEntity):
 
     def _update_buff_emitters(self, dt):
         """Update and cleanup buff particle emitters."""
+        import random
+
         expired = []
         for stat_name, emitter in self._buff_emitters.items():
             # Check if modifier still active
             if self.state_manager.stat_modifiers.has_modifier(stat_name):
-                emitter.emit_continuous(dt, (self.pos.x, self.pos.y))
+                if stat_name == "speed":
+                    # Trail effect: below player, more particles
+                    pos = (self.pos.x, self.pos.y + 20)
+                    emitter.emit_continuous(pos, dt)
+                else:
+                    # Sparkle box effect for fire_rate and others
+                    offset_x = random.uniform(-24, 24)
+                    offset_y = random.uniform(-24, 24)
+                    pos = (self.pos.x + offset_x, self.pos.y + offset_y)
+                    emitter.emit_continuous(pos, dt)
             else:
                 expired.append(stat_name)
 
@@ -407,7 +418,9 @@ class Player(BaseEntity):
     def add_buff_emitter(self, stat_name: str, preset_name: str):
         """Add a particle emitter for an active buff."""
         from src.graphics.particles.particle_manager import ParticleEmitter
-        self._buff_emitters[stat_name] = ParticleEmitter(preset_name, emit_rate=20)
+        # Higher emit rate for speed trail effect
+        emit_rate = 40 if stat_name == "speed" else 20
+        self._buff_emitters[stat_name] = ParticleEmitter(preset_name, emit_rate=emit_rate)
 
     def draw(self, draw_manager):
         """Render player if visible."""

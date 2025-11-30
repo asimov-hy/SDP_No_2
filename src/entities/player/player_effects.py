@@ -109,19 +109,24 @@ def handle_USE_NUKE(player, effect_data):
 # ===========================================================
 # effects Dispatcher
 # ===========================================================
-def apply_item_effects(player, effects: list):
+def apply_item_effects(player, effects: list, particle_preset: str = None):
     """
     Apply item effects to player.
 
     Args:
         player: Player entity
         effects: List of effects dicts from items.json
+        particle_preset: Particle preset name for duration effects
     """
     if player.death_state != LifecycleState.ALIVE:
         return
 
     for effect in effects:
         effect_type = effect.get("type")
+
+        # Inject particle_preset for duration-based effects
+        if particle_preset and effect.get("duration"):
+            effect = {**effect, "particle_preset": particle_preset}
 
         handler = EFFECT_HANDLERS.get(effect_type)
         if handler:

@@ -106,7 +106,8 @@
     "lifetime": [0.4, 0.7],
     "spread": 360,
     "shrink": true,
-    "glow": true
+    "glow": true,
+    "fade_delay": 0.5
   },
   "item_fire_rate": {
     "colors": [[255, 200, 50], [255, 150, 30], [255, 100, 10]],
@@ -115,7 +116,8 @@
     "lifetime": [0.3, 0.5],
     "spread": 360,
     "shrink": true,
-    "glow": true
+    "glow": true,
+    "fade_delay": 0.5
   },
   "item_speed": {
     "colors": [[100, 220, 255], [150, 240, 255], [200, 255, 255]],
@@ -124,6 +126,7 @@
     "lifetime": [0.3, 0.5],
     "spread": 360,
     "shrink": true,
-    "glow": true
+    "glow": true,
+    "fade_delay": 0.5
   }
 }

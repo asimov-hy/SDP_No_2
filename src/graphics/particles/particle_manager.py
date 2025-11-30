@@ -104,9 +104,9 @@ class Particle:
     """Individual particle with position, velocity, and lifetime."""
 
     __slots__ = ('x', 'y', 'vx', 'vy', 'size', 'max_size', 'color',
-                 'lifetime', 'max_lifetime', 'alpha', 'glow', 'shrink', 'grow')
+                 'lifetime', 'max_lifetime', 'alpha', 'glow', 'shrink', 'grow', 'fade_delay')
 
-    def __init__(self, x, y, vx, vy, size, color, lifetime, glow=False, shrink=False, grow=False):
+    def __init__(self, x, y, vx, vy, size, color, lifetime, glow=False, shrink=False, grow=False, fade_delay=0.0):
         self.x = x
         self.y = y
         self.vx = vx
@@ -120,6 +120,7 @@ class Particle:
         self.glow = glow
         self.shrink = shrink
         self.grow = grow
+        self.fade_delay = fade_delay
 
     def update(self, dt, wobble=0, spread_growth=1.0):
         """Update particle position and lifetime."""
@@ -134,9 +135,12 @@ class Particle:
 
         self.lifetime -= dt
 
-        # Fade alpha based on remaining lifetime
+        # Fade alpha based on remaining lifetime (respecting fade_delay)
         t = max(0, self.lifetime / self.max_lifetime)
-        self.alpha = int(255 * t)
+        if t > self.fade_delay:
+            self.alpha = 255
+        else:
+            self.alpha = int(255 * (t / self.fade_delay)) if self.fade_delay > 0 else 0
 
         # Size changes
         if self.shrink:
@@ -227,6 +231,7 @@ class ParticleEmitter:
                 glow=preset.get("glow", False),
                 shrink=preset.get("shrink", False),
                 grow=preset.get("grow", False),
+                fade_delay=preset.get("fade_delay", 0.0),
             )
             ParticleEmitter._active_particles.append(particle)
 
@@ -390,6 +395,7 @@ class ParticleOverlay:
             glow=preset.get("glow", False),
             shrink=preset.get("shrink", False),
             grow=preset.get("grow", False),
+            fade_delay=preset.get("fade_delay", 0.0),
         )
         self.particles.append(particle)
 

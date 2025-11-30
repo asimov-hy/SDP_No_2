@@ -21,7 +21,7 @@
     "name": "Quick Fire",
     "asset_path": "quick_fire.png",
     "scale": 1.0,
-    "drop_weight": 1000000,
+    "drop_weight": 100000000,
     "particle_preset": "item_fire_rate",
     "physics": {
       "velo_x": 0,
