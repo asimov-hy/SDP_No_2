@@ -328,9 +328,9 @@ class Player(BaseEntity):
         if self._collision_manager:
             self._collision_manager.unregister_hitbox(self._shield)
 
-        # Remove from spawn_manager
-        if self._spawn_manager and self._shield in self._spawn_manager.entities:
-            self._spawn_manager.entities.remove(self._shield)
+        # # Remove from spawn_manager
+        # if self._spawn_manager and self._shield in self._spawn_manager.entities:
+        #     self._spawn_manager.entities.remove(self._shield)
 
         self._shield.kill()
         self._shield = None
