@@ -279,14 +279,14 @@ class Player(BaseEntity):
     @staticmethod
     def _build_exp_table():
         """Build exp lookup table once at init."""
-        base = 100
+        base_exp = 1000
         multiplier = 1.5
         max_level = 200
         max_exp_cap = 999999
 
         table = [0]
         for lvl in range(1, max_level + 2):
-            exp = min(int(base * (multiplier ** (lvl - 1))), max_exp_cap)
+            exp = min(int(base_exp * (multiplier ** (lvl - 1))), max_exp_cap)
             table.append(exp)
         return table
 

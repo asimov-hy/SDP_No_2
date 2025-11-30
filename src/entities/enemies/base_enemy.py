@@ -170,6 +170,10 @@ class BaseEnemy(BaseEntity):
         if self.death_state != LifecycleState.ALIVE:
             return
 
+        # Frozen by effect - skip movement
+        if self.state == InteractionState.FROZEN:
+            return
+
         # Track spawn time for grace period
         self.spawn_time += dt
 
@@ -340,8 +344,8 @@ class BaseEnemy(BaseEntity):
             self._nuke_subscribed = False
 
     def on_nuke_used(self, event: NukeUsedEvent):
-        """Kill enemy instantly when nuke is used."""
-        self.take_damage(self.max_health + 1, source="nuke")
+        """Nuke event - damage handled by NukePulse effect."""
+        pass
 
     def _reload_image_cached(self, image_path, scale):
         """Reload image only if not cached, or scale changed."""

@@ -43,6 +43,7 @@ class SpawnManager:
         self.collision_manager = collision_manager
         self.entities = []  # Active entities
         self._alive_cache = []  # Cache for alive entities (updated per frame)
+        self._effects_manager = None
         self.on_entity_destroyed = None
 
         # Pooling system

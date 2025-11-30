@@ -13,6 +13,7 @@ Responsibilities
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.entity_state import LifecycleState
 from src.core.services.event_manager import get_events, NukeUsedEvent
+from src.systems.effects.nuke_pulse import NukePulse
 
 EFFECT_HANDLERS = {}
 
@@ -99,11 +100,28 @@ def handle_MULTIPLY_FIRE_RATE(player, effect_data):
         category="item"
     )
 
+
 @effect_handler("USE_NUKE")
 def handle_USE_NUKE(player, effect_data):
-    """Trigger a screen-clearing nuke."""
-    get_events().dispatch(NukeUsedEvent())
-    DebugLogger.action("NUKE ACTIVATED! Clearing screen...", category="item")
+    """Trigger nuke with expanding pulse effect."""
+    # Get effects_manager from spawn_manager's scene reference
+    effects_manager = getattr(player._spawn_manager, '_effects_manager', None)
+
+    if effects_manager is None:
+        # Fallback: instant kill via event
+        get_events().dispatch(NukeUsedEvent())
+        DebugLogger.warn("No effects_manager, using instant nuke", category="item")
+        return
+
+    pulse = NukePulse(
+        center=player.rect.center,
+        expand_speed=effect_data.get("expand_speed", 800),
+        damage=effect_data.get("damage", 9999),
+        color=tuple(effect_data.get("color", [255, 255, 150])),
+    )
+    effects_manager.spawn(pulse)
+
+    DebugLogger.action("NUKE ACTIVATED! Pulse expanding...", category="item")
 
 
 @effect_handler("SPAWN_SHIELD")

@@ -150,6 +150,8 @@ class GameScene(BaseScene):
         self.spawn_manager = systems['spawn_manager']
         self.bullet_manager = systems['bullet_manager']
         self.level_manager = systems['level_manager']
+        self.effects_manager = systems['effects_manager']
+        self.spawn_manager._effects_manager = self.effects_manager
         self.ui = systems['ui']
 
     def _init_level_up_ui(self):
@@ -228,6 +230,7 @@ class GameScene(BaseScene):
         Called before transitioning to another scene.
         """
         ParticleEmitter.clear_all()
+        self.effects_manager.clear()
         self._clear_background()
         self.ui.clear_hud()
         self.ui.hide_screen("game_over")
@@ -477,6 +480,7 @@ class GameScene(BaseScene):
         self.spawn_manager.update(dt)
         self.bullet_manager.update(dt)
         self.level_manager.update(dt)
+        self.effects_manager.update(dt)
 
         # Collision detection
         self.collision_manager.update()
@@ -501,9 +505,11 @@ class GameScene(BaseScene):
             1. Player
             2. Enemies (via spawn_manager)
             3. Bullets
-            4. Overlay (dark tint for pause/game over)
-            5. UI elements (includes level_up when active)
-            6. Debug overlays (if enabled)
+            4. Effects (pulse, flashes, etc.)
+            5. Particles
+            6. Overlay (dark tint for pause/game over)
+            7. UI elements (includes level_up when active)
+            8. Debug overlays (if enabled)
 
         Args:
             draw_manager: DrawManager for queuing draws
@@ -512,6 +518,9 @@ class GameScene(BaseScene):
         self.player.draw(draw_manager)
         self.spawn_manager.draw()
         self.bullet_manager.draw(draw_manager)
+
+        # Screen effects
+        self.effects_manager.draw(draw_manager)
 
         ParticleEmitter.render_all(draw_manager)
 

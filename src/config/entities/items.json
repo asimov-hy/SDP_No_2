@@ -21,7 +21,7 @@
     "name": "Quick Fire",
     "asset_path": "quick_fire.png",
     "scale": 1.0,
-    "drop_weight": 100000000,
+    "drop_weight": 1000,
     "particle_preset": "item_fire_rate",
     "physics": {
       "velo_x": 0,
@@ -59,7 +59,7 @@
     "name": "Nuke",
     "asset_path": "nuke.png",
     "scale": 1.0,
-    "drop_weight": 500,
+    "drop_weight": 50000000,
     "physics": {
       "velo_x": 0,
       "velo_y": 120,
