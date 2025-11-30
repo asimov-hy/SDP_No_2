@@ -136,6 +136,9 @@ class Player(BaseEntity):
         self.health = core["health"]
         self.max_health = self.health
 
+        # Buff particle emitters (stat_name -> ParticleEmitter)
+        self._buff_emitters = {}
+
         # Player stats - load from progression config
         self.exp = 0
         self.level = 1
@@ -305,6 +308,7 @@ class Player(BaseEntity):
         self.anim_manager.update(dt)
         self.state_manager.update(dt)
         self._update_stress(dt)
+        self._update_buff_emitters(dt)
 
         # Detect STUN → RECOVERY transition
         if was_stunned and not self.state_manager.has_state(PlayerEffectState.STUN):
@@ -386,6 +390,24 @@ class Player(BaseEntity):
 
         if self._time_since_damage >= self.stress_grace_period and self.stress > 0:
             self.stress = max(0.0, self.stress - self.stress_decay_rate * dt)
+
+    def _update_buff_emitters(self, dt):
+        """Update and cleanup buff particle emitters."""
+        expired = []
+        for stat_name, emitter in self._buff_emitters.items():
+            # Check if modifier still active
+            if self.state_manager.stat_modifiers.has_modifier(stat_name):
+                emitter.emit_continuous(dt, (self.pos.x, self.pos.y))
+            else:
+                expired.append(stat_name)
+
+        for stat_name in expired:
+            del self._buff_emitters[stat_name]
+
+    def add_buff_emitter(self, stat_name: str, preset_name: str):
+        """Add a particle emitter for an active buff."""
+        from src.graphics.particles.particle_manager import ParticleEmitter
+        self._buff_emitters[stat_name] = ParticleEmitter(preset_name, emit_rate=20)
 
     def draw(self, draw_manager):
         """Render player if visible."""

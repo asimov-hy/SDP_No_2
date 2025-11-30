@@ -146,52 +146,77 @@ def _get_charge_color(charge_ratio: float) -> tuple:
 
 
 def _emit_charge_particles_inward(player, dt: float):
-    """Emit particles that move TOWARD the player center."""
+    """Emit particles - inward while charging, outward when fully charged."""
     if not hasattr(player, '_charge_emit_timer'):
         player._charge_emit_timer = 0.0
 
     player._charge_emit_timer += dt
     max_time = player.spread_charge_levels[-1]["time"]
     charge_ratio = player.spread_charge / max_time
+    is_fully_charged = charge_ratio >= 1.0
 
-    # Emit rate increases with charge level (0.08s -> 0.03s)
-    emit_interval = 0.08 - (0.05 * charge_ratio)
+    # Emit rate: faster when fully charged (pulsing effect)
+    if is_fully_charged:
+        emit_interval = 0.04
+    else:
+        emit_interval = 0.08 - (0.05 * charge_ratio)
 
     if player._charge_emit_timer >= emit_interval:
         player._charge_emit_timer = 0.0
 
-        # Spawn 2-5 particles based on charge
-        count = 2 + int(charge_ratio * 3)
         color = _get_charge_color(charge_ratio)
         cx, cy = player.rect.center
 
-        for _ in range(count):
-            # Spawn at random angle, 40-70 pixels away
-            angle = random.uniform(0, 2 * math.pi)
-            spawn_dist = random.uniform(40, 70)
+        if is_fully_charged:
+            # OUTWARD burst - radiating "ready" effect
+            count = 4
+            for _ in range(count):
+                angle = random.uniform(0, 2 * math.pi)
+                speed = random.uniform(120, 200)
 
-            spawn_x = cx + math.cos(angle) * spawn_dist
-            spawn_y = cy + math.sin(angle) * spawn_dist
+                # Spawn at center, move outward
+                vx = math.cos(angle) * speed
+                vy = math.sin(angle) * speed
+                size = random.randint(4, 8)
+                lifetime = random.uniform(0.3, 0.5)
 
-            # Velocity points INWARD (toward player center)
-            speed = random.uniform(150, 250)
-            vx = -math.cos(angle) * speed
-            vy = -math.sin(angle) * speed
+                particle = Particle(
+                    x=cx, y=cy,
+                    vx=vx, vy=vy,
+                    size=size,
+                    color=color,
+                    lifetime=lifetime,
+                    glow=True,
+                    shrink=True
+                )
+                ParticleEmitter._active_particles.append(particle)
+        else:
+            # INWARD gathering - charging effect
+            count = 2 + int(charge_ratio * 3)
+            for _ in range(count):
+                angle = random.uniform(0, 2 * math.pi)
+                spawn_dist = random.uniform(40, 70)
 
-            # Create particle directly
-            size = random.randint(3, 6 + int(charge_ratio * 3))
-            lifetime = spawn_dist / speed  # Arrive at center
+                spawn_x = cx + math.cos(angle) * spawn_dist
+                spawn_y = cy + math.sin(angle) * spawn_dist
 
-            particle = Particle(
-                x=spawn_x, y=spawn_y,
-                vx=vx, vy=vy,
-                size=size,
-                color=color,
-                lifetime=lifetime,
-                glow=True,
-                shrink=True
-            )
-            ParticleEmitter._active_particles.append(particle)
+                speed = random.uniform(150, 250)
+                vx = -math.cos(angle) * speed
+                vy = -math.sin(angle) * speed
+
+                size = random.randint(3, 6 + int(charge_ratio * 3))
+                lifetime = spawn_dist / speed
+
+                particle = Particle(
+                    x=spawn_x, y=spawn_y,
+                    vx=vx, vy=vy,
+                    size=size,
+                    color=color,
+                    lifetime=lifetime,
+                    glow=True,
+                    shrink=True
+                )
+                ParticleEmitter._active_particles.append(particle)
 
 
 def _get_charge_level(player) -> dict:

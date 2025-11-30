@@ -21,6 +21,7 @@ from src.entities.entity_types import CollisionTags, EntityCategory
 from src.core.services.event_manager import get_events, ItemCollectedEvent
 from src.entities.player.player_effects import apply_item_effects
 from src.systems.entity_management.entity_registry import EntityRegistry
+from src.graphics.particles.particle_manager import ParticleEmitter
 
 
 class BaseItem(BaseEntity):
@@ -169,10 +170,15 @@ class BaseItem(BaseEntity):
 
     def on_collision(self, other, collision_tag=None):
         """Handle collision with player."""
-        # Use passed tag if provided (prevents race conditions), else read current tag
         tag = collision_tag if collision_tag is not None else getattr(other, "collision_tag", "unknown")
 
         if tag == "player":
+            # Spawn pickup particle burst (for non-duration effects)
+            particle_preset = self.item_data.get("particle_preset")
+            if particle_preset:
+                count = self.item_data.get("particle_count", 12)
+                ParticleEmitter.burst(particle_preset, (other.pos.x, other.pos.y), count=count)
+
             # Apply effects directly to player
             apply_item_effects(other, self.get_effects())
 

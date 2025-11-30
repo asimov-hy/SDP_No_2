@@ -98,5 +98,32 @@
     "spread": 360,
     "shrink": true,
     "glow": false
+  },
+  "item_heal": {
+    "colors": [[100, 255, 100], [150, 255, 150], [200, 255, 200]],
+    "size_range": [4, 8],
+    "speed_range": [100, 200],
+    "lifetime": [0.4, 0.7],
+    "spread": 360,
+    "shrink": true,
+    "glow": true
+  },
+  "item_fire_rate": {
+    "colors": [[255, 200, 50], [255, 150, 30], [255, 100, 10]],
+    "size_range": [3, 6],
+    "speed_range": [40, 80],
+    "lifetime": [0.3, 0.5],
+    "spread": 360,
+    "shrink": true,
+    "glow": true
+  },
+  "item_speed": {
+    "colors": [[100, 220, 255], [150, 240, 255], [200, 255, 255]],
+    "size_range": [3, 6],
+    "speed_range": [40, 80],
+    "lifetime": [0.3, 0.5],
+    "spread": 360,
+    "shrink": true,
+    "glow": true
   }
 }

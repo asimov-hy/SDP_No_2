@@ -67,6 +67,11 @@ def handle_SPEED_BOOST(player, effect_data):
 
     player.state_manager.add_stat_modifier("speed", multiplier, duration, stack_type)
 
+    # Start buff particle emitter
+    particle_preset = effect_data.get("particle_preset")
+    if particle_preset:
+        player.add_buff_emitter("speed", particle_preset)
+
     DebugLogger.action(
         f"Speed {multiplier}x for {duration}s",
         category="item"
@@ -83,6 +88,11 @@ def handle_MULTIPLY_FIRE_RATE(player, effect_data):
     stack_type = effect_data.get("stack_type", "MULTIPLY")
 
     player.state_manager.add_stat_modifier("fire_rate", multiplier, duration, stack_type)
+
+    # Start buff particle emitter
+    particle_preset = effect_data.get("particle_preset")
+    if particle_preset:
+        player.add_buff_emitter("fire_rate", particle_preset)
 
     DebugLogger.action(
         f"Fire rate {multiplier}x for {duration}s",

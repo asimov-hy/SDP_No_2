@@ -4,7 +4,7 @@
   "core_attributes": {
     "_notes": "Defines base physics and behavior values.",
     "scale": 0.9,
-    "health": 1000000,
+    "health": 1000,
     "hitbox_scale": 0.85,
 
     "speed": 300,
@@ -19,7 +19,7 @@
     "primary": {
       "_notes": "Normal auto-fire (SPACE)",
       "cooldown": 0.2,
-      "damage": 1,
+      "damage": 100,
       "speed": 900
     },
 
