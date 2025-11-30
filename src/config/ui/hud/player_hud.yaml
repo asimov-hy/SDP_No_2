@@ -54,18 +54,19 @@ player_hud:
       offset: [-50, 0]
       image: "ui/health/health_gauge.png"
 
+      children:
 
-    - type: needle
-      id: "health_needle"
-      parent_anchor: "#health_gauge:center"
-      self_anchor: center
-      offset: [0, 20]
-      size: [200, 200]
-      image: "ui/health/health_needle.png"
+      - type: needle
+        id: "health_needle"
+        parent_anchor: "#health_gauge:center"
+        self_anchor: center
+        offset: [0, 20]
+        size: [200, 200]
+        image: "ui/health/health_needle.png"
 
-      bind: player.health
-      bind_max: player.max_health
+        bind: player.health
+        bind_max: player.max_health
 
-      min_value: 0
-      min_angle: -80
-      max_angle: 80
+        min_value: 0
+        min_angle: -80
+        max_angle: 80

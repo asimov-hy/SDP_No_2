@@ -7,8 +7,9 @@ Base cutscene action and common action library.
 from abc import ABC, abstractmethod
 from typing import Callable, List, Tuple
 import pygame
+import os
 
-from src.core.runtime.game_settings import Display
+from src.core.runtime.game_settings import Display, Fonts
 
 
 class CutsceneAction(ABC):
@@ -159,23 +160,52 @@ class FadeOverlayAction(CutsceneAction):
 
 
 class TextFlashAction(CutsceneAction):
-    """Display text that fades in/out."""
+    """Display text that fades in/out. Supports multi-line with \\n."""
 
     def __init__(self, text: str, duration: float = 1.5,
                  fade_in: float = 0.3, fade_out: float = 0.3,
-                 font_size: int = 48, color: Tuple[int, int, int] = (255, 255, 255)):
+                 font_size: int = 48, color: Tuple[int, int, int] = (255, 255, 255),
+                 line_spacing: int = 10):
         super().__init__(duration)
         self.text = text
         self.fade_in = fade_in
         self.fade_out = fade_out
         self.font_size = font_size
         self.color = color
+        self.line_spacing = line_spacing
         self._surface = None
         self._alpha = 0
 
     def on_start(self):
-        font = pygame.font.Font(None, self.font_size)
-        self._surface = font.render(self.text, True, self.color).convert_alpha()
+        font_path = os.path.join(Fonts.DIR, Fonts.DEFAULT)
+        font = pygame.font.Font(font_path, self.font_size)
+        lines = self.text.split('\n')
+
+        # Render each line
+        line_surfaces = []
+        for line in lines:
+            if line.strip() == '---':
+                # Render separator line
+                sep_surf = pygame.Surface((250, 2), pygame.SRCALPHA)
+                sep_surf.fill(self.color)
+                line_surfaces.append(sep_surf)
+            else:
+                line_surfaces.append(font.render(line, True, self.color))
+
+        # Calculate total size
+        total_width = max(s.get_width() for s in line_surfaces)
+        total_height = sum(s.get_height() for s in line_surfaces) + self.line_spacing * (len(lines) - 1)
+
+        # Create combined surface
+        self._surface = pygame.Surface((total_width, total_height), pygame.SRCALPHA)
+
+        # Blit lines centered
+        y = 0
+        for surf in line_surfaces:
+            x = (total_width - surf.get_width()) // 2
+            self._surface.blit(surf, (x, y))
+            y += surf.get_height() + self.line_spacing
+
         self._rect = self._surface.get_rect(center=(Display.WIDTH // 2, Display.HEIGHT // 2))
 
     def update(self, dt: float) -> bool:

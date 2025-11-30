@@ -152,6 +152,8 @@ class UIElement:
         self._slide_delay = 0.0
         self._sliding = False
 
+        self.slide_with_parent = position_dict.get('slide_with_parent', True)
+
         # Caching
         self._surface_cache: Optional[pygame.Surface] = None
         self._dirty = True
@@ -471,65 +473,65 @@ class UIElement:
             return (self.rect.x, self.rect.y)
         return (0, 0)
 
-        # ===================================================================
-        # Slide Animation
-        # ===================================================================
+    # ===================================================================
+    # Slide Animation
+    # ===================================================================
 
-        def start_slide_in(self, offset: Tuple[int, int], duration: float, delay: float = 0):
-            """
-            Start slide-in animation from offset.
+    def start_slide_in(self, offset: Tuple[int, int], duration: float, delay: float = 0):
+        """
+        Start slide-in animation from offset.
 
-            Args:
-                offset: Starting offset from final position (x, y)
-                duration: Animation duration
-                delay: Delay before starting
-            """
-            self._slide_start = offset
-            self._slide_end = (0, 0)
-            self._slide_offset = offset
-            self._slide_duration = duration
-            self._slide_delay = delay
-            self._slide_elapsed = 0.0
-            self._sliding = True
+        Args:
+            offset: Starting offset from final position (x, y)
+            duration: Animation duration
+            delay: Delay before starting
+        """
+        self._slide_start = offset
+        self._slide_end = (0, 0)
+        self._slide_offset = offset
+        self._slide_duration = duration
+        self._slide_delay = delay
+        self._slide_elapsed = 0.0
+        self._sliding = True
 
-        def update_slide(self, dt: float) -> bool:
-            """
-            Update slide animation.
+    def update_slide(self, dt: float) -> bool:
+        """
+        Update slide animation.
 
-            Returns:
-                True if animation complete
-            """
-            if not self._sliding:
-                return True
+        Returns:
+            True if animation complete
+        """
+        if not self._sliding:
+            return True
 
-            # Handle delay
-            if self._slide_delay > 0:
-                self._slide_delay -= dt
-                return False
-
-            self._slide_elapsed += dt
-            t = min(self._slide_elapsed / self._slide_duration, 1.0)
-
-            # Ease-out
-            t = 1 - (1 - t) ** 2
-
-            self._slide_offset = (
-                int(self._slide_start[0] + (self._slide_end[0] - self._slide_start[0]) * t),
-                int(self._slide_start[1] + (self._slide_end[1] - self._slide_start[1]) * t)
-            )
-
-            if t >= 1.0:
-                self._slide_offset = (0, 0)
-                self._sliding = False
-                return True
-
+        # Handle delay
+        if self._slide_delay > 0:
+            self._slide_delay -= dt
             return False
 
-        @property
-        def slide_offset(self) -> Tuple[int, int]:
-            """Current slide offset for rendering."""
-            return self._slide_offset
+        self._slide_elapsed += dt
+        t = min(self._slide_elapsed / self._slide_duration, 1.0)
 
-        @property
-        def is_sliding(self) -> bool:
-            return self._sliding
+        # Ease-out
+        t = 1 - (1 - t) ** 2
+
+        self._slide_offset = (
+            int(self._slide_start[0] + (self._slide_end[0] - self._slide_start[0]) * t),
+            int(self._slide_start[1] + (self._slide_end[1] - self._slide_start[1]) * t)
+        )
+
+        if t >= 1.0:
+            self._slide_offset = (0, 0)
+            self._sliding = False
+            return True
+
+        return False
+
+    @property
+    def slide_offset(self) -> Tuple[int, int]:
+        """Current slide offset for rendering."""
+        return self._slide_offset
+
+    @property
+    def is_sliding(self) -> bool:
+        return self._sliding

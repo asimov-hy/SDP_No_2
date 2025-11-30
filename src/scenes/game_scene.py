@@ -31,6 +31,7 @@ from src.core.runtime.game_settings import Debug
 # Core - Runtime & Services
 from src.core.runtime.session_stats import get_session_stats
 from src.core.services.event_manager import get_events, EnemyDiedEvent, ScreenShakeEvent, SpawnPauseEvent
+from src.core.runtime.game_settings import Display
 
 # Entities
 from src.entities.entity_state import LifecycleState
@@ -216,6 +217,8 @@ class GameScene(BaseScene):
         # UI setup
         self.ui.register_binding('player', self.player)
         self.ui.load_hud("hud/player_hud.yaml")
+        # Hide HUD initially - cutscene will slide it in
+        self._hide_hud_for_intro()
         self.ui.load_screen("game_over", "screens/game_over.yaml")
 
         # Reset all game state
@@ -233,6 +236,13 @@ class GameScene(BaseScene):
 
         # Play intro cutscene
         self._play_intro_cutscene()
+
+    def _hide_hud_for_intro(self):
+        """Hide HUD elements off-screen before intro cutscene."""
+        for element in self.ui.hud_elements:
+            anchor = getattr(element, 'parent_anchor', 'center')
+            offset = self.ui.ANCHOR_TO_OFFSET.get(anchor, (0, -100))
+            element._slide_offset = offset
 
     def on_exit(self):
         """
@@ -264,18 +274,17 @@ class GameScene(BaseScene):
 
     def _play_intro_cutscene(self):
         """Build and play level intro cutscene."""
-        from src.core.runtime.game_settings import Display
 
         # Pause spawning during intro
-        get_events().emit(SpawnPauseEvent(paused=True))
+        get_events().dispatch(SpawnPauseEvent(paused=True))
 
         # Player start/end positions
-        start_y = Display.HEIGHT + 50
-        end_y = Display.HEIGHT * 0.75
         center_x = Display.WIDTH / 2
+        start_y = Display.HEIGHT + self.player.rect.height
+        end_y = Display.HEIGHT / 2
 
         actions = [
-            # Phase 1: Lock input, position player off-screen
+            # Phase 1: Lock input, position player off-screen, pause BG scroll
             ActionGroup([
                 LockInputAction(self.player, locked=True),
                 CallbackAction(self._position_player_offscreen),
@@ -294,7 +303,23 @@ class GameScene(BaseScene):
             UISlideInAction(self.ui, duration=0.4, stagger=0.08),
 
             # Phase 4: Mission text
-            TextFlashAction("MISSION START", duration=1.5, fade_in=0.3, fade_out=0.3),
+            # Phase 4: System text
+            TextFlashAction(
+                "MAIN SYSTEM\n─────────────────────────────────\nCOMBAT MODE ACTIVE",
+                duration=2.0,
+                fade_in=0.3,
+                fade_out=0.3,
+                font_size=36
+            ),
+
+            # Phase 5: Commence mission
+            TextFlashAction(
+                "COMMENCE MISSION",
+                duration=1.5,
+                fade_in=0.2,
+                fade_out=0.3,
+                font_size=48
+            ),
 
             # Phase 5: Enable gameplay
             ActionGroup([
@@ -309,7 +334,7 @@ class GameScene(BaseScene):
         """Called when intro cutscene finishes."""
         self._intro_complete = True
         # Resume spawning
-        get_events().emit(SpawnPauseEvent(paused=False))
+        get_events().dispatch(SpawnPauseEvent(paused=False))
 
     def _position_player_offscreen(self):
         """Move player to starting position off-screen."""
@@ -318,12 +343,6 @@ class GameScene(BaseScene):
         self.player.rect.centery = Display.HEIGHT + 50
         self.player.virtual_pos.x = self.player.rect.centerx
         self.player.virtual_pos.y = self.player.rect.centery
-
-    def _on_intro_complete(self):
-        """Called when intro cutscene finishes."""
-        self._intro_complete = True
-        # Now start spawning enemies
-        self.spawn_manager.active = True
 
     # ===========================================================
     # Level Loading

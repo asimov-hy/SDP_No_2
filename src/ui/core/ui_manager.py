@@ -13,6 +13,7 @@ from .binding_system import BindingSystem
 from .ui_loader import UILoader
 from .ui_element import UIElement
 from src.audio.sound_manager import get_sound_manager
+from src.scenes.transitions.transitions import UISlideAnimation
 
 
 class UIManager:
@@ -125,7 +126,6 @@ class UIManager:
 
         # Start slide animation if specified
         if slide_from:
-            from src.scenes.transitions.transitions import UISlideAnimation
             self._screen_animations[name] = UISlideAnimation(slide_from, slide_duration)
 
         # Rebuild focus list when showing screen
@@ -148,7 +148,6 @@ class UIManager:
 
         # Start slide-out animation if specified
         if slide_to:
-            from src.scenes.transitions.transitions import UISlideAnimation
             self._screen_animations[name] = UISlideAnimation(slide_to, slide_duration, reverse=True)
             # Delay actual hide until animation completes
             self._pending_hides[name] = True
@@ -269,7 +268,6 @@ class UIManager:
         if 0 <= self.focus_index < len(self.focusables):
             element = self.focusables[self.focus_index]
             if hasattr(element, 'action'):
-                from src.audio.sound_manager import get_sound_manager
                 get_sound_manager().play_bfx("button_click")
                 return element.action
         return None
@@ -369,6 +367,10 @@ class UIManager:
         elements = self._get_sorted_hud_elements()
 
         for i, element in enumerate(elements):
+            # Resolve rect if not yet resolved (needed for offset calculation)
+            if not element.rect:
+                element.rect = self.anchor_resolver.resolve(element, None)
+
             anchor = getattr(element, 'parent_anchor', 'center')
             offset = self.ANCHOR_TO_OFFSET.get(anchor, (0, -100))
             delay = i * stagger
@@ -642,16 +644,22 @@ class UIManager:
         # Render surface
         surface = element.render_surface()
 
-        # Apply animation offset to draw position
-        draw_rect = element.rect.move(anim_offset[0], anim_offset[1])
+        # Apply animation offset + element slide offset to draw position
+        slide = element.slide_offset
+        draw_rect = element.rect.move(
+            anim_offset[0] + slide[0],
+            anim_offset[1] + slide[1]
+        )
 
         # Queue for drawing
         draw_manager.queue_draw(surface, draw_rect, element.layer)
 
         # Draw children (pass offset down)
         if hasattr(element, 'children'):
+            combined_offset = (anim_offset[0] + slide[0], anim_offset[1] + slide[1])
             for child in element.children:
-                self._draw_element_tree(child, draw_manager, parent=element, anim_offset=anim_offset)
+                child_offset = combined_offset if child.slide_with_parent else anim_offset
+                self._draw_element_tree(child, draw_manager, parent=element, anim_offset=child_offset)
 
     def _set_auto_layer(self, element, layer):
         """

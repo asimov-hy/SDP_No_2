@@ -5,6 +5,7 @@ Defines the minimal Player entity core used to coordinate all components.
 """
 
 import pygame
+import random
 import os
 
 from src.core.runtime.game_settings import Display, Layers
@@ -22,6 +23,7 @@ from .player_movement import update_movement
 from . import player_ability
 from .player_logic import damage_collision
 from .player_state import PlayerEffectState
+from src.graphics.particles.particle_manager import ParticleEmitter
 
 
 # ===========================================================
@@ -471,7 +473,6 @@ class Player(BaseEntity):
 
     def _update_buff_emitters(self, dt):
         """Update and cleanup buff particle emitters."""
-        import random
 
         expired = []
         for stat_name, emitter in self._buff_emitters.items():
@@ -495,7 +496,6 @@ class Player(BaseEntity):
 
     def add_buff_emitter(self, stat_name: str, preset_name: str):
         """Add a particle emitter for an active buff."""
-        from src.graphics.particles.particle_manager import ParticleEmitter
         # Higher emit rate for speed trail effect
         emit_rate = 40 if stat_name == "speed" else 20
         self._buff_emitters[stat_name] = ParticleEmitter(preset_name, emit_rate=emit_rate)
