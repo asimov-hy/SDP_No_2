@@ -7,10 +7,20 @@ Handles player combat-related systems:
 """
 
 import math
+import random
 
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.bullets.bullet_straight import StraightBullet
 from src.entities.player.player_state import PlayerEffectState
+from src.graphics.particles.particle_manager import ParticleEmitter, Particle, SpriteCache
+
+# Charge color gradient: blue -> cyan -> yellow -> white
+CHARGE_COLORS = [
+    (100, 180, 255),   # 0% - Blue
+    (100, 255, 255),   # 33% - Cyan
+    (255, 255, 100),   # 66% - Yellow
+    (255, 255, 255),   # 100% - White
+]
 
 
 # ===========================================================
@@ -60,9 +70,16 @@ def _fire_bullet(player):
 # ===========================================================
 def update_spread_shot(player, dt: float):
     """Handle charged spread shot with bomb key."""
+    max_time = player.spread_charge_levels[-1]["time"]
+
+    # Stunned = charge fails
     if player.state_manager.has_state(PlayerEffectState.STUN):
+        if player.spread_charging:
+            ParticleEmitter.burst("spread_charge_fail", player.rect.center, count=12)
+            DebugLogger.state("Spread charge interrupted!", category="combat")
         player.spread_charging = False
         player.spread_charge = 0.0
+        player._spread_max_reached = False
         return
 
     # Cooldown tick
@@ -70,17 +87,32 @@ def update_spread_shot(player, dt: float):
 
     # Not ready yet
     if player.spread_timer < player.spread_cooldown:
+        if player.input.pressed("bomb"):
+            ParticleEmitter.burst("spread_charge_fail", player.rect.center, count=6)
+            DebugLogger.state("Spread shot on cooldown!", category="combat")
         return
 
     # Start charging
     if player.input.pressed("bomb"):
         player.spread_charging = True
         player.spread_charge = 0.0
+        player._spread_max_reached = False
+        player._charge_emit_timer = 0.0
 
     # Continue charging
     if player.spread_charging and player.input.held("bomb"):
-        max_time = player.spread_charge_levels[-1]["time"]
+        prev_charge = player.spread_charge
         player.spread_charge = min(player.spread_charge + dt, max_time)
+
+        # Emit inward charging particles
+        _emit_charge_particles_inward(player, dt)
+
+        # Check if max charge just reached
+        if prev_charge < max_time and player.spread_charge >= max_time:
+            if not getattr(player, '_spread_max_reached', False):
+                player._spread_max_reached = True
+                ParticleEmitter.burst("spread_charge_full", player.rect.center, count=20)
+                DebugLogger.state("Spread shot FULLY CHARGED!", category="combat")
 
     # Release = fire
     if player.spread_charging and player.input.released("bomb"):
@@ -88,6 +120,78 @@ def update_spread_shot(player, dt: float):
         player.spread_charging = False
         player.spread_charge = 0.0
         player.spread_timer = 0.0
+        player._spread_max_reached = False
+
+
+def _get_charge_color(charge_ratio: float) -> tuple:
+    """Interpolate color based on charge ratio (0.0 to 1.0)."""
+    if charge_ratio >= 1.0:
+        return CHARGE_COLORS[-1]
+
+    # Find which segment we're in
+    segment_count = len(CHARGE_COLORS) - 1
+    scaled = charge_ratio * segment_count
+    idx = int(scaled)
+    t = scaled - idx
+
+    # Lerp between two colors
+    c1 = CHARGE_COLORS[idx]
+    c2 = CHARGE_COLORS[min(idx + 1, len(CHARGE_COLORS) - 1)]
+
+    return (
+        int(c1[0] + (c2[0] - c1[0]) * t),
+        int(c1[1] + (c2[1] - c1[1]) * t),
+        int(c1[2] + (c2[2] - c1[2]) * t),
+    )
+
+
+def _emit_charge_particles_inward(player, dt: float):
+    """Emit particles that move TOWARD the player center."""
+    if not hasattr(player, '_charge_emit_timer'):
+        player._charge_emit_timer = 0.0
+
+    player._charge_emit_timer += dt
+    max_time = player.spread_charge_levels[-1]["time"]
+    charge_ratio = player.spread_charge / max_time
+
+    # Emit rate increases with charge level (0.08s -> 0.03s)
+    emit_interval = 0.08 - (0.05 * charge_ratio)
+
+    if player._charge_emit_timer >= emit_interval:
+        player._charge_emit_timer = 0.0
+
+        # Spawn 2-5 particles based on charge
+        count = 2 + int(charge_ratio * 3)
+        color = _get_charge_color(charge_ratio)
+        cx, cy = player.rect.center
+
+        for _ in range(count):
+            # Spawn at random angle, 40-70 pixels away
+            angle = random.uniform(0, 2 * math.pi)
+            spawn_dist = random.uniform(40, 70)
+
+            spawn_x = cx + math.cos(angle) * spawn_dist
+            spawn_y = cy + math.sin(angle) * spawn_dist
+
+            # Velocity points INWARD (toward player center)
+            speed = random.uniform(150, 250)
+            vx = -math.cos(angle) * speed
+            vy = -math.sin(angle) * speed
+
+            # Create particle directly
+            size = random.randint(3, 6 + int(charge_ratio * 3))
+            lifetime = spawn_dist / speed  # Arrive at center
+
+            particle = Particle(
+                x=spawn_x, y=spawn_y,
+                vx=vx, vy=vy,
+                size=size,
+                color=color,
+                lifetime=lifetime,
+                glow=True,
+                shrink=True
+            )
+            ParticleEmitter._active_particles.append(particle)
 
 
 def _get_charge_level(player) -> dict:

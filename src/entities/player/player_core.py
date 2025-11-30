@@ -219,6 +219,8 @@ class Player(BaseEntity):
         self.spread_timer = self.spread_cooldown
         self.spread_charge = 0.0
         self.spread_charging = False
+        self._spread_max_reached = False
+        self._charge_emit_timer = 0.0
 
         # Collision
         collision = combat_cfg.get("collision", {})

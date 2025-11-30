@@ -71,5 +71,32 @@
     "spread": 120,
     "shrink": true,
     "glow": true
+  },
+  "spread_charge_inward": {
+    "colors": [[100, 200, 255]],
+    "size_range": [4, 8],
+    "speed_range": [150, 250],
+    "lifetime": [0.2, 0.4],
+    "spread": 0,
+    "shrink": true,
+    "glow": true
+  },
+  "spread_charge_full": {
+    "colors": [[255, 255, 100], [255, 220, 50], [255, 255, 255]],
+    "size_range": [6, 12],
+    "speed_range": [150, 300],
+    "lifetime": [0.4, 0.7],
+    "spread": 360,
+    "shrink": true,
+    "glow": true
+  },
+  "spread_charge_fail": {
+    "colors": [[255, 100, 100], [200, 50, 50], [150, 80, 80]],
+    "size_range": [4, 8],
+    "speed_range": [100, 200],
+    "lifetime": [0.3, 0.5],
+    "spread": 360,
+    "shrink": true,
+    "glow": false
   }
 }

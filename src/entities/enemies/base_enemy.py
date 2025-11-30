@@ -201,8 +201,9 @@ class BaseEnemy(BaseEntity):
         self.health = max(0, self.health - amount)
 
         if self.health > 0:
-            # Set INTANGIBLE during damage animation so we don't hurt player
-            self.state = InteractionState.INTANGIBLE
+            # Only go INTANGIBLE for contact damage (not bullets)
+            if source == "player_contact":
+                self.state = InteractionState.INTANGIBLE
 
             # Re-bind callback because stop() clears it
             self.anim_manager.on_complete = self._on_anim_complete
