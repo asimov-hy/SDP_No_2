@@ -52,6 +52,7 @@ class NukeUsedEvent(BaseEvent):
     """Dispatched when a bomb is used to clear the screen."""
     damage: int = 9999
 
+
 @dataclass(frozen=True)
 class ScreenShakeEvent(BaseEvent):
     """Dispatched to trigger screen shake effect."""
@@ -59,10 +60,23 @@ class ScreenShakeEvent(BaseEvent):
     duration: float = 0.3
 
 
+@dataclass(frozen=True)
+class BulletClearEvent(BaseEvent):
+    """Dispatched to clear enemy bullets in an area."""
+    center: tuple
+    radius: float
+    owner: str = "enemy"  # Which bullets to clear
+
+
+@dataclass(frozen=True)
+class SpawnPauseEvent(BaseEvent):
+    """Dispatched to pause/resume enemy spawning."""
+    paused: bool
+
+
 # ===========================================================
 # Event Manager
 # ===========================================================
-
 class EventManager:
     """Central event dispatcher using pub-sub pattern."""
 

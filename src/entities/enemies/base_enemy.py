@@ -161,7 +161,7 @@ class BaseEnemy(BaseEntity):
     # Update Logic
     # ===========================================================
     def update(self, dt: float):
-        """Default downward movement for enemies."""
+        """Main update - handles state checks, then delegates to _update_behavior."""
         if self.death_state == LifecycleState.DYING:
             if self.anim_manager.update(dt):
                 self.mark_dead(immediate=True)
@@ -170,7 +170,7 @@ class BaseEnemy(BaseEntity):
         if self.death_state != LifecycleState.ALIVE:
             return
 
-        # Frozen by effect - skip movement
+        # Frozen by effect - skip ALL behavior
         if self.state == InteractionState.FROZEN:
             return
 
@@ -180,6 +180,10 @@ class BaseEnemy(BaseEntity):
         # Ensure animations (like damage blink) update while alive
         self.anim_manager.update(dt)
 
+        # Subclass behavior hook
+        self._update_behavior(dt)
+
+        # Base movement
         self.pos.x += self.velocity.x * dt
         self.pos.y += self.velocity.y * dt
         self.sync_rect()
@@ -192,6 +196,10 @@ class BaseEnemy(BaseEntity):
         # Mark dead if off-screen (only after grace period)
         if self.spawn_time > self.spawn_grace_period and self.is_offscreen():
             self.mark_dead(immediate=True)
+
+    def _update_behavior(self, dt: float):
+        """Override in subclasses for custom behavior (shooting, homing, etc.)."""
+        pass
 
     def take_damage(self, amount: int, source: str = "unknown"):
         """

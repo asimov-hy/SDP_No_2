@@ -97,25 +97,15 @@ class EnemyHoming(BaseEnemy):
     # ===========================================================
     # Update Logic
     # ===========================================================
-    def update(self, dt: float):
-        """
-        Move the enemy and handle homing if player exists.
-
-        Args:
-            dt (float): Delta time (in seconds) since last frame.
-        """
+    def _update_behavior(self, dt: float):
         if self.player_ref:
             if self.update_delay > 0:
-                # Delayed update modes (e.g., homing_smart)
                 self.update_timer += dt
                 if self.update_timer >= self.update_delay:
                     self._update_homing_continuous(dt)
                     self.update_timer = 0.0
             else:
-                # Constant update modes (e.g., homing_slow, homing_fast)
                 self._update_homing_continuous(dt)
-
-        super().update(dt)
 
     def reset(self, x, y, direction=(0, 1), speed=None, health=None, **kwargs):
         """Reset enemy for pooling."""

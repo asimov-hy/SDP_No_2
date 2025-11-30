@@ -115,7 +115,8 @@ def handle_USE_NUKE(player, effect_data):
 
     pulse = NukePulse(
         center=player.rect.center,
-        expand_speed=effect_data.get("expand_speed", 800),
+        start_speed=effect_data.get("start_speed", 1600),
+        end_speed=effect_data.get("end_speed", 200),
         damage=effect_data.get("damage", 9999),
         color=tuple(effect_data.get("color", [255, 255, 150])),
     )

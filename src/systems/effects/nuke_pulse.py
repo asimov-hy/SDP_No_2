@@ -10,7 +10,7 @@ import pygame
 
 from src.core.runtime.game_settings import Display, Layers
 from src.core.debug.debug_logger import DebugLogger
-from src.core.services.event_manager import get_events, ScreenShakeEvent
+from src.core.services.event_manager import get_events, ScreenShakeEvent, BulletClearEvent, SpawnPauseEvent
 from src.entities.entity_state import InteractionState, LifecycleState
 from src.entities.entity_types import EntityCategory
 from src.graphics.particles.particle_manager import ParticleEmitter
@@ -26,14 +26,15 @@ class PulseState:
 class NukePulse:
     """Expanding ring that freezes enemies, then detonates them."""
 
-    def __init__(self, center, expand_speed=800, fade_duration=0.3,
-                 detonate_duration=0.25, damage=9999,
+    def __init__(self, center, start_speed=1600, end_speed=200, fade_duration=0.3,
+                 detonate_duration=0.5, explosion_duration=2.0, damage=9999,
                  color=(255, 255, 150), ring_width=12,
                  target_category=EntityCategory.ENEMY):
         """
         Args:
             center: (x, y) origin point
-            expand_speed: Pixels per second
+            start_speed: Initial expansion speed (pixels per second)
+            end_speed: Final expansion speed (pixels per second)
             fade_duration: Seconds to fade after max radius
             detonate_duration: Seconds of shake before explode
             damage: Damage dealt on detonation
@@ -43,7 +44,8 @@ class NukePulse:
         """
         self.center = center
         self.radius = 0
-        self.expand_speed = expand_speed
+        self.start_speed = start_speed
+        self.end_speed = end_speed
         self.max_radius = math.hypot(Display.WIDTH, Display.HEIGHT) * 0.6
 
         self.damage = damage
@@ -54,12 +56,20 @@ class NukePulse:
 
         self.fade_duration = fade_duration
         self.detonate_duration = detonate_duration
+        self.explosion_duration = explosion_duration
+
+        self._explosion_times = []  # Pre-calculated explosion times
 
         self.state = PulseState.EXPANDING
         self._state_timer = 0.0
+        self._detonate_timer = 0.0
+        self._detonate_index = 0
 
         self._frozen_entities = []
         self._original_positions = {}
+
+        # Pause spawning during nuke
+        get_events().dispatch(SpawnPauseEvent(paused=True))
 
         DebugLogger.action("Nuke pulse expanding...", category="effects")
 
@@ -78,8 +88,10 @@ class NukePulse:
 
     def _update_expanding(self, dt, entities):
         """Expand ring and freeze entities on contact."""
-        prev_radius = self.radius
-        self.radius += self.expand_speed * dt
+        # Exponential slowdown: fast at start, slow at end
+        progress = self.radius / self.max_radius  # 0.0 -> 1.0
+        current_speed = self.start_speed * math.pow(self.end_speed / self.start_speed, progress)
+        self.radius += current_speed * dt
 
         for entity in entities:
             # Filter by category
@@ -90,15 +102,21 @@ class NukePulse:
             if entity in self._frozen_entities:
                 continue
 
-            # Distance check
+            # Distance check - hit if inside current radius
             dist = math.hypot(
                 entity.rect.centerx - self.center[0],
                 entity.rect.centery - self.center[1]
             )
 
-            # Entity touched by ring edge
-            if prev_radius <= dist <= self.radius:
+            if dist <= self.radius:
                 self._freeze_entity(entity)
+
+        # Clear enemy bullets inside expanding ring
+        get_events().dispatch(BulletClearEvent(
+            center=self.center,
+            radius=self.radius,
+            owner="enemy"
+        ))
 
         # Transition when fully expanded
         if self.radius >= self.max_radius:
@@ -118,15 +136,23 @@ class NukePulse:
         if self._state_timer >= self.fade_duration:
             self.state = PulseState.DETONATING
             self._state_timer = 0.0
+            self._detonate_index = 0
+
+            # Shuffle for random explosion order
+            random.shuffle(self._frozen_entities)
+
+            # Pre-calculate explosion times (accelerating curve)
+            self._explosion_times = self._generate_explosion_times(len(self._frozen_entities))
+
             DebugLogger.action("Nuke detonation starting...", category="effects")
 
     def _update_detonating(self, dt):
-        """Shake frozen entities, then explode all."""
+        """Shake frozen entities, explode one by one."""
         self._state_timer += dt
 
-        # Shake frozen entities
+        # Shake remaining frozen entities
         shake_intensity = 4
-        for entity in self._frozen_entities:
+        for entity in self._frozen_entities[self._detonate_index:]:
             if getattr(entity, 'death_state', LifecycleState.DEAD) != LifecycleState.ALIVE:
                 continue
 
@@ -138,9 +164,15 @@ class NukePulse:
                 entity.pos.y = orig_pos[1] + offset_y
                 entity.sync_rect()
 
-        # Detonate
-        if self._state_timer >= self.detonate_duration:
-            self._detonate_all()
+        # Explode entities when their scheduled time arrives
+        while (self._detonate_index < len(self._frozen_entities) and
+               self._state_timer >= self._explosion_times[self._detonate_index]):
+            self._detonate_single(self._detonate_index)
+            self._detonate_index += 1
+
+        # Done when all exploded
+        if self._detonate_index >= len(self._frozen_entities):
+            self._finish_detonation()
             self.state = PulseState.DONE
 
     def _freeze_entity(self, entity):
@@ -152,26 +184,51 @@ class NukePulse:
         # Visual feedback
         ParticleEmitter.burst("damage", entity.rect.center, count=4)
 
-    def _detonate_all(self):
-        """Kill all frozen entities with effects."""
-        # Screen shake
+    def _generate_explosion_times(self, count):
+        """Generate accelerating explosion times spread over explosion_duration."""
+        if count == 0:
+            return []
+        if count == 1:
+            return [self.detonate_duration]
+
+        times = []
+        for i in range(count):
+            # Progress 0.0 -> 1.0
+            progress = i / (count - 1)
+
+            # Quadratic ease-in: slow start, fast end
+            # t = progress^2 gives acceleration
+            curved_progress = progress * progress
+
+            # Map to time after detonate_duration
+            time = self.detonate_duration + (curved_progress * self.explosion_duration)
+            times.append(time)
+
+        return times
+
+    def _detonate_single(self, index):
+        """Explode a single frozen entity."""
+        entity = self._frozen_entities[index]
+
+        if getattr(entity, 'death_state', LifecycleState.DEAD) != LifecycleState.ALIVE:
+            return
+
+        # Restore position
+        orig_pos = self._original_positions.get(id(entity))
+        if orig_pos:
+            entity.pos.x, entity.pos.y = orig_pos
+            entity.sync_rect()
+
+        # Particle burst
+        ParticleEmitter.burst("enemy_explode", entity.rect.center, count=20)
+
+        # Kill
+        entity.take_damage(self.damage, source="nuke")
+
+    def _finish_detonation(self):
+        """Cleanup after all entities detonated."""
+        # Screen shake at end
         get_events().dispatch(ScreenShakeEvent(intensity=15, duration=0.4))
-
-        for entity in self._frozen_entities:
-            if getattr(entity, 'death_state', LifecycleState.DEAD) != LifecycleState.ALIVE:
-                continue
-
-            # Restore position
-            orig_pos = self._original_positions.get(id(entity))
-            if orig_pos:
-                entity.pos.x, entity.pos.y = orig_pos
-                entity.sync_rect()
-
-            # Particle burst
-            ParticleEmitter.burst("enemy_explode", entity.rect.center, count=20)
-
-            # Kill
-            entity.take_damage(self.damage, source="nuke")
 
         DebugLogger.action(
             f"Nuke detonated {len(self._frozen_entities)} enemies!",
@@ -180,6 +237,9 @@ class NukePulse:
 
         self._frozen_entities.clear()
         self._original_positions.clear()
+
+        # Resume spawning
+        get_events().dispatch(SpawnPauseEvent(paused=False))
 
     def draw(self, draw_manager):
         """Draw expanding/fading ring."""

@@ -12,10 +12,12 @@ Responsibilities
 """
 
 import pygame
+import math
 import os
-from src.core.services.config_manager import load_config
-from src.entities.bullets.bullet_straight import StraightBullet
 from src.core.debug.debug_logger import DebugLogger
+from src.core.services.config_manager import load_config
+from src.core.services.event_manager import get_events, BulletClearEvent
+from src.entities.bullets.bullet_straight import StraightBullet
 from src.entities.entity_state import LifecycleState
 
 
@@ -33,9 +35,8 @@ class BulletManager:
         self._bullet_configs = {}  # {owner: config_dict}
         self._bullet_images = {}  # {owner: pygame.Surface} - cached
 
-        # Only prewarm if draw_manager available
-        # if self.draw_manager:
-        #     self.prewarm_pool(owner="player", count=50)
+        # Subscribe to bullet clear events
+        get_events().subscribe(BulletClearEvent, self._on_bullet_clear)
 
         DebugLogger.init_entry("BulletManager Initialized")
 
@@ -305,6 +306,28 @@ class BulletManager:
             DebugLogger.state(
                 f"Cleaned up {removed} inactive bullets",
                 category="entity_cleanup"
+            )
+
+    def _on_bullet_clear(self, event: BulletClearEvent):
+        """Clear bullets matching owner within radius of center."""
+        cleared = 0
+        for bullet in self.active:
+            if bullet.owner != event.owner:
+                continue
+
+            dist = math.hypot(
+                bullet.pos.x - event.center[0],
+                bullet.pos.y - event.center[1]
+            )
+
+            if dist <= event.radius:
+                bullet.death_state = LifecycleState.DEAD
+                cleared += 1
+
+        if cleared > 0:
+            DebugLogger.action(
+                f"Cleared {cleared} {event.owner} bullets",
+                category="combat"
             )
 
     # ===========================================================

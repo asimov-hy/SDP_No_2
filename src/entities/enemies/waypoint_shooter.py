@@ -110,22 +110,13 @@ class WaypointShooter(BaseEnemy):
     # ===========================================================
     # Update Logic
     # ===========================================================
-    def update(self, dt: float):
-        """Update movement and shooting."""
-        # Update shooting timer
+    def _update_behavior(self, dt: float):
         self.shoot_timer += dt
         if self.shoot_timer >= self.shoot_interval:
             self._shoot()
             self.shoot_timer = 0.0
-
-        # Always waypoint movement
         self._update_waypoint_movement(dt)
-
-        # Rotate sprite to face player
         self._rotate_towards_player()
-
-        # Call base update for position sync and offscreen check
-        super().update(dt)
 
     def _update_waypoint_movement(self, dt: float):
         """Move toward current waypoint, cycle to next when reached."""
