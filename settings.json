@@ -1,0 +1,23 @@
+{
+  "graphics": {
+    "fps_limit": 60,
+    "vsync": true,
+    "fullscreen": false,
+    "resolution": [
+      1280,
+      720
+    ]
+  },
+  "audio": {
+    "master_volume": 100,
+    "music_volume": 80,
+    "sfx_volume": 100,
+    "muted": false,
+    "master_level": 70,
+    "bgm_level": 100,
+    "bfx_level": 70
+  },
+  "controls": {
+    "mouse_sensitivity": 1.0
+  }
+}

@@ -536,3 +536,9 @@ class UIElement:
     @property
     def is_sliding(self) -> bool:
         return self._sliding
+
+    def set_text(self, text: str):
+        """Update text and mark dirty if changed."""
+        if str(self.text) != str(text):
+            self.text = str(text)
+            self.mark_dirty()
