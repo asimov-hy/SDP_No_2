@@ -26,22 +26,18 @@ import pygame
 
 # Core - Debug & Settings
 from src.core.debug.debug_logger import DebugLogger
-from src.core.runtime.game_settings import Debug
+from src.core.runtime import Debug, Display, get_session_stats
 
 # Core - Runtime & Services
-from src.core.runtime.session_stats import get_session_stats
 from src.core.services.event_manager import get_events, EnemyDiedEvent, ScreenShakeEvent, SpawnPauseEvent
-from src.core.runtime.game_settings import Display
 
 # Entities
-from src.entities.entity_state import LifecycleState
+from src.entities import LifecycleState
 
 from src.graphics.particles.particle_manager import ParticleEmitter
 
 # Scenes
-from src.scenes.base_scene import BaseScene
-from src.scenes.scene_state import SceneState
-from src.scenes.transitions.transitions import FadeTransition, UIFadeOverlay
+from src.scenes import BaseScene, SceneState, FadeTransition, UIFadeOverlay
 from src.scenes.cutscenes import (
     CutsceneManager, ActionGroup, DelayAction, CallbackAction,
     LockInputAction, MoveEntityAction, TextFlashAction, UISlideInAction,
@@ -362,7 +358,6 @@ class GameScene(BaseScene):
 
     def _position_player_offscreen(self):
         """Move player to starting position off-screen."""
-        from src.core.runtime.game_settings import Display
         self.player.rect.centerx = Display.WIDTH / 2
         self.player.rect.centery = Display.HEIGHT + 50
         self.player.virtual_pos.x = self.player.rect.centerx

@@ -48,12 +48,6 @@ class FireRateEvent(BaseEvent):
 
 
 @dataclass(frozen=True)
-class NukeUsedEvent(BaseEvent):
-    """Dispatched when a bomb is used to clear the screen."""
-    damage: int = 9999
-
-
-@dataclass(frozen=True)
 class ScreenShakeEvent(BaseEvent):
     """Dispatched to trigger screen shake effect."""
     intensity: float = 8.0

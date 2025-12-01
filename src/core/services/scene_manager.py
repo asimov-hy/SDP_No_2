@@ -5,9 +5,9 @@ Simplified scene coordinator - direct class registration.
 """
 
 from src.core.debug.debug_logger import DebugLogger
-from src.scenes.scene_state import SceneState
+from src.scenes import SceneState
 from src.core.services.service_locator import ServiceLocator
-from src.core.runtime.session_stats import get_session_stats
+from src.core.runtime import get_session_stats
 from src.systems.entity_management.entity_registry import EntityRegistry
 from src.systems.level.level_registry import LevelRegistry
 from src.audio.sound_manager import SoundManager

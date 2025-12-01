@@ -13,7 +13,7 @@ Responsibilities:
 import pygame
 import time
 
-from src.core.runtime.game_settings import Display, Physics, Debug
+from src.core.runtime import Display, Physics, Debug
 from src.core.services.input_manager import InputManager
 from src.core.services.display_manager import DisplayManager
 from src.core.services.scene_manager import SceneManager

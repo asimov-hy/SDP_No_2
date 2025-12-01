@@ -6,7 +6,7 @@ Extracts all setup logic from GameScene.__init__ into reusable initializer.
 """
 
 from src.systems.system_initializer import SystemInitializer
-from src.core.runtime.game_settings import Display
+from src.core.runtime import Display
 from src.core.debug.debug_logger import DebugLogger
 
 # Entity and system imports
@@ -17,7 +17,7 @@ from src.systems.collision.collision_manager import CollisionManager
 from src.systems.entity_management.spawn_manager import SpawnManager
 from src.systems.level.level_manager import LevelManager
 from src.systems.entity_management.item_manager import ItemManager
-from src.systems.effects.effects_manager import EffectsManager
+from src.systems.effects import EffectsManager
 
 # game_system_initializer.py lines 22-24
 # Animation modules imported for auto-registration side effects

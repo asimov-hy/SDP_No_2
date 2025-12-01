@@ -11,7 +11,7 @@ Responsibilities
 """
 
 import pygame
-from src.core.runtime.game_settings import Display
+from src.core.runtime import Display
 from src.entities.player.player_state import PlayerEffectState
 
 VELOCITY_SMOOTHING_RATE = 8.0

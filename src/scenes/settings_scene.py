@@ -4,8 +4,7 @@ settings_scene.py
 Settings/options menu - controls, audio, display.
 """
 
-from src.scenes.base_scene import BaseScene
-from src.scenes.transitions.transitions import FadeTransition
+from src.scenes import BaseScene, FadeTransition
 
 
 class SettingsScene(BaseScene):

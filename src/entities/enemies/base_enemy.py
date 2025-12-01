@@ -12,14 +12,14 @@ Responsibilities
 
 import pygame
 import random
-from src.core.runtime.game_settings import Display, Layers
+from src.core.runtime import Display, Layers
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import LifecycleState, InteractionState
 from src.entities.entity_types import CollisionTags, EntityCategory
 from src.graphics.particles.particle_manager import ParticleEmitter
 from src.systems.entity_management.entity_registry import EntityRegistry
-from src.core.services.event_manager import get_events, EnemyDiedEvent, NukeUsedEvent
+from src.core.services.event_manager import get_events, EnemyDiedEvent
 
 
 class BaseEnemy(BaseEntity):
@@ -27,7 +27,7 @@ class BaseEnemy(BaseEntity):
 
     __slots__ = (
         'speed', 'health', 'max_health', 'exp_value',
-        'velocity', '_last_rot_velocity', 'state', '_nuke_subscribed',
+        'velocity', '_last_rot_velocity', 'state',
         'spawn_time', 'spawn_grace_period'
     )
 
@@ -132,14 +132,6 @@ class BaseEnemy(BaseEntity):
         # Spawn grace period to prevent instant death from bounds
         self.spawn_time = 0.0
         self.spawn_grace_period = 1.0  # 1 second grace period
-
-        self._nuke_subscribed = False
-        self._subscribe_nuke()
-
-    def _subscribe_nuke(self):
-        if not self._nuke_subscribed:
-            get_events().subscribe(NukeUsedEvent, self.on_nuke_used)
-            self._nuke_subscribed = True
 
     # ===========================================================
     # Damage and State Handling
@@ -343,16 +335,9 @@ class BaseEnemy(BaseEntity):
             self.velocity *= self.speed
 
         self.update_rotation()
-        self._subscribe_nuke()
 
     def cleanup(self):
         """Explicitly unsubscribe to prevent zombie processing."""
-        if hasattr(self, '_nuke_subscribed') and self._nuke_subscribed:
-            get_events().unsubscribe(NukeUsedEvent, self.on_nuke_used)
-            self._nuke_subscribed = False
-
-    def on_nuke_used(self, event: NukeUsedEvent):
-        """Nuke event - damage handled by NukePulse effect."""
         pass
 
     def _reload_image_cached(self, image_path, scale):

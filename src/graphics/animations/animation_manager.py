@@ -19,7 +19,7 @@ from src.graphics.animations.animation_data import (
     get_animation_duration,
     get_animation_config
 )
-from src.entities.entity_state import LifecycleState
+from src.entities import LifecycleState
 
 
 class AnimationManager:

@@ -8,7 +8,7 @@ import pygame
 import os
 from typing import Optional, Dict, Any, List, Tuple, Union
 from dataclasses import dataclass
-from src.core.runtime.game_settings import Layers, Fonts
+from src.core.runtime import Layers, Fonts
 
 
 @dataclass

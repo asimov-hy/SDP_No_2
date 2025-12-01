@@ -22,7 +22,7 @@ Usage:
 import pygame
 import random
 import math
-from src.core.runtime.game_settings import Display, Layers
+from src.core.runtime import Display, Layers, Debug
 from src.core.services.config_manager import load_config
 
 
@@ -401,7 +401,6 @@ class ParticleOverlay:
 
     def render(self, draw_manager, layer=Layers.PARTICLES):
         """Render overlay particles."""
-        from src.core.runtime.game_settings import Debug
 
         for p in self.particles:
             sprite = SpriteCache.get_sprite(p.color, p.size, p.glow)

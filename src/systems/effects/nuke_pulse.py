@@ -8,7 +8,7 @@ import math
 import random
 import pygame
 
-from src.core.runtime.game_settings import Display, Layers
+from src.core.runtime import Display, Layers
 from src.core.debug.debug_logger import DebugLogger
 from src.core.services.event_manager import get_events, ScreenShakeEvent, BulletClearEvent, SpawnPauseEvent
 from src.entities.entity_state import InteractionState, LifecycleState
@@ -146,6 +146,13 @@ class NukePulse:
 
             # Pre-calculate explosion times (accelerating curve)
             self._explosion_times = self._generate_explosion_times(len(self._frozen_entities))
+
+            # Start screen shake for entire detonation sequence
+            if self._explosion_times:
+                shake_duration = self._explosion_times[-1]
+                get_events().dispatch(ScreenShakeEvent(intensity=4, duration=shake_duration))
+            else:
+                get_events().dispatch(ScreenShakeEvent(intensity=4, duration=self.detonate_duration))
 
             DebugLogger.action("Nuke detonation starting...", category="effects")
 

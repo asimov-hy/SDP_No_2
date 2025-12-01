@@ -14,7 +14,7 @@ Responsibilities
 import pygame
 import random
 import math
-from src.core.runtime.game_settings import Display, Layers
+from src.core.runtime import Display, Layers
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import LifecycleState
 from src.entities.entity_types import CollisionTags, EntityCategory

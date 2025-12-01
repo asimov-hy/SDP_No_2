@@ -6,8 +6,7 @@ Main menu - title, start game, settings, quit.
 
 import pygame
 from src.core.services.config_manager import load_config
-from src.scenes.base_scene import BaseScene
-from src.scenes.transitions.transitions import FadeTransition
+from src.scenes import BaseScene, FadeTransition
 from src.graphics.particles.particle_manager import ParticleOverlay
 
 
