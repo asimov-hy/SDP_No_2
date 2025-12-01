@@ -22,7 +22,7 @@ from .player_movement import update_movement
 from . import player_ability
 from .player_logic import damage_collision
 from .player_state import PlayerEffectState
-from src.graphics.particles.particle_manager import ParticleEmitter
+from src.graphics.particles import ParticleEmitter
 
 
 # ===========================================================

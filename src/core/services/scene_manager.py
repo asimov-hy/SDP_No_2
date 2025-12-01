@@ -8,8 +8,8 @@ from src.core.debug.debug_logger import DebugLogger
 from src.scenes import SceneState
 from src.core.services.service_locator import ServiceLocator
 from src.core.runtime import get_session_stats
-from src.systems.entity_management.entity_registry import EntityRegistry
-from src.systems.level.level_registry import LevelRegistry
+from src.systems.entity_management import EntityRegistry
+from src.systems.level import LevelRegistry
 from src.audio.sound_manager import SoundManager
 
 # Import scene classes

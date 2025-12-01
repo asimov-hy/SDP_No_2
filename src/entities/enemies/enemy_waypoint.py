@@ -15,7 +15,7 @@ from src.entities.enemies.base_enemy import BaseEnemy
 from src.entities.base_entity import BaseEntity
 from src.entities import EntityCategory
 from src.core.debug.debug_logger import DebugLogger
-from src.systems.entity_management.entity_registry import EntityRegistry
+from src.systems.entity_management import EntityRegistry
 
 
 class EnemyWaypoint(BaseEnemy):

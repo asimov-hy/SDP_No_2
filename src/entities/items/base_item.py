@@ -20,8 +20,8 @@ from src.entities.entity_state import LifecycleState
 from src.entities.entity_types import CollisionTags, EntityCategory
 from src.core.services.event_manager import get_events, ItemCollectedEvent
 from src.entities.player.player_effects import apply_item_effects
-from src.systems.entity_management.entity_registry import EntityRegistry
-from src.graphics.particles.particle_manager import ParticleEmitter
+from src.systems.entity_management import EntityRegistry
+from src.graphics.particles import ParticleEmitter
 
 
 class BaseItem(BaseEntity):

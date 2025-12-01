@@ -8,7 +8,7 @@ import pygame
 from typing import Dict, List, Optional, Tuple
 
 from src.core.runtime import Layers
-from src.ui.core.anchor_resolver import AnchorResolver
+from src.ui.core import AnchorResolver
 from .binding_system import BindingSystem
 from .ui_loader import UILoader
 from .ui_element import UIElement

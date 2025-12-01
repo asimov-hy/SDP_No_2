@@ -14,10 +14,8 @@ import pygame
 import time
 
 from src.core.runtime import Display, Physics, Debug
-from src.core.services.input_manager import InputManager
-from src.core.services.display_manager import DisplayManager
-from src.core.services.scene_manager import SceneManager
-from src.ui.core.ui_manager import UIManager
+from src.core.services import InputManager, DisplayManager, SceneManager
+from src.ui.core import UIManager
 from src.core.debug.debug_logger import DebugLogger
 from src.core.debug.debug_hud import DebugHUD
 from src.graphics.draw_manager import DrawManager

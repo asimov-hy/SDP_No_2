@@ -17,7 +17,7 @@ import random
 from src.core.debug.debug_logger import DebugLogger
 from src.core.services.event_manager import get_events, SpawnPauseEvent
 from src.entities import EntityCategory, LifecycleState
-from src.systems.level.pattern_registry import PatternRegistry
+from src.systems.level import PatternRegistry
 
 
 class WaveScheduler:

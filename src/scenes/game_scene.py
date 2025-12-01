@@ -34,7 +34,7 @@ from src.core.services.event_manager import get_events, EnemyDiedEvent, ScreenSh
 # Entities
 from src.entities import LifecycleState
 
-from src.graphics.particles.particle_manager import ParticleEmitter
+from src.graphics.particles import ParticleEmitter
 
 # Scenes
 from src.scenes import BaseScene, SceneState, FadeTransition, UIFadeOverlay

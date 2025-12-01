@@ -12,7 +12,7 @@ import random
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.bullets.bullet_straight import StraightBullet
 from src.entities.player.player_state import PlayerEffectState
-from src.graphics.particles.particle_manager import ParticleEmitter, Particle, SpriteCache
+from src.graphics.particles import ParticleEmitter, Particle, SpriteCache
 
 # Charge color gradient: blue -> cyan -> yellow -> white
 CHARGE_COLORS = [

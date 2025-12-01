@@ -12,11 +12,9 @@ from src.core.debug.debug_logger import DebugLogger
 # Entity and system imports
 from src.entities.player.player_core import Player
 from src.entities.items.base_item import BaseItem
-from src.systems.entity_management.bullet_manager import BulletManager
+from src.systems.entity_management import BulletManager, SpawnManager, ItemManager
 from src.systems.collision.collision_manager import CollisionManager
-from src.systems.entity_management.spawn_manager import SpawnManager
-from src.systems.level.level_manager import LevelManager
-from src.systems.entity_management.item_manager import ItemManager
+from src.systems.level import LevelManager
 from src.systems.effects import EffectsManager
 
 # game_system_initializer.py lines 22-24
@@ -25,7 +23,7 @@ from src.graphics.animations.entities_animation import player_animation  # noqa:
 from src.graphics.animations.entities_animation import enemy_animation   # noqa: F401
 from src.graphics.animations.animation_effects import common_animation   # noqa: F401
 
-from src.ui.core.ui_manager import UIManager
+from src.ui.core import UIManager
 
 
 class GameSystemInitializer(SystemInitializer):

@@ -13,7 +13,7 @@ from src.entities.entity_types import CollisionTags, EntityCategory
 from src.entities.entity_state import InteractionState, LifecycleState
 from src.core.runtime import Layers
 from src.core.debug.debug_logger import DebugLogger
-from src.graphics.particles.particle_manager import ParticleEmitter
+from src.graphics.particles import ParticleEmitter
 
 
 class Shield(BaseEntity):
