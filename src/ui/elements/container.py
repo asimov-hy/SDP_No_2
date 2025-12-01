@@ -191,7 +191,7 @@ class UIContainer(UIElement):
         if image:
             surf.blit(image, (0, 0))
         elif self.background:
-            surf.fill(self.background)
+            self._fill_color(surf, self.background)
 
         # Border
         if self.border > 0:

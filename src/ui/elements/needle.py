@@ -38,13 +38,16 @@ class UINeedle(UIElement):
         self.bind_max_path = data.get('bind_max')
 
         # Value range settings
-        # min_value: The value at which the needle is at min_angle
-        # max_value: The value at which the needle is at max_angle
-        self.min_value = data.get('min_value', 1)
-        self.max_value = data.get('max_value', 3)
+        self.min_value = data.get('min_value', 0)  # Health typically starts at 0
 
-        # Initial current value
-        self.current_value = data.get('current_value', self.min_value)
+        # Max value: use config default, will be overridden by bind_max if set
+        self.max_value = data.get('max_value', 100)
+
+        # Binding path for current value (e.g., 'player.health')
+        self.bind_path = data.get('bind')
+
+        # Initial current value - will be updated by binding system
+        self.current_value = data.get('current_value', self.max_value)
 
         # Angle settings in degrees
         # Typically negative for left, positive for right (e.g., -60 to 60)

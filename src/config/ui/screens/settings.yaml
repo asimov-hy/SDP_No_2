@@ -1,12 +1,13 @@
 settings:
   type: container
   id: "settings_root"
-  size: [800, 600]
-  parent_anchor: center
-  self_anchor: center
-  background: [20, 20, 30, 240]
+  size: [500, 600]
+  parent_anchor: center_left
+  self_anchor: center_left
+  offset: [50, 0]
+  background: [32, 32, 32, 100]
   border: 2
-  border_color: [100, 100, 120]
+  border_color: [100, 100, 100]
   border_radius: 10
   layer: Layers.UI
 
@@ -15,12 +16,13 @@ settings:
     - type: label
       id: "title"
       text: "SETTINGS"
-      size: [700, 60]
-      parent_anchor: top_center
+      size: [200, 60]
+      parent_anchor: "#settings_root:top_center"
       self_anchor: top_center
-      offset: [0, 30]
-      font_size: 48
-      color: [255, 255, 255]
+      offset: [0, -30]
+      font_size: 32
+      font_color: [255, 255, 255]
+      background: [ 32, 32, 32, 0 ]
       layer: Layers.UI
 
     # Display Section Label
@@ -28,11 +30,11 @@ settings:
       id: "display_title"
       text: "Display"
       size: [660, 40]
-      parent_anchor: "#title:bottom_left"
-      self_anchor: top_left
-      offset: [50, 30]
-      font_size: 32
-      color: [200, 200, 255]
+      parent_anchor: "#settings_root:top_center"
+      self_anchor: top_center
+      offset: [100, 30]
+      font_size: 24
+      color: [200, 200, 200]
       text_align: left
       layer: Layers.UI
 
@@ -45,10 +47,10 @@ settings:
       parent_anchor: "#display_title:bottom_left"
       self_anchor: top_left
       offset: [20, 20]
-      color: [60, 80, 120]
+      color: [96, 96, 96, 100]
       font_size: 24
       border: 2
-      border_color: [100, 120, 160]
+      border_color: [32, 32, 32, 0]
       border_radius: 5
       layer: Layers.UI
 
@@ -57,10 +59,10 @@ settings:
       id: "window_label"
       text: "Window Size:"
       size: [150, 40]
-      parent_anchor: "#fullscreen_button:bottom_left"
+      parent_anchor: "#display_title:bottom_left"
       self_anchor: top_left
-      offset: [0, 20]
-      font_size: 20
+      offset: [0, 100]
+      font_size: 24
       color: [200, 200, 200]
       text_align: left
       layer: Layers.UI
@@ -73,11 +75,11 @@ settings:
       size: [120, 45]
       parent_anchor: "#window_label:bottom_left"
       self_anchor: top_left
-      offset: [0, 10]
-      color: [60, 80, 120]
+      offset: [20, 20]
+      color: [96, 96, 96, 100]
       font_size: 20
       border: 2
-      border_color: [100, 120, 160]
+      border_color: [100, 120, 160, 0]
       border_radius: 5
       layer: Layers.UI
 
@@ -87,13 +89,13 @@ settings:
       text: "1080p"
       action: "window_size_medium"
       size: [120, 45]
-      parent_anchor: "#window_size_small:top_right"
-      self_anchor: top_left
+      parent_anchor: "#window_size_small:right"
+      self_anchor: left
       offset: [15, 0]
-      color: [60, 80, 120]
+      color: [96, 96, 96, 100]
       font_size: 20
       border: 2
-      border_color: [100, 120, 160]
+      border_color: [100, 120, 160, 0]
       border_radius: 5
       layer: Layers.UI
 
@@ -106,24 +108,11 @@ settings:
       parent_anchor: "#window_size_medium:top_right"
       self_anchor: top_left
       offset: [15, 0]
-      color: [60, 80, 120]
+      color: [96, 96, 96, 100]
       font_size: 20
       border: 2
-      border_color: [100, 120, 160]
+      border_color: [100, 120, 160, 0]
       border_radius: 5
-      layer: Layers.UI
-
-    # Window Size Info
-    - type: label
-      id: "window_info"
-      text: "(Changes apply immediately)"
-      size: [300, 30]
-      parent_anchor: "#window_size_large:top_right"
-      self_anchor: top_left
-      offset: [20, 8]
-      font_size: 14
-      color: [150, 150, 150]
-      text_align: left
       layer: Layers.UI
 
     # Audio Section Label
@@ -134,8 +123,8 @@ settings:
       parent_anchor: "#window_size_small:bottom_left"
       self_anchor: top_left
       offset: [-20, 40]
-      font_size: 32
-      color: [200, 200, 255]
+      font_size: 24
+      color: [200, 200, 200]
       text_align: left
       layer: Layers.UI
 
@@ -169,12 +158,12 @@ settings:
       text: "BACK"
       action: "back"
       size: [200, 50]
-      parent_anchor: bottom_center
+      parent_anchor: "#settings_root:bottom_center"
       self_anchor: bottom_center
       offset: [0, -30]
-      color: [80, 100, 140]
+      color: [96, 96, 96, 100]
       font_size: 24
       border: 2
-      border_color: [120, 140, 180]
+      border_color: [120, 140, 180, 0]
       border_radius: 5
       layer: Layers.UI

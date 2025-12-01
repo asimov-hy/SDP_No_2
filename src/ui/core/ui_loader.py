@@ -7,10 +7,10 @@ Loads ui configurations from YAML files and instantiates element trees.
 import yaml
 from pathlib import Path
 from typing import Dict, Any, Optional
-from src.core.runtime.game_settings import Layers
+from src.core.runtime import Layers
 from src.core.debug.debug_logger import DebugLogger
 
-from src.ui.core.ui_element import UIElement
+from src.ui.core import UIElement
 
 # Element type registry
 ELEMENT_REGISTRY = {}

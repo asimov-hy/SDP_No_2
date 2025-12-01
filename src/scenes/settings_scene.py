@@ -4,16 +4,18 @@ settings_scene.py
 Settings/options menu - controls, audio, display.
 """
 
-from src.scenes.base_scene import BaseScene
+from src.scenes import BaseScene, FadeTransition
 
 
 class SettingsScene(BaseScene):
     """Settings menu scene."""
 
+    BACKGROUNDS_PATH = "assets/images/backgrounds/"
+
     BACKGROUND_CONFIG = {
         "layers": [{
-            "image": "assets/images/maps/settings_menu.png",
-            "scroll_speed": [25, -25],
+            "image": BACKGROUNDS_PATH + "settings_menu.png",
+            "scroll_speed": [0, 0],
             "parallax": [0, 0]
         }]
     }
@@ -46,7 +48,7 @@ class SettingsScene(BaseScene):
         """Update settings UI."""
         self._update_background(dt)
 
-        mouse_pos = self.input_manager.get_mouse_pos()
+        mouse_pos = self.input_manager.get_effective_mouse_pos()
         self.ui.update(dt, mouse_pos)
 
     def draw(self, draw_manager):
@@ -64,7 +66,7 @@ class SettingsScene(BaseScene):
             else:
                 # Return to main menu
                 target = self.caller_scene if self.caller_scene else "MainMenu"
-                self.scene_manager.set_scene(target)
+                self.scene_manager.set_scene("MainMenu", transition=FadeTransition(0.3))
 
         elif action == "toggle_fullscreen":
             # Toggle fullscreen via display manager

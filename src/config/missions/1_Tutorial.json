@@ -2,7 +2,7 @@
   "background": {
     "layers": [
       {
-        "image": "assets/images/maps/test_background.png"
+        "image": "test_background.png"
       }
     ]
   },

@@ -7,10 +7,9 @@ Uses data-driven UI system for buttons, direct rendering for metrics.
 
 import pygame
 import time
-from src.core.runtime.game_settings import Display, Layers
+from src.core.runtime import Display, Layers
 from src.core.debug.debug_logger import DebugLogger
-from src.ui.core.ui_loader import UILoader
-from src.ui.core.anchor_resolver import AnchorResolver
+from src.ui.core import UILoader, AnchorResolver
 
 
 class DebugHUD:

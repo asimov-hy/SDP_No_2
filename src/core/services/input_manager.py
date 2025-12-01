@@ -13,7 +13,7 @@ Provides:
 import pygame
 
 from src.core.debug.debug_logger import DebugLogger
-from src.core.runtime.game_settings import Debug, Input
+from src.core.runtime import Debug, Input
 
 
 # ===========================================================
@@ -88,6 +88,11 @@ class InputManager:
         self._init_action_registry()
         self._init_movement_state()
         self._init_controller()
+
+        # Cursor auto-hide system
+        self.mouse_enabled = True
+        self.prev_mouse_pos = pygame.mouse.get_pos()
+        self.mouse_move_threshold = 5
 
         self._validate_bindings()
 
@@ -276,6 +281,9 @@ class InputManager:
         """Poll all input sources. Call once per frame."""
         keys = pygame.key.get_pressed()
 
+        # Auto-hide cursor based on input device
+        self._update_cursor_visibility(keys)
+
         if self.context == "gameplay":
             self._update_gameplay(keys)
         elif self.context == "ui":
@@ -388,6 +396,64 @@ class InputManager:
         if not state["prev_held"]:
             state["pressed"] = True
         state["held"] = True
+
+    def _update_cursor_visibility(self, keys):
+        """Toggle mouse_enabled based on input device used."""
+        current_mouse_pos = pygame.mouse.get_pos()
+        mouse_delta = (
+            abs(current_mouse_pos[0] - self.prev_mouse_pos[0]),
+            abs(current_mouse_pos[1] - self.prev_mouse_pos[1])
+        )
+
+        # Mouse moved significantly -> enable mouse
+        if mouse_delta[0] > self.mouse_move_threshold or mouse_delta[1] > self.mouse_move_threshold:
+            if not self.mouse_enabled:
+                self.mouse_enabled = True
+                pygame.mouse.set_visible(True)
+            self.prev_mouse_pos = current_mouse_pos
+            return
+
+        self.prev_mouse_pos = current_mouse_pos
+
+        # Keyboard used -> disable mouse
+        if any(keys):
+            self._disable_mouse()
+            return
+
+        # Controller used -> disable mouse
+        if self.controller:
+            for btn in range(self.controller.get_numbuttons()):
+                if self.controller.get_button(btn):
+                    self._disable_mouse()
+                    return
+            for axis in range(self.controller.get_numaxes()):
+                if abs(self.controller.get_axis(axis)) > Input.CONTROLLER_DEADZONE:
+                    self._disable_mouse()
+                    return
+            if self.controller.get_numhats() > 0 and self.controller.get_hat(0) != (0, 0):
+                self._disable_mouse()
+                return
+
+    def get_effective_mouse_pos(self):
+        """
+        Get mouse position, or off-screen if mouse is disabled.
+
+        Returns:
+            tuple: Mouse position or (-1, -1) if mouse disabled
+        """
+        if not self.mouse_enabled:
+            return (-1, -1)
+
+        screen_pos = pygame.mouse.get_pos()
+        if self.display_manager:
+            return self.display_manager.screen_to_game_pos(*screen_pos)
+        return screen_pos
+
+    def _disable_mouse(self):
+        """Disable mouse input mode."""
+        if self.mouse_enabled:
+            self.mouse_enabled = False
+            pygame.mouse.set_visible(False)
 
     # ===========================================================
     # System Input (Global Hotkeys)

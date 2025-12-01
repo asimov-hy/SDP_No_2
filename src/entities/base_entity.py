@@ -27,7 +27,7 @@ import pygame
 from typing import Optional
 
 from src.core.debug.debug_logger import DebugLogger
-from src.core.runtime.game_settings import Layers, Bounds, Display
+from src.core.runtime import Layers, Bounds, Display
 from src.entities.entity_state import LifecycleState
 from src.entities.entity_types import EntityCategory, CollisionTags
 
@@ -386,6 +386,43 @@ class BaseEntity:
             collision_tag: Pre-captured tag (prevents race conditions)
         """
         pass
+
+    def apply_knockback(self, direction, strength, additive=False):
+        """
+        Apply knockback velocity to this entity.
+
+        Args:
+            direction: (dx, dy) tuple or Vector2 - direction to push
+            strength: Knockback speed in pixels/second
+            additive: If True, add to existing velocity. If False, replace.
+
+        Returns:
+            True if applied, False if entity has no velocity or invalid direction
+        """
+        if not hasattr(self, 'velocity') or direction is None:
+            return False
+
+        # Normalize direction
+        if isinstance(direction, pygame.Vector2):
+            dx, dy = direction.x, direction.y
+        else:
+            dx, dy = direction[0], direction[1]
+
+        length = (dx * dx + dy * dy) ** 0.5
+        if length < 0.001:
+            return False
+
+        norm_x = dx / length
+        norm_y = dy / length
+
+        if additive:
+            self.velocity.x += norm_x * strength
+            self.velocity.y += norm_y * strength
+        else:
+            self.velocity.x = norm_x * strength
+            self.velocity.y = norm_y * strength
+
+        return True
 
     # ===================================================================
     # Bounds & Visibility

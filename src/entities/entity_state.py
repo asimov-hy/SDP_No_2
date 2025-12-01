@@ -40,3 +40,4 @@ class InteractionState(IntEnum):
     INVINCIBLE = 1
     INTANGIBLE = 2
     CLIP_THROUGH = 3
+    FROZEN = 4
