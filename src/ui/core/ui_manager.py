@@ -356,7 +356,7 @@ class UIManager:
         "bottom_right": (150, 100),
     }
 
-    def slide_in_hud(self, duration: float = 0.4, stagger: float = 0.05):
+    def slide_in_hud(self, duration: float = 0.4, stagger: float = 0.15):
         """
         Slide all HUD elements from their anchor edges.
 
@@ -365,16 +365,25 @@ class UIManager:
             stagger: Delay between each element
         """
         elements = self._get_sorted_hud_elements()
+        animated_count = 0
 
         for i, element in enumerate(elements):
+            # Skip children that slide with parent (only if parent has real offset)
+            if element.slide_with_parent and element.parent:
+                parent_anchor = getattr(element.parent, 'parent_anchor', 'center')
+                parent_offset = self.ANCHOR_TO_OFFSET.get(parent_anchor, (0, 0))
+                if parent_offset != (0, 0):
+                    continue
+
             # Resolve rect if not yet resolved (needed for offset calculation)
             if not element.rect:
                 element.rect = self.anchor_resolver.resolve(element, None)
 
             anchor = getattr(element, 'parent_anchor', 'center')
             offset = self.ANCHOR_TO_OFFSET.get(anchor, (0, -100))
-            delay = i * stagger
+            delay = animated_count * stagger
             element.start_slide_in(offset, duration, delay)
+            animated_count += 1
 
         self._hud_sliding = True
 

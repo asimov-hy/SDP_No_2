@@ -302,7 +302,7 @@ class GameScene(BaseScene):
 
             # Phase 3: UI slides in + System text with effects
             ActionGroup([
-                UISlideInAction(self.ui, duration=0.4, stagger=0.08),
+                UISlideInAction(self.ui, duration=0.4, stagger=0.4),
                 TextScaleFadeAction(
                     "MAIN SYSTEM",
                     duration=0.5,

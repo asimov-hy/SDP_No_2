@@ -513,7 +513,7 @@ class UIElement:
         t = min(self._slide_elapsed / self._slide_duration, 1.0)
 
         # Ease-out
-        t = 1 - (1 - t) ** 2
+        t = 1 - (1 - t) ** 3
 
         self._slide_offset = (
             int(self._slide_start[0] + (self._slide_end[0] - self._slide_start[0]) * t),
