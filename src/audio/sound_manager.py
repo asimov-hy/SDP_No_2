@@ -24,6 +24,12 @@ class SoundManager:
             "button_click": "assets/audio/ui/ButtonClick.wav",
         }
     }
+
+    SOUND_VOLUMES = {
+        "player_shoot": 0.1,
+    }
+    DEFAULT_SOUND_VOLUME = 1.0
+
     def __init__(self):
         global INSTANCE
         INSTANCE = self
@@ -54,9 +60,10 @@ class SoundManager:
             log_volume = (level / 100) ** 2
             return min(max(log_volume, 0.0), 1.0)
 
-    def load_bfx(self, name, route): # load BFX file
+    def load_bfx(self, name, route):  # load BFX file
         bfx_sound = self.bfx[name] = pygame.mixer.Sound(route)
-        volume = self.master_volume * self.bfx_volume
+        sound_mult = self.SOUND_VOLUMES.get(name, self.DEFAULT_SOUND_VOLUME)
+        volume = self.master_volume * self.bfx_volume * sound_mult
         bfx_sound.set_volume(volume)
 
     def load_bgm(self, name, route): # load BGM route
@@ -101,8 +108,9 @@ class SoundManager:
 
     # Update BFX
     def update_bfx(self):
-        volume = self.master_volume * self.bfx_volume
-        for sound in self.bfx.values():
+        for name, sound in self.bfx.items():
+            sound_mult = self.SOUND_VOLUMES.get(name, self.DEFAULT_SOUND_VOLUME)
+            volume = self.master_volume * self.bfx_volume * sound_mult
             sound.set_volume(volume)
 
     # Update BGM
