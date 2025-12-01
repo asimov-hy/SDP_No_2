@@ -27,7 +27,8 @@ class NukePulse:
     """Expanding ring that freezes enemies, then detonates them."""
 
     def __init__(self, center, start_speed=1600, end_speed=200, fade_duration=0.3,
-                 detonate_duration=0.5, explosion_duration=2.0, damage=9999,
+                 detonate_duration=0.5, damage=9999,
+                 max_explosion_delay=0.4, min_explosion_delay=0.03, explosion_decay=0.85,
                  color=(255, 255, 150), ring_width=12,
                  target_category=EntityCategory.ENEMY):
         """
@@ -56,7 +57,9 @@ class NukePulse:
 
         self.fade_duration = fade_duration
         self.detonate_duration = detonate_duration
-        self.explosion_duration = explosion_duration
+        self.max_explosion_delay = max_explosion_delay
+        self.min_explosion_delay = min_explosion_delay
+        self.explosion_decay = explosion_decay
 
         self._explosion_times = []  # Pre-calculated explosion times
 
@@ -185,24 +188,21 @@ class NukePulse:
         ParticleEmitter.burst("damage", entity.rect.center, count=4)
 
     def _generate_explosion_times(self, count):
-        """Generate accelerating explosion times spread over explosion_duration."""
+        """Generate explosion times with exponentially decreasing gaps."""
         if count == 0:
             return []
         if count == 1:
             return [self.detonate_duration]
 
         times = []
+        current_time = self.detonate_duration
+        current_delay = self.max_explosion_delay
+
         for i in range(count):
-            # Progress 0.0 -> 1.0
-            progress = i / (count - 1)
-
-            # Quadratic ease-in: slow start, fast end
-            # t = progress^2 gives acceleration
-            curved_progress = progress * progress
-
-            # Map to time after detonate_duration
-            time = self.detonate_duration + (curved_progress * self.explosion_duration)
-            times.append(time)
+            times.append(current_time)
+            # Exponential decay, but respect minimum
+            current_time += current_delay
+            current_delay = max(current_delay * self.explosion_decay, self.min_explosion_delay)
 
         return times
 
