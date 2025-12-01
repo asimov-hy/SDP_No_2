@@ -1,5 +1,5 @@
 """
-enemy_BOSS.py
+enemy_boss.py
 --------------
 Boss entity composed of a main body with multiple weapon attachments.
 Loads configuration from bosses.json.
@@ -114,16 +114,23 @@ class EnemyBoss(BaseEnemy):
         """Load weapon parts from config."""
         for part_name, part_cfg in parts_config.items():
             image_path = part_cfg.get("image")
-            img = BaseEntity.load_and_scale_image(image_path, scale)
+            part_scale = part_cfg.get("scale", 1.0) * scale  # Relative to body
+            img = BaseEntity.load_and_scale_image(image_path, part_scale)
 
             if img:
                 if part_cfg.get("flip", False):
                     img = pygame.transform.flip(img, True, False)
 
+                rotation = part_cfg.get("rotation", 0)
+                if rotation != 0:
+                    img = pygame.transform.rotate(img, rotation)
+
+                # Scale anchor offset with body
                 anchor = part_cfg.get("anchor", [0, 0])
+                scaled_anchor = [anchor[0] * scale, anchor[1] * scale]
                 part_hp = part_cfg.get("hp", 20)
 
-                self.parts[part_name] = BossPart(part_name, img, anchor, part_hp)
+                self.parts[part_name] = BossPart(part_name, img, scaled_anchor, part_hp)
 
     def _update_behavior(self, dt: float):
         """Boss-specific behavior."""
@@ -138,9 +145,9 @@ class EnemyBoss(BaseEnemy):
         """Handle phase transition."""
         DebugLogger.state(f"Boss entered phase {new_phase}", category="enemy")
 
-    def draw(self, surface: pygame.Surface):
+    def draw(self, draw_manager):
         """Draw boss body and all active parts."""
-        surface.blit(self.image, self.rect)
+        draw_manager.draw_entity(self, layer=self.layer)
 
         for part in self.parts.values():
             if part.active and part.image:
@@ -148,7 +155,8 @@ class EnemyBoss(BaseEnemy):
                     self.rect.centerx + int(part.offset.x) - part.image.get_width() // 2,
                     self.rect.centery + int(part.offset.y) - part.image.get_height() // 2
                 )
-                surface.blit(part.image, part_pos)
+                part_rect = part.image.get_rect(topleft=part_pos)
+                draw_manager.queue_draw(part.image, part_rect, layer=self.layer)
 
     def damage_part(self, part_name: str, amount: int):
         """Damage a specific part."""
@@ -172,3 +180,7 @@ class EnemyBoss(BaseEnemy):
             part.active = True
 
         self.phase = 1
+
+    def is_offscreen(self) -> bool:
+        """Boss never dies from going off-screen."""
+        return False

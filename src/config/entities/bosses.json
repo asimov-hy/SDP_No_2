@@ -2,7 +2,7 @@
   "mech_boss": {
     "body": {
       "image": "assets/images/sprites/boss/boss.png",
-      "scale": 0.5,
+      "scale": 0.75,
       "hp": 500,
       "hitbox": {
         "scale": 0.8,
@@ -12,40 +12,49 @@
     "speed": 50,
     "exp": 1000,
     "phases": [0.75, 0.50, 0.25],
+
     "parts": {
-      "battery": {
-        "image": "assets/images/sprites/boss/boss_battery.png",
-        "anchor": [0, -40],
-        "hp": 30
+      "artillery": {
+        "image": "assets/images/sprites/boss/boss_artillery.png",
+        "anchor": [0, -50],
+        "hp": 30,
+        "scale": 0.4
       },
       "laser": {
         "image": "assets/images/sprites/boss/boss_laser.png",
-        "anchor": [0, 60],
-        "hp": 40
+        "anchor": [0, 200],
+        "hp": 40,
+        "scale": 0.4
       },
       "mg_left": {
         "image": "assets/images/sprites/boss/boss_mg.png",
-        "anchor": [-70, -10],
+        "anchor": [-110, 140],
         "hp": 20,
-        "flip": false
+        "flip": false,
+        "scale": 0.4
       },
       "mg_right": {
         "image": "assets/images/sprites/boss/boss_mg.png",
-        "anchor": [70, -10],
+        "anchor": [110, 140],
         "hp": 20,
-        "flip": true
+        "flip": true,
+        "scale": 0.4
       },
       "missile_left": {
         "image": "assets/images/sprites/boss/boss_missilepod.png",
-        "anchor": [-90, 30],
+        "anchor": [-110, -140],
         "hp": 25,
-        "flip": false
+        "flip": false,
+        "scale": 0.4,
+        "rotation": -15
       },
       "missile_right": {
         "image": "assets/images/sprites/boss/boss_missilepod.png",
-        "anchor": [90, 30],
+        "anchor": [110, -140],
         "hp": 25,
-        "flip": true
+        "flip": true,
+        "scale": 0.4,
+        "rotation": 20
       }
     }
   }
