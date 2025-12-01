@@ -15,9 +15,9 @@ Responsibilities
 import pygame
 import random
 from src.core.debug.debug_logger import DebugLogger
-from src.entities.entity_types import EntityCategory
-from src.systems.level.pattern_registry import PatternRegistry
-from src.entities.entity_state import LifecycleState
+from src.core.services.event_manager import get_events, SpawnPauseEvent
+from src.entities import EntityCategory, LifecycleState
+from src.systems.level import PatternRegistry
 
 
 class WaveScheduler:
@@ -64,6 +64,10 @@ class WaveScheduler:
 
         self._imported_entities = set()
 
+        # Spawn pause state
+        self._spawn_paused = False
+        get_events().subscribe(SpawnPauseEvent, self._on_spawn_pause)
+
     # ===========================================================
     # Wave Loading
     # ===========================================================
@@ -95,6 +99,10 @@ class WaveScheduler:
             dt: Delta time
             stage_timer: Current stage time
         """
+        # Skip all spawning while paused
+        if self._spawn_paused:
+            return
+
         # Process deferred spawns from previous frames
         self._process_deferred_spawns()
 
@@ -599,6 +607,14 @@ class WaveScheduler:
         category = getattr(entity, 'category', None)
         if category == EntityCategory.ENEMY:
             self._remaining_enemies -= 1
+
+    def _on_spawn_pause(self, event: SpawnPauseEvent):
+        """Handle spawn pause/resume events."""
+        self._spawn_paused = event.paused
+        DebugLogger.action(
+            f"Spawning {'paused' if event.paused else 'resumed'}",
+            category="level"
+        )
 
     # ===========================================================
     # Utility

@@ -11,7 +11,7 @@ Responsibilities
 """
 
 from src.core.debug.debug_logger import DebugLogger
-from src.entities.entity_types import EntityCategory
+from src.entities import EntityCategory
 from src.core.services.config_manager import load_config
 
 

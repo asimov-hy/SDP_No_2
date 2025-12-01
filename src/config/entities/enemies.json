@@ -57,7 +57,7 @@
     "bullet_image": "assets/images/sprites/projectiles/plasma_green.png",
     "bullet_scale": 0.1,
     "hitbox": {
-      "scale": 0.9
+      "scale": 0.5
     }
   }
 }

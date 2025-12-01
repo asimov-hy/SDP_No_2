@@ -12,8 +12,8 @@ Responsibilities
 - Handle per-frame update and render passes for all active entities.
 """
 from src.core.debug.debug_logger import DebugLogger
-from src.systems.entity_management.entity_registry import EntityRegistry
-from src.entities.entity_state import LifecycleState
+from src.systems.entity_management import EntityRegistry
+from src.entities import LifecycleState
 from src.entities.base_entity import BaseEntity
 
 
@@ -43,6 +43,7 @@ class SpawnManager:
         self.collision_manager = collision_manager
         self.entities = []  # Active entities
         self._alive_cache = []  # Cache for alive entities (updated per frame)
+        self._effects_manager = None
         self.on_entity_destroyed = None
 
         # Pooling system

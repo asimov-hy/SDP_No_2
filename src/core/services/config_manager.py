@@ -28,6 +28,7 @@ SEARCH_DIRS = [
     os.path.join(DATA_ROOT, "entities"),
     os.path.join(DATA_ROOT, "missions"),
     os.path.join(DATA_ROOT, "animations"),
+    os.path.join(DATA_ROOT, "ui", "screens"),
 ]
 
 _FILE_INDEX = None
@@ -62,6 +63,8 @@ def load_config(filename, default_dict=None, strict=False):
     try:
         if path.endswith(".py"):
             data = _load_py_module(path)
+        elif path.endswith((".yaml", ".yml")):
+            data = _load_yaml(path)
         else:
             data = _load_json(path)
 
@@ -84,7 +87,7 @@ def build_file_index():
             continue
         for root, _, files in os.walk(directory):
             for file in files:
-                if file.endswith((".json", ".py")):
+                if file.endswith((".json", ".py", ".yaml", ".yml")):
                     if file not in _FILE_INDEX:
                         _FILE_INDEX[file] = os.path.join(root, file)
 
@@ -153,6 +156,15 @@ def _load_py_module(path):
     except (ImportError, AttributeError, SyntaxError) as e:
         DebugLogger.warn(f"Failed to load Python config {path}: {e}", category="loading")
         return {}
+
+
+def _load_yaml(path):
+    """Load YAML config file."""
+    import yaml
+    with open(path, "r", encoding="utf-8") as f:
+        data = yaml.safe_load(f)
+    DebugLogger.system(f"Loaded {os.path.basename(path)}", category="loading")
+    return data or {}
 
 
 # ===========================================================

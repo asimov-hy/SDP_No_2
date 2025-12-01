@@ -15,12 +15,10 @@ Responsibilities
 """
 
 import pygame
-from src.core.runtime.game_settings import Debug
+from src.core.runtime import Debug, Display
 from src.core.debug.debug_logger import DebugLogger
-from src.entities.entity_state import LifecycleState
-from src.entities.entity_state import InteractionState
+from src.entities import LifecycleState, InteractionState
 from src.systems.collision.collision_hitbox import CollisionHitbox
-from src.core.runtime.game_settings import Display
 
 
 class CollisionManager:
@@ -44,6 +42,8 @@ class CollisionManager:
             ("player_bullet", "enemy"),
             ("enemy_bullet", "player"),
             # ("player_bullet", "enemy_bullet"),
+            ("shield", "enemy"),
+            ("shield", "enemy_bullet"),
         }
 
         self.hitboxes = {}

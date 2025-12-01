@@ -17,8 +17,7 @@ Responsibilities
 """
 
 from src.core.debug.debug_logger import DebugLogger
-from src.systems.level.stage_loader import StageLoader
-from src.systems.level.wave_scheduler import WaveScheduler
+from src.systems.level import StageLoader, WaveScheduler
 
 
 class LevelManager:

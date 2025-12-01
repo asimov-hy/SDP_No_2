@@ -1,0 +1,75 @@
+level_up_modal:
+  id: "level_up_box"
+  type: container
+  position:
+    parent_anchor: center
+    self_anchor: center
+    size: [600, 200]
+  graphic:
+    background: [40, 40, 50, 100]
+    border: 2
+    border_color: [200, 200, 255, 100]
+    border_radius: 8
+
+  children:
+    - type: label
+      id: "title"
+      text: "LEVEL UP!"
+      size: [150, 50]
+      parent_anchor: "#level_up_box:top_center"
+      self_anchor: top_center
+      offset: [0, 20]
+      font_size: 36
+      text_color: [255, 255, 255]
+
+
+    - type: label
+      text: "Choose an upgrade:"
+      parent_anchor: "#title:bottom_center"
+      self_anchor: top_center
+      offset: [0, -10]
+      size: [170, 50]
+      font_size: 24
+      text_color: [200, 200, 200]
+
+
+    - type: container
+      id: "button_container"
+      parent_anchor: "#level_up_box:center"
+      self_anchor: top_center
+      offset: [0, -10]
+      size: [600, 100]
+
+      children:
+        - type: button
+          id: upgrade_slot_0
+          text: "Slot 0"
+          parent_anchor: "#button_container:center"
+          self_anchor: center
+          offset: [-190, 0]
+          size: [180, 40]
+          color: [192, 192, 192]
+          border_radius: 5
+          action: none
+
+        - type: button
+          id: upgrade_slot_1
+          parent_anchor: "#button_container:center"
+          self_anchor: center
+          offset: [ 0, 0 ]
+          size: [180, 40]
+          color: [192, 192, 192]
+          text: "Slot 1"
+          border_radius: 5
+          action: none
+
+        - type: button
+          id: upgrade_slot_2
+          parent_anchor: "#button_container:center"
+          self_anchor: center
+          offset: [ 190, 0 ]
+          size: [180, 40]
+          color: [192, 192, 192]
+          text: "Slot 2"
+          border_radius: 5
+          action: none

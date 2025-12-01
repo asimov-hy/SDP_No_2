@@ -3,29 +3,40 @@ main_menu:
   size: [1280, 720]
   parent_anchor: center
   layer: Layers.UI
+
+  particles:
+    - preset: "ember"
+      spawn_area: [ 10, 700, 400, 30 ]
+      direction: [ 1, -1 ]
+      speed: [ 30, 75 ]
+      lifetime: [3.0, 13.0]
+      max_particles: 80
+      spawn_rate: 25
+      "spread_growth": 4.0
+
   children:
     # Title
     - type: label
       id: "title"
       # position
-      parent_anchor: top_center
-      self_anchor: top_center
-      offset: [0, 120]
+      parent_anchor: top_left
+      self_anchor: top_left
+      offset: [0, 100]
       layer: Layers.UI
       #graphic
       text: "202X"
-      font_size: 155
-      size: [600, 100]
-      color: [220, 240, 255]
+      font_size: 170
+      size: [600, 150]
+      text_color: [220, 240, 255, 240]
 
     # Subtitle
     - type: label
       id: "subtitle"
-      text: "BULLET HELL"
+      text: "Machine"
       size: [400, 40]
-      parent_anchor: "#title:bottom"
-      self_anchor: top_center
-      offset: [0, 10]
+      parent_anchor: "#title:bottom_right"
+      self_anchor: top_right
+      offset: [20, -20]
       font_size: 24
       color: [150, 180, 220]
       layer: Layers.UI
@@ -33,17 +44,20 @@ main_menu:
     # Start button
     - type: button
       id: "start_button"
-      text: "START GAME"
+      text: "START"
       action: "start_game"
-      size: [320, 65]
-      parent_anchor: "#subtitle:bottom"
+      size: [320, 50]
+      parent_anchor: "#title:bottom_center"
       self_anchor: top_center
-      offset: [0, 80]
-      color: [50, 120, 200]
-      border: 3
-      border_color: [100, 160, 255]
-      border_radius: 10
-      font_size: 30
+      offset: [-50, 80]
+      color:
+        type: gradient
+        direction: horizontal
+        colors: [ [96, 96, 96, 200], [96, 96, 96, 0] ]
+      font_size: 25
+#      text_color: [32, 32, 32]
+      text_align: left
+      text_padding: 20
       layer: Layers.UI
 
     # Settings button
@@ -51,15 +65,17 @@ main_menu:
       id: "settings_button"
       text: "SETTINGS"
       action: "settings"
-      size: [320, 58]
-      parent_anchor: "#start_button:bottom"
+      size: [320, 50]
+      parent_anchor: "#start_button:bottom_center"
       self_anchor: top_center
       offset: [0, 18]
-      color: [70, 90, 140]
-      border: 2
-      border_color: [110, 130, 180]
-      border_radius: 10
-      font_size: 24
+      color:
+        type: gradient
+        direction: horizontal
+        colors: [ [96, 96, 96, 200], [96, 96, 96, 0] ]
+      font_size: 25
+      text_align: left
+      text_padding: 20
       layer: Layers.UI
 
     # Quit button
@@ -67,21 +83,23 @@ main_menu:
       id: "quit_button"
       text: "QUIT"
       action: "quit"
-      size: [320, 58]
-      parent_anchor: "#settings_button:bottom"
+      size: [320, 50]
+      parent_anchor: "#settings_button:bottom_center"
       self_anchor: top_center
       offset: [0, 18]
-      color: [140, 60, 70]
-      border: 2
-      border_color: [190, 100, 110]
-      border_radius: 10
-      font_size: 24
+      color:
+        type: gradient
+        direction: horizontal
+        colors: [ [96, 96, 96, 200], [96, 96, 96, 0] ]
+      font_size: 25
+      text_align: left
+      text_padding: 20
       layer: Layers.UI
 
     # Version label
     - type: label
       id: "version"
-      text: "v0.1.0-alpha"
+      text: "v0.9.0-alpha"
       size: [150, 25]
       parent_anchor: bottom_right
       self_anchor: bottom_right

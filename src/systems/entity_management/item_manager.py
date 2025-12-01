@@ -33,6 +33,7 @@ class ItemType(Enum):
     QUICK_FIRE = "quick_fire"
     NUKE = "nuke"
     SPEED_BOOST = "speed_boost"
+    SHIELD = "shield"
 
 
 # ===========================================================
