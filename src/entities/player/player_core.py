@@ -8,7 +8,9 @@ import pygame
 import random
 import os
 
-from src.core.runtime import Display, Layers, get_session_stats
+from src.core.runtime.game_settings import Display, Layers
+from src.core.runtime.session_stats import get_session_stats
+
 from src.core.debug.debug_logger import DebugLogger
 from src.core.services.config_manager import load_config
 from src.core.services.event_manager import get_events, EnemyDiedEvent
@@ -18,16 +20,15 @@ from src.entities.state_manager import StateManager
 from src.entities.entity_state import LifecycleState, InteractionState
 from src.entities.entity_types import CollisionTags, EntityCategory
 from src.entities.items.shield import Shield
-from .player_movement import update_movement
-from . import player_ability
-from .player_logic import damage_collision
-from .player_state import PlayerEffectState
-from src.graphics.particles import ParticleEmitter
+
+from src.entities.player.player_movement import update_movement
+from src.entities.player import player_ability
+from src.entities.player.player_logic import damage_collision
+from src.entities.player.player_state import PlayerEffectState
+
+from src.graphics.particles.particle_manager import ParticleEmitter
 
 
-# ===========================================================
-# Action Query Wrapper
-# ===========================================================
 class PlayerInput:
     """Wrapper to simplify action queries without explicit imports."""
 

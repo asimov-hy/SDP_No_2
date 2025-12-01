@@ -15,9 +15,12 @@ Responsibilities
 """
 
 import pygame
-from src.core.runtime import Debug, Display
+
+from src.core.runtime.game_settings import Debug, Display
 from src.core.debug.debug_logger import DebugLogger
-from src.entities import LifecycleState, InteractionState
+
+from src.entities.entity_state import LifecycleState, InteractionState
+
 from src.systems.collision.collision_hitbox import CollisionHitbox
 
 

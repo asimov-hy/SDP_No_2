@@ -6,24 +6,40 @@ Extracts all setup logic from GameScene.__init__ into reusable initializer.
 """
 
 from src.systems.system_initializer import SystemInitializer
-from src.core.runtime import Display
+from src.core.runtime.game_settings import Display
 from src.core.debug.debug_logger import DebugLogger
 
 # Entity and system imports
 from src.entities.player.player_core import Player
 from src.entities.items.base_item import BaseItem
-from src.systems.entity_management import BulletManager, SpawnManager, ItemManager
-from src.systems.collision.collision_manager import CollisionManager
-from src.systems.level import LevelManager
-from src.systems.effects import EffectsManager
 
-# game_system_initializer.py lines 22-24
-# Animation modules imported for auto-registration side effects
+from src.systems.entity_management.bullet_manager import BulletManager
+from src.systems.entity_management.spawn_manager import SpawnManager
+from src.systems.entity_management.item_manager import ItemManager
+from src.systems.entity_management.entity_registry import EntityRegistry
+
+from src.systems.collision.collision_manager import CollisionManager
+
+from src.systems.level.level_manager import LevelManager
+from src.systems.level.stage_loader import StageLoader
+from src.systems.level.wave_scheduler import WaveScheduler
+
+from src.systems.effects.effects_manager import EffectsManager
+
+# Animation auto-register imports
 from src.graphics.animations.entities_animation import player_animation  # noqa: F401
 from src.graphics.animations.entities_animation import enemy_animation   # noqa: F401
 from src.graphics.animations.animation_effects import common_animation   # noqa: F401
 
-from src.ui.core import UIManager
+from src.ui.core.ui_manager import UIManager
+
+# Auto-discover all entity classes for registration
+EntityRegistry.discover_entities(
+    "src.entities.enemies",
+    "src.entities.bullets",
+    "src.entities.items",
+    "src.entities.bosses",
+)
 
 
 class GameSystemInitializer(SystemInitializer):
@@ -176,7 +192,7 @@ class GameSystemInitializer(SystemInitializer):
 
     def _init_level_system(self, spawn_manager, player, bullet_manager) -> LevelManager:
         """
-        Initialize level management.
+        Initialize level management with dependency injection.
 
         Args:
             spawn_manager: SpawnManager instance
@@ -186,5 +202,6 @@ class GameSystemInitializer(SystemInitializer):
         Returns:
             LevelManager instance
         """
-        level_manager = LevelManager(spawn_manager, player_ref=player, bullet_manager=bullet_manager)
-        return level_manager
+        stage_loader = StageLoader(spawn_manager)
+        wave_scheduler = WaveScheduler(spawn_manager, player, bullet_manager)
+        return LevelManager(stage_loader, wave_scheduler)

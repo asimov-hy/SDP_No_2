@@ -8,10 +8,17 @@ They handle player-exclusive logic like i-frames, death cleanup, and visuals.
 """
 
 from src.core.debug.debug_logger import DebugLogger
-from src.core.services.event_manager import PlayerHealthEvent, FireRateEvent, get_events, ScreenShakeEvent
-from src.entities import LifecycleState, InteractionState
+from src.core.services.event_manager import (
+    PlayerHealthEvent,
+    FireRateEvent,
+    get_events,
+    ScreenShakeEvent,
+)
+
+from src.entities.entity_state import LifecycleState, InteractionState
 from src.entities.player.player_state import PlayerEffectState
-from src.graphics.particles import ParticleEmitter
+
+from src.graphics.particles.particle_manager import ParticleEmitter
 
 
 # ===========================================================

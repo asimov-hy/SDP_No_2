@@ -11,11 +11,13 @@ Responsibilities
 """
 
 import pygame
-from src.core.runtime import Display
+from src.core.runtime.game_settings import Display
 from src.entities.player.player_state import PlayerEffectState
+
 
 VELOCITY_SMOOTHING_RATE = 8.0
 EDGE_PARALLAX_BOOST = 2.5  # parallax boost Multiplier when clamped
+
 
 def update_movement(player, dt):
     """

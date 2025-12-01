@@ -11,7 +11,7 @@ Responsibilities
 """
 
 from src.core.debug.debug_logger import DebugLogger
-from src.entities import EntityCategory
+from src.entities.entity_types import EntityCategory
 from src.core.services.config_manager import load_config
 
 
@@ -133,6 +133,37 @@ class EntityRegistry:
 
         # All validations passed - register
         cls.register(category, name, entity_class)
+
+    @classmethod
+    def discover_entities(cls, *package_paths: str):
+        """
+        Auto-discover and import all entity modules to trigger registration.
+
+        Args:
+            *package_paths: Package paths to scan (e.g., "src.entities.enemies")
+        """
+        import importlib
+        import pkgutil
+
+        for package_path in package_paths:
+            try:
+                package = importlib.import_module(package_path)
+            except ImportError as e:
+                DebugLogger.warn(f"Cannot import package {package_path}: {e}", category="loading")
+                continue
+
+            for importer, modname, ispkg in pkgutil.walk_packages(
+                    package.__path__, prefix=package_path + "."
+            ):
+                if ispkg:
+                    continue  # Skip sub-packages, let walk handle them
+                try:
+                    importlib.import_module(modname)
+                except Exception as e:
+                    DebugLogger.warn(f"Failed to import {modname}: {e}", category="loading")
+
+        DebugLogger.init_sub(
+            f"Entity discovery complete: {cls.get_registry_stats()['total_entities']} entities registered")
 
     @classmethod
     def load_entity_data(cls, config_path: str):

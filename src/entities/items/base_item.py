@@ -14,14 +14,20 @@ Responsibilities
 import pygame
 import random
 import math
-from src.core.runtime import Display, Layers
+
+from src.core.runtime.game_settings import Display, Layers
+
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import LifecycleState
 from src.entities.entity_types import CollisionTags, EntityCategory
+
 from src.core.services.event_manager import get_events, ItemCollectedEvent
+
 from src.entities.player.player_effects import apply_item_effects
-from src.systems.entity_management import EntityRegistry
-from src.graphics.particles import ParticleEmitter
+
+from src.systems.entity_management.entity_registry import EntityRegistry
+
+from src.graphics.particles.particle_manager import ParticleEmitter
 
 
 class BaseItem(BaseEntity):

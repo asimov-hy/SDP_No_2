@@ -6,8 +6,8 @@ Scene transition effects.
 
 import pygame
 
-from src.core.runtime import Display, Layers
-from src.scenes.transitions import BaseTransition
+from src.core.runtime.game_settings import Display, Layers
+from src.scenes.transitions.base_transition import BaseTransition
 
 
 class InstantTransition(BaseTransition):

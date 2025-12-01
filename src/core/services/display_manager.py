@@ -13,7 +13,7 @@ Responsibilities:
 import pygame
 
 from src.core.debug.debug_logger import DebugLogger
-from src.core.runtime import Display
+from src.core.runtime.game_settings import Display
 
 
 class DisplayManager:

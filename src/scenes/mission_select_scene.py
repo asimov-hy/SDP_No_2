@@ -4,7 +4,8 @@ mission_select_scene.py
 Campaign/mission selection screen.
 """
 
-from src.scenes import BaseScene, FadeTransition
+from src.scenes.base_scene import BaseScene
+from src.scenes.transitions.transitions import FadeTransition
 
 
 class MissionSelectScene(BaseScene):

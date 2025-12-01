@@ -15,20 +15,14 @@ from enum import IntEnum
 from typing import Dict, List, Optional, Any
 
 from src.core.debug.debug_logger import DebugLogger
-from src.entities import InteractionState
+from src.entities.entity_state import InteractionState
 
 
-# ===================================================================
 # Constants
-# ===================================================================
-
 PERMANENT_DURATION = -1
 
 
-# ===================================================================
 # Stat Modifier System
-# ===================================================================
-
 class StackType:
     """How modifiers combine with base stats."""
     ADD = "ADD"

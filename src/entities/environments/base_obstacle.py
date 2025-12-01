@@ -6,7 +6,7 @@ Examples: walls, asteroids, destructible barriers.
 """
 
 from src.entities.base_entity import BaseEntity
-from src.entities import EntityCategory
+from src.entities.entity_types import EntityCategory
 
 
 class BaseObstacle(BaseEntity):

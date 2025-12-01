@@ -11,9 +11,10 @@ Responsibilities
 """
 
 from src.core.debug.debug_logger import DebugLogger
-from src.entities import LifecycleState
+from src.entities.entity_state import LifecycleState
 from src.core.services.event_manager import get_events
-from src.systems.effects import NukePulse
+from src.systems.effects.nuke_pulse import NukePulse
+
 
 EFFECT_HANDLERS = {}
 

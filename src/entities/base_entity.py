@@ -27,7 +27,7 @@ import pygame
 from typing import Optional
 
 from src.core.debug.debug_logger import DebugLogger
-from src.core.runtime import Layers, Bounds, Display
+from src.core.runtime.game_settings import Layers, Bounds, Display
 from src.entities.entity_state import LifecycleState
 from src.entities.entity_types import EntityCategory, CollisionTags
 

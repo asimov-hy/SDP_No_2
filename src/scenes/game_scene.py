@@ -18,30 +18,43 @@ Features:
     - Background parallax integration
 """
 
-# ===========================================================
-# Imports
-# ===========================================================
-
 import pygame
 
 # Core - Debug & Settings
 from src.core.debug.debug_logger import DebugLogger
-from src.core.runtime import Debug, Display, get_session_stats
+from src.core.runtime.game_settings import Debug, Display
+from src.core.runtime.session_stats import get_session_stats
 
 # Core - Runtime & Services
-from src.core.services.event_manager import get_events, EnemyDiedEvent, ScreenShakeEvent, SpawnPauseEvent
+from src.core.services.event_manager import (
+    get_events,
+    EnemyDiedEvent,
+    ScreenShakeEvent,
+    SpawnPauseEvent,
+)
 
 # Entities
-from src.entities import LifecycleState
+from src.entities.entity_state import LifecycleState
 
-from src.graphics.particles import ParticleEmitter
+# Graphics - Particles
+from src.graphics.particles.particle_manager import ParticleEmitter
 
 # Scenes
-from src.scenes import BaseScene, SceneState, FadeTransition, UIFadeOverlay
-from src.scenes.cutscenes import (
-    CutsceneManager, ActionGroup, DelayAction, CallbackAction,
-    LockInputAction, MoveEntityAction, TextFlashAction, UISlideInAction,
-    TextScaleFadeAction, TextBlinkRevealAction
+from src.scenes.base_scene import BaseScene
+from src.scenes.scene_state import SceneState
+from src.scenes.transitions.transitions import FadeTransition, UIFadeOverlay
+
+from src.scenes.cutscenes.cutscene_manager import CutsceneManager
+from src.scenes.cutscenes.cutscene_action import (
+    ActionGroup,
+    DelayAction,
+    CallbackAction,
+    LockInputAction,
+    MoveEntityAction,
+    TextFlashAction,
+    UISlideInAction,
+    TextScaleFadeAction,
+    TextBlinkRevealAction,
 )
 
 # Systems

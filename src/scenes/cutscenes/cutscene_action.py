@@ -9,7 +9,8 @@ from typing import Callable, List, Tuple
 import pygame
 import os
 
-from src.core.runtime import Display, Fonts
+from src.core.runtime.game_settings import Display, Fonts
+
 
 def _render_text_or_separator(text: str, font, color: Tuple[int, int, int], sep_width: int = 350) -> pygame.Surface:
     """Render text or separator line if text is '---'."""
@@ -18,7 +19,6 @@ def _render_text_or_separator(text: str, font, color: Tuple[int, int, int], sep_
         surf.fill(color)
         return surf
     return font.render(text, True, color)
-
 
 
 class CutsceneAction(ABC):

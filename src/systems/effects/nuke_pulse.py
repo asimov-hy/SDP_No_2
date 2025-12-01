@@ -8,12 +8,20 @@ import math
 import random
 import pygame
 
-from src.core.runtime import Display, Layers
+from src.core.runtime.game_settings import Display, Layers
 from src.core.debug.debug_logger import DebugLogger
-from src.core.services.event_manager import get_events, ScreenShakeEvent, BulletClearEvent, SpawnPauseEvent
+
+from src.core.services.event_manager import (
+    get_events,
+    ScreenShakeEvent,
+    BulletClearEvent,
+    SpawnPauseEvent,
+)
+
 from src.entities.entity_state import InteractionState, LifecycleState
 from src.entities.entity_types import EntityCategory
-from src.graphics.particles import ParticleEmitter
+
+from src.graphics.particles.particle_manager import ParticleEmitter
 
 
 class PulseState:

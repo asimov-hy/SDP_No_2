@@ -22,7 +22,8 @@ Usage:
 import pygame
 import random
 import math
-from src.core.runtime import Display, Layers, Debug
+
+from src.core.runtime.game_settings import Display, Layers, Debug
 from src.core.services.config_manager import load_config
 
 

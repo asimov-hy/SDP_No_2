@@ -13,7 +13,7 @@ Provides:
 import pygame
 
 from src.core.debug.debug_logger import DebugLogger
-from src.core.runtime import Debug, Input
+from src.core.runtime.game_settings import Debug, Input
 
 
 # ===========================================================

@@ -12,13 +12,18 @@ Responsibilities
 
 import pygame
 import random
-from src.core.runtime import Display, Layers
+
+from src.core.runtime.game_settings import Display, Layers
 from src.core.debug.debug_logger import DebugLogger
+
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import LifecycleState, InteractionState
 from src.entities.entity_types import CollisionTags, EntityCategory
-from src.graphics.particles import ParticleEmitter
-from src.systems.entity_management import EntityRegistry
+
+from src.graphics.particles.particle_manager import ParticleEmitter
+
+from src.systems.entity_management.entity_registry import EntityRegistry
+
 from src.core.services.event_manager import get_events, EnemyDiedEvent
 
 

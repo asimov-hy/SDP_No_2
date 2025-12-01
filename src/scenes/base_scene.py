@@ -11,10 +11,10 @@ Provides:
 """
 
 from abc import ABC, abstractmethod
-from src.scenes import SceneState
+from src.scenes.scene_state import SceneState
 from src.core.debug.debug_logger import DebugLogger
 from src.graphics.background_manager import BackgroundManager
-from src.core.runtime import Display
+from src.core.runtime.game_settings import Display
 
 
 class BaseScene(ABC):

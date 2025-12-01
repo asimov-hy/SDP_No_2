@@ -1,3 +1,0 @@
-"""
-enemy_BOSS.py
-"""

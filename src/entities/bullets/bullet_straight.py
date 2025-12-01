@@ -11,7 +11,7 @@ Responsibilities
 """
 
 from src.entities.bullets.base_bullet import BaseBullet
-from src.entities import EntityCategory
+from src.entities.entity_types import EntityCategory
 
 
 class StraightBullet(BaseBullet):

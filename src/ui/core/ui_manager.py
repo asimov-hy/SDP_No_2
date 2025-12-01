@@ -7,13 +7,15 @@ Manages ui screens, HUD elements, and rendering with the new system.
 import pygame
 from typing import Dict, List, Optional, Tuple
 
-from src.core.runtime import Layers
-from src.ui.core import AnchorResolver
+from src.core.runtime.game_settings import Layers
+from src.ui.core.anchor_resolver import AnchorResolver
+
 from .binding_system import BindingSystem
 from .ui_loader import UILoader
 from .ui_element import UIElement
+
 from src.audio.sound_manager import get_sound_manager
-from src.scenes import UISlideAnimation
+from src.scenes.transitions.transitions import UISlideAnimation
 
 
 class UIManager:
