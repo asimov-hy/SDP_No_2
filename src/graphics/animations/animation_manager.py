@@ -13,12 +13,18 @@ Responsibilities
 """
 
 from src.core.debug.debug_logger import DebugLogger
-from src.graphics.animations.animation_registry import get_animation, get_animations_for_entity
+
+from src.graphics.animations.animation_registry import (
+    get_animation,
+    get_animations_for_entity,
+)
+
 from src.graphics.animations.animation_data import (
     get_animation_frames,
     get_animation_duration,
-    get_animation_config
+    get_animation_config,
 )
+
 from src.entities.entity_state import LifecycleState
 
 

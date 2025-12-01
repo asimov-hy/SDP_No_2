@@ -18,29 +18,44 @@ Features:
     - Background parallax integration
 """
 
-# ===========================================================
-# Imports
-# ===========================================================
-
 import pygame
 
 # Core - Debug & Settings
 from src.core.debug.debug_logger import DebugLogger
-from src.core.runtime.game_settings import Debug
+from src.core.runtime.game_settings import Debug, Display
+from src.core.runtime.session_stats import get_session_stats
 
 # Core - Runtime & Services
-from src.core.runtime.session_stats import get_session_stats
-from src.core.services.event_manager import get_events, EnemyDiedEvent, ScreenShakeEvent
+from src.core.services.event_manager import (
+    get_events,
+    EnemyDiedEvent,
+    ScreenShakeEvent,
+    SpawnPauseEvent,
+)
 
 # Entities
 from src.entities.entity_state import LifecycleState
 
+# Graphics - Particles
 from src.graphics.particles.particle_manager import ParticleEmitter
 
 # Scenes
 from src.scenes.base_scene import BaseScene
 from src.scenes.scene_state import SceneState
 from src.scenes.transitions.transitions import FadeTransition, UIFadeOverlay
+
+from src.scenes.cutscenes.cutscene_manager import CutsceneManager
+from src.scenes.cutscenes.cutscene_action import (
+    ActionGroup,
+    DelayAction,
+    CallbackAction,
+    LockInputAction,
+    MoveEntityAction,
+    TextFlashAction,
+    UISlideInAction,
+    TextScaleFadeAction,
+    TextBlinkRevealAction,
+)
 
 # Systems
 from src.systems.game_system_initializer import GameSystemInitializer
@@ -127,6 +142,10 @@ class GameScene(BaseScene):
         # Overlay for pause/game over (semi-transparent dark tint)
         self.overlay = UIFadeOverlay(color=(0, 0, 0), max_alpha=150)
 
+        # Cutscene system
+        self.cutscene_manager = CutsceneManager()
+        self._intro_complete = False
+
         # --- Event Subscriptions ---
         self.level_manager.on_level_complete = self._on_level_complete
         get_events().subscribe(EnemyDiedEvent, self._on_enemy_died)
@@ -150,6 +169,8 @@ class GameScene(BaseScene):
         self.spawn_manager = systems['spawn_manager']
         self.bullet_manager = systems['bullet_manager']
         self.level_manager = systems['level_manager']
+        self.effects_manager = systems['effects_manager']
+        self.spawn_manager._effects_manager = self.effects_manager
         self.ui = systems['ui']
 
     def _init_level_up_ui(self):
@@ -206,6 +227,8 @@ class GameScene(BaseScene):
         # UI setup
         self.ui.register_binding('player', self.player)
         self.ui.load_hud("hud/player_hud.yaml")
+        # Hide HUD initially - cutscene will slide it in
+        self._hide_hud_for_intro()
         self.ui.load_screen("game_over", "screens/game_over.yaml")
 
         # Reset all game state
@@ -218,8 +241,18 @@ class GameScene(BaseScene):
         # Subscribe to screen shake events
         get_events().subscribe(ScreenShakeEvent, self._on_screen_shake)
 
-        # Start level
+        # Start level (loads but doesn't spawn yet)
         self._start_level()
+
+        # Play intro cutscene
+        self._play_intro_cutscene()
+
+    def _hide_hud_for_intro(self):
+        """Hide HUD elements off-screen before intro cutscene."""
+        for element in self.ui.hud_elements:
+            anchor = getattr(element, 'parent_anchor', 'center')
+            offset = self.ui.ANCHOR_TO_OFFSET.get(anchor, (0, -100))
+            element._slide_offset = offset
 
     def on_exit(self):
         """
@@ -228,6 +261,7 @@ class GameScene(BaseScene):
         Called before transitioning to another scene.
         """
         ParticleEmitter.clear_all()
+        self.effects_manager.clear()
         self._clear_background()
         self.ui.clear_hud()
         self.ui.hide_screen("game_over")
@@ -243,6 +277,104 @@ class GameScene(BaseScene):
         self.resume_background()
         self.overlay.fade_out(speed=400)
         self.ui.hide_screen("pause", slide_to="top", slide_duration=0.25)
+
+    # ===========================================================
+    # Intro Cutscene
+    # ===========================================================
+
+    def _play_intro_cutscene(self):
+        """Build and play level intro cutscene."""
+
+        # Pause spawning during intro
+        get_events().dispatch(SpawnPauseEvent(paused=True))
+
+        # Player start/end positions
+        center_x = Display.WIDTH / 2
+        start_y = Display.HEIGHT + self.player.rect.height
+        end_y = Display.HEIGHT / 2
+
+        actions = [
+            # Phase 1: Lock input, position player off-screen, pause BG scroll
+            ActionGroup([
+                LockInputAction(self.player, locked=True),
+                CallbackAction(self._position_player_offscreen),
+            ]),
+
+            # Phase 2: Player flies in
+            MoveEntityAction(
+                entity=self.player,
+                start_pos=(center_x, start_y),
+                end_pos=(center_x, end_y),
+                duration=1.0,
+                easing="ease_out"
+            ),
+
+            # Phase 3: UI slides in + System text with effects
+            ActionGroup([
+                UISlideInAction(self.ui, duration=0.4, stagger=0.4),
+                TextScaleFadeAction(
+                    "MAIN SYSTEM",
+                    duration=0.5,
+                    start_scale=1.6,
+                    end_scale=1.0,
+                    font_size=36,
+                    hold_time=1.5,
+                    fade_out=0.2,
+                    y_offset=-40
+                ),
+                TextScaleFadeAction(
+                    "---",
+                    duration=0.5,
+                    start_scale=1.5,
+                    end_scale=1.0,
+                    font_size=36,
+                    hold_time=1.5,
+                    fade_out=0.2,
+                    y_offset=0
+                ),
+                TextScaleFadeAction(
+                    "COMBAT MODE ACTIVE",
+                    duration=0.5,
+                    start_scale=1.6,
+                    end_scale=1.0,
+                    font_size=28,
+                    hold_time=1.5,
+                    fade_out=0.2,
+                    y_offset=40
+                ),
+            ]),
+
+            # Phase 4: Commence mission with blink effect
+            TextBlinkRevealAction(
+                "COMMENCE MISSION",
+                duration=1.2,
+                font_size=48,
+                blink_count=10,
+                hold_time=1.0,
+                fade_out=0.3
+            ),
+
+            # Phase 5: Enable gameplay
+            ActionGroup([
+                LockInputAction(self.player, locked=False),
+                CallbackAction(self._on_intro_complete),
+            ]),
+        ]
+
+        self.cutscene_manager.play(actions)
+
+    def _on_intro_complete(self):
+        """Called when intro cutscene finishes."""
+        self._intro_complete = True
+        # Resume spawning
+        get_events().dispatch(SpawnPauseEvent(paused=False))
+
+    def _position_player_offscreen(self):
+        """Move player to starting position off-screen."""
+        self.player.rect.centerx = Display.WIDTH / 2
+        self.player.rect.centery = Display.HEIGHT + 50
+        self.player.virtual_pos.x = self.player.rect.centerx
+        self.player.virtual_pos.y = self.player.rect.centery
 
     # ===========================================================
     # Level Loading
@@ -361,6 +493,15 @@ class GameScene(BaseScene):
         # --- Always Update ---
         self.overlay.update(dt)
 
+        # --- Cutscene Update ---
+        if self.cutscene_manager.is_playing:
+            self.cutscene_manager.update(dt)
+            # Still update visuals during cutscene
+            self._update_background(dt)
+            self.player.anim_manager.update(dt)
+            self.ui.update(dt, self.input_manager.get_effective_mouse_pos())
+            return
+
         # --- Game Over Delay ---
         # Wait before showing game over screen (lets player see final moments)
         if self._game_over_pending:
@@ -477,6 +618,7 @@ class GameScene(BaseScene):
         self.spawn_manager.update(dt)
         self.bullet_manager.update(dt)
         self.level_manager.update(dt)
+        self.effects_manager.update(dt)
 
         # Collision detection
         self.collision_manager.update()
@@ -501,9 +643,11 @@ class GameScene(BaseScene):
             1. Player
             2. Enemies (via spawn_manager)
             3. Bullets
-            4. Overlay (dark tint for pause/game over)
-            5. UI elements (includes level_up when active)
-            6. Debug overlays (if enabled)
+            4. Effects (pulse, flashes, etc.)
+            5. Particles
+            6. Overlay (dark tint for pause/game over)
+            7. UI elements (includes level_up when active)
+            8. Debug overlays (if enabled)
 
         Args:
             draw_manager: DrawManager for queuing draws
@@ -513,6 +657,9 @@ class GameScene(BaseScene):
         self.spawn_manager.draw()
         self.bullet_manager.draw(draw_manager)
 
+        # Screen effects
+        self.effects_manager.draw(draw_manager)
+
         ParticleEmitter.render_all(draw_manager)
 
         # Overlay (between game and UI)
@@ -520,6 +667,9 @@ class GameScene(BaseScene):
 
         # UI layers (includes level_up screen when active)
         self.ui.draw(draw_manager)
+
+        # Cutscene overlays (text, etc)
+        self.cutscene_manager.draw(draw_manager)
 
         # Debug overlays
         if Debug.HITBOX_VISIBLE:

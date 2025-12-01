@@ -8,9 +8,17 @@ All player animations centralized here for easy tuning.
 
 import pygame
 import math
+
 from src.graphics.animations.animation_effects.death_animation import death_fade
-from src.graphics.animations.animation_effects.common_animation import blink, fade_color, flash_white, shake
+from src.graphics.animations.animation_effects.common_animation import (
+    blink,
+    fade_color,
+    flash_white,
+    shake,
+)
+
 from src.graphics.particles.particle_manager import ParticleEmitter
+
 from src.core.debug.debug_logger import DebugLogger
 from src.graphics.animations.animation_registry import register
 
@@ -109,24 +117,22 @@ def stun_player(entity, t):
 @register("player", "recovery")
 def recovery_player(entity, t):
     """
-    DAMAGED state: Red tint + slow pulse.
-    Called during debuff phase.
+    RECOVERY state: Orange/yellow pulse on player.
+    Shield visuals handled by Shield entity.
     """
     # Cache base image
     if not hasattr(entity, "_base_image") or entity._base_image is None:
         entity._base_image = entity.image.copy()
 
     base = entity._base_image
-    tinted = base.copy()
-
-    # Pulsing orange/yellow tint
     elapsed = entity.anim_context.get("elapsed_time", 0)
+
+    # Player tint: pulsing orange/yellow
+    tinted = base.copy()
     pulse = 0.5 + 0.5 * math.sin(elapsed * 4)
-    orange = int(80 + 40 * pulse)
-    yellow = int(40 + 20 * pulse)
-
+    orange = int(60 + 30 * pulse)
+    yellow = int(30 + 20 * pulse)
     tinted.fill((orange, yellow, 0), special_flags=pygame.BLEND_RGB_ADD)
-
     entity.image = tinted
 
     # Cleanup at end

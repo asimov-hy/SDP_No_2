@@ -13,6 +13,8 @@ Provides:
 from abc import ABC, abstractmethod
 from src.scenes.scene_state import SceneState
 from src.core.debug.debug_logger import DebugLogger
+from src.graphics.background_manager import BackgroundManager
+from src.core.runtime.game_settings import Display
 
 
 class BaseScene(ABC):
@@ -93,8 +95,6 @@ class BaseScene(ABC):
             config: Background configuration dict with 'layers' list
                     Example: {"layers": [{"image": "path.png", "scroll_speed": [0, 30]}]}
         """
-        from src.graphics.background_manager import BackgroundManager
-        from src.core.runtime.game_settings import Display
 
         if not config or "layers" not in config:
             DebugLogger.warn(f"No background config for {self.__class__.__name__}")

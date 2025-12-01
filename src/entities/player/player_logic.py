@@ -8,10 +8,16 @@ They handle player-exclusive logic like i-frames, death cleanup, and visuals.
 """
 
 from src.core.debug.debug_logger import DebugLogger
-from src.core.services.event_manager import PlayerHealthEvent, FireRateEvent, get_events, ScreenShakeEvent
-from src.entities.entity_state import LifecycleState
-from src.entities.entity_state import InteractionState
+from src.core.services.event_manager import (
+    PlayerHealthEvent,
+    FireRateEvent,
+    get_events,
+    ScreenShakeEvent,
+)
+
+from src.entities.entity_state import LifecycleState, InteractionState
 from src.entities.player.player_state import PlayerEffectState
+
 from src.graphics.particles.particle_manager import ParticleEmitter
 
 
@@ -41,20 +47,10 @@ def damage_collision(player, other):
         DebugLogger.trace(f"Invalid damage value {damage}", category="collision")
         return
 
-    # Check RECOVERY state for reduction + extension
-    in_recovery_state = player.state_manager.has_state(PlayerEffectState.RECOVERY)
-
-    if in_recovery_state:
-        recovery_cfg = player.state_manager.get_state_config(PlayerEffectState.RECOVERY)
-
-        # Apply damage reduction
-        reduction = recovery_cfg.get("damage_reduction", 0.0)
-        damage = damage * (1.0 - reduction)
-
-        DebugLogger.trace(
-            f"RECOVERY state: {reduction * 100:.0f}% reduction, +{extend_time}s",
-            category="collision"
-        )
+    # RECOVERY state - shield entity handles collisions, skip damage
+    if player.state_manager.has_state(PlayerEffectState.RECOVERY):
+        DebugLogger.trace("Player in RECOVERY - shield handles collisions", category="collision")
+        return
 
     # Apply damage
     prev_health = player.health
@@ -64,10 +60,9 @@ def damage_collision(player, other):
         category="collision"
     )
 
-    # Accumulate stress (skip if in RECOVERY)
-    if not in_recovery_state:
-        player.stress = min(player.stress_max, player.stress + damage * player.stress_per_damage)
-        player._time_since_damage = 0.0
+    # Accumulate stress (we already returned early if in RECOVERY)
+    player.stress = min(player.stress_max, player.stress + damage * player.stress_per_damage)
+    player._time_since_damage = 0.0
     DebugLogger.trace(f"Stress: {player.stress:.1f}/{player.stress_threshold}", category="collision")
 
     # Calculate knockback direction
@@ -80,7 +75,9 @@ def damage_collision(player, other):
     if getattr(other, "collision_tag", None) == "enemy":
         if player.stress < player.stress_threshold:  # Won't trigger STUN
             collision_kb = player.cfg.get("combat", {}).get("collision_knockback", 200)
-            player.apply_knockback(direction, collision_kb)
+            # Negate direction to push AWAY from enemy (direction points toward enemy for particles)
+            knockback_dir = (-direction[0], -direction[1]) if direction else None
+            player.apply_knockback(knockback_dir, collision_kb)
             player.state_manager.timed_state(PlayerEffectState.KNOCKBACK)
 
     # Spawn particles
@@ -100,11 +97,6 @@ def damage_collision(player, other):
         target_state = "normal"
 
     previous_state = player._current_sprite
-
-    # Already in RECOVERY - just flash, skip stress
-    if in_recovery_state:
-        _apply_recovery_hit(player, previous_state, target_state)
-        return
 
     # Check stress threshold
     if player.stress >= player.stress_threshold:
@@ -138,7 +130,8 @@ def _apply_heavy_damage(player, previous_state, target_state, direction):
     DebugLogger.state(f"HEAVY damage! Entering STUN", category="animation")
 
     # Apply stun knockback (replaces collision knockback with stronger force)
-    player.apply_knockback(direction, knockback)
+    knockback_dir = (-direction[0], -direction[1]) if direction else None
+    player.apply_knockback(knockback_dir, knockback)
 
     # Play STUN animation (short, white flash)
     player.anim_manager.play(

@@ -17,8 +17,6 @@ Responsibilities
 """
 
 from src.core.debug.debug_logger import DebugLogger
-from src.systems.level.stage_loader import StageLoader
-from src.systems.level.wave_scheduler import WaveScheduler
 
 
 class LevelManager:
@@ -28,7 +26,7 @@ class LevelManager:
     Delegates heavy lifting to StageLoader and WaveScheduler.
     """
 
-    def __init__(self, spawn_manager, player_ref=None, bullet_manager=None):
+    def __init__(self, stage_loader, wave_scheduler):
         """
         Initialize level manager and subsystems.
 
@@ -39,15 +37,9 @@ class LevelManager:
         """
         DebugLogger.init_entry("LevelManager Initialized")
 
-        if player_ref is None:
-            DebugLogger.warn(
-                "[LevelManager] No player_ref provided - homing enemies will default to center targeting",
-                category="level"
-            )
-
         # Initialize subsystems
-        self.stage_loader = StageLoader(spawn_manager)
-        self.wave_scheduler = WaveScheduler(spawn_manager, player_ref, bullet_manager)
+        self.stage_loader = stage_loader
+        self.wave_scheduler = wave_scheduler
 
         # Level data storage (for background config, etc.)
         self.current_level_data = {}

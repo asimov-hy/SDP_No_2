@@ -1,0 +1,52 @@
+{
+  "mech_boss": {
+    "body": {
+      "image": "assets/images/sprites/boss/boss.png",
+      "scale": 0.5,
+      "hp": 500,
+      "hitbox": {
+        "scale": 0.8,
+        "shape": "rect"
+      }
+    },
+    "speed": 50,
+    "exp": 1000,
+    "phases": [0.75, 0.50, 0.25],
+    "parts": {
+      "battery": {
+        "image": "assets/images/sprites/boss/boss_battery.png",
+        "anchor": [0, -40],
+        "hp": 30
+      },
+      "laser": {
+        "image": "assets/images/sprites/boss/boss_laser.png",
+        "anchor": [0, 60],
+        "hp": 40
+      },
+      "mg_left": {
+        "image": "assets/images/sprites/boss/boss_mg.png",
+        "anchor": [-70, -10],
+        "hp": 20,
+        "flip": false
+      },
+      "mg_right": {
+        "image": "assets/images/sprites/boss/boss_mg.png",
+        "anchor": [70, -10],
+        "hp": 20,
+        "flip": true
+      },
+      "missile_left": {
+        "image": "assets/images/sprites/boss/boss_missilepod.png",
+        "anchor": [-90, 30],
+        "hp": 25,
+        "flip": false
+      },
+      "missile_right": {
+        "image": "assets/images/sprites/boss/boss_missilepod.png",
+        "anchor": [90, 30],
+        "hp": 25,
+        "flip": true
+      }
+    }
+  }
+}

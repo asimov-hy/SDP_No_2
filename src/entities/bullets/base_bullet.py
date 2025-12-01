@@ -12,12 +12,16 @@ Responsibilities
 """
 
 import pygame
+
 from src.core.runtime import game_settings
 from src.core.runtime.game_settings import Bounds
+
 from src.core.debug.debug_logger import DebugLogger
+
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import LifecycleState, InteractionState
 from src.entities.entity_types import EntityCategory, CollisionTags
+
 from src.systems.entity_management.entity_registry import EntityRegistry
 
 

@@ -14,13 +14,20 @@ Responsibilities
 import pygame
 import random
 import math
+
 from src.core.runtime.game_settings import Display, Layers
+
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import LifecycleState
 from src.entities.entity_types import CollisionTags, EntityCategory
+
 from src.core.services.event_manager import get_events, ItemCollectedEvent
+
 from src.entities.player.player_effects import apply_item_effects
+
 from src.systems.entity_management.entity_registry import EntityRegistry
+
+from src.graphics.particles.particle_manager import ParticleEmitter
 
 
 class BaseItem(BaseEntity):
@@ -169,12 +176,24 @@ class BaseItem(BaseEntity):
 
     def on_collision(self, other, collision_tag=None):
         """Handle collision with player."""
-        # Use passed tag if provided (prevents race conditions), else read current tag
         tag = collision_tag if collision_tag is not None else getattr(other, "collision_tag", "unknown")
 
         if tag == "player":
-            # Apply effects directly to player
-            apply_item_effects(other, self.get_effects())
+            particle_preset = self.item_data.get("particle_preset")
+
+            # Apply effects directly to player (pass particle_preset for duration effects)
+            apply_item_effects(other, self.get_effects(), particle_preset=particle_preset)
+
+            # Spawn pickup particle burst only for instant effects (no duration)
+            has_duration = any(e.get("duration") for e in self.get_effects())
+            if particle_preset and not has_duration:
+                count = self.item_data.get("particle_count", 12)
+                # Sparkle effect: spawn particles at random offsets around player
+                for _ in range(count):
+                    offset_x = random.uniform(-24, 24)
+                    offset_y = random.uniform(-24, 24)
+                    pos = (other.pos.x + offset_x, other.pos.y + offset_y)
+                    ParticleEmitter.burst(particle_preset, pos, count=1)
 
             # Notify observers (achievements, ui, etc can subscribe)
             get_events().dispatch(ItemCollectedEvent(effects=self.get_effects()))

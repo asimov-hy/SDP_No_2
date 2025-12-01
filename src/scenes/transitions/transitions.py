@@ -6,9 +6,7 @@ Scene transition effects.
 
 import pygame
 
-from src.core.runtime.game_settings import Display
-from src.core.runtime.game_settings import Layers
-
+from src.core.runtime.game_settings import Display, Layers
 from src.scenes.transitions.base_transition import BaseTransition
 
 
