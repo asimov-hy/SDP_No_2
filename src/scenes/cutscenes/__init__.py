@@ -8,5 +8,7 @@ from .cutscene_action import (
     MoveEntityAction,
     FadeOverlayAction,
     TextFlashAction,
+    TextScaleFadeAction,
+    TextBlinkRevealAction,
     UISlideInAction,
 )

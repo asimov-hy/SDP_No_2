@@ -44,7 +44,8 @@ from src.scenes.scene_state import SceneState
 from src.scenes.transitions.transitions import FadeTransition, UIFadeOverlay
 from src.scenes.cutscenes import (
     CutsceneManager, ActionGroup, DelayAction, CallbackAction,
-    LockInputAction, MoveEntityAction, TextFlashAction, UISlideInAction
+    LockInputAction, MoveEntityAction, TextFlashAction, UISlideInAction,
+    TextScaleFadeAction, TextBlinkRevealAction
 )
 
 # Systems
@@ -299,26 +300,49 @@ class GameScene(BaseScene):
                 easing="ease_out"
             ),
 
-            # Phase 3: UI slides in
-            UISlideInAction(self.ui, duration=0.4, stagger=0.08),
+            # Phase 3: UI slides in + System text with effects
+            ActionGroup([
+                UISlideInAction(self.ui, duration=0.4, stagger=0.08),
+                TextScaleFadeAction(
+                    "MAIN SYSTEM",
+                    duration=0.5,
+                    start_scale=1.6,
+                    end_scale=1.0,
+                    font_size=36,
+                    hold_time=1.5,
+                    fade_out=0.2,
+                    y_offset=-40
+                ),
+                TextScaleFadeAction(
+                    "---",
+                    duration=0.5,
+                    start_scale=1.5,
+                    end_scale=1.0,
+                    font_size=36,
+                    hold_time=1.5,
+                    fade_out=0.2,
+                    y_offset=0
+                ),
+                TextScaleFadeAction(
+                    "COMBAT MODE ACTIVE",
+                    duration=0.5,
+                    start_scale=1.6,
+                    end_scale=1.0,
+                    font_size=28,
+                    hold_time=1.5,
+                    fade_out=0.2,
+                    y_offset=40
+                ),
+            ]),
 
-            # Phase 4: Mission text
-            # Phase 4: System text
-            TextFlashAction(
-                "MAIN SYSTEM\n─────────────────────────────────\nCOMBAT MODE ACTIVE",
-                duration=2.0,
-                fade_in=0.3,
-                fade_out=0.3,
-                font_size=36
-            ),
-
-            # Phase 5: Commence mission
-            TextFlashAction(
+            # Phase 4: Commence mission with blink effect
+            TextBlinkRevealAction(
                 "COMMENCE MISSION",
-                duration=1.5,
-                fade_in=0.2,
-                fade_out=0.3,
-                font_size=48
+                duration=1.2,
+                font_size=48,
+                blink_count=10,
+                hold_time=1.0,
+                fade_out=0.3
             ),
 
             # Phase 5: Enable gameplay
