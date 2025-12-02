@@ -38,7 +38,8 @@ class BossPart:
         'name', 'image', 'offset', 'health', 'max_health', 'active', 'angle',
         'owner', 'pos', 'rect', 'hitbox', 'collision_tag', 'death_state', 'state',
         '_base_image', '_anim_manager', 'anim_context', 'category',
-        'player_ref', 'base_angle', 'rotation_speed', 'min_angle', 'max_angle'
+        'player_ref', 'base_angle', 'rotation_speed', 'min_angle', 'max_angle',
+        'fire_rate', 'fire_timer', 'bullet_speed', 'bullet_offset', 'bullet_image'
     )
 
     def __init__(self, name: str, image: pygame.Surface, offset: tuple,
@@ -92,6 +93,13 @@ class BossPart:
         self._anim_manager = None
         self.anim_context = {}
 
+        # Shooting properties
+        self.fire_rate = 0.15  # seconds between shots
+        self.fire_timer = 0.0
+        self.bullet_speed = 400
+        self.bullet_offset = (0, 300)  # offset along gun direction
+        self.bullet_image = None  # loaded by owner
+
     @property
     def anim_manager(self):
         """Lazy-load AnimationManager on first access."""
@@ -136,8 +144,45 @@ class BossPart:
 
         # 4. Apply rotation
         final_angle = self.base_angle + self.angle
-        self.image = pygame.transform.rotate(self._base_image, -final_angle)
+        self.image = pygame.transform.rotate(self._base_image, final_angle)
         self.rect = self.image.get_rect(center=(int(self.pos.x), int(self.pos.y)))
+
+        # NEW METHOD TO ADD:
+    def update_shooting(self, dt, bullet_manager):
+        """Fire bullets in the direction the gun is pointing."""
+        if not self.active or not bullet_manager:
+            return
+
+        self.fire_timer += dt
+        if self.fire_timer < self.fire_rate:
+            return
+
+        self.fire_timer = 0.0
+
+        # Calculate firing direction from gun angle
+        # base_angle + self.angle gives the world rotation
+        fire_angle_deg = self.base_angle + self.angle
+        fire_angle_rad = math.radians(fire_angle_deg)
+
+        # Direction vector (down is 180°, so we need to convert)
+        dir_x = math.sin(fire_angle_rad)
+        dir_y = math.cos(fire_angle_rad)
+
+        # Spawn position: gun center + offset along firing direction
+        spawn_x = self.pos.x + dir_x * self.bullet_offset[1]
+        spawn_y = self.pos.y + dir_y * self.bullet_offset[1]
+
+        # Velocity
+        vel_x = dir_x * self.bullet_speed
+        vel_y = dir_y * self.bullet_speed
+
+        bullet_manager.spawn(
+            pos=(spawn_x, spawn_y),
+            vel=(vel_x, vel_y),
+            image=self.bullet_image,
+            owner="enemy",
+            damage=1
+        )
 
     def on_collision(self, other, collision_tag=None):
         """
@@ -208,7 +253,10 @@ class EnemyBoss(BaseEnemy):
     __slots__ = (
         'parts', 'body_image', '_boss_config', 'player_ref',
         'anchor_pos', 'wander_radius', 'noise_time', 'noise_seed',
-        'hover_velocity'
+        'hover_velocity', 'bullet_manager', '_mg_bullet_image',
+        'track_target_x', 'target_follow_rate', 'track_speed_max',
+        'track_speed_multiplier', '_rotation_enabled', 'exp_value',
+        'tilt_angle', 'tilt_max', 'tilt_speed', 'velocity_x'
     )
 
     __registry_category__ = EntityCategory.ENEMY
@@ -249,6 +297,16 @@ class EnemyBoss(BaseEnemy):
         health = body_cfg.get("hp", 500)
         speed = config.get("speed", 50)
 
+        self.track_target_x = x
+        self.target_follow_rate = 3.0
+        self.track_speed_max = 600
+        self.track_speed_multiplier = 4.0
+
+        self.tilt_angle = 0.0  # current tilt (degrees)
+        self.tilt_max = 15.0  # max tilt angle
+        self.tilt_speed = 5.0  # how fast to tilt (lerp rate)
+        self.velocity_x = 0.0  # track horizontal velocity
+
         # Load body image
         body_path = body_cfg.get("image", "assets/images/sprites/boss/boss.png")
         body_img = BaseEntity.load_and_scale_image(body_path, scale)
@@ -282,6 +340,14 @@ class EnemyBoss(BaseEnemy):
         self.noise_time = 0.0
         self.noise_seed = random.randint(0, 10000)
         self.hover_velocity = pygame.Vector2(0, 0)
+
+        # Store bullet manager reference
+        self.bullet_manager = bullet_manager
+
+        # Load MG bullet image
+        self._mg_bullet_image = BaseEntity.load_and_scale_image(
+            "assets/images/sprites/projectiles/tracer.png", 0.5
+        )
 
         # Load weapon parts
         self.parts = {}
@@ -321,8 +387,13 @@ class EnemyBoss(BaseEnemy):
             # Get HP
             part_hp = part_cfg.get("hp", 20)
 
-            # Create part
-            self.parts[part_name] = BossPart(part_name, img, offset, part_hp, owner=self)
+            part = BossPart(part_name, img, offset, part_hp, owner=self)
+
+            # Assign bullet image to MG parts
+            if "mg" in part_name:
+                part.bullet_image = self._mg_bullet_image
+
+            self.parts[part_name] = part
 
         # Sync positions
         for part in self.parts.values():
@@ -341,6 +412,7 @@ class EnemyBoss(BaseEnemy):
 
         # 1. Calculate the drift
         self._update_wander(dt)
+        self._update_tilt(dt)
 
         # 2. Sync Rect to new Position
         self.rect.center = (int(self.pos.x), int(self.pos.y))
@@ -351,27 +423,62 @@ class EnemyBoss(BaseEnemy):
                 part.update_position(self.pos)
                 if hasattr(self, 'player_ref') and self.player_ref:
                     part.rotate_towards_player(self.player_ref, dt)
+                # Fire bullets from MG parts
+                if "mg" in part.name:
+                    part.update_shooting(dt, self.bullet_manager)
 
     def _update_wander(self, dt: float):
-        """Continuous organic hover using velocity."""
         self.noise_time += dt
 
-        # Get noise velocities instead of positions
-        vel_x = self._value_noise(self.noise_time * 1.5) * 20  # pixels/sec
+        if self.player_ref:
+            # 1. Ghost target follows player with delay
+            target_dx = self.player_ref.pos.x - self.track_target_x
+            self.track_target_x += target_dx * self.target_follow_rate * dt
+
+            # 2. Boss chases ghost - speed scales with distance
+            chase_dx = self.track_target_x - self.pos.x
+            distance = abs(chase_dx)
+
+            # Speed increases with distance, capped at max
+            track_speed = min(distance * self.track_speed_multiplier, self.track_speed_max)
+
+            # Move toward ghost
+            if distance > 1:
+                direction = 1 if chase_dx > 0 else -1
+                max_move = track_speed * dt
+                move_amount = min(distance, max_move) * direction
+                self.pos.x += move_amount
+                self.velocity_x = move_amount / dt  # track velocity for tilt
+            else:
+                self.velocity_x = 0.0
+
+            # Y anchor unchanged
+            self.anchor_pos.y = min(max(150, self.player_ref.pos.y - 200), 150)
+            self.anchor_pos.x = self.pos.x
+
+        # --- KEPT: Organic wobble ---
+        vel_x = self._value_noise(self.noise_time * 1.5) * 20
         vel_y = self._value_noise(self.noise_time * 1.5 + 100) * 15
 
-        # Smooth velocity changes
         target_vel = pygame.Vector2(vel_x, vel_y)
         self.hover_velocity += (target_vel - self.hover_velocity) * 0.1
 
-        # Apply velocity
         self.pos += self.hover_velocity * dt
 
-        # Spring back towards anchor if drifting too far
+        # --- KEPT: Spring back to anchor ---
         distance = self.pos.distance_to(self.anchor_pos)
         if distance > self.wander_radius:
             pull = (self.anchor_pos - self.pos).normalize() * (distance - self.wander_radius) * 2
             self.pos += pull * dt
+
+    def _update_tilt(self, dt: float):
+        """Tilt boss based on horizontal velocity."""
+        # Target tilt based on velocity (negative = tilt into movement direction)
+        speed_ratio = self.velocity_x / self.track_speed_max  # -1 to 1
+        target_tilt = -speed_ratio * self.tilt_max  # negative so it leans INTO movement
+
+        # Smooth lerp toward target
+        self.tilt_angle += (target_tilt - self.tilt_angle) * self.tilt_speed * dt
 
     # ===================================================================
     # Noise Generation for Organic Movement
@@ -409,16 +516,31 @@ class EnemyBoss(BaseEnemy):
     def draw(self, draw_manager):
         """Draw boss body and gun parts."""
 
-        draw_manager.draw_entity(self, layer=self.layer)
+        if abs(self.tilt_angle) > 0.5:
+            rotated_img = pygame.transform.rotate(self.body_image, self.tilt_angle)
+            rotated_rect = rotated_img.get_rect(center=self.rect.center)
+            draw_manager.queue_draw(rotated_img, rotated_rect, layer=self.layer)
+        else:
+            draw_manager.draw_entity(self, layer=self.layer)
 
         for part in self.parts.values():
             if part.active and part.image:
+                # Rotate offset by body tilt
+                rad = math.radians(-self.tilt_angle)
+                cos_a, sin_a = math.cos(rad), math.sin(rad)
+
+                rotated_offset_x = part.offset.x * cos_a - part.offset.y * sin_a
+                rotated_offset_y = part.offset.x * sin_a + part.offset.y * cos_a
+
+                # Rotate part image to match body tilt
+                rotated_part_img = pygame.transform.rotate(part.image, self.tilt_angle)
+
                 part_pos = (
-                    self.rect.centerx + int(part.offset.x) - part.image.get_width() // 2,
-                    self.rect.centery + int(part.offset.y) - part.image.get_height() // 2
+                    self.rect.centerx + int(rotated_offset_x) - rotated_part_img.get_width() // 2,
+                    self.rect.centery + int(rotated_offset_y) - rotated_part_img.get_height() // 2
                 )
-                part_rect = part.image.get_rect(topleft=part_pos)
-                draw_manager.queue_draw(part.image, part_rect, layer=self.layer + 1)
+                part_rect = rotated_part_img.get_rect(topleft=part_pos)
+                draw_manager.queue_draw(rotated_part_img, part_rect, layer=self.layer + 1)
 
                 # Debug: Draw pivot point
                 if Debug.HITBOX_VISIBLE:

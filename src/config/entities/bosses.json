@@ -2,7 +2,7 @@
   "boss_juggernaut": {
     "body": {
       "image": "assets/images/sprites/boss/boss.png",
-      "scale": 0.75,
+      "scale": 0.6,
       "hp": 500,
       "hitbox": {
         "scale": 0.8,
