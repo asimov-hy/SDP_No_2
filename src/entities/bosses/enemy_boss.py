@@ -12,6 +12,7 @@ from src.entities.enemies.base_enemy import BaseEnemy
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_types import EntityCategory
 from src.entities.entity_state import LifecycleState, InteractionState
+from src.entities.entity_types import CollisionTags
 
 from src.systems.entity_management.entity_registry import EntityRegistry
 
@@ -32,7 +33,8 @@ class BossPart:
 
     __slots__ = (
         'name', 'image', 'offset', 'health', 'max_health', 'active', 'angle',
-        'owner', 'pos', 'rect', 'hitbox', 'collision_tag', 'death_state', 'state'
+        'owner', 'pos', 'rect', 'hitbox', 'collision_tag', 'death_state', 'state',
+        '_base_image', '_anim_manager', 'anim_context', 'category'
     )
 
     def __init__(self, name: str, image: pygame.Surface, offset: tuple,
@@ -67,6 +69,20 @@ class BossPart:
         self.collision_tag = "boss_part"
         self.death_state = LifecycleState.ALIVE
         self.state = InteractionState.DEFAULT
+        self.category = EntityCategory.ENEMY
+
+        # Animation support (sync with body)
+        self._base_image = image
+        self._anim_manager = None
+        self.anim_context = {}
+
+    @property
+    def anim_manager(self):
+        """Lazy-load AnimationManager on first access."""
+        if self._anim_manager is None:
+            from src.graphics.animations.animation_manager import AnimationManager
+            self._anim_manager = AnimationManager(self)
+        return self._anim_manager
 
     def update_position(self, boss_pos):
         """
@@ -141,7 +157,7 @@ class EnemyBoss(BaseEnemy):
     """
 
     __slots__ = (
-        'parts', 'body_image', 'phase', 'phase_thresholds',
+        'parts', 'body_image',
         'player_ref', 'bullet_manager', '_boss_config', 'body_vulnerable'
     )
 
@@ -210,16 +226,13 @@ class EnemyBoss(BaseEnemy):
         self.parts = {}
         self._load_parts(scale, config.get("parts", {}))
 
-        # Phase system (triggers at HP thresholds)
-        self.phase = 1
-        self.phase_thresholds = config.get("phases", [0.75, 0.50, 0.25])
-
         # External references
         self.player_ref = player_ref
         self.bullet_manager = bullet_manager
 
         # Body protection - immune to bullets until all parts destroyed
-        self.body_vulnerable = False
+        self.body_vulnerable = True
+        self.collision_tag = CollisionTags.ENEMY
 
         DebugLogger.init(
             f"Spawned {boss_type} at ({x}, {y}) | HP={health} | Parts={len(self.parts)}",
@@ -292,6 +305,7 @@ class EnemyBoss(BaseEnemy):
         # All parts destroyed - body now takes bullet damage
         if active_parts == 0:
             self.body_vulnerable = True
+            self.collision_tag = CollisionTags.ENEMY  # Now bullets can hit
             DebugLogger.state("Boss body now vulnerable!", category="enemy")
 
     def get_active_parts(self):
@@ -304,35 +318,38 @@ class EnemyBoss(BaseEnemy):
 
     def _update_behavior(self, dt: float):
         """Boss-specific per-frame logic."""
-        # Sync part positions to body
+        # Sync part positions to body and update animations
         for part in self.parts.values():
             if part.active:
                 part.update_position(self.pos)
+                if part._anim_manager:
+                    part.anim_manager.update(dt)
 
-        # Check phase transitions
-        self._check_phase_transition()
+    def take_damage(self, amount: int, source: str = "unknown"):
+        """Apply damage and sync damage animation to all active parts."""
+        super().take_damage(amount, source)
 
-    def _check_phase_transition(self):
-        """Transition to next phase if HP drops below threshold."""
-        health_pct = self.health / self.max_health
+        # Sync damage animation to active parts
+        if self.death_state == LifecycleState.ALIVE:
+            for part in self.parts.values():
+                if part.active:
+                    part.anim_manager.play("damage", duration=0.15)
 
-        for i, threshold in enumerate(self.phase_thresholds):
-            if health_pct <= threshold and self.phase <= i + 1:
-                self.phase = i + 2
-                self._on_phase_change(self.phase)
-                break
+    def on_death(self, source):
+        """Handle boss death - kill all parts with body."""
+        # Kill all parts
+        for part in self.parts.values():
+            part.active = False
+            part.death_state = LifecycleState.DEAD
+            if part.hitbox:
+                part.hitbox.set_active(False)
 
-    def _on_phase_change(self, new_phase: int):
-        """
-        Handle phase transition.
-        Override in subclasses for phase-specific behavior.
-        """
-        DebugLogger.state(f"Boss entered phase {new_phase}", category="enemy")
+        # Call parent death handling
+        super().on_death(source)
 
     # ===================================================================
     # Collision Handling
     # ===================================================================
-
     def on_collision(self, other, collision_tag=None):
         """
         Handle collision with other entities.
@@ -401,6 +418,5 @@ class EnemyBoss(BaseEnemy):
         for part in self.parts.values():
             part.reset()
 
-        # Reset phase and vulnerability
-        self.phase = 1
-        self.body_vulnerable = False
+        # Reset vulnerability
+        self.body_vulnerable = True

@@ -13,7 +13,7 @@
     "music_volume": 80,
     "sfx_volume": 100,
     "muted": false,
-    "master_level": 70,
+    "master_level": 100,
     "bgm_level": 100,
     "bfx_level": 70
   },

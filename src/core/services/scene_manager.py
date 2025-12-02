@@ -103,6 +103,10 @@ class SceneManager:
             transition: ITransition instance (None = instant)
             **scene_data: Data to pass to on_load() hook
         """
+        # Block new transitions while one is active
+        if self._active_transition:
+            return
+
         if name not in self.scene_classes:
             DebugLogger.warn(f"Unknown scene: '{name}'")
             return
