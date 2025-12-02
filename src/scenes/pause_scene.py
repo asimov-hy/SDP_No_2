@@ -10,12 +10,9 @@ Responsibilities:
 """
 
 import pygame
-import sys
 
 from src.core.debug.debug_logger import DebugLogger
-from src.core.runtime.game_settings import Display
 
-from src.ui.elements.button import UIButton
 
 FONT_PATH = "assets/fonts/arcade.ttf"
 

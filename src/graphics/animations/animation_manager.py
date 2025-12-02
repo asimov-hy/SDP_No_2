@@ -21,7 +21,6 @@ from src.graphics.animations.animation_registry import (
 
 from src.graphics.animations.animation_data import (
     get_animation_frames,
-    get_animation_duration,
     get_animation_config,
 )
 

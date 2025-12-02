@@ -5,7 +5,7 @@ Centralized access to core game services and systems.
 Provides dependency injection for scenes and managers.
 """
 
-from typing import Any, Optional
+from typing import Any
 
 
 # ===========================================================

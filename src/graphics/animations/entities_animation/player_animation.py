@@ -9,17 +9,13 @@ All player animations centralized here for easy tuning.
 import pygame
 import math
 
-from src.graphics.animations.animation_effects.death_animation import death_fade
 from src.graphics.animations.animation_effects.common_animation import (
-    blink,
-    fade_color,
     flash_white,
     shake,
 )
 
 from src.graphics.particles.particle_manager import ParticleEmitter
 
-from src.core.debug.debug_logger import DebugLogger
 from src.graphics.animations.animation_registry import register
 
 

@@ -12,7 +12,7 @@ Responsibilities
 """
 
 from enum import IntEnum
-from typing import Dict, List, Optional, Any
+from typing import Dict, List
 
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.entity_state import InteractionState

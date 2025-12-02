@@ -47,11 +47,9 @@ from src.scenes.transitions.transitions import FadeTransition, UIFadeOverlay
 from src.scenes.cutscenes.cutscene_manager import CutsceneManager
 from src.scenes.cutscenes.cutscene_action import (
     ActionGroup,
-    DelayAction,
     CallbackAction,
     LockInputAction,
     MoveEntityAction,
-    TextFlashAction,
     UISlideInAction,
     TextScaleFadeAction,
     TextBlinkRevealAction,

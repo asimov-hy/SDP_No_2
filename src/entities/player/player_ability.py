@@ -16,7 +16,6 @@ from src.entities.player.player_state import PlayerEffectState
 from src.graphics.particles.particle_manager import (
     ParticleEmitter,
     Particle,
-    SpriteCache,
 )
 
 

@@ -6,7 +6,7 @@ Loads ui configurations from YAML files and instantiates element trees.
 
 import yaml
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 from src.core.runtime.game_settings import Layers
 from src.core.debug.debug_logger import DebugLogger
@@ -97,7 +97,7 @@ class UILoader:
             Instantiated UIElement
         """
         # Handle root-level named configs
-        if len(config) == 1 and not 'type' in config:
+        if len(config) == 1 and 'type' not in config:
             # Root element with name (e.g., "pause_menu: ...")
             root_key = list(config.keys())[0]
             element_config = config[root_key]

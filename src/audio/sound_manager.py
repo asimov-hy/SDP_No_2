@@ -1,6 +1,5 @@
 import pygame
 
-from src.core.debug.debug_logger import DebugLogger
 from src.core.services.settings_manager import get_settings
 
 INSTANCE = None

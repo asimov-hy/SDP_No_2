@@ -11,7 +11,6 @@ from src.core.debug.debug_logger import DebugLogger
 
 # Entity and system imports
 from src.entities.player.player_core import Player
-from src.entities.items.base_item import BaseItem
 
 from src.systems.entity_management.bullet_manager import BulletManager
 from src.systems.entity_management.spawn_manager import SpawnManager

@@ -17,7 +17,6 @@ import os
 
 from src.core.debug.debug_logger import DebugLogger
 
-from src.core.services.config_manager import load_config
 from src.core.services.event_manager import get_events, BulletClearEvent
 
 from src.entities.bullets.bullet_straight import StraightBullet

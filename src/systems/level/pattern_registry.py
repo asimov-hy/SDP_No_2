@@ -18,7 +18,6 @@ PatternRegistry.register("line", pattern_line)
 positions = PatternRegistry.get_positions("line", count=5, width=1280)
 """
 
-import math
 from src.core.debug.debug_logger import DebugLogger
 
 

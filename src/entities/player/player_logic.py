@@ -9,13 +9,11 @@ They handle player-exclusive logic like i-frames, death cleanup, and visuals.
 
 from src.core.debug.debug_logger import DebugLogger
 from src.core.services.event_manager import (
-    PlayerHealthEvent,
-    FireRateEvent,
     get_events,
     ScreenShakeEvent,
 )
 
-from src.entities.entity_state import LifecycleState, InteractionState
+from src.entities.entity_state import LifecycleState
 from src.entities.player.player_state import PlayerEffectState
 
 from src.graphics.particles.particle_manager import ParticleEmitter
@@ -127,7 +125,7 @@ def _apply_heavy_damage(player, previous_state, target_state, direction):
     stun_duration = stun_cfg.get("duration", 0.5)
     knockback = stun_cfg.get("knockback_strength", 400)
 
-    DebugLogger.state(f"HEAVY damage! Entering STUN", category="animation")
+    DebugLogger.state("HEAVY damage! Entering STUN", category="animation")
 
     # Apply stun knockback (replaces collision knockback with stronger force)
     knockback_dir = (-direction[0], -direction[1]) if direction else None
@@ -147,7 +145,7 @@ def _apply_heavy_damage(player, previous_state, target_state, direction):
 
 def _apply_recovery_hit(player, previous_state, target_state):
     """Hit while in RECOVERY state - brief flash only."""
-    DebugLogger.state(f"Hit during RECOVERY state", category="animation")
+    DebugLogger.state("Hit during RECOVERY state", category="animation")
 
     player.anim_manager.play(
         "damage",

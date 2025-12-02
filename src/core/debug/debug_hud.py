@@ -136,7 +136,7 @@ class DebugHUD:
         """Execute button action."""
         if action == "toggle_fullscreen":
             self.display_manager.toggle_fullscreen()
-            DebugLogger.action(f"Fullscreen toggled")
+            DebugLogger.action("Fullscreen toggled")
 
         elif action == "quit":
             DebugLogger.action("Quit requested")

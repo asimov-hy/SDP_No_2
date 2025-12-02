@@ -19,8 +19,6 @@ import os
 from src.core.services.event_manager import get_events, EnemyDiedEvent
 from src.core.services.config_manager import load_config
 from src.core.debug.debug_logger import DebugLogger
-from src.entities.base_entity import BaseEntity
-from src.entities.items.base_item import BaseItem
 
 
 # ===========================================================
@@ -121,7 +119,7 @@ class ItemManager:
         if os.path.exists(fallback_path):
             try:
                 self._fallback_image = pygame.image.load(fallback_path).convert_alpha()
-                DebugLogger.init_sub(f"Loaded fallback image")
+                DebugLogger.init_sub("Loaded fallback image")
             except Exception as e:
                 DebugLogger.warn(f"Failed loading fallback: {e}")
 

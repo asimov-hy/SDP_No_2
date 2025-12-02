@@ -7,10 +7,8 @@ All enemy animations centralized here for easy tuning.
 Enemies share common damage/death patterns but can be customized per type.
 """
 
-from src.graphics.animations.animation_effects.common_animation import blink, fade_out, flash_white
 from src.graphics.animations.animation_effects.damage_animation import damage_flash
 from src.graphics.animations.animation_registry import register
-from src.core.debug.debug_logger import DebugLogger
 from src.graphics.animations.animation_effects.death_animation import death_fade, death_sprite_cycle  # Add death_sprite_cycle
 
 

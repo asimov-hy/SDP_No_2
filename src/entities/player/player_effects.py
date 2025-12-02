@@ -12,7 +12,6 @@ Responsibilities
 
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.entity_state import LifecycleState
-from src.core.services.event_manager import get_events
 from src.systems.effects.nuke_pulse import NukePulse
 
 

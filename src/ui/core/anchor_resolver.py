@@ -5,7 +5,7 @@ Resolves element positions from anchors, offsets, and parent relationships.
 """
 
 import pygame
-from typing import Tuple, Optional, Union, List
+from typing import Tuple, Union, List
 
 
 class AnchorResolver:
