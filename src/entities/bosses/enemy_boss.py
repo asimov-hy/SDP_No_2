@@ -144,7 +144,7 @@ class BossPart:
 
         # 4. Apply rotation
         final_angle = self.base_angle + self.angle
-        self.image = pygame.transform.rotate(self._base_image, final_angle)
+        self.image = pygame.transform.rotate(self._base_image, -final_angle)
         self.rect = self.image.get_rect(center=(int(self.pos.x), int(self.pos.y)))
 
         # NEW METHOD TO ADD:
@@ -473,11 +473,23 @@ class EnemyBoss(BaseEnemy):
 
     def _update_tilt(self, dt: float):
         """Tilt boss based on horizontal velocity."""
-        # Target tilt based on velocity (negative = tilt into movement direction)
         speed_ratio = self.velocity_x / self.track_speed_max  # -1 to 1
-        target_tilt = -speed_ratio * self.tilt_max  # negative so it leans INTO movement
+        abs_ratio = abs(speed_ratio)
 
-        # Smooth lerp toward target
+        # Smooth ramp: no tilt below 0.4, full tilt above 0.8
+        threshold_min = 0.4
+        threshold_max = 0.8
+
+        if abs_ratio < threshold_min:
+            tilt_strength = 0.0
+        elif abs_ratio > threshold_max:
+            tilt_strength = 1.0
+        else:
+            # Smooth interpolation between thresholds
+            tilt_strength = (abs_ratio - threshold_min) / (threshold_max - threshold_min)
+
+        target_tilt = -speed_ratio * self.tilt_max * tilt_strength
+
         self.tilt_angle += (target_tilt - self.tilt_angle) * self.tilt_speed * dt
 
     # ===================================================================
@@ -517,7 +529,7 @@ class EnemyBoss(BaseEnemy):
         """Draw boss body and gun parts."""
 
         if abs(self.tilt_angle) > 0.5:
-            rotated_img = pygame.transform.rotate(self.body_image, self.tilt_angle)
+            rotated_img = pygame.transform.rotate(self.body_image, -self.tilt_angle)
             rotated_rect = rotated_img.get_rect(center=self.rect.center)
             draw_manager.queue_draw(rotated_img, rotated_rect, layer=self.layer)
         else:
@@ -526,7 +538,7 @@ class EnemyBoss(BaseEnemy):
         for part in self.parts.values():
             if part.active and part.image:
                 # Rotate offset by body tilt
-                rad = math.radians(-self.tilt_angle)
+                rad = math.radians(self.tilt_angle)
                 cos_a, sin_a = math.cos(rad), math.sin(rad)
 
                 rotated_offset_x = part.offset.x * cos_a - part.offset.y * sin_a
