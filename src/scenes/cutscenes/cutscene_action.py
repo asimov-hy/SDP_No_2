@@ -12,9 +12,11 @@ import os
 from src.core.runtime.game_settings import Display, Fonts
 
 
-def _render_text_or_separator(text: str, font, color: Tuple[int, int, int], sep_width: int = 350) -> pygame.Surface:
+def _render_text_or_separator(
+    text: str, font, color: Tuple[int, int, int], sep_width: int = 350
+) -> pygame.Surface:
     """Render text or separator line if text is '---'."""
-    if text.strip() == '---':
+    if text.strip() == "---":
         surf = pygame.Surface((sep_width, 2), pygame.SRCALPHA)
         surf.fill(color)
         return surf
@@ -115,9 +117,14 @@ class LockInputAction(CutsceneAction):
 class MoveEntityAction(CutsceneAction):
     """Lerp entity to position."""
 
-    def __init__(self, entity, start_pos: Tuple[float, float],
-                 end_pos: Tuple[float, float], duration: float = 1.0,
-                 easing: str = "ease_out"):
+    def __init__(
+        self,
+        entity,
+        start_pos: Tuple[float, float],
+        end_pos: Tuple[float, float],
+        duration: float = 1.0,
+        easing: str = "ease_out",
+    ):
         super().__init__(duration)
         self.entity = entity
         self.start_pos = pygame.Vector2(start_pos)
@@ -136,7 +143,7 @@ class MoveEntityAction(CutsceneAction):
         if self.easing == "ease_out":
             t = 1 - (1 - t) ** 2
         elif self.easing == "ease_in":
-            t = t ** 2
+            t = t**2
         elif self.easing == "ease_in_out":
             t = t * t * (3 - 2 * t)
 
@@ -171,10 +178,16 @@ class FadeOverlayAction(CutsceneAction):
 class TextFlashAction(CutsceneAction):
     """Display text that fades in/out. Supports multi-line with \\n."""
 
-    def __init__(self, text: str, duration: float = 1.5,
-                 fade_in: float = 0.3, fade_out: float = 0.3,
-                 font_size: int = 48, color: Tuple[int, int, int] = (255, 255, 255),
-                 line_spacing: int = 10):
+    def __init__(
+        self,
+        text: str,
+        duration: float = 1.5,
+        fade_in: float = 0.3,
+        fade_out: float = 0.3,
+        font_size: int = 48,
+        color: Tuple[int, int, int] = (255, 255, 255),
+        line_spacing: int = 10,
+    ):
         super().__init__(duration)
         self.text = text
         self.fade_in = fade_in
@@ -188,7 +201,7 @@ class TextFlashAction(CutsceneAction):
     def on_start(self):
         font_path = os.path.join(Fonts.DIR, Fonts.DEFAULT)
         font = pygame.font.Font(font_path, self.font_size)
-        lines = self.text.split('\n')
+        lines = self.text.split("\n")
 
         # Render each line
         line_surfaces = []
@@ -197,7 +210,9 @@ class TextFlashAction(CutsceneAction):
 
         # Calculate total size
         total_width = max(s.get_width() for s in line_surfaces)
-        total_height = sum(s.get_height() for s in line_surfaces) + self.line_spacing * (len(lines) - 1)
+        total_height = sum(
+            s.get_height() for s in line_surfaces
+        ) + self.line_spacing * (len(lines) - 1)
 
         # Create combined surface
         self._surface = pygame.Surface((total_width, total_height), pygame.SRCALPHA)
@@ -209,7 +224,9 @@ class TextFlashAction(CutsceneAction):
             self._surface.blit(surf, (x, y))
             y += surf.get_height() + self.line_spacing
 
-        self._rect = self._surface.get_rect(center=(Display.WIDTH // 2, Display.HEIGHT // 2))
+        self._rect = self._surface.get_rect(
+            center=(Display.WIDTH // 2, Display.HEIGHT // 2)
+        )
 
     def update(self, dt: float) -> bool:
         self.elapsed += dt
@@ -235,11 +252,18 @@ class TextFlashAction(CutsceneAction):
 class TextScaleFadeAction(CutsceneAction):
     """Text that fades in while scaling down from large to normal."""
 
-    def __init__(self, text: str, duration: float = 1.5,
-                 start_scale: float = 2.0, end_scale: float = 1.0,
-                 font_size: int = 48, color: Tuple[int, int, int] = (255, 255, 255),
-                 hold_time: float = 0.5, fade_out: float = 0.3,
-                 y_offset: int = 0):
+    def __init__(
+        self,
+        text: str,
+        duration: float = 1.5,
+        start_scale: float = 2.0,
+        end_scale: float = 1.0,
+        font_size: int = 48,
+        color: Tuple[int, int, int] = (255, 255, 255),
+        hold_time: float = 0.5,
+        fade_out: float = 0.3,
+        y_offset: int = 0,
+    ):
         super().__init__(duration + hold_time + fade_out)
         self.text = text
         self.scale_duration = duration
@@ -292,17 +316,26 @@ class TextScaleFadeAction(CutsceneAction):
             if w > 0 and h > 0:
                 scaled = pygame.transform.smoothscale(self._base_surface, (w, h))
                 scaled.set_alpha(self._alpha)
-                rect = scaled.get_rect(center=(Display.WIDTH // 2, Display.HEIGHT // 2 + self.y_offset))
+                rect = scaled.get_rect(
+                    center=(Display.WIDTH // 2, Display.HEIGHT // 2 + self.y_offset)
+                )
                 draw_manager.queue_draw(scaled, rect, layer=9000)
 
 
 class TextBlinkRevealAction(CutsceneAction):
     """Text that blinks rapidly then slows down to solid (computer boot style)."""
 
-    def __init__(self, text: str, duration: float = 2.0,
-                 font_size: int = 48, color: Tuple[int, int, int] = (255, 255, 255),
-                 blink_count: int = 12, hold_time: float = 1.0, fade_out: float = 0.3,
-                 y_offset: int = 0):
+    def __init__(
+        self,
+        text: str,
+        duration: float = 2.0,
+        font_size: int = 48,
+        color: Tuple[int, int, int] = (255, 255, 255),
+        blink_count: int = 12,
+        hold_time: float = 1.0,
+        fade_out: float = 0.3,
+        y_offset: int = 0,
+    ):
         super().__init__(duration + hold_time + fade_out)
         self.text = text
         self.blink_duration = duration
@@ -320,7 +353,9 @@ class TextBlinkRevealAction(CutsceneAction):
         font_path = os.path.join(Fonts.DIR, Fonts.DEFAULT)
         font = pygame.font.Font(font_path, self.font_size)
         self._surface = _render_text_or_separator(self.text, font, self.color)
-        self._rect = self._surface.get_rect(center=(Display.WIDTH // 2, Display.HEIGHT // 2 + self.y_offset))
+        self._rect = self._surface.get_rect(
+            center=(Display.WIDTH // 2, Display.HEIGHT // 2 + self.y_offset)
+        )
 
     def update(self, dt: float) -> bool:
         self.elapsed += dt
@@ -330,7 +365,7 @@ class TextBlinkRevealAction(CutsceneAction):
             # Blink phase - frequency decreases over time (starts fast, slows down)
             t = self.elapsed / self.blink_duration
             # Decelerate blink rate
-            freq = 20 * (1 - t ** 1.5) + 2  # starts ~20hz, ends ~2hz
+            freq = 20 * (1 - t**1.5) + 2  # starts ~20hz, ends ~2hz
             self._visible = (self.elapsed * freq) % 1.0 > 0.5
             self._alpha = 255
         elif self.elapsed < self.blink_duration + self.hold_time:
@@ -350,6 +385,7 @@ class TextBlinkRevealAction(CutsceneAction):
             temp = self._surface.copy()
             temp.set_alpha(self._alpha)
             draw_manager.queue_draw(temp, self._rect, layer=9000)
+
 
 class UISlideInAction(CutsceneAction):
     """Slide all HUD elements from their anchor edges."""

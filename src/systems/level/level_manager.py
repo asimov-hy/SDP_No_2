@@ -60,18 +60,20 @@ class LevelManager:
         """
         if not level_path or not isinstance(level_path, str):
             DebugLogger.warn(
-                f"[LevelManager] Invalid level_path: {level_path}",
-                category="level"
+                f"[LevelManager] Invalid level_path: {level_path}", category="level"
             )
             return
 
         # Load and store level data for background/config access
         import json
+
         try:
-            with open(level_path, 'r') as f:
+            with open(level_path, "r") as f:
                 self.current_level_data = json.load(f)
         except Exception as e:
-            DebugLogger.warn(f"Failed to load level data from {level_path}: {e}", category="level")
+            DebugLogger.warn(
+                f"Failed to load level data from {level_path}: {e}", category="level"
+            )
             self.current_level_data = {}
             return
 
@@ -80,8 +82,7 @@ class LevelManager:
 
         if not self.stage_loader.stages:
             DebugLogger.warn(
-                f"[LevelManager] No stages loaded from {level_path}",
-                category="level"
+                f"[LevelManager] No stages loaded from {level_path}", category="level"
             )
             return
 

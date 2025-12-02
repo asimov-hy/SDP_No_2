@@ -66,7 +66,11 @@ class DisplayManager:
         # Create initial window
         self._create_window(silent=True)
 
-        mode = "Fullscreen" if self.is_fullscreen else f"Windowed ({game_width}x{game_height})"
+        mode = (
+            "Fullscreen"
+            if self.is_fullscreen
+            else f"Windowed ({game_width}x{game_height})"
+        )
         DebugLogger.init_sub(f"Display Mode: {mode}", level=1)
 
     # ===========================================================
@@ -98,12 +102,13 @@ class DisplayManager:
         window_w, window_h = Display.WINDOW_SIZES[size_preset]
 
         self.window = pygame.display.set_mode(
-            (window_w, window_h),
-            pygame.DOUBLEBUF | pygame.HWSURFACE
+            (window_w, window_h), pygame.DOUBLEBUF | pygame.HWSURFACE
         )
         self._calculate_scale()
 
-        DebugLogger.state(f"Window size changed to {size_preset}: {window_w}x{window_h}")
+        DebugLogger.state(
+            f"Window size changed to {size_preset}: {window_w}x{window_h}"
+        )
 
     def mark_dirty(self):
         """Force display refresh on next render (for external changes)."""
@@ -131,9 +136,7 @@ class DisplayManager:
 
         # Scale game surface to cached destination
         pygame.transform.scale(
-            self.game_surface,
-            self.scaled_size,
-            dest_surface=self._scaled_surface_cache
+            self.game_surface, self.scaled_size, dest_surface=self._scaled_surface_cache
         )
 
         pygame.display.flip()
@@ -148,8 +151,7 @@ class DisplayManager:
 
         # Cache subsurface to avoid recreation each frame
         cache_rect = pygame.Rect(
-            self.offset_x, self.offset_y,
-            self.scaled_size[0], self.scaled_size[1]
+            self.offset_x, self.offset_y, self.scaled_size[0], self.scaled_size[1]
         )
         self._scaled_surface_cache = self.window.subsurface(cache_rect)
         self._display_dirty = False
@@ -202,18 +204,15 @@ class DisplayManager:
         """
         if fullscreen:
             self.window = pygame.display.set_mode(
-                (0, 0),
-                pygame.FULLSCREEN | pygame.DOUBLEBUF | pygame.HWSURFACE
+                (0, 0), pygame.FULLSCREEN | pygame.DOUBLEBUF | pygame.HWSURFACE
             )
             self.is_fullscreen = True
         else:
             window_w, window_h = Display.WINDOW_SIZES.get(
-                self.window_size_preset,
-                (self.game_width, self.game_height)
+                self.window_size_preset, (self.game_width, self.game_height)
             )
             self.window = pygame.display.set_mode(
-                (window_w, window_h),
-                pygame.DOUBLEBUF | pygame.HWSURFACE
+                (window_w, window_h), pygame.DOUBLEBUF | pygame.HWSURFACE
             )
             self.is_fullscreen = False
 
@@ -259,7 +258,7 @@ class DisplayManager:
 
         DebugLogger.trace(
             f"Scale={self.scale:.3f}, Offset=({self.offset_x},{self.offset_y})",
-            category="display"
+            category="display",
         )
 
     def _create_letterbox_bars(self, window_size: tuple):

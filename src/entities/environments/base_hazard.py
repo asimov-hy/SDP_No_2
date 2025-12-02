@@ -11,6 +11,7 @@ from src.entities.entity_types import EntityCategory
 
 class HazardState:
     """State machine for hazard lifecycle"""
+
     TELEGRAPH = 1  # Warning phase
     ACTIVE = 2  # Dealing damage
     FADEOUT = 3  # Ending
@@ -24,8 +25,11 @@ class BaseHazard(BaseEntity):
     """
 
     __slots__ = (
-        'hazard_state', 'state_timer',
-        'telegraph_time', 'active_time', 'fadeout_time'
+        "hazard_state",
+        "state_timer",
+        "telegraph_time",
+        "active_time",
+        "fadeout_time",
     )
 
     def __init__(self, x, y, telegraph_time=0.5, active_time=2.0, **kwargs):

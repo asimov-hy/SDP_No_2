@@ -31,6 +31,7 @@ from src.core.services.config_manager import load_config
 # Load Presets from JSON
 # ===========================================================
 
+
 def _load_presets():
     """Load particle presets from config, convert lists to tuples."""
     data = load_config("particles.json", default_dict={})
@@ -50,12 +51,14 @@ def _load_presets():
 
     return data
 
+
 PARTICLE_PRESETS = _load_presets()
 
 
 # ===========================================================
 # Pre-rendered Sprite Cache
 # ===========================================================
+
 
 class SpriteCache:
     """Pre-renders particle sprites for fast blitting."""
@@ -101,13 +104,41 @@ class SpriteCache:
 # Single Particle
 # ===========================================================
 
+
 class Particle:
     """Individual particle with position, velocity, and lifetime."""
 
-    __slots__ = ('x', 'y', 'vx', 'vy', 'size', 'max_size', 'color',
-                 'lifetime', 'max_lifetime', 'alpha', 'glow', 'shrink', 'grow', 'fade_delay')
+    __slots__ = (
+        "x",
+        "y",
+        "vx",
+        "vy",
+        "size",
+        "max_size",
+        "color",
+        "lifetime",
+        "max_lifetime",
+        "alpha",
+        "glow",
+        "shrink",
+        "grow",
+        "fade_delay",
+    )
 
-    def __init__(self, x, y, vx, vy, size, color, lifetime, glow=False, shrink=False, grow=False, fade_delay=0.0):
+    def __init__(
+        self,
+        x,
+        y,
+        vx,
+        vy,
+        size,
+        color,
+        lifetime,
+        glow=False,
+        shrink=False,
+        grow=False,
+        fade_delay=0.0,
+    ):
         self.x = x
         self.y = y
         self.vx = vx
@@ -160,6 +191,7 @@ class Particle:
 # Particle Emitter (for entity trails, bursts)
 # ===========================================================
 
+
 class ParticleEmitter:
     """
     Spawns particles from a position.
@@ -196,7 +228,10 @@ class ParticleEmitter:
         preset = self.preset
 
         for _ in range(count):
-            if len(ParticleEmitter._active_particles) >= ParticleEmitter._particle_limit:
+            if (
+                len(ParticleEmitter._active_particles)
+                >= ParticleEmitter._particle_limit
+            ):
                 break
 
             # Random properties from preset
@@ -214,7 +249,11 @@ class ParticleEmitter:
                 angle = random.uniform(0, 360)
             else:
                 # Cone spread
-                base_angle = math.degrees(math.atan2(base_dir[1], base_dir[0])) if base_dir != (0, 0) else -90
+                base_angle = (
+                    math.degrees(math.atan2(base_dir[1], base_dir[0]))
+                    if base_dir != (0, 0)
+                    else -90
+                )
                 angle = base_angle + random.uniform(-spread / 2, spread / 2)
 
             rad = math.radians(angle)
@@ -222,8 +261,8 @@ class ParticleEmitter:
             vy = math.sin(rad) * speed
 
             particle = Particle(
-                x=pos[0] if hasattr(pos, '__getitem__') else pos.x,
-                y=pos[1] if hasattr(pos, '__getitem__') else pos.y,
+                x=pos[0] if hasattr(pos, "__getitem__") else pos.x,
+                y=pos[1] if hasattr(pos, "__getitem__") else pos.y,
                 vx=vx,
                 vy=vy,
                 size=size,
@@ -254,11 +293,9 @@ class ParticleEmitter:
     @classmethod
     def update_all(cls, dt):
         """Update all active particles (call once per frame)."""
-        wobble_map = {id(p): PARTICLE_PRESETS.get("ember", {}).get("wobble", 0)
-                      for p in cls._active_particles}
-
         cls._active_particles = [
-            p for p in cls._active_particles
+            p
+            for p in cls._active_particles
             if p.update(dt, wobble=0)  # Wobble handled per-preset below
         ]
 
@@ -290,14 +327,23 @@ class ParticleEmitter:
 # Particle Overlay (ambient effects: embers, rain)
 # ===========================================================
 
+
 class ParticleOverlay:
     """
     Full-screen ambient particle effect.
     Use for menu backgrounds, weather effects, etc.
     """
 
-    def __init__(self, preset_name, max_particles=150, spawn_rate=30,
-                 spawn_area=None, direction=None, speed=None, lifetime=None):
+    def __init__(
+        self,
+        preset_name,
+        max_particles=150,
+        spawn_rate=30,
+        spawn_area=None,
+        direction=None,
+        speed=None,
+        lifetime=None,
+    ):
         """
         Args:
             preset_name: Key from PARTICLE_PRESETS

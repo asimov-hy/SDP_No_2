@@ -38,7 +38,7 @@ class LevelUp:
         if not path.exists():
             DebugLogger.warn("upgrades.json not found", category="ui")
             return {}
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             return json.load(f)
 
     def show(self):
@@ -53,7 +53,10 @@ class LevelUp:
         self.ui_manager.show_screen("level_up", modal=True)
         self.is_active = True
 
-        DebugLogger.state(f"LevelUp shown with: {[u['id'] for u in self.current_choices]}", category="levelup")
+        DebugLogger.state(
+            f"LevelUp shown with: {[u['id'] for u in self.current_choices]}",
+            category="levelup",
+        )
 
     def _select_random_upgrades(self, count: int):
         """Select random upgrades from pool."""
@@ -69,12 +72,14 @@ class LevelUp:
         self.current_choices = []
         for uid in selected_ids:
             data = self.all_upgrades[uid]
-            self.current_choices.append({
-                "id": uid,
-                "name": data.get("name", uid),
-                "color": tuple(data.get("color", [192, 192, 192])),
-                "effects": data.get("effects", [])
-            })
+            self.current_choices.append(
+                {
+                    "id": uid,
+                    "name": data.get("name", uid),
+                    "color": tuple(data.get("color", [192, 192, 192])),
+                    "effects": data.get("effects", []),
+                }
+            )
 
     def _update_buttons(self):
         """Update button text/color/action for current choices."""
@@ -130,8 +135,10 @@ class LevelUp:
         if effect_type == "ADD_MAX_HEALTH":
             self.player.max_health += effect.get("amount", 1)
         elif effect_type == "MULTIPLY_DAMAGE":
-            if hasattr(self.player, 'damage'):
-                self.player.damage = int(self.player.damage * effect.get("multiplier", 1.0))
+            if hasattr(self.player, "damage"):
+                self.player.damage = int(
+                    self.player.damage * effect.get("multiplier", 1.0)
+                )
         elif effect_type == "MULTIPLY_SPEED":
             self.player.base_speed *= effect.get("multiplier", 1.0)
 

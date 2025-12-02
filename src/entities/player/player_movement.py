@@ -28,8 +28,9 @@ def update_movement(player, dt):
         dt (float): Delta time since the last frame (in seconds).
     """
 
-    if player.state_manager.has_state(PlayerEffectState.STUN) or \
-            player.state_manager.has_state(PlayerEffectState.KNOCKBACK):
+    if player.state_manager.has_state(
+        PlayerEffectState.STUN
+    ) or player.state_manager.has_state(PlayerEffectState.KNOCKBACK):
         move_vec = pygame.Vector2(0, 0)
     else:
         move_vec = player.input.move()
@@ -62,9 +63,9 @@ def update_movement(player, dt):
         # Limit top speed
         vel_len_sq = player.velocity.length_squared()
         max_speed = player.speed * max_speed_mult
-        max_speed_sq = max_speed ** 2
+        max_speed_sq = max_speed**2
         if vel_len_sq > max_speed_sq:
-            scale = max_speed / (vel_len_sq ** 0.5)
+            scale = max_speed / (vel_len_sq**0.5)
             player.velocity *= scale
 
     # -------------------------------------------------------
@@ -73,12 +74,12 @@ def update_movement(player, dt):
     else:
         speed_sq = player.velocity.length_squared()
         if speed_sq > 0:
-            current_speed = speed_sq ** 0.5
+            current_speed = speed_sq**0.5
             new_speed = max(0.0, current_speed - friction_rate * dt)
             if new_speed < 5.0:
                 player.velocity.xy = (0, 0)
             else:
-                player.velocity *= (new_speed / current_speed)
+                player.velocity *= new_speed / current_speed
 
     # -------------------------------------------------------
     # Update position and constrain within screen bounds
@@ -112,12 +113,16 @@ def clamp_to_screen(player):
     old_x, old_y = player.pos.x, player.pos.y
 
     # Clamp position with soft margins
-    player.pos.x = max(half_w + SOFT_MARGIN, min(player.pos.x, screen_w - half_w - SOFT_MARGIN))
-    player.pos.y = max(half_h + SOFT_MARGIN, min(player.pos.y, screen_h - half_h - SOFT_MARGIN))
+    player.pos.x = max(
+        half_w + SOFT_MARGIN, min(player.pos.x, screen_w - half_w - SOFT_MARGIN)
+    )
+    player.pos.y = max(
+        half_h + SOFT_MARGIN, min(player.pos.y, screen_h - half_h - SOFT_MARGIN)
+    )
 
     # Track which edges are clamped (NEW)
-    player.clamped_x = (player.pos.x != old_x)
-    player.clamped_y = (player.pos.y != old_y)
+    player.clamped_x = player.pos.x != old_x
+    player.clamped_y = player.pos.y != old_y
 
     # Stop velocity if clamping occurred
     if player.clamped_x:

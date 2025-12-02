@@ -17,7 +17,6 @@ import os
 
 from src.core.debug.debug_logger import DebugLogger
 
-from src.core.services.config_manager import load_config
 from src.core.services.event_manager import get_events, BulletClearEvent
 
 from src.entities.bullets.bullet_straight import StraightBullet
@@ -34,7 +33,7 @@ class BulletManager:
         self.draw_manager = draw_manager
         self.collision_manager = collision_manager
         self.active = []  # Active bullets currently in flight
-        self.pool = []   # Inactive bullets available for reuse
+        self.pool = []  # Inactive bullets available for reuse
         self._bullet_configs = {}  # {owner: config_dict}
         self._bullet_images = {}  # {owner: pygame.Surface} - cached
 
@@ -50,21 +49,29 @@ class BulletManager:
         """Return a recycled or newly created StraightBullet."""
         if self.pool:
             bullet = self.pool.pop()
-            self._reset_bullet(bullet, pos, vel, image, color, radius, owner, damage, hitbox_scale)
+            self._reset_bullet(
+                bullet, pos, vel, image, color, radius, owner, damage, hitbox_scale
+            )
         else:
             bullet = StraightBullet(
-                pos, vel,
-                image=image, color=color,
-                radius=radius, owner=owner,
-                damage=damage, hitbox_scale=hitbox_scale,
-                draw_manager=self.draw_manager
+                pos,
+                vel,
+                image=image,
+                color=color,
+                radius=radius,
+                owner=owner,
+                damage=damage,
+                hitbox_scale=hitbox_scale,
+                draw_manager=self.draw_manager,
             )
 
         bullet.collision_tag = f"{owner}_bullet"
         self._register_hitbox(bullet)
         return bullet
 
-    def _reset_bullet(self, b, pos, vel, image, color, radius, owner, damage, hitbox_scale):
+    def _reset_bullet(
+        self, b, pos, vel, image, color, radius, owner, damage, hitbox_scale
+    ):
         """Reset an existing bullet from the pool."""
         b.pos.update(pos)
         b.vel.update(vel)
@@ -78,7 +85,7 @@ class BulletManager:
             b._rotation_enabled = True  # Enable rotation for image bullets
 
             # Clear rotation cache to force regeneration
-            if hasattr(b, '_rotation_cache'):
+            if hasattr(b, "_rotation_cache"):
                 b._rotation_cache.clear()
                 b._cached_rotation_index = -1
         else:
@@ -98,8 +105,17 @@ class BulletManager:
     # ===========================================================
     # Pool Prewarming
     # ===========================================================
-    def prewarm_pool(self, owner="player", count=50, bullet_class=StraightBullet,
-                     image=None, color=None, radius=None, damage=None, hitbox_scale=0.9):
+    def prewarm_pool(
+        self,
+        owner="player",
+        count=50,
+        bullet_class=StraightBullet,
+        image=None,
+        color=None,
+        radius=None,
+        damage=None,
+        hitbox_scale=0.9,
+    ):
         """
         Pre-generate a number of inactive bullets and store them in the pool.
         This reduces runtime allocation spikes during gameplay.
@@ -127,27 +143,44 @@ class BulletManager:
 
         for _ in range(count):
             bullet = bullet_class(
-                (0, 0), (0, 0),
-                image=image, color=color,
-                radius=radius, owner=owner,
-                damage=damage, hitbox_scale=hitbox_scale,
-                draw_manager=self.draw_manager
+                (0, 0),
+                (0, 0),
+                image=image,
+                color=color,
+                radius=radius,
+                owner=owner,
+                damage=damage,
+                hitbox_scale=hitbox_scale,
+                draw_manager=self.draw_manager,
             )
             bullet.death_state = LifecycleState.DEAD
             bullet.collision_tag = f"{owner}_bullet"
             self.pool.append(bullet)
 
-        DebugLogger.state(f"Prewarmed {count} bullets for [{owner}] pool", category="combat")
+        DebugLogger.state(
+            f"Prewarmed {count} bullets for [{owner}] pool", category="combat"
+        )
 
     def link_collision_manager(self, cm):
         self.collision_manager = cm
-        DebugLogger.system("CollisionManager linked to BulletManager", category="combat")
+        DebugLogger.system(
+            "CollisionManager linked to BulletManager", category="combat"
+        )
 
     # ===========================================================
     # Spawning
     # ===========================================================
-    def spawn(self, pos, vel, image=None, color=None,
-              radius=None, owner="player", damage=None, hitbox_scale=0.9):
+    def spawn(
+        self,
+        pos,
+        vel,
+        image=None,
+        color=None,
+        radius=None,
+        owner="player",
+        damage=None,
+        hitbox_scale=0.9,
+    ):
         """
         Create or reuse a StraightBullet instance (default bullet type).
 
@@ -173,13 +206,25 @@ class BulletManager:
         if damage is None:
             damage = config.get("damage", 1)
 
-        bullet = self._get_bullet(pos, vel, image, color, radius, owner, damage, hitbox_scale)
+        bullet = self._get_bullet(
+            pos, vel, image, color, radius, owner, damage, hitbox_scale
+        )
         self.active.append(bullet)
 
         # DebugLogger.trace(f"[BulletSpawn] {bullet.collision_tag} at {pos} → Vel={vel}")
 
-    def spawn_custom(self, bullet_class, pos, vel, image=None, color=None,
-                     radius=None, owner="enemy", damage=None, hitbox_scale=0.9):
+    def spawn_custom(
+        self,
+        bullet_class,
+        pos,
+        vel,
+        image=None,
+        color=None,
+        radius=None,
+        owner="enemy",
+        damage=None,
+        hitbox_scale=0.9,
+    ):
         """
         Create or reuse a bullet of a specified class (e.g., ZigzagBullet, SpiralBullet).
         Falls back to StraightBullet on failure.
@@ -197,23 +242,31 @@ class BulletManager:
 
         try:
             bullet = bullet_class(
-                pos, vel,
-                image=image, color=color,
-                radius=radius, owner=owner,
-                damage=damage, hitbox_scale=hitbox_scale,
-                draw_manager=self.draw_manager
+                pos,
+                vel,
+                image=image,
+                color=color,
+                radius=radius,
+                owner=owner,
+                damage=damage,
+                hitbox_scale=hitbox_scale,
+                draw_manager=self.draw_manager,
             )
         except Exception as e:
             DebugLogger.warn(
                 f"[BulletManager] Failed to spawn {bullet_class.__name__}: {e} → Using StraightBullet",
-                category="combat"
+                category="combat",
             )
             bullet = StraightBullet(
-                pos, vel,
-                image=image, color=color,
-                radius=radius, owner=owner,
-                damage=damage, hitbox_scale=hitbox_scale,
-                draw_manager=self.draw_manager
+                pos,
+                vel,
+                image=image,
+                color=color,
+                radius=radius,
+                owner=owner,
+                damage=damage,
+                hitbox_scale=hitbox_scale,
+                draw_manager=self.draw_manager,
             )
 
         bullet.collision_tag = f"{owner}_bullet"
@@ -239,7 +292,7 @@ class BulletManager:
             except Exception as e:
                 DebugLogger.warn(
                     f"[BulletUpdateError] {type(bullet).__name__}: {e}",
-                    category="combat"
+                    category="combat",
                 )
                 bullet.death_state = LifecycleState.DEAD
                 self._unregister_hitbox(bullet)
@@ -247,7 +300,9 @@ class BulletManager:
                 continue
 
             # Lifecycle
-            if bullet.death_state < LifecycleState.DEAD and not self._is_offscreen(bullet):
+            if bullet.death_state < LifecycleState.DEAD and not self._is_offscreen(
+                bullet
+            ):
                 next_active.append(bullet)
             else:
                 bullet.death_state = LifecycleState.DEAD
@@ -288,6 +343,7 @@ class BulletManager:
         """Remove bullet from collision tracking."""
         if self.collision_manager:
             self.collision_manager.unregister_hitbox(bullet)
+
     # ===========================================================
     # Cleanup
     # ===========================================================
@@ -307,8 +363,7 @@ class BulletManager:
 
         if removed > 0:
             DebugLogger.state(
-                f"Cleaned up {removed} inactive bullets",
-                category="entity_cleanup"
+                f"Cleaned up {removed} inactive bullets", category="entity_cleanup"
             )
 
     def _on_bullet_clear(self, event: BulletClearEvent):
@@ -319,8 +374,7 @@ class BulletManager:
                 continue
 
             dist = math.hypot(
-                bullet.pos.x - event.center[0],
-                bullet.pos.y - event.center[1]
+                bullet.pos.x - event.center[0], bullet.pos.y - event.center[1]
             )
 
             if dist <= event.radius:
@@ -329,8 +383,7 @@ class BulletManager:
 
         if cleared > 0:
             DebugLogger.action(
-                f"Cleared {cleared} {event.owner} bullets",
-                category="combat"
+                f"Cleared {cleared} {event.owner} bullets", category="combat"
             )
 
     # ===========================================================
@@ -379,7 +432,9 @@ class BulletManager:
                 self._bullet_images[owner] = img
                 return img
             except pygame.error as e:
-                DebugLogger.warn(f"Failed to load bullet image '{path}': {e}", category="loading")
+                DebugLogger.warn(
+                    f"Failed to load bullet image '{path}': {e}", category="loading"
+                )
 
         # Fallback to null.png
         if os.path.exists(_NULL_IMAGE_PATH):
@@ -391,5 +446,7 @@ class BulletManager:
             except pygame.error:
                 pass
 
-        DebugLogger.warn(f"No bullet image for [{owner}], using shape", category="loading")
+        DebugLogger.warn(
+            f"No bullet image for [{owner}], using shape", category="loading"
+        )
         return None

@@ -23,10 +23,16 @@ class BackgroundLayer:
     """
 
     __slots__ = (
-        'scroll_speed', 'parallax', 'scroll_offset',
-        'render_offset_x', 'render_offset_y',
-        'image', 'width', 'height',
-        'screen_width', 'screen_height'
+        "scroll_speed",
+        "parallax",
+        "scroll_offset",
+        "render_offset_x",
+        "render_offset_y",
+        "image",
+        "width",
+        "height",
+        "screen_width",
+        "screen_height",
     )
 
     def __init__(self, image_path, scroll_speed, parallax_factor, screen_size):
@@ -135,7 +141,7 @@ class BackgroundManager:
     - Layer management (add, remove, clear)
     """
 
-    __slots__ = ('screen_size', 'layers', '_paused')
+    __slots__ = ("screen_size", "layers", "_paused")
 
     def __init__(self, screen_size):
         """

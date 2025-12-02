@@ -12,7 +12,7 @@ Responsibilities
 """
 
 from enum import IntEnum
-from typing import Dict, List, Optional, Any
+from typing import Dict, List
 
 from src.core.debug.debug_logger import DebugLogger
 from src.entities.entity_state import InteractionState
@@ -25,6 +25,7 @@ PERMANENT_DURATION = -1
 # Stat Modifier System
 class StackType:
     """How modifiers combine with base stats."""
+
     ADD = "ADD"
     MULTIPLY = "MULTIPLY"
 
@@ -37,12 +38,18 @@ class StatModifier:
     Formula: (base_value + additive_sum) * multiplicative_product
     """
 
-    __slots__ = ('_modifiers',)
+    __slots__ = ("_modifiers",)
 
     def __init__(self):
         self._modifiers: Dict[str, List[dict]] = {}
 
-    def add(self, stat: str, value: float, duration: float, stack_type: str = StackType.MULTIPLY):
+    def add(
+        self,
+        stat: str,
+        value: float,
+        duration: float,
+        stack_type: str = StackType.MULTIPLY,
+    ):
         """
         Add a stat modifier.
 
@@ -55,13 +62,13 @@ class StatModifier:
         if stat not in self._modifiers:
             self._modifiers[stat] = []
 
-        self._modifiers[stat].append({
-            "value": value,
-            "time": duration,
-            "stack": stack_type
-        })
+        self._modifiers[stat].append(
+            {"value": value, "time": duration, "stack": stack_type}
+        )
 
-        DebugLogger.action(f"Stat modifier: {stat} {stack_type} {value} for {duration}s")
+        DebugLogger.action(
+            f"Stat modifier: {stat} {stack_type} {value} for {duration}s"
+        )
 
     def update(self, dt: float):
         """Decrement timers and remove expired modifiers."""
@@ -72,7 +79,9 @@ class StatModifier:
             for mod in mods:
                 if mod["time"] != PERMANENT_DURATION:
                     mod["time"] -= dt
-            self._modifiers[stat] = [m for m in mods if m["time"] == PERMANENT_DURATION or m["time"] > 0]
+            self._modifiers[stat] = [
+                m for m in mods if m["time"] == PERMANENT_DURATION or m["time"] > 0
+            ]
 
             if not mods:
                 empty_stats.append(stat)
@@ -123,6 +132,7 @@ class StatModifier:
 # State Manager
 # ===================================================================
 
+
 class StateManager:
     """
     Manages temporary status effects on any entity.
@@ -130,7 +140,13 @@ class StateManager:
     Works with any IntEnum effect type (PlayerEffectState, EnemyEffectState, etc.)
     """
 
-    __slots__ = ('entity', 'state_config', '_active_states', '_cached_interaction', 'stat_modifiers')
+    __slots__ = (
+        "entity",
+        "state_config",
+        "_active_states",
+        "_cached_interaction",
+        "stat_modifiers",
+    )
 
     def __init__(self, entity, config: dict):
         """
@@ -140,7 +156,9 @@ class StateManager:
         """
         self.entity = entity
         self.state_config = config
-        self._active_states: Dict[IntEnum, dict] = {}  # {effect: {"time": float, "interaction": InteractionState}}
+        self._active_states: Dict[
+            IntEnum, dict
+        ] = {}  # {effect: {"time": float, "interaction": InteractionState}}
         self._cached_interaction = InteractionState.DEFAULT
         self.stat_modifiers = StatModifier()
 
@@ -148,7 +166,9 @@ class StateManager:
     # Effect Activation
     # ===================================================================
 
-    def timed_state(self, effect: IntEnum, duration: float = None, apply_debuffs: bool = True) -> bool:
+    def timed_state(
+        self, effect: IntEnum, duration: float = None, apply_debuffs: bool = True
+    ) -> bool:
         """
         Activate a timed effect.
 
@@ -170,12 +190,14 @@ class StateManager:
 
         cfg_duration = cfg.get("duration", 0.0)
         final_duration = duration if duration is not None else cfg_duration
-        interaction = self._parse_interaction_state(cfg.get("interaction_state", "DEFAULT"))
+        interaction = self._parse_interaction_state(
+            cfg.get("interaction_state", "DEFAULT")
+        )
 
         self._active_states[effect] = {
             "time": final_duration,
             "interaction": interaction,
-            "config": cfg  # Store for chaining and queries
+            "config": cfg,  # Store for chaining and queries
         }
 
         # Apply debuffs if configured
@@ -185,7 +207,7 @@ class StateManager:
                 self.add_stat_modifier(
                     stat,
                     stat_cfg.get("multiplier", 1.0),
-                    stat_cfg.get("duration", final_duration)
+                    stat_cfg.get("duration", final_duration),
                 )
 
         DebugLogger.action(f"{effect.name}: Duration {final_duration:.2f}s")
@@ -210,11 +232,13 @@ class StateManager:
         if cfg is None:
             return False
 
-        interaction = self._parse_interaction_state(cfg.get("interaction_state", "DEFAULT"))
+        interaction = self._parse_interaction_state(
+            cfg.get("interaction_state", "DEFAULT")
+        )
 
         self._active_states[effect] = {
             "time": PERMANENT_DURATION,
-            "interaction": interaction
+            "interaction": interaction,
         }
 
         DebugLogger.action(f"{effect.name}: Permanent")
@@ -237,7 +261,13 @@ class StateManager:
     # Stat Modifiers (Delegated)
     # ===================================================================
 
-    def add_stat_modifier(self, stat: str, value: float, duration: float, stack_type: str = StackType.MULTIPLY):
+    def add_stat_modifier(
+        self,
+        stat: str,
+        value: float,
+        duration: float,
+        stack_type: str = StackType.MULTIPLY,
+    ):
         """Add a stat modifier."""
         self.stat_modifiers.add(stat, value, duration, stack_type)
 
@@ -376,7 +406,9 @@ class StateManager:
         try:
             next_effect = effect_class[state_name.upper()]
             self.timed_state(next_effect)
-            DebugLogger.state(f"State chain: {current_effect.name} → {next_effect.name}")
+            DebugLogger.state(
+                f"State chain: {current_effect.name} → {next_effect.name}"
+            )
 
         except KeyError:
             DebugLogger.warn(f"Unknown next_state: {state_name}")

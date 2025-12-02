@@ -10,6 +10,7 @@ Separated from entity management and scene state.
 # Session Stats
 # ===========================================================
 
+
 class SessionStats:
     """Container for run-specific statistics. Reset when starting a new game."""
 

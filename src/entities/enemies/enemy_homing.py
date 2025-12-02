@@ -23,7 +23,14 @@ from src.systems.entity_management.entity_registry import EntityRegistry
 class EnemyHoming(BaseEnemy):
     """Enemy that tracks the player with configurable turn rates and speeds."""
 
-    __slots__ = ('turn_rate', 'player_ref', 'update_delay', 'update_timer', 'spawn_edge', 'enemy_type')
+    __slots__ = (
+        "turn_rate",
+        "player_ref",
+        "update_delay",
+        "update_timer",
+        "spawn_edge",
+        "enemy_type",
+    )
 
     __registry_category__ = EntityCategory.ENEMY
     __registry_name__ = "homing"
@@ -32,8 +39,18 @@ class EnemyHoming(BaseEnemy):
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(self, x, y, direction=(0, 1), speed=None, health=None,
-                 scale=None, draw_manager=None, player_ref=None, **kwargs):
+    def __init__(
+        self,
+        x,
+        y,
+        direction=(0, 1),
+        speed=None,
+        health=None,
+        scale=None,
+        draw_manager=None,
+        player_ref=None,
+        **kwargs,
+    ):
         """
         Args:
             x, y: Spawn position
@@ -49,7 +66,9 @@ class EnemyHoming(BaseEnemy):
 
         # Cache defaults per enemy type
         if enemy_type not in EnemyHoming._cached_defaults:
-            EnemyHoming._cached_defaults[enemy_type] = EntityRegistry.get_data("enemy", enemy_type)
+            EnemyHoming._cached_defaults[enemy_type] = EntityRegistry.get_data(
+                "enemy", enemy_type
+            )
         defaults = EnemyHoming._cached_defaults[enemy_type]
 
         # Apply overrides or use defaults from JSON
@@ -68,14 +87,15 @@ class EnemyHoming(BaseEnemy):
         img = BaseEntity.load_and_scale_image(image_path, scale)
 
         super().__init__(
-            x, y,
+            x,
+            y,
             image=img,
             draw_manager=draw_manager,
             speed=speed,
             health=health,
             direction=direction,
             spawn_edge=kwargs.get("spawn_edge"),
-            hitbox_config=hitbox_config
+            hitbox_config=hitbox_config,
         )
 
         # Homing configuration from JSON
@@ -93,7 +113,7 @@ class EnemyHoming(BaseEnemy):
 
         DebugLogger.init(
             f"Spawned {enemy_type} at ({x}, {y}) | Speed={speed} | Turn={turn_rate}",
-            category="animation_effects"
+            category="animation_effects",
         )
 
     # ===========================================================
@@ -115,18 +135,21 @@ class EnemyHoming(BaseEnemy):
         enemy_type = self.__registry_name__
         # Reload defaults for new enemy type
         if enemy_type not in EnemyHoming._cached_defaults:
-            EnemyHoming._cached_defaults[enemy_type] = EntityRegistry.get_data("enemy", enemy_type)
+            EnemyHoming._cached_defaults[enemy_type] = EntityRegistry.get_data(
+                "enemy", enemy_type
+            )
         defaults = EnemyHoming._cached_defaults[enemy_type]
 
         speed = speed if speed is not None else defaults.get("speed", 300)
         health = health if health is not None else defaults.get("hp", 3)
 
         super().reset(
-            x, y,
+            x,
+            y,
             direction=direction,
             speed=speed,
             health=health,
-            spawn_edge=kwargs.get("spawn_edge")
+            spawn_edge=kwargs.get("spawn_edge"),
         )
 
         # Update homing parameters from JSON
@@ -143,7 +166,7 @@ class EnemyHoming(BaseEnemy):
 
     def _update_homing_continuous(self, dt):
         """Smooth turn toward player each frame (or instant snap for high turn_rate)"""
-        if not self.player_ref or not hasattr(self.player_ref, 'pos'):
+        if not self.player_ref or not hasattr(self.player_ref, "pos"):
             return
 
         # Calculate direction to player
@@ -152,7 +175,11 @@ class EnemyHoming(BaseEnemy):
             return
 
         target_dir = to_player.normalize()
-        current_dir = self.velocity.normalize() if self.velocity.length() > 0 else pygame.Vector2(0, 1)
+        current_dir = (
+            self.velocity.normalize()
+            if self.velocity.length() > 0
+            else pygame.Vector2(0, 1)
+        )
 
         # Calculate angle difference
         target_angle = math.degrees(math.atan2(target_dir.y, target_dir.x))
@@ -174,11 +201,14 @@ class EnemyHoming(BaseEnemy):
         rad = math.radians(new_angle)
         self.velocity = pygame.Vector2(math.cos(rad), math.sin(rad)) * self.speed
 
+
 class EnemyHomingSlow(EnemyHoming):
     __registry_name__ = "homing_slow"
 
+
 class EnemyHomingFast(EnemyHoming):
     __registry_name__ = "homing_fast"
+
 
 class EnemyHomingSmart(EnemyHoming):
     __registry_name__ = "homing_smart"

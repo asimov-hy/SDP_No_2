@@ -27,7 +27,6 @@ from src.core.debug.debug_hud import DebugHUD
 from src.graphics.draw_manager import DrawManager
 
 
-
 class MainLoop:
     """
     Core runtime controller managing the game's main loop.
@@ -62,9 +61,7 @@ class MainLoop:
     def _init_core_systems(self):
         """Initialize display, input, drawing, and UI systems."""
         self.display = DisplayManager(
-            Display.WIDTH,
-            Display.HEIGHT,
-            Display.DEFAULT_WINDOW_SIZE
+            Display.WIDTH, Display.HEIGHT, Display.DEFAULT_WINDOW_SIZE
         )
         self.input_manager = InputManager(display_manager=self.display)
         self.draw_manager = DrawManager()
@@ -74,7 +71,7 @@ class MainLoop:
             self.draw_manager,
             input_manager=self.input_manager,
             game_width=Display.WIDTH,
-            game_height=Display.HEIGHT
+            game_height=Display.HEIGHT,
         )
         DebugLogger.init_sub("UIManager initialized")
 
@@ -83,15 +80,14 @@ class MainLoop:
         self.debug_hud = DebugHUD(self.display, self.draw_manager)
         self._last_perf_warn_time = 0.0
 
-        DebugLogger.init_sub("Bound [DisplayManager, DrawManager] dependencies", level=1)
+        DebugLogger.init_sub(
+            "Bound [DisplayManager, DrawManager] dependencies", level=1
+        )
 
     def _init_scene_manager(self):
         """Initialize scene management and runtime state."""
         self.scenes = SceneManager(
-            self.display,
-            self.input_manager,
-            self.draw_manager,
-            self.ui_manager
+            self.display, self.input_manager, self.draw_manager, self.ui_manager
         )
 
         self.clock = pygame.time.Clock()
@@ -168,9 +164,7 @@ class MainLoop:
                 break
 
             # Global hotkeys (always active)
-            self.input_manager.handle_system_input(
-                event, self.display, self.debug_hud
-            )
+            self.input_manager.handle_system_input(event, self.display, self.debug_hud)
 
             # Scene handles event, falls through to debug HUD if not consumed
             if not self.scenes.handle_event(event):
@@ -187,7 +181,6 @@ class MainLoop:
         Args:
             frame_time: Time since last frame (for debug HUD update)
         """
-        game_surface = self.display.get_game_surface()
         self.draw_manager.clear()
 
         # Profile and render based on debug state
@@ -250,8 +243,13 @@ class MainLoop:
         # Slow frame warning (throttled)
         self._check_slow_frame(frame_time_ms, scene_time, hud_time, render_time)
 
-    def _check_slow_frame(self, frame_time_ms: float, scene_time: float,
-                          hud_time: float, render_time: float):
+    def _check_slow_frame(
+        self,
+        frame_time_ms: float,
+        scene_time: float,
+        hud_time: float,
+        render_time: float,
+    ):
         """Log warning for slow frames (throttled to 1/second)."""
         if frame_time_ms <= Debug.FRAME_TIME_WARNING:
             return

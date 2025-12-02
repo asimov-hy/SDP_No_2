@@ -10,14 +10,12 @@ Responsibilities:
 """
 
 import pygame
-import sys
 
 from src.core.debug.debug_logger import DebugLogger
-from src.core.runtime.game_settings import Display
 
-from src.ui.elements.button import UIButton
 
 FONT_PATH = "assets/fonts/arcade.ttf"
+
 
 class PauseScene:
     """Handles the pause screen, UI, and scene transitions."""
@@ -33,6 +31,7 @@ class PauseScene:
         self.draw_manager = scene_manager.draw_manager
         self.input_manager = scene_manager.input_manager
         self.ui = scene_manager.ui_manager
+
     #
     #     self.ui_elements = []
     #
@@ -124,6 +123,7 @@ class PauseScene:
         #             if action:
         #                 self.on_button_click(action)
         #                 break
+
     #
     # def on_button_click(self, action: str):
     #     DebugLogger.action(f"PauseScene received action: '{action}'")
@@ -154,6 +154,7 @@ class PauseScene:
         Render the title and all UI elements.
         """
         self.ui.draw(draw_manager)
+
     # ===========================================================
     # Lifecycle Hooks
     # ===========================================================
@@ -166,7 +167,6 @@ class PauseScene:
     def on_exit(self):
         DebugLogger.state("on_exit() - PauseScene")
         self.ui.hide_screen("pause_scene")
-
 
     def on_pause(self):
         DebugLogger.state("on_pause()")

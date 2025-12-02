@@ -60,7 +60,7 @@ class StageLoader:
         if not isinstance(stages_data, list):
             DebugLogger.warn(
                 f"[StageLoader] Invalid stages format: {type(stages_data)}. Expected list.",
-                category="level"
+                category="level",
             )
             self.stages = []
         else:
@@ -99,7 +99,7 @@ class StageLoader:
 
         DebugLogger.warn(
             f"[StageLoader] Invalid level_data type: {type(level_data)}",
-            category="level"
+            category="level",
         )
         return {"stages": []}
 
@@ -146,21 +146,24 @@ class StageLoader:
         if not isinstance(timeline_data, dict):
             DebugLogger.warn(
                 f"[StageLoader] Stage has invalid timeline format: {type(timeline_data)}",
-                category="level"
+                category="level",
             )
             return []
 
         waves = []
 
         # FIXED: Safe iteration with time validation
-        for time_str in sorted(timeline_data.keys(), key=lambda x: float(x) if isinstance(x, (str, int, float)) else 0):
+        for time_str in sorted(
+            timeline_data.keys(),
+            key=lambda x: float(x) if isinstance(x, (str, int, float)) else 0,
+        ):
             spawns = timeline_data[time_str]
 
             # VALIDATION: Ensure spawns is a list
             if not isinstance(spawns, list):
                 DebugLogger.warn(
                     f"[StageLoader] Timeline entry at {time_str} is not a list: {type(spawns)}",
-                    category="level"
+                    category="level",
                 )
                 continue
 
@@ -170,7 +173,7 @@ class StageLoader:
             except (ValueError, TypeError) as e:
                 DebugLogger.warn(
                     f"[StageLoader] Invalid time format '{time_str}': {e}",
-                    category="level"
+                    category="level",
                 )
                 continue
 
@@ -178,12 +181,11 @@ class StageLoader:
                 if not isinstance(spawn, dict):
                     DebugLogger.warn(
                         f"[StageLoader] Invalid spawn entry at time {time_str}",
-                        category="level"
+                        category="level",
                     )
                     continue
 
                 wave_entry = spawn.copy()
-                delay = spawn.get("delay", 0)
                 wave_entry["time"] = time_float
                 waves.append(wave_entry)
 
@@ -223,7 +225,7 @@ class StageLoader:
         """
         # Time-based
         if trigger == "duration":
-            duration = self.stages[self.current_stage_idx].get("duration", float('inf'))
+            duration = self.stages[self.current_stage_idx].get("duration", float("inf"))
             return lambda: self.stage_timer >= duration
 
         # Event-driven wave clear (requires external enemy count)
@@ -241,8 +243,7 @@ class StageLoader:
 
         # Fallback
         DebugLogger.warn(
-            f"[StageLoader] Unknown trigger type: {trigger}",
-            category="level"
+            f"[StageLoader] Unknown trigger type: {trigger}", category="level"
         )
         return lambda: False
 
@@ -310,12 +311,11 @@ class StageLoader:
 
         if trigger_type == "timer":
             min_time = trigger.get("min", 0.0)
-            max_time = trigger.get("max", float('inf'))
+            max_time = trigger.get("max", float("inf"))
             return min_time <= self.stage_timer <= max_time
 
         DebugLogger.warn(
-            f"[StageLoader] Unknown complex trigger: {trigger_type}",
-            category="level"
+            f"[StageLoader] Unknown complex trigger: {trigger_type}", category="level"
         )
         return False
 
@@ -340,6 +340,5 @@ class StageLoader:
     def _has_boss_alive(self, boss_id) -> bool:
         """Check if specific boss entity exists."""
         return any(
-            getattr(e, "boss_id", None) == boss_id
-            for e in self.spawn_manager.entities
+            getattr(e, "boss_id", None) == boss_id for e in self.spawn_manager.entities
         )

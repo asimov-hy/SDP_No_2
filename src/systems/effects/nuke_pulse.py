@@ -34,11 +34,21 @@ class PulseState:
 class NukePulse:
     """Expanding ring that freezes enemies, then detonates them."""
 
-    def __init__(self, center, start_speed=1600, end_speed=200, fade_duration=0.3,
-                 detonate_duration=0.5, damage=9999,
-                 max_explosion_delay=0.4, min_explosion_delay=0.03, explosion_decay=0.85,
-                 color=(255, 255, 150), ring_width=12,
-                 target_category=EntityCategory.ENEMY):
+    def __init__(
+        self,
+        center,
+        start_speed=1600,
+        end_speed=200,
+        fade_duration=0.3,
+        detonate_duration=0.5,
+        damage=9999,
+        max_explosion_delay=0.4,
+        min_explosion_delay=0.03,
+        explosion_decay=0.85,
+        color=(255, 255, 150),
+        ring_width=12,
+        target_category=EntityCategory.ENEMY,
+    ):
         """
         Args:
             center: (x, y) origin point
@@ -101,14 +111,19 @@ class NukePulse:
         """Expand ring and freeze entities on contact."""
         # Exponential slowdown: fast at start, slow at end
         progress = self.radius / self.max_radius  # 0.0 -> 1.0
-        current_speed = self.start_speed * math.pow(self.end_speed / self.start_speed, progress)
+        current_speed = self.start_speed * math.pow(
+            self.end_speed / self.start_speed, progress
+        )
         self.radius += current_speed * dt
 
         for entity in entities:
             # Filter by category
-            if getattr(entity, 'category', None) != self.target_category:
+            if getattr(entity, "category", None) != self.target_category:
                 continue
-            if getattr(entity, 'death_state', LifecycleState.DEAD) != LifecycleState.ALIVE:
+            if (
+                getattr(entity, "death_state", LifecycleState.DEAD)
+                != LifecycleState.ALIVE
+            ):
                 continue
             if entity in self._frozen_entities:
                 continue
@@ -116,26 +131,23 @@ class NukePulse:
             # Distance check - hit if inside current radius
             dist = math.hypot(
                 entity.rect.centerx - self.center[0],
-                entity.rect.centery - self.center[1]
+                entity.rect.centery - self.center[1],
             )
 
             if dist <= self.radius:
                 self._freeze_entity(entity)
 
         # Clear enemy bullets inside expanding ring
-        get_events().dispatch(BulletClearEvent(
-            center=self.center,
-            radius=self.radius,
-            owner="enemy"
-        ))
+        get_events().dispatch(
+            BulletClearEvent(center=self.center, radius=self.radius, owner="enemy")
+        )
 
         # Transition when fully expanded
         if self.radius >= self.max_radius:
             self.state = PulseState.FADING
             self._state_timer = 0.0
             DebugLogger.action(
-                f"Pulse fading, {len(self._frozen_entities)} frozen",
-                category="effects"
+                f"Pulse fading, {len(self._frozen_entities)} frozen", category="effects"
             )
 
     def _update_fading(self, dt):
@@ -153,14 +165,20 @@ class NukePulse:
             random.shuffle(self._frozen_entities)
 
             # Pre-calculate explosion times (accelerating curve)
-            self._explosion_times = self._generate_explosion_times(len(self._frozen_entities))
+            self._explosion_times = self._generate_explosion_times(
+                len(self._frozen_entities)
+            )
 
             # Start screen shake for entire detonation sequence
             if self._explosion_times:
                 shake_duration = self._explosion_times[-1]
-                get_events().dispatch(ScreenShakeEvent(intensity=4, duration=shake_duration))
+                get_events().dispatch(
+                    ScreenShakeEvent(intensity=4, duration=shake_duration)
+                )
             else:
-                get_events().dispatch(ScreenShakeEvent(intensity=4, duration=self.detonate_duration))
+                get_events().dispatch(
+                    ScreenShakeEvent(intensity=4, duration=self.detonate_duration)
+                )
 
             DebugLogger.action("Nuke detonation starting...", category="effects")
 
@@ -170,8 +188,11 @@ class NukePulse:
 
         # Shake remaining frozen entities
         shake_intensity = 4
-        for entity in self._frozen_entities[self._detonate_index:]:
-            if getattr(entity, 'death_state', LifecycleState.DEAD) != LifecycleState.ALIVE:
+        for entity in self._frozen_entities[self._detonate_index :]:
+            if (
+                getattr(entity, "death_state", LifecycleState.DEAD)
+                != LifecycleState.ALIVE
+            ):
                 continue
 
             orig_pos = self._original_positions.get(id(entity))
@@ -183,8 +204,10 @@ class NukePulse:
                 entity.sync_rect()
 
         # Explode entities when their scheduled time arrives
-        while (self._detonate_index < len(self._frozen_entities) and
-               self._state_timer >= self._explosion_times[self._detonate_index]):
+        while (
+            self._detonate_index < len(self._frozen_entities)
+            and self._state_timer >= self._explosion_times[self._detonate_index]
+        ):
             self._detonate_single(self._detonate_index)
             self._detonate_index += 1
 
@@ -217,7 +240,9 @@ class NukePulse:
             times.append(current_time)
             # Exponential decay, but respect minimum
             current_time += current_delay
-            current_delay = max(current_delay * self.explosion_decay, self.min_explosion_delay)
+            current_delay = max(
+                current_delay * self.explosion_decay, self.min_explosion_delay
+            )
 
         return times
 
@@ -225,7 +250,7 @@ class NukePulse:
         """Explode a single frozen entity."""
         entity = self._frozen_entities[index]
 
-        if getattr(entity, 'death_state', LifecycleState.DEAD) != LifecycleState.ALIVE:
+        if getattr(entity, "death_state", LifecycleState.DEAD) != LifecycleState.ALIVE:
             return
 
         # Restore position
@@ -246,8 +271,7 @@ class NukePulse:
         get_events().dispatch(ScreenShakeEvent(intensity=15, duration=0.4))
 
         DebugLogger.action(
-            f"Nuke detonated {len(self._frozen_entities)} enemies!",
-            category="effects"
+            f"Nuke detonated {len(self._frozen_entities)} enemies!", category="effects"
         )
 
         self._frozen_entities.clear()
@@ -275,11 +299,14 @@ class NukePulse:
 
         if self.radius > self.ring_width:
             pygame.draw.circle(
-                surf, color_with_alpha,
+                surf,
+                color_with_alpha,
                 (center, center),
                 int(self.radius),
-                self.ring_width
+                self.ring_width,
             )
 
         rect = surf.get_rect(center=self.center)
-        draw_manager.queue_draw(surf, rect, layer=Layers.EFFECTS if hasattr(Layers, 'EFFECTS') else 50)
+        draw_manager.queue_draw(
+            surf, rect, layer=Layers.EFFECTS if hasattr(Layers, "EFFECTS") else 50
+        )

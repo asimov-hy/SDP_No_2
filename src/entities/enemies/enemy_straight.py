@@ -30,8 +30,17 @@ class EnemyStraight(BaseEnemy):
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(self, x, y, direction=(0, 1), speed=None, health=None,
-                 scale=None, draw_manager=None, **kwargs):
+    def __init__(
+        self,
+        x,
+        y,
+        direction=(0, 1),
+        speed=None,
+        health=None,
+        scale=None,
+        draw_manager=None,
+        **kwargs,
+    ):
         """
         Args:
             x, y: Spawn position
@@ -44,7 +53,9 @@ class EnemyStraight(BaseEnemy):
 
         # Load defaults from JSON
         if EnemyStraight._cached_defaults is None:
-            EnemyStraight._cached_defaults = EntityRegistry.get_data("enemy", "straight")
+            EnemyStraight._cached_defaults = EntityRegistry.get_data(
+                "enemy", "straight"
+            )
         defaults = EnemyStraight._cached_defaults
 
         # Apply overrides or use defaults
@@ -59,14 +70,15 @@ class EnemyStraight(BaseEnemy):
         img = BaseEntity.load_and_scale_image(image_path, scale)
 
         super().__init__(
-            x, y,
+            x,
+            y,
             image=img,
             draw_manager=draw_manager,
             speed=speed,
             health=health,
             direction=direction,
             spawn_edge=kwargs.get("spawn_edge", None),
-            hitbox_config=hitbox_config
+            hitbox_config=hitbox_config,
         )
 
         # Store exp value for when enemy dies
@@ -74,7 +86,7 @@ class EnemyStraight(BaseEnemy):
 
         DebugLogger.init(
             f"Spawned EnemyStraight at ({x}, {y}) | Speed={speed}",
-            category="animation_effects"
+            category="animation_effects",
         )
 
     # ===========================================================
@@ -89,7 +101,9 @@ class EnemyStraight(BaseEnemy):
         """
         super().update(dt)
 
-    def reset(self, x, y, direction=(0, 1), speed=None, health=None, scale=None, **kwargs):
+    def reset(
+        self, x, y, direction=(0, 1), speed=None, health=None, scale=None, **kwargs
+    ):
         # Load defaults from JSON (same as __init__)
         defaults = EnemyStraight._cached_defaults
 
@@ -104,12 +118,13 @@ class EnemyStraight(BaseEnemy):
 
         # Call super to reset position/state
         super().reset(
-            x, y,
+            x,
+            y,
             direction=direction,
             speed=speed,
             health=health,
             spawn_edge=kwargs.get("spawn_edge"),
-            hitbox_scale=hitbox_scale
+            hitbox_scale=hitbox_scale,
         )
 
         # Reload and rescale image if using image mode

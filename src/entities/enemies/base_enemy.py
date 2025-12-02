@@ -31,9 +31,15 @@ class BaseEnemy(BaseEntity):
     """Base class providing shared logic for all enemy entities_animation."""
 
     __slots__ = (
-        'speed', 'health', 'max_health', 'exp_value',
-        'velocity', '_last_rot_velocity', 'state',
-        'spawn_time', 'spawn_grace_period'
+        "speed",
+        "health",
+        "max_health",
+        "exp_value",
+        "velocity",
+        "_last_rot_velocity",
+        "state",
+        "spawn_time",
+        "spawn_grace_period",
     )
 
     @staticmethod
@@ -53,29 +59,29 @@ class BaseEnemy(BaseEntity):
             "edge_top": [(0, 1), (1, 1)],
             "center": [(0, 1), (-1, 1), (1, 1)],
             "edge_bottom": [(0, 1), (-1, 1)],
-            "corner_bottom": [(-1, 1)]
+            "corner_bottom": [(-1, 1)],
         },
         "bottom": {
             "corner_top": [(1, -1)],
             "edge_top": [(0, -1), (1, -1)],
             "center": [(0, -1), (-1, -1), (1, -1)],
             "edge_bottom": [(0, -1), (-1, -1)],
-            "corner_bottom": [(-1, -1)]
+            "corner_bottom": [(-1, -1)],
         },
         "left": {
             "corner_top": [(1, 1)],
             "edge_top": [(1, 0), (1, 1)],
             "center": [(1, 0), (1, -1), (1, 1)],
             "edge_bottom": [(1, 0), (1, -1)],
-            "corner_bottom": [(1, -1)]
+            "corner_bottom": [(1, -1)],
         },
         "right": {
             "corner_top": [(-1, 1)],
             "edge_top": [(-1, 0), (-1, 1)],
             "center": [(-1, 0), (-1, -1), (-1, 1)],
             "edge_bottom": [(-1, 0), (-1, -1)],
-            "corner_bottom": [(-1, -1)]
-        }
+            "corner_bottom": [(-1, -1)],
+        },
     }
 
     def __init_subclass__(cls, **kwargs):
@@ -86,8 +92,19 @@ class BaseEnemy(BaseEntity):
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(self, x, y, image=None, shape_data=None, draw_manager=None,
-                 speed=100, health=None, direction=None, spawn_edge=None, **kwargs):
+    def __init__(
+        self,
+        x,
+        y,
+        image=None,
+        shape_data=None,
+        draw_manager=None,
+        speed=100,
+        health=None,
+        direction=None,
+        spawn_edge=None,
+        **kwargs,
+    ):
         """
         Args:
             x, y: Position
@@ -97,10 +114,16 @@ class BaseEnemy(BaseEntity):
             speed: Movement speed
             health: HP
         """
-        hitbox_config = kwargs.get('hitbox_config', {})
+        hitbox_config = kwargs.get("hitbox_config", {})
 
-        super().__init__(x, y, image=image, shape_data=shape_data,
-                         draw_manager=draw_manager, hitbox_config=hitbox_config)
+        super().__init__(
+            x,
+            y,
+            image=image,
+            shape_data=shape_data,
+            draw_manager=draw_manager,
+            hitbox_config=hitbox_config,
+        )
         self.speed = speed
         self.health = health if health is not None else 1
         self.max_health = self.health
@@ -227,20 +250,22 @@ class BaseEnemy(BaseEntity):
 
     def on_death(self, source):
         self.death_state = LifecycleState.DYING
-        self.layer = Layers.PARTICLES   # TODO: temporary measure -> later replace with seperate layer and death animation
+        self.layer = Layers.PARTICLES  # TODO: temporary measure -> later replace with seperate layer and death animation
         self.anim_manager.play("death")
 
         exp_to_award = 0
         if source in ("player_bullet", "nuke"):
             exp_to_award = self.exp_value
 
-        get_events().dispatch(EnemyDiedEvent(
-            position=(self.rect.centerx, self.rect.centery),
-            enemy_type_tag=self.__class__.__name__,
-            exp=exp_to_award
-        ))
+        get_events().dispatch(
+            EnemyDiedEvent(
+                position=(self.rect.centerx, self.rect.centery),
+                enemy_type_tag=self.__class__.__name__,
+                exp=exp_to_award,
+            )
+        )
 
-        if hasattr(self, 'hitbox') and self.hitbox:
+        if hasattr(self, "hitbox") and self.hitbox:
             self.hitbox.set_active(False)
 
         self.collision_tag = CollisionTags.NEUTRAL
@@ -257,7 +282,11 @@ class BaseEnemy(BaseEntity):
     # ===========================================================
     def on_collision(self, other, collision_tag=None):
         """Default collision response for enemies."""
-        tag = collision_tag if collision_tag is not None else getattr(other, "collision_tag", "unknown")
+        tag = (
+            collision_tag
+            if collision_tag is not None
+            else getattr(other, "collision_tag", "unknown")
+        )
 
         if tag == "player_bullet":
             self.take_damage(getattr(other, "damage", 1), source="player_bullet")
@@ -273,11 +302,16 @@ class BaseEnemy(BaseEntity):
 
         # Validate/detect edge
         if edge is None:
-            if self.pos.x < 0: edge = "left"
-            elif self.pos.x > Display.WIDTH: edge = "right"
-            elif self.pos.y < 0: edge = "top"
-            elif self.pos.y > Display.HEIGHT: edge = "bottom"
-            else: edge = "top"  # fallback
+            if self.pos.x < 0:
+                edge = "left"
+            elif self.pos.x > Display.WIDTH:
+                edge = "right"
+            elif self.pos.y < 0:
+                edge = "top"
+            elif self.pos.y > Display.HEIGHT:
+                edge = "bottom"
+            else:
+                edge = "top"  # fallback
 
         edge = edge.lower()
 
@@ -314,7 +348,9 @@ class BaseEnemy(BaseEntity):
 
         return pygame.Vector2(chosen)
 
-    def reset(self, x, y, direction=None, speed=None, health=None, spawn_edge=None, **kwargs):
+    def reset(
+        self, x, y, direction=None, speed=None, health=None, spawn_edge=None, **kwargs
+    ):
         super().reset(x, y)
 
         # Reset state to DEFAULT in case it was pooled while blinking
@@ -347,7 +383,7 @@ class BaseEnemy(BaseEntity):
 
     def _reload_image_cached(self, image_path, scale):
         """Reload image only if not cached, or scale changed."""
-        if hasattr(self, '_base_image') and self._base_image:
+        if hasattr(self, "_base_image") and self._base_image:
             # Reuse cached image
             self.image = self._base_image
             self.rect = self.image.get_rect(center=self.pos)

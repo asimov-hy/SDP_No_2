@@ -19,11 +19,13 @@ class MainMenuScene(BaseScene):
     BACKGROUNDS_PATH = "assets/images/backgrounds/"
 
     BACKGROUND_CONFIG = {
-        "layers": [{
-            "image": BACKGROUNDS_PATH + "main_menu.png",
-            "scroll_speed": [0, 0],
-            "parallax": [0, 0]
-        }]
+        "layers": [
+            {
+                "image": BACKGROUNDS_PATH + "main_menu.png",
+                "scroll_speed": [0, 0],
+                "parallax": [0, 0],
+            }
+        ]
     }
 
     def __init__(self, services):
@@ -73,9 +75,13 @@ class MainMenuScene(BaseScene):
         action = self.ui.handle_event(event)
 
         if action == "start_game":
-            self.scene_manager.set_scene("CampaignSelect", transition=FadeTransition(0.4))
+            self.scene_manager.set_scene(
+                "CampaignSelect", transition=FadeTransition(0.4)
+            )
         elif action == "settings":
-            self.scene_manager.set_scene("Settings", transition=FadeTransition(0.3), caller="MainMenu")
+            self.scene_manager.set_scene(
+                "Settings", transition=FadeTransition(0.3), caller="MainMenu"
+            )
         elif action == "quit":
             pygame.event.post(pygame.event.Event(pygame.QUIT))
 
@@ -94,6 +100,6 @@ class MainMenuScene(BaseScene):
                 spawn_area=tuple(p["spawn_area"]) if p.get("spawn_area") else None,
                 direction=tuple(p["direction"]) if p.get("direction") else None,
                 speed=tuple(p["speed"]) if p.get("speed") else None,
-                lifetime=tuple(p["lifetime"]) if p.get("lifetime") else None  # ADD
+                lifetime=tuple(p["lifetime"]) if p.get("lifetime") else None,  # ADD
             )
             self.particles.append(overlay)

@@ -1,4 +1,5 @@
 """Common reusable animation effects."""
+
 import pygame
 
 
@@ -25,10 +26,10 @@ def scale_down(entity, t):
     if scale <= 0:
         return
 
-    orig = getattr(entity, '_base_image', entity.image)
+    orig = getattr(entity, "_base_image", entity.image)
     new_size = (
         max(1, int(orig.get_width() * scale)),
-        max(1, int(orig.get_height() * scale))
+        max(1, int(orig.get_height() * scale)),
     )
     entity.image = pygame.transform.scale(orig, new_size)
     entity.rect = entity.image.get_rect(center=entity.rect.center)
@@ -95,7 +96,7 @@ def fade_color(entity, t, start_color=(255, 0, 0), end_color=(0, 0, 0)):
 
     Use case: Flash red on hit, fade to normal
     """
-    orig = getattr(entity, '_base_image', entity.image)
+    orig = getattr(entity, "_base_image", entity.image)
 
     # Lerp flash intensity
     r = int(start_color[0] + (end_color[0] - start_color[0]) * t)
@@ -113,8 +114,8 @@ def fade_color(entity, t, start_color=(255, 0, 0), end_color=(0, 0, 0)):
 
 def sprite_cycle(entity, t):
     """Cycle through animation frames from context."""
-    ctx = getattr(entity, 'anim_context', {})
-    frames = ctx.get('frames', [])
+    ctx = getattr(entity, "anim_context", {})
+    frames = ctx.get("frames", [])
 
     if not frames:
         fade_out(entity, t)
@@ -127,15 +128,18 @@ def sprite_cycle(entity, t):
 
 def shake(entity, t, intensity=4, frequency=30):
     """Shake entity position. Stores original pos on first call."""
-    if not hasattr(entity, '_shake_origin'):
+    if not hasattr(entity, "_shake_origin"):
         entity._shake_origin = entity.rect.center
 
     if t < 1.0:
         import math
+
         offset_x = int(math.sin(t * frequency * math.pi) * intensity * (1 - t))
         offset_y = int(math.cos(t * frequency * math.pi * 0.7) * intensity * (1 - t))
-        entity.rect.center = (entity._shake_origin[0] + offset_x,
-                              entity._shake_origin[1] + offset_y)
+        entity.rect.center = (
+            entity._shake_origin[0] + offset_x,
+            entity._shake_origin[1] + offset_y,
+        )
     else:
         entity.rect.center = entity._shake_origin
         del entity._shake_origin

@@ -14,6 +14,7 @@ from enum import IntEnum, auto
 
 class PlayerEffectState(IntEnum):
     """Defines player-exclusive temporary effects."""
+
     NONE = 0
     KNOCKBACK = auto()  # Brief input lock, not invincible
     STUN = auto()  # Knockback, no input, invincible

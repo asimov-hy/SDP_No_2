@@ -108,7 +108,7 @@ class BaseScene(ABC):
             self.bg_manager.add_layer(
                 image_path=layer_config.get("image", ""),
                 scroll_speed=tuple(layer_config.get("scroll_speed", [0, 30])),
-                parallax=tuple(layer_config.get("parallax", [0.4, 0.6]))
+                parallax=tuple(layer_config.get("parallax", [0.4, 0.6])),
             )
 
         # Pass reference to draw manager for rendering

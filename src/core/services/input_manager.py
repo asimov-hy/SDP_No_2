@@ -402,11 +402,14 @@ class InputManager:
         current_mouse_pos = pygame.mouse.get_pos()
         mouse_delta = (
             abs(current_mouse_pos[0] - self.prev_mouse_pos[0]),
-            abs(current_mouse_pos[1] - self.prev_mouse_pos[1])
+            abs(current_mouse_pos[1] - self.prev_mouse_pos[1]),
         )
 
         # Mouse moved significantly -> enable mouse
-        if mouse_delta[0] > self.mouse_move_threshold or mouse_delta[1] > self.mouse_move_threshold:
+        if (
+            mouse_delta[0] > self.mouse_move_threshold
+            or mouse_delta[1] > self.mouse_move_threshold
+        ):
             if not self.mouse_enabled:
                 self.mouse_enabled = True
                 pygame.mouse.set_visible(True)
@@ -430,7 +433,10 @@ class InputManager:
                 if abs(self.controller.get_axis(axis)) > Input.CONTROLLER_DEADZONE:
                     self._disable_mouse()
                     return
-            if self.controller.get_numhats() > 0 and self.controller.get_hat(0) != (0, 0):
+            if self.controller.get_numhats() > 0 and self.controller.get_hat(0) != (
+                0,
+                0,
+            ):
                 self._disable_mouse()
                 return
 

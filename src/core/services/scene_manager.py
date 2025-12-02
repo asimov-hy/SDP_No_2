@@ -39,7 +39,7 @@ class SceneManager:
             display=display_manager,
             input_mgr=input_manager,
             draw=draw_manager,
-            ui=ui_manager
+            ui=ui_manager,
         )
         DebugLogger.init_sub("ServiceLocator initialized")
 
@@ -145,7 +145,6 @@ class SceneManager:
         new_scene.state = SceneState.ACTIVE
         DebugLogger.section(f"Active Scene: {name}")
 
-
         # 6. Enter scene
         DebugLogger.state(f"Entering {name}")
         new_scene.on_enter()
@@ -191,10 +190,9 @@ class SceneManager:
         """
         if self._active_scene:
             # Save current scene to stack
-            self._scene_stack.append({
-                'scene': self._active_scene,
-                'name': self._active_name
-            })
+            self._scene_stack.append(
+                {"scene": self._active_scene, "name": self._active_name}
+            )
             DebugLogger.state(f"Pushed {self._active_name} to stack")
 
         # Switch to new scene
@@ -215,13 +213,18 @@ class SceneManager:
 
         # Restore previous scene
         prev = self._scene_stack.pop()
-        self._active_scene = prev['scene']
-        self._active_name = prev['name']
+        self._active_scene = prev["scene"]
+        self._active_name = prev["name"]
 
-        DebugLogger.state(f"Popped back to {self._active_name} (state: {self._active_scene.state})")
+        DebugLogger.state(
+            f"Popped back to {self._active_name} (state: {self._active_scene.state})"
+        )
 
         # CRITICAL: If returning to paused game, restore pause UI
-        if self._active_name == "Game" and self._active_scene.state == SceneState.PAUSED:
+        if (
+            self._active_name == "Game"
+            and self._active_scene.state == SceneState.PAUSED
+        ):
             self._active_scene.on_pause()  # Re-show pause overlay
 
         # Restore input context
@@ -249,8 +252,10 @@ class SceneManager:
                 DebugLogger.state("Transition complete")
 
                 # Get fade-in overlay before clearing transition
-                if hasattr(self._active_transition, 'create_fade_in_overlay'):
-                    self._fade_in_overlay = self._active_transition.create_fade_in_overlay()
+                if hasattr(self._active_transition, "create_fade_in_overlay"):
+                    self._fade_in_overlay = (
+                        self._active_transition.create_fade_in_overlay()
+                    )
 
                 # Exit old scene NOW
                 if self._transition_old_scene:
@@ -301,7 +306,10 @@ class SceneManager:
                     return
 
         # Normal scene update (only if ACTIVE)
-        if self._active_scene and self._active_scene.state in (SceneState.ACTIVE, SceneState.PAUSED):
+        if self._active_scene and self._active_scene.state in (
+            SceneState.ACTIVE,
+            SceneState.PAUSED,
+        ):
             self._active_scene.update(dt)
 
     def draw(self, draw_manager):
@@ -309,9 +317,7 @@ class SceneManager:
         # Render transition if active
         if self._active_transition:
             self._active_transition.draw(
-                draw_manager,
-                self._transition_old_scene,
-                self._transition_new_scene
+                draw_manager, self._transition_old_scene, self._transition_new_scene
             )
             return
 

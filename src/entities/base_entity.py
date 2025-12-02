@@ -66,23 +66,35 @@ class BaseEntity:
 
     __slots__ = (
         # Core spatial
-        'pos', 'rect', 'image', 'draw_manager',
-
+        "pos",
+        "rect",
+        "image",
+        "draw_manager",
         # State
-        'death_state', 'layer', 'category', 'collision_tag', 'tags',
-
+        "death_state",
+        "layer",
+        "category",
+        "collision_tag",
+        "tags",
         # Rotation
-        'rotation_angle', '_rotation_enabled', '_base_image',
-        '_rotation_cache', '_cached_rotation_index',
-
+        "rotation_angle",
+        "_rotation_enabled",
+        "_base_image",
+        "_rotation_cache",
+        "_cached_rotation_index",
         # Animation (lazy-loaded)
-        '_anim_manager', 'anim_context',
-
+        "_anim_manager",
+        "anim_context",
         # Sprite states
-        '_current_sprite', '_sprite_config', 'shape_data',
-
+        "_current_sprite",
+        "_sprite_config",
+        "shape_data",
         # Hitbox
-        'hitbox_scale', 'hitbox_shape', 'hitbox_offset', 'hitbox_params', 'hitbox',
+        "hitbox_scale",
+        "hitbox_shape",
+        "hitbox_offset",
+        "hitbox_params",
+        "hitbox",
     )
 
     # ===================================================================
@@ -96,7 +108,7 @@ class BaseEntity:
         image: Optional[pygame.Surface] = None,
         shape_data: Optional[dict] = None,
         draw_manager=None,
-        hitbox_config: Optional[dict] = None
+        hitbox_config: Optional[dict] = None,
     ):
         """
         Initialize entity with position and rendering configuration.
@@ -166,7 +178,7 @@ class BaseEntity:
                 entity_type=type(self).__name__,
                 size=size,
                 color=color,
-                config=shape_data
+                config=shape_data,
             )
 
             if shape_data:
@@ -187,12 +199,11 @@ class BaseEntity:
     def _init_hitbox(self, config: Optional[dict]):
         """Initialize hitbox configuration."""
         config = config or {}
-        self.hitbox_scale = config.get('scale', 0.9)
-        self.hitbox_shape = config.get('shape', 'rect')
-        self.hitbox_offset = config.get('offset', (0, 0))
+        self.hitbox_scale = config.get("scale", 0.9)
+        self.hitbox_shape = config.get("shape", "rect")
+        self.hitbox_offset = config.get("offset", (0, 0))
         self.hitbox_params = {
-            k: v for k, v in config.items()
-            if k not in ('scale', 'shape', 'offset')
+            k: v for k, v in config.items() if k not in ("scale", "shape", "offset")
         }
         self.hitbox = None  # Populated by CollisionManager
 
@@ -205,6 +216,7 @@ class BaseEntity:
         """Lazy-load AnimationManager on first access."""
         if self._anim_manager is None:
             from src.graphics.animations.animation_manager import AnimationManager
+
             self._anim_manager = AnimationManager(self)
         return self._anim_manager
 
@@ -246,8 +258,7 @@ class BaseEntity:
             self.death_state = LifecycleState.DYING
 
         DebugLogger.state(
-            f"[{type(self).__name__}] -> {self.death_state.name}",
-            category="entity"
+            f"[{type(self).__name__}] -> {self.death_state.name}", category="entity"
         )
 
     def reset(self, x: float, y: float, **kwargs):
@@ -290,7 +301,9 @@ class BaseEntity:
             return
         draw_manager.draw_entity(self, self.layer)
 
-    def refresh_sprite(self, new_image=None, new_color=None, shape_type=None, size=None):
+    def refresh_sprite(
+        self, new_image=None, new_color=None, shape_type=None, size=None
+    ):
         """
         Rebuild entity visuals at runtime.
 
@@ -305,16 +318,16 @@ class BaseEntity:
 
         elif new_color and self.shape_data:
             if not self.draw_manager:
-                DebugLogger.warn(f"{type(self).__name__} can't rebake - no draw_manager")
+                DebugLogger.warn(
+                    f"{type(self).__name__} can't rebake - no draw_manager"
+                )
                 return
 
             shape_type = shape_type or self.shape_data.get("type", "rect")
             size = size or self.shape_data.get("size", (10, 10))
 
             self.image = self.draw_manager.prebake_shape(
-                type=shape_type,
-                size=size,
-                color=new_color
+                type=shape_type, size=size, color=new_color
             )
 
         # Update base image and rect
@@ -343,7 +356,7 @@ class BaseEntity:
         if not self._rotation_enabled or not self._base_image:
             return
 
-        vel = velocity if velocity is not None else getattr(self, 'velocity', None)
+        vel = velocity if velocity is not None else getattr(self, "velocity", None)
         if vel is None or vel.length_squared() < 0.01:
             return
 
@@ -399,7 +412,7 @@ class BaseEntity:
         Returns:
             True if applied, False if entity has no velocity or invalid direction
         """
-        if not hasattr(self, 'velocity') or direction is None:
+        if not hasattr(self, "velocity") or direction is None:
             return False
 
         # Normalize direction
@@ -440,27 +453,34 @@ class BaseEntity:
         """Check if entity is beyond cleanup margin."""
         m = margin if margin is not None else self.get_cleanup_margin()
         return (
-            self.rect.right < -m or
-            self.rect.left > Display.WIDTH + m or
-            self.rect.bottom < -m or
-            self.rect.top > Display.HEIGHT + m
+            self.rect.right < -m
+            or self.rect.left > Display.WIDTH + m
+            or self.rect.bottom < -m
+            or self.rect.top > Display.HEIGHT + m
         )
 
     def is_hittable(self) -> bool:
         """Check if entity is within damage zone."""
         m = self.get_damage_margin()
         return (
-            self.rect.right > m and
-            self.rect.left < Display.WIDTH - m and
-            self.rect.bottom > m and
-            self.rect.top < Display.HEIGHT - m
+            self.rect.right > m
+            and self.rect.left < Display.WIDTH - m
+            and self.rect.bottom > m
+            and self.rect.top < Display.HEIGHT - m
         )
 
     # ===================================================================
     # Sprite State System
     # ===================================================================
 
-    def setup_sprite(self, health, thresholds_dict, color_states, image_states=None, render_mode="shape"):
+    def setup_sprite(
+        self,
+        health,
+        thresholds_dict,
+        color_states,
+        image_states=None,
+        render_mode="shape",
+    ):
         """
         Configure sprite state transitions based on health thresholds.
 
@@ -472,7 +492,9 @@ class BaseEntity:
             render_mode: "shape" or "image"
         """
         # Sort by threshold descending
-        sorted_states = sorted(thresholds_dict.items(), key=lambda x: x[1], reverse=True)
+        sorted_states = sorted(
+            thresholds_dict.items(), key=lambda x: x[1], reverse=True
+        )
 
         # Determine initial state
         state_key = None
@@ -489,24 +511,26 @@ class BaseEntity:
             "thresholds": thresholds_dict,
             "colors": color_states,
             "images": image_states or {},
-            "render_mode": render_mode
+            "render_mode": render_mode,
         }
 
     def get_current_color(self):
         """Get color for current sprite state."""
-        return self._sprite_config.get('colors', {}).get(self._current_sprite, (255, 255, 255))
+        return self._sprite_config.get("colors", {}).get(
+            self._current_sprite, (255, 255, 255)
+        )
 
     def get_target_color(self, state_key):
         """Get color for specified sprite state."""
-        return self._sprite_config.get('colors', {}).get(state_key, (255, 255, 255))
+        return self._sprite_config.get("colors", {}).get(state_key, (255, 255, 255))
 
     def get_current_image(self):
         """Get image for current sprite state."""
-        return self._sprite_config.get('images', {}).get(self._current_sprite)
+        return self._sprite_config.get("images", {}).get(self._current_sprite)
 
     def get_target_image(self, state_key):
         """Get image for specified sprite state."""
-        return self._sprite_config.get('images', {}).get(state_key)
+        return self._sprite_config.get("images", {}).get(state_key)
 
     # ===================================================================
     # Utilities
@@ -558,7 +582,10 @@ class BaseEntity:
             if isinstance(scale, (int, float)):
                 new_size = (int(img.get_width() * scale), int(img.get_height() * scale))
             elif isinstance(scale, (list, tuple)) and len(scale) == 2:
-                new_size = (int(img.get_width() * scale[0]), int(img.get_height() * scale[1]))
+                new_size = (
+                    int(img.get_width() * scale[0]),
+                    int(img.get_height() * scale[1]),
+                )
             else:
                 return img
 

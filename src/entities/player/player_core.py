@@ -32,7 +32,7 @@ from src.graphics.particles.particle_manager import ParticleEmitter
 class PlayerInput:
     """Wrapper to simplify action queries without explicit imports."""
 
-    __slots__ = ('input_manager',)
+    __slots__ = ("input_manager",)
 
     def __init__(self, input_manager):
         self.input_manager = input_manager
@@ -57,8 +57,9 @@ class PlayerInput:
 class Player(BaseEntity):
     """Represents the controllable player entity."""
 
-    def __init__(self, x=None, y=None, image=None,
-                 draw_manager=None, input_manager=None):
+    def __init__(
+        self, x=None, y=None, image=None, draw_manager=None, input_manager=None
+    ):
         """Initialize the player entity."""
 
         # ========================================
@@ -71,8 +72,7 @@ class Player(BaseEntity):
         missing = [s for s in _REQUIRED_SECTIONS if s not in cfg]
         if missing:
             DebugLogger.fail(
-                f"player.json missing required sections: {missing}",
-                category="loading"
+                f"player.json missing required sections: {missing}", category="loading"
             )
             raise ValueError(f"Invalid player.json: missing {missing}")
 
@@ -90,7 +90,6 @@ class Player(BaseEntity):
         if self.render_mode == "image":
             if image is None:
                 sprite_path = render.get("sprite", {}).get("path")
-                scale = (size[0], size[1])  # tuple scale for target dimensions
                 # Calculate scale factor from original image size
                 if sprite_path and os.path.exists(sprite_path):
                     temp_img = pygame.image.load(sprite_path).convert_alpha()
@@ -108,7 +107,7 @@ class Player(BaseEntity):
                 "type": default_state["shape_type"],
                 "color": tuple(default_state["color"]),
                 "size": size,
-                "kwargs": {}
+                "kwargs": {},
             }
 
         # Spawn position
@@ -118,10 +117,16 @@ class Player(BaseEntity):
         # 3. Base Entity Init
         # ========================================
         # Build hitbox config from player config
-        hitbox_config = {'scale': core["hitbox_scale"]}
+        hitbox_config = {"scale": core["hitbox_scale"]}
 
-        super().__init__(x, y, image=image, shape_data=shape_data,
-                         draw_manager=draw_manager, hitbox_config=hitbox_config)
+        super().__init__(
+            x,
+            y,
+            image=image,
+            shape_data=shape_data,
+            draw_manager=draw_manager,
+            hitbox_config=hitbox_config,
+        )
 
         if self.render_mode == "shape":
             self.shape_data = shape_data
@@ -177,7 +182,9 @@ class Player(BaseEntity):
             images = {}
             for state_key, path in health_cfg["image_states"].items():
                 # Reuse initial image for normal state if same path
-                if state_key == "normal" and path == render.get("sprite", {}).get("path"):
+                if state_key == "normal" and path == render.get("sprite", {}).get(
+                    "path"
+                ):
                     images[state_key] = image  # Reuse already loaded
                 else:
                     images[state_key] = self._load_and_scale(path, size)
@@ -188,7 +195,7 @@ class Player(BaseEntity):
             thresholds_dict=self.health_thresholds,
             color_states={k: tuple(v) for k, v in health_cfg["color_states"].items()},
             image_states=images,
-            render_mode=self.render_mode
+            render_mode=self.render_mode,
         )
 
         # ========================================
@@ -221,9 +228,9 @@ class Player(BaseEntity):
         self.spread_cooldown = secondary.get("cooldown", 1.5)
         self.spread_damage = secondary.get("damage", 0.5)
         self.spread_speed = secondary.get("speed", 700)
-        self.spread_charge_levels = secondary.get("charge_levels", [
-            {"time": 0.0, "count": 3, "angle": 15}
-        ])
+        self.spread_charge_levels = secondary.get(
+            "charge_levels", [{"time": 0.0, "count": 3, "angle": 15}]
+        )
         self.spread_timer = self.spread_cooldown
         self.spread_charge = 0.0
         self.spread_charging = False
@@ -312,7 +319,7 @@ class Player(BaseEntity):
 
         # Track STUN state before update
         was_stunned = self.state_manager.has_state(PlayerEffectState.STUN)
-        in_recovery = self.state_manager.has_state(PlayerEffectState.RECOVERY)
+        self.state_manager.has_state(PlayerEffectState.RECOVERY)
 
         self.anim_manager.update(dt)
         self.state_manager.update(dt)
@@ -323,7 +330,9 @@ class Player(BaseEntity):
         if was_stunned and not self.state_manager.has_state(PlayerEffectState.STUN):
             if self.state_manager.has_state(PlayerEffectState.RECOVERY):
                 recovery_cfg = self.state_manager.state_config.get("recovery", {})
-                self.anim_manager.play("recovery", duration=recovery_cfg.get("duration", 2.5))
+                self.anim_manager.play(
+                    "recovery", duration=recovery_cfg.get("duration", 2.5)
+                )
                 self._spawn_shield()  # ADD
 
         # Update shield state
@@ -340,8 +349,16 @@ class Player(BaseEntity):
             # Still update animation during cutscenes
             pass
 
-    def _spawn_shield(self, slot="recovery", duration=None, radius=56, knockback=350,
-                      can_damage=False, damage=0, color=(100, 200, 255)):
+    def _spawn_shield(
+        self,
+        slot="recovery",
+        duration=None,
+        radius=56,
+        knockback=350,
+        can_damage=False,
+        damage=0,
+        color=(100, 200, 255),
+    ):
         """Spawn shield to specified slot."""
         # Check slot
         if slot == "recovery":
@@ -357,7 +374,7 @@ class Player(BaseEntity):
             color=color,
             knockback_strength=knockback,
             can_damage=can_damage,
-            damage_amount=damage
+            damage_amount=damage,
         )
 
         # Register
@@ -376,7 +393,9 @@ class Player(BaseEntity):
 
         DebugLogger.state(f"{slot.capitalize()} shield spawned", category="player")
 
-    def spawn_item_shield(self, duration, radius=56, knockback=150, damage=1, color=(100, 255, 150)):
+    def spawn_item_shield(
+        self, duration, radius=56, knockback=150, damage=1, color=(100, 255, 150)
+    ):
         """Spawn item-based shield with damage capability."""
         self._spawn_shield(
             slot="item",
@@ -385,7 +404,7 @@ class Player(BaseEntity):
             knockback=knockback,
             can_damage=True,
             damage=damage,
-            color=color
+            color=color,
         )
 
     def _despawn_shield(self):
@@ -413,7 +432,9 @@ class Player(BaseEntity):
             self._shield.update(dt)
 
             # Warning blink in last 30% of recovery
-            remaining = self.state_manager.get_remaining_time(PlayerEffectState.RECOVERY)
+            remaining = self.state_manager.get_remaining_time(
+                PlayerEffectState.RECOVERY
+            )
             recovery_cfg = self.state_manager.state_config.get("recovery", {})
             duration = recovery_cfg.get("duration", 2.5)
 
@@ -498,7 +519,9 @@ class Player(BaseEntity):
         """Add a particle emitter for an active buff."""
         # Higher emit rate for speed trail effect
         emit_rate = 40 if stat_name == "speed" else 20
-        self._buff_emitters[stat_name] = ParticleEmitter(preset_name, emit_rate=emit_rate)
+        self._buff_emitters[stat_name] = ParticleEmitter(
+            preset_name, emit_rate=emit_rate
+        )
 
     def draw(self, draw_manager):
         """Render player if visible."""
@@ -516,7 +539,11 @@ class Player(BaseEntity):
     def on_collision(self, other, collision_tag=None):
         """Handle collision events."""
 
-        tag = collision_tag if collision_tag is not None else getattr(other, "collision_tag", None)
+        tag = (
+            collision_tag
+            if collision_tag is not None
+            else getattr(other, "collision_tag", None)
+        )
         if tag is None:
             return
 
@@ -543,8 +570,7 @@ class Player(BaseEntity):
             self._level_up()
 
         DebugLogger.state(
-            f"Experience: +{exp_gain} ({self.exp}/{self.exp_required})",
-            category="exp"
+            f"Experience: +{exp_gain} ({self.exp}/{self.exp_required})", category="exp"
         )
 
     def _level_up(self):
@@ -557,8 +583,7 @@ class Player(BaseEntity):
         stats.max_level_reached = max(stats.max_level_reached, self.level)
 
         DebugLogger.state(
-            f"Level: {self.level}, Next={self.exp_required}",
-            category="exp"
+            f"Level: {self.level}, Next={self.exp_required}", category="exp"
         )
 
     # ===========================================================
@@ -596,5 +621,5 @@ class Player(BaseEntity):
             "size": bullet_cfg.get("size", [16, 32]),
             "damage": primary.get("damage", 1),
             "color": (255, 255, 100),
-            "radius": 4
+            "radius": 4,
         }

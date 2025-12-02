@@ -16,16 +16,15 @@ from src.entities.player.player_state import PlayerEffectState
 from src.graphics.particles.particle_manager import (
     ParticleEmitter,
     Particle,
-    SpriteCache,
 )
 
 
 # Charge color gradient: blue -> cyan -> yellow -> white
 CHARGE_COLORS = [
-    (100, 180, 255),   # 0% - Blue
-    (100, 255, 255),   # 33% - Cyan
-    (255, 255, 100),   # 66% - Yellow
-    (255, 255, 255),   # 100% - White
+    (100, 180, 255),  # 0% - Blue
+    (100, 255, 255),  # 33% - Cyan
+    (255, 255, 100),  # 66% - Yellow
+    (255, 255, 255),  # 100% - White
 ]
 
 
@@ -115,9 +114,11 @@ def update_spread_shot(player, dt: float):
 
         # Check if max charge just reached
         if prev_charge < max_time and player.spread_charge >= max_time:
-            if not getattr(player, '_spread_max_reached', False):
+            if not getattr(player, "_spread_max_reached", False):
                 player._spread_max_reached = True
-                ParticleEmitter.burst("spread_charge_full", player.rect.center, count=20)
+                ParticleEmitter.burst(
+                    "spread_charge_full", player.rect.center, count=20
+                )
                 DebugLogger.state("Spread shot FULLY CHARGED!", category="combat")
 
     # Release = fire
@@ -153,7 +154,7 @@ def _get_charge_color(charge_ratio: float) -> tuple:
 
 def _emit_charge_particles_inward(player, dt: float):
     """Emit particles - inward while charging, outward when fully charged."""
-    if not hasattr(player, '_charge_emit_timer'):
+    if not hasattr(player, "_charge_emit_timer"):
         player._charge_emit_timer = 0.0
 
     player._charge_emit_timer += dt
@@ -187,13 +188,15 @@ def _emit_charge_particles_inward(player, dt: float):
                 lifetime = random.uniform(0.3, 0.5)
 
                 particle = Particle(
-                    x=cx, y=cy,
-                    vx=vx, vy=vy,
+                    x=cx,
+                    y=cy,
+                    vx=vx,
+                    vy=vy,
                     size=size,
                     color=color,
                     lifetime=lifetime,
                     glow=True,
-                    shrink=True
+                    shrink=True,
                 )
                 ParticleEmitter._active_particles.append(particle)
         else:
@@ -214,13 +217,15 @@ def _emit_charge_particles_inward(player, dt: float):
                 lifetime = spawn_dist / speed
 
                 particle = Particle(
-                    x=spawn_x, y=spawn_y,
-                    vx=vx, vy=vy,
+                    x=spawn_x,
+                    y=spawn_y,
+                    vx=vx,
+                    vy=vy,
                     size=size,
                     color=color,
                     lifetime=lifetime,
                     glow=True,
-                    shrink=True
+                    shrink=True,
                 )
                 ParticleEmitter._active_particles.append(particle)
 
@@ -248,8 +253,7 @@ def _fire_spread(player):
         angles = [0]
     else:
         angles = [
-            -half_angle + (2 * half_angle * i / (count - 1))
-            for i in range(count)
+            -half_angle + (2 * half_angle * i / (count - 1)) for i in range(count)
         ]
 
     # Spawn bullets
@@ -270,6 +274,5 @@ def _fire_spread(player):
         player.sound_manager.play_bfx("player_shoot")
 
     DebugLogger.state(
-        f"Spread shot: {count} bullets, ±{half_angle}°",
-        category="combat"
+        f"Spread shot: {count} bullets, ±{half_angle}°", category="combat"
     )

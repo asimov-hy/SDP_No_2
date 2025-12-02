@@ -11,7 +11,6 @@ from src.core.debug.debug_logger import DebugLogger
 
 # Entity and system imports
 from src.entities.player.player_core import Player
-from src.entities.items.base_item import BaseItem
 
 from src.systems.entity_management.bullet_manager import BulletManager
 from src.systems.entity_management.spawn_manager import SpawnManager
@@ -28,8 +27,8 @@ from src.systems.effects.effects_manager import EffectsManager
 
 # Animation auto-register imports
 from src.graphics.animations.entities_animation import player_animation  # noqa: F401
-from src.graphics.animations.entities_animation import enemy_animation   # noqa: F401
-from src.graphics.animations.animation_effects import common_animation   # noqa: F401
+from src.graphics.animations.entities_animation import enemy_animation  # noqa: F401
+from src.graphics.animations.animation_effects import common_animation  # noqa: F401
 
 from src.ui.core.ui_manager import UIManager
 
@@ -60,26 +59,24 @@ class GameSystemInitializer(SystemInitializer):
         systems = {}
 
         # Initialize systems in dependency order
-        systems['ui'] = self._init_ui()
-        systems['player'] = self._init_player()
+        systems["ui"] = self._init_ui()
+        systems["player"] = self._init_player()
 
         # Combat systems (depend on player)
-        combat_systems = self._init_combat(systems['player'])
+        combat_systems = self._init_combat(systems["player"])
         systems.update(combat_systems)
 
         # Spawning systems (depend on collision)
-        spawn_systems = self._init_spawning(systems['collision_manager'])
+        spawn_systems = self._init_spawning(systems["collision_manager"])
         systems.update(spawn_systems)
 
         # Link managers to player for shield system
-        systems['player']._collision_manager = systems['collision_manager']
-        systems['player']._spawn_manager = systems['spawn_manager']
+        systems["player"]._collision_manager = systems["collision_manager"]
+        systems["player"]._spawn_manager = systems["spawn_manager"]
 
         # Level system (depends on spawn + player)
-        systems['level_manager'] = self._init_level_system(
-            systems['spawn_manager'],
-            systems['player'],
-            systems['bullet_manager']
+        systems["level_manager"] = self._init_level_system(
+            systems["spawn_manager"], systems["player"], systems["bullet_manager"]
         )
 
         DebugLogger.init_entry("Game Systems Initialized")
@@ -103,7 +100,7 @@ class GameSystemInitializer(SystemInitializer):
             x=start_x,
             y=start_y,
             draw_manager=self.draw_manager,
-            input_manager=self.input_manager
+            input_manager=self.input_manager,
         )
 
         # Register player for cross-system access
@@ -142,7 +139,7 @@ class GameSystemInitializer(SystemInitializer):
         collision_manager = CollisionManager(
             player,
             bullet_manager,
-            None  # spawn_manager not ready
+            None,  # spawn_manager not ready
         )
         bullet_manager.link_collision_manager(collision_manager)
 
@@ -153,7 +150,7 @@ class GameSystemInitializer(SystemInitializer):
 
         return {
             "bullet_manager": bullet_manager,
-            "collision_manager": collision_manager
+            "collision_manager": collision_manager,
         }
 
     def _init_spawning(self, collision_manager) -> dict:
@@ -166,18 +163,13 @@ class GameSystemInitializer(SystemInitializer):
         Returns:
             dict: {"spawn_manager": ..., "item_manager": ..., "effects_manager": ...}
         """
-        spawn_manager = SpawnManager(
-            self.draw_manager,
-            self.display,
-            collision_manager
-        )
+        spawn_manager = SpawnManager(self.draw_manager, self.display, collision_manager)
 
         collision_manager.spawn_manager = spawn_manager
         spawn_manager.enable_pooling("enemy", "straight", prewarm_count=10)
 
         item_manager = ItemManager(
-            spawn_manager=spawn_manager,
-            item_data_path="items.json"
+            spawn_manager=spawn_manager, item_data_path="items.json"
         )
         DebugLogger.init_sub("Connected [ItemManager] → [SpawnManager]")
 
@@ -187,7 +179,7 @@ class GameSystemInitializer(SystemInitializer):
         return {
             "spawn_manager": spawn_manager,
             "item_manager": item_manager,
-            "effects_manager": effects_manager
+            "effects_manager": effects_manager,
         }
 
     def _init_level_system(self, spawn_manager, player, bullet_manager) -> LevelManager:

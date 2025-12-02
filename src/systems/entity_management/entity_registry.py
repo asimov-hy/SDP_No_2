@@ -26,13 +26,13 @@ class EntityRegistry:
         "bullets": "projectile",
         "items": "pickup",
         "obstacles": "obstacle",
-        "hazards": "hazard"
+        "hazards": "hazard",
     }
 
     _REQUIRED_FIELDS = {
-        'enemy': ['hp', 'speed', 'exp'],
-        'projectile': ['damage', 'radius'],
-        'pickup': ['effect_type', 'value']
+        "enemy": ["hp", "speed", "exp"],
+        "projectile": ["damage", "radius"],
+        "pickup": ["effect_type", "value"],
     }
 
     # ===========================================================
@@ -46,7 +46,7 @@ class EntityRegistry:
         cls._registry[category][name] = entity_class
         DebugLogger.state(
             f"Registered entity [{category}:{name}] -> {entity_class.__name__}",
-            category="loading"
+            category="loading",
         )
 
     @classmethod
@@ -61,8 +61,8 @@ class EntityRegistry:
         - No duplicate registrations (warns if overwriting)
         - Entity class is valid type
         """
-        category = getattr(entity_class, '__registry_category__', None)
-        name = getattr(entity_class, '__registry_name__', None)
+        category = getattr(entity_class, "__registry_category__", None)
+        name = getattr(entity_class, "__registry_name__", None)
 
         # Validation 1: Check attributes exist
         if not category or not name:
@@ -74,7 +74,7 @@ class EntityRegistry:
             DebugLogger.warn(
                 f"[Registry] Invalid category type for {entity_class.__name__}: "
                 f"expected str, got {type(category).__name__}",
-                category="loading"
+                category="loading",
             )
             return
 
@@ -82,7 +82,7 @@ class EntityRegistry:
             DebugLogger.warn(
                 f"[Registry] Invalid name type for {entity_class.__name__}: "
                 f"expected str, got {type(name).__name__}",
-                category="loading"
+                category="loading",
             )
             return
 
@@ -90,14 +90,14 @@ class EntityRegistry:
         if not category.strip():
             DebugLogger.warn(
                 f"[Registry] Empty category string for {entity_class.__name__}",
-                category="loading"
+                category="loading",
             )
             return
 
         if not name.strip():
             DebugLogger.warn(
                 f"[Registry] Empty name string for {entity_class.__name__}",
-                category="loading"
+                category="loading",
             )
             return
 
@@ -107,7 +107,7 @@ class EntityRegistry:
                 DebugLogger.warn(
                     f"[Registry] Unknown category '{category}' for {entity_class.__name__}. "
                     f"Valid categories: {EntityCategory.REGISTRY_VALID}",
-                    category="loading"
+                    category="loading",
                 )
                 # Still allow registration for flexibility, just warn
         except (TypeError, AttributeError):
@@ -120,14 +120,13 @@ class EntityRegistry:
             DebugLogger.warn(
                 f"[Registry] Overwriting [{category}:{name}]: "
                 f"{existing.__name__} → {entity_class.__name__}",
-                category="loading"
+                category="loading",
             )
 
         # Validation 6: Verify it's a class type
         if not isinstance(entity_class, type):
             DebugLogger.warn(
-                f"[Registry] {entity_class} is not a class type",
-                category="loading"
+                f"[Registry] {entity_class} is not a class type", category="loading"
             )
             return
 
@@ -149,21 +148,26 @@ class EntityRegistry:
             try:
                 package = importlib.import_module(package_path)
             except ImportError as e:
-                DebugLogger.warn(f"Cannot import package {package_path}: {e}", category="loading")
+                DebugLogger.warn(
+                    f"Cannot import package {package_path}: {e}", category="loading"
+                )
                 continue
 
             for importer, modname, ispkg in pkgutil.walk_packages(
-                    package.__path__, prefix=package_path + "."
+                package.__path__, prefix=package_path + "."
             ):
                 if ispkg:
                     continue  # Skip sub-packages, let walk handle them
                 try:
                     importlib.import_module(modname)
                 except Exception as e:
-                    DebugLogger.warn(f"Failed to import {modname}: {e}", category="loading")
+                    DebugLogger.warn(
+                        f"Failed to import {modname}: {e}", category="loading"
+                    )
 
         DebugLogger.init_sub(
-            f"Entity discovery complete: {cls.get_registry_stats()['total_entities']} entities registered")
+            f"Entity discovery complete: {cls.get_registry_stats()['total_entities']} entities registered"
+        )
 
     @classmethod
     def load_entity_data(cls, config_path: str):
@@ -175,7 +179,7 @@ class EntityRegistry:
         """
         data = load_config(config_path, default_dict={})
 
-        filename = config_path.split('/')[-1].replace('.json', '')
+        filename = config_path.split("/")[-1].replace(".json", "")
         category = cls._CATEGORY_MAP.get(filename, filename)
         required = cls._REQUIRED_FIELDS.get(category, [])
 
@@ -184,7 +188,7 @@ class EntityRegistry:
             if missing:
                 DebugLogger.warn(
                     f"[Registry] Entity '{name}' missing fields: {missing}",
-                    category="loading"
+                    category="loading",
                 )
 
         if category not in cls._entity_data:
@@ -262,7 +266,7 @@ class EntityRegistry:
         if entity_cls is None:
             DebugLogger.warn(
                 f"[Registry] Cannot create unregistered entity [{category}:{name}]",
-                category="entity_spawn"
+                category="entity_spawn",
             )
             return None
 
@@ -273,14 +277,14 @@ class EntityRegistry:
             DebugLogger.warn(
                 f"[Registry] Failed to create [{category}:{name}]: {e}. "
                 f"Check constructor signature.",
-                category="entity_spawn"
+                category="entity_spawn",
             )
             return None
         except Exception as e:
             # Other exceptions
             DebugLogger.warn(
                 f"[Registry] Failed to create [{category}:{name}]: {e}",
-                category="entity_spawn"
+                category="entity_spawn",
             )
             return None
 
@@ -348,7 +352,7 @@ class EntityRegistry:
             "total_categories": len(cls._registry),
             "total_entities": 0,
             "entities_per_category": {},
-            "data_loaded_categories": list(cls._entity_data.keys())
+            "data_loaded_categories": list(cls._entity_data.keys()),
         }
 
         for category, entities in cls._registry.items():
@@ -376,13 +380,13 @@ class EntityRegistry:
         if has_class and not has_data:
             DebugLogger.warn(
                 f"[Registry] Entity [{category}:{name}] registered but has no JSON data",
-                category="loading"
+                category="loading",
             )
 
         if has_data and not has_class:
             DebugLogger.warn(
                 f"[Registry] Entity [{category}:{name}] has JSON data but no class registered",
-                category="loading"
+                category="loading",
             )
 
         return has_class and has_data

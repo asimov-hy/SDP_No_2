@@ -12,7 +12,8 @@ from typing import Tuple
 from ..core.ui_element import UIElement
 from ..core.ui_loader import register_element
 
-@register_element('needle')
+
+@register_element("needle")
 class UINeedle(UIElement):
     """
     A UI element that visualizes a value by rotating an image.
@@ -30,29 +31,29 @@ class UINeedle(UIElement):
 
         # Retrieve data configuration
         # Fallback to 'config' if 'data' key is missing (supports Flat Format YAML)
-        data = config.get('data')
+        data = config.get("data")
         if data is None:
             data = config
 
         # Binding path for dynamic max value (e.g., 'player.max_health')
-        self.bind_max_path = data.get('bind_max')
+        self.bind_max_path = data.get("bind_max")
 
         # Value range settings
-        self.min_value = data.get('min_value', 0)  # Health typically starts at 0
+        self.min_value = data.get("min_value", 0)  # Health typically starts at 0
 
         # Max value: use config default, will be overridden by bind_max if set
-        self.max_value = data.get('max_value', 100)
+        self.max_value = data.get("max_value", 100)
 
         # Binding path for current value (e.g., 'player.health')
-        self.bind_path = data.get('bind')
+        self.bind_path = data.get("bind")
 
         # Initial current value - will be updated by binding system
-        self.current_value = data.get('current_value', self.max_value)
+        self.current_value = data.get("current_value", self.max_value)
 
         # Angle settings in degrees
         # Typically negative for left, positive for right (e.g., -60 to 60)
-        self.min_angle = data.get('min_angle', -80)
-        self.max_angle = data.get('max_angle', 80)
+        self.min_angle = data.get("min_angle", -80)
+        self.max_angle = data.get("max_angle", 80)
 
         # Calculate initial rotation
         self._update_rotation()
@@ -95,7 +96,7 @@ class UINeedle(UIElement):
         target_angle = self.min_angle + (self.max_angle - self.min_angle) * ratio
 
         # Optimization: Only mark dirty (re-render) if the angle changed significantly
-        current_rot = getattr(self, 'rotation', None)
+        current_rot = getattr(self, "rotation", None)
         if current_rot is None or abs(current_rot - target_angle) > 0.01:
             self.rotation = target_angle
             self.mark_dirty()

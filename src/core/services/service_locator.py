@@ -5,24 +5,25 @@ Centralized access to core game services and systems.
 Provides dependency injection for scenes and managers.
 """
 
-from typing import Any, Optional
+from typing import Any
 
 
 # ===========================================================
 # Service Locator
 # ===========================================================
 
+
 class ServiceLocator:
     """Container for core game services with scene-local and global registries."""
 
     __slots__ = (
-        'scene_manager',
-        'display_manager',
-        'input_manager',
-        'draw_manager',
-        'ui_manager',
-        '_global_systems',
-        '_entities'
+        "scene_manager",
+        "display_manager",
+        "input_manager",
+        "draw_manager",
+        "ui_manager",
+        "_global_systems",
+        "_entities",
     )
 
     def __init__(self, scene_manager):

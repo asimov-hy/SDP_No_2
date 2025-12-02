@@ -25,9 +25,17 @@ from src.core.debug.debug_logger import DebugLogger
 class WaypointShooter(BaseEnemy):
     """Enemy that shoots bullets while moving."""
 
-    __slots__ = ('waypoint_speed', 'waypoints', 'current_waypoint_index',
-                 'shoot_interval', 'shoot_timer', 'bullet_speed', 'bullet_image',
-                 'player_ref', 'bullet_manager')
+    __slots__ = (
+        "waypoint_speed",
+        "waypoints",
+        "current_waypoint_index",
+        "shoot_interval",
+        "shoot_timer",
+        "bullet_speed",
+        "bullet_image",
+        "player_ref",
+        "bullet_manager",
+    )
 
     __registry_category__ = EntityCategory.ENEMY
     __registry_name__ = "waypoint_shooter"
@@ -36,14 +44,29 @@ class WaypointShooter(BaseEnemy):
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(self, x, y, speed=None, health=None, size=None, draw_manager=None,
-                 waypoints=None, waypoint_speed=None, shoot_interval=None, bullet_speed=None,
-                 player_ref=None, bullet_manager=None, **kwargs):
+    def __init__(
+        self,
+        x,
+        y,
+        speed=None,
+        health=None,
+        size=None,
+        draw_manager=None,
+        waypoints=None,
+        waypoint_speed=None,
+        shoot_interval=None,
+        bullet_speed=None,
+        player_ref=None,
+        bullet_manager=None,
+        **kwargs,
+    ):
         """
         JSON-driven shooter enemy with optional overrides.
         """
         if WaypointShooter._cached_defaults is None:
-            WaypointShooter._cached_defaults = EntityRegistry.get_data("enemy", "waypoint_shooter")
+            WaypointShooter._cached_defaults = EntityRegistry.get_data(
+                "enemy", "waypoint_shooter"
+            )
         defaults = WaypointShooter._cached_defaults
 
         speed = speed if speed is not None else defaults.get("speed", 100)
@@ -51,18 +74,35 @@ class WaypointShooter(BaseEnemy):
 
         scale = defaults.get("scale", 1.0)
 
-        waypoint_speed = waypoint_speed if waypoint_speed is not None else defaults.get("waypoint_speed", 120)
-        waypoints = waypoints if waypoints is not None else defaults.get("waypoints", None)
+        waypoint_speed = (
+            waypoint_speed
+            if waypoint_speed is not None
+            else defaults.get("waypoint_speed", 120)
+        )
+        waypoints = (
+            waypoints if waypoints is not None else defaults.get("waypoints", None)
+        )
 
-        shoot_interval = shoot_interval if shoot_interval is not None else defaults.get("shoot_interval", 1.25)
-        bullet_speed = bullet_speed if bullet_speed is not None else defaults.get("bullet_speed", 300)
+        shoot_interval = (
+            shoot_interval
+            if shoot_interval is not None
+            else defaults.get("shoot_interval", 1.25)
+        )
+        bullet_speed = (
+            bullet_speed
+            if bullet_speed is not None
+            else defaults.get("bullet_speed", 300)
+        )
 
         # Load and scale bullet image
         bullet_image_path = defaults.get("bullet_image", "assets/images/null.png")
         bullet_scale = defaults.get("bullet_scale", 0.3)
         bullet_img = pygame.image.load(bullet_image_path).convert_alpha()
         original_size = bullet_img.get_size()
-        new_size = (int(original_size[0] * bullet_scale), int(original_size[1] * bullet_scale))
+        new_size = (
+            int(original_size[0] * bullet_scale),
+            int(original_size[1] * bullet_scale),
+        )
         self.bullet_image = pygame.transform.scale(bullet_img, new_size)
 
         image_path = defaults.get("image", "assets/images/null.png")
@@ -79,13 +119,14 @@ class WaypointShooter(BaseEnemy):
         img = pygame.transform.scale(img, (int(w * scale), int(h * scale)))
 
         super().__init__(
-            x, y,
+            x,
+            y,
             image=img,
             draw_manager=draw_manager,
             speed=speed,
             health=health,
             spawn_edge=kwargs.get("spawn_edge", None),
-            hitbox_config=hitbox_config
+            hitbox_config=hitbox_config,
         )
 
         # Store EXP from JSON
@@ -107,7 +148,7 @@ class WaypointShooter(BaseEnemy):
 
         DebugLogger.init(
             f"Spawned WaypointShooter at ({x}, {y}) | Waypoints={len(self.waypoints)} | ShootInterval={shoot_interval}",
-            category="enemy"
+            category="enemy",
         )
 
     # ===========================================================
@@ -133,11 +174,13 @@ class WaypointShooter(BaseEnemy):
         dy = target[1] - self.pos.y
 
         # distance squared
-        dist_sq = dx*dx + dy*dy
+        dist_sq = dx * dx + dy * dy
 
         # Reached waypoint threshold (5px -> 25px squared)
         if dist_sq < 25:
-            self.current_waypoint_index = (self.current_waypoint_index + 1) % len(self.waypoints)
+            self.current_waypoint_index = (self.current_waypoint_index + 1) % len(
+                self.waypoints
+            )
             self._update_waypoint_velocity()
         elif dist_sq > 0:
             # Manually normalize and apply speed
@@ -156,7 +199,7 @@ class WaypointShooter(BaseEnemy):
         dx = target[0] - self.pos.x
         dy = target[1] - self.pos.y
 
-        dist_sq = dx*dx + dy*dy
+        dist_sq = dx * dx + dy * dy
 
         if dist_sq > 0:
             dist = math.sqrt(dist_sq)
@@ -165,7 +208,11 @@ class WaypointShooter(BaseEnemy):
 
     def _rotate_towards_player(self):
         """Rotate sprite to face player."""
-        if not self._rotation_enabled or not self._base_image or self.player_ref is None:
+        if (
+            not self._rotation_enabled
+            or not self._base_image
+            or self.player_ref is None
+        ):
             return
 
         # Calculate direction to player
@@ -220,31 +267,39 @@ class WaypointShooter(BaseEnemy):
             vel=(dir_x * self.bullet_speed, dir_y * self.bullet_speed),
             image=self.bullet_image,
             owner="enemy",
-            damage=1
+            damage=1,
         )
 
     # ===========================================================
     # Reset for Object Pooling
     # ===========================================================
-    def reset(self, x, y, speed=150, health=3, size=60,
-              waypoints=None, waypoint_speed=100, shoot_interval=1.0,
-              bullet_speed=300, player_ref=None, **kwargs):
+    def reset(
+        self,
+        x,
+        y,
+        speed=150,
+        health=3,
+        size=60,
+        waypoints=None,
+        waypoint_speed=100,
+        shoot_interval=1.0,
+        bullet_speed=300,
+        player_ref=None,
+        **kwargs,
+    ):
         """Reset waypoint shooter for pooling."""
 
         # Reset base properties
         super().reset(
-            x, y,
-            speed=speed,
-            health=health,
-            spawn_edge=kwargs.get("spawn_edge")
+            x, y, speed=speed, health=health, spawn_edge=kwargs.get("spawn_edge")
         )
 
         # Update size if changed
-        if size != getattr(self, 'size', None):
+        if size != getattr(self, "size", None):
             self.size = size
             norm_size = (size, size) if isinstance(size, int) else size
             # Reload and scale image
-            if hasattr(self, '_base_image') and self._base_image:
+            if hasattr(self, "_base_image") and self._base_image:
                 self.image = pygame.transform.scale(self._base_image, norm_size)
                 self.rect = self.image.get_rect(center=self.pos)
 

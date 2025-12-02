@@ -11,7 +11,7 @@ from ..core.ui_element import UIElement, GradientColor
 from ..core.ui_loader import register_element
 
 
-@register_element('button')
+@register_element("button")
 class UIButton(UIElement):
     """Clickable button with hover and press states."""
 
@@ -25,21 +25,25 @@ class UIButton(UIElement):
         super().__init__(config)
 
         # Extract config groups
-        graphic_dict = config.get('graphic', config)
-        data_dict = config.get('data', config)
+        graphic_dict = config.get("graphic", config)
+        data_dict = config.get("data", config)
 
         # Button-specific properties
-        self.action = data_dict.get('action')
-        self.icon = graphic_dict.get('icon')
+        self.action = data_dict.get("action")
+        self.icon = graphic_dict.get("icon")
 
         # Hover/pressed colors
         self.hover_color = None
         self.pressed_color = None
 
         if self.hover_config:
-            self.hover_color = self._parse_color(self.hover_config.get('color', self.color))
+            self.hover_color = self._parse_color(
+                self.hover_config.get("color", self.color)
+            )
             self.pressed_color = self._parse_color(
-                self.hover_config.get('pressed_color', tuple(max(c - 40, 0) for c in self.color[:3]))
+                self.hover_config.get(
+                    "pressed_color", tuple(max(c - 40, 0) for c in self.color[:3])
+                )
             )
         else:
             if isinstance(self.color, GradientColor):
@@ -61,7 +65,7 @@ class UIButton(UIElement):
         self.hover_t = 0.0
 
         # Transition speed
-        self.transition_speed = graphic_dict.get('transition_speed', 8.0)
+        self.transition_speed = graphic_dict.get("transition_speed", 8.0)
 
     def update(self, dt: float, mouse_pos: Tuple[int, int], binding_system=None):
         """Update button state."""
@@ -119,26 +123,37 @@ class UIButton(UIElement):
             if isinstance(self.color, GradientColor):
                 self._fill_color(surf, self.color)
                 if self.hover_t > 0.01:
-                    tint_surf = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+                    tint_surf = pygame.Surface(
+                        (self.width, self.height), pygame.SRCALPHA
+                    )
                     base_tint_alpha = int(100 * self.hover_t)
                     tint_colors = []
                     for c in self.color.colors:
                         original_alpha = c[3] if len(c) > 3 else 255
                         scaled_alpha = int((original_alpha / 255) * base_tint_alpha)
                         tint_colors.append((255, 255, 255, scaled_alpha))
-                    tint_gradient = GradientColor(colors=tint_colors, direction=self.color.direction)
+                    tint_gradient = GradientColor(
+                        colors=tint_colors, direction=self.color.direction
+                    )
                     self._fill_color(tint_surf, tint_gradient)
                     surf.blit(tint_surf, (0, 0))
             elif self.border_radius > 0:
-                pygame.draw.rect(surf, color, surf.get_rect(), border_radius=self.border_radius)
+                pygame.draw.rect(
+                    surf, color, surf.get_rect(), border_radius=self.border_radius
+                )
             else:
                 surf.fill(color)
 
         # Border
         if self.border > 0:
             if self.border_radius > 0:
-                pygame.draw.rect(surf, self.border_color, surf.get_rect(),
-                                 self.border, border_radius=self.border_radius)
+                pygame.draw.rect(
+                    surf,
+                    self.border_color,
+                    surf.get_rect(),
+                    self.border,
+                    border_radius=self.border_radius,
+                )
             else:
                 pygame.draw.rect(surf, self.border_color, surf.get_rect(), self.border)
 
@@ -174,17 +189,19 @@ class UIButton(UIElement):
         w, h = surface.get_size()
         color = (255, 255, 255)
 
-        if icon_type == 'close':
+        if icon_type == "close":
             pygame.draw.line(surface, color, (w * 0.3, h * 0.3), (w * 0.7, h * 0.7), 3)
             pygame.draw.line(surface, color, (w * 0.7, h * 0.3), (w * 0.3, h * 0.7), 3)
-        elif icon_type == 'pause':
+        elif icon_type == "pause":
             bar_width = w * 0.15
             bar_height = h * 0.5
             pygame.draw.rect(surface, color, (w * 0.3, h * 0.25, bar_width, bar_height))
-            pygame.draw.rect(surface, color, (w * 0.55, h * 0.25, bar_width, bar_height))
-        elif icon_type == 'play':
-            pygame.draw.polygon(surface, color, [
-                (w * 0.3, h * 0.2),
-                (w * 0.3, h * 0.8),
-                (w * 0.7, h * 0.5)
-            ])
+            pygame.draw.rect(
+                surface, color, (w * 0.55, h * 0.25, bar_width, bar_height)
+            )
+        elif icon_type == "play":
+            pygame.draw.polygon(
+                surface,
+                color,
+                [(w * 0.3, h * 0.2), (w * 0.3, h * 0.8), (w * 0.7, h * 0.5)],
+            )

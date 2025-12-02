@@ -9,13 +9,11 @@ They handle player-exclusive logic like i-frames, death cleanup, and visuals.
 
 from src.core.debug.debug_logger import DebugLogger
 from src.core.services.event_manager import (
-    PlayerHealthEvent,
-    FireRateEvent,
     get_events,
     ScreenShakeEvent,
 )
 
-from src.entities.entity_state import LifecycleState, InteractionState
+from src.entities.entity_state import LifecycleState
 from src.entities.player.player_state import PlayerEffectState
 
 from src.graphics.particles.particle_manager import ParticleEmitter
@@ -49,7 +47,9 @@ def damage_collision(player, other):
 
     # RECOVERY state - shield entity handles collisions, skip damage
     if player.state_manager.has_state(PlayerEffectState.RECOVERY):
-        DebugLogger.trace("Player in RECOVERY - shield handles collisions", category="collision")
+        DebugLogger.trace(
+            "Player in RECOVERY - shield handles collisions", category="collision"
+        )
         return
 
     # Apply damage
@@ -57,13 +57,17 @@ def damage_collision(player, other):
     player.health -= damage
     DebugLogger.action(
         f"Player took {damage} damage ({prev_health} → {player.health})",
-        category="collision"
+        category="collision",
     )
 
     # Accumulate stress (we already returned early if in RECOVERY)
-    player.stress = min(player.stress_max, player.stress + damage * player.stress_per_damage)
+    player.stress = min(
+        player.stress_max, player.stress + damage * player.stress_per_damage
+    )
     player._time_since_damage = 0.0
-    DebugLogger.trace(f"Stress: {player.stress:.1f}/{player.stress_threshold}", category="collision")
+    DebugLogger.trace(
+        f"Stress: {player.stress:.1f}/{player.stress_threshold}", category="collision"
+    )
 
     # Calculate knockback direction
     dx = other.pos.x - player.pos.x
@@ -108,14 +112,16 @@ def damage_collision(player, other):
 
 def _apply_light_damage(player, previous_state, target_state):
     """Flash + particles only. No invincibility."""
-    DebugLogger.state(f"Light damage: {previous_state} → {target_state}", category="animation")
+    DebugLogger.state(
+        f"Light damage: {previous_state} → {target_state}", category="animation"
+    )
 
     player.anim_manager.play(
         "damage",
         duration=0.3,
         blink_interval=0.05,
         previous_state=previous_state,
-        target_state=target_state
+        target_state=target_state,
     )
     # No state change - player remains vulnerable
 
@@ -127,7 +133,7 @@ def _apply_heavy_damage(player, previous_state, target_state, direction):
     stun_duration = stun_cfg.get("duration", 0.5)
     knockback = stun_cfg.get("knockback_strength", 400)
 
-    DebugLogger.state(f"HEAVY damage! Entering STUN", category="animation")
+    DebugLogger.state("HEAVY damage! Entering STUN", category="animation")
 
     # Apply stun knockback (replaces collision knockback with stronger force)
     knockback_dir = (-direction[0], -direction[1]) if direction else None
@@ -138,7 +144,7 @@ def _apply_heavy_damage(player, previous_state, target_state, direction):
         "stun",
         duration=stun_duration,
         previous_state=previous_state,
-        target_state=target_state
+        target_state=target_state,
     )
 
     # Enter STUN (auto-chains to DAMAGED via config)
@@ -147,14 +153,14 @@ def _apply_heavy_damage(player, previous_state, target_state, direction):
 
 def _apply_recovery_hit(player, previous_state, target_state):
     """Hit while in RECOVERY state - brief flash only."""
-    DebugLogger.state(f"Hit during RECOVERY state", category="animation")
+    DebugLogger.state("Hit during RECOVERY state", category="animation")
 
     player.anim_manager.play(
         "damage",
         duration=0.2,
         blink_interval=0.05,
         previous_state=previous_state,
-        target_state=target_state
+        target_state=target_state,
     )
 
 
