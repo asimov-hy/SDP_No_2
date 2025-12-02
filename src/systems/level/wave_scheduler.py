@@ -213,6 +213,11 @@ class WaveScheduler:
                 base_params["player_ref"] = self.player
                 base_params["bullet_manager"] = self.bullet_manager
 
+            # Inject references for boss
+            if entity_type == "boss":
+                base_params["player_ref"] = self.player
+                base_params["bullet_manager"] = self.bullet_manager
+
             # Merge movement params with priority system:
             # 1. Explicit enemy_params.direction (highest priority)
             # 2. Movement config direction

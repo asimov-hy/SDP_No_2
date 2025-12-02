@@ -7,14 +7,17 @@ Body becomes vulnerable to bullets only after all parts are destroyed.
 """
 
 import pygame
+import random
 
 from src.entities.enemies.base_enemy import BaseEnemy
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_types import EntityCategory
 from src.entities.entity_state import LifecycleState, InteractionState
 from src.entities.entity_types import CollisionTags
+from src.entities.bosses.boss_attack_artillery import ArtilleryAttack
 
 from src.systems.entity_management.entity_registry import EntityRegistry
+from src.graphics.animations.animation_manager import AnimationManager
 
 from src.core.services.config_manager import load_config
 from src.core.debug.debug_logger import DebugLogger
@@ -80,7 +83,6 @@ class BossPart:
     def anim_manager(self):
         """Lazy-load AnimationManager on first access."""
         if self._anim_manager is None:
-            from src.graphics.animations.animation_manager import AnimationManager
             self._anim_manager = AnimationManager(self)
         return self._anim_manager
 
@@ -158,7 +160,8 @@ class EnemyBoss(BaseEnemy):
 
     __slots__ = (
         'parts', 'body_image',
-        'player_ref', 'bullet_manager', '_boss_config', 'body_vulnerable'
+        'player_ref', 'bullet_manager', '_boss_config', 'body_vulnerable',
+        'attacks', 'current_attack', 'attack_cooldown', 'attack_delay'
     )
 
     __registry_category__ = EntityCategory.ENEMY
@@ -234,6 +237,14 @@ class EnemyBoss(BaseEnemy):
         self.body_vulnerable = True
         self.collision_tag = CollisionTags.ENEMY
 
+        # Attack system
+        self.attacks = {}
+        self.current_attack = None
+        self.attack_cooldown = 2.0  # Initial delay before first attack
+        self.attack_delay = config.get("attack_delay", 3.0)
+
+        self._init_attacks(draw_manager)
+
         DebugLogger.init(
             f"Spawned {boss_type} at ({x}, {y}) | HP={health} | Parts={len(self.parts)}",
             category="enemy"
@@ -276,6 +287,29 @@ class EnemyBoss(BaseEnemy):
                 part = BossPart(part_name, img, scaled_anchor, part_hp, owner=self)
                 part.update_position(self.pos)
                 self.parts[part_name] = part
+
+    def _init_attacks(self, draw_manager):
+        """Initialize attack handlers for each part."""
+
+        # Map part names to attack classes
+        attack_map = {
+            "artillery": ArtilleryAttack,
+            # "mg_left": MachinegunAttack,
+            # "mg_right": MachinegunAttack,
+            # "missile_left": MissileAttack,
+            # "missile_right": MissileAttack,
+            # "laser": LaserAttack,
+        }
+
+        for part_name, part in self.parts.items():
+            attack_class = attack_map.get(part_name)
+            if attack_class:
+                self.attacks[part_name] = attack_class(
+                    part=part,
+                    boss=self,
+                    bullet_manager=self.bullet_manager,
+                    draw_manager=draw_manager
+                )
 
     def register_parts_collision(self, collision_manager):
         """
@@ -324,6 +358,41 @@ class EnemyBoss(BaseEnemy):
                 part.update_position(self.pos)
                 if part._anim_manager:
                     part.anim_manager.update(dt)
+
+        # Update attack system
+        self._update_attacks(dt)
+
+    def _update_attacks(self, dt: float):
+        """Handle attack selection and execution."""
+
+        # Attack in progress
+        if self.current_attack and self.current_attack.is_active:
+            self.current_attack.update(dt)
+            return
+
+        # Cooldown between attacks
+        self.attack_cooldown -= dt
+        if self.attack_cooldown <= 0:
+            self._start_random_attack()
+            self.attack_cooldown = self.attack_delay
+
+    def _start_random_attack(self):
+        """Pick random available attack and start it."""
+
+        # Get attacks for active parts only
+        available = [
+            name for name, attack in self.attacks.items()
+            if self.parts.get(name) and self.parts[name].active
+        ]
+
+        if not available:
+            return
+
+        part_name = random.choice(available)
+        self.current_attack = self.attacks[part_name]
+        self.current_attack.start()
+
+        DebugLogger.state(f"Boss attack: {part_name}", category="enemy")
 
     def take_damage(self, amount: int, source: str = "unknown"):
         """Apply damage and sync damage animation to all active parts."""
@@ -420,3 +489,7 @@ class EnemyBoss(BaseEnemy):
 
         # Reset vulnerability
         self.body_vulnerable = True
+
+        # Reset attack system
+        self.current_attack = None
+        self.attack_cooldown = 2.0
