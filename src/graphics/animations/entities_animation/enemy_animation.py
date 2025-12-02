@@ -57,8 +57,6 @@ def damage_enemy(entity, t):
         entity: Enemy instance
         t: Normalized time (0.0 to 1.0)
     """
-    ctx = getattr(entity, "anim_context", {})
-
     damage_flash(entity, t)
     # flash_white(entity, t, interval=interval)
 
