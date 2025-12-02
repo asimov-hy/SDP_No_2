@@ -4,13 +4,14 @@
 name: build
 
 on:
-  push:
-    tags: [v*]
-  pull_request:
-    tags: [v*]
-
-permissions:
-  contents: read
+  workflow_call:
+    inputs:
+      tags:
+        required: true
+        type: string
+      release_urls:
+        required: true
+        type: string
 
 jobs:
   build:
@@ -29,10 +30,20 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pygame pyinstaller
+        pip install pygame pyinstaller pyyaml
     - name: pyinstaller
       run: |
         pyinstaller --onefile --noconsole main.py
+
+    - name: create a zip file (windows)
+      if: ${{ matrix.os == 'windows-latest' }}
+      run: |
+        tar -acf dist.zip ./dist
+
+    - name: create a zip file (mac os)
+      if: ${{ matrix.os == 'macos-latest' }}
+      run: |
+        zip -r dist.zip ./dist
 
     - name: Upload artifact (windows)
       if: ${{ matrix.os == 'windows-latest' }}
@@ -47,3 +58,25 @@ jobs:
       with:
         name: mac_file
         path: dist/main.app
+
+    - name: Upload release (windows)
+      if: ${{ matrix.os == 'windows-latest' }}
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ inputs.release_urls }}
+        asset_path: ./dist.zip
+        asset_name: main-windows-${{ inputs.tags }}.zip
+        asset_content_type: application/zip
+
+    - name: Upload release (mac os)
+      if: ${{ matrix.os == 'macos-latest' }}
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ inputs.release_urls }}
+        asset_path: ./dist.zip
+        asset_name: main-mac-${{ inputs.tags }}.zip
+        asset_content_type: application/zip
