@@ -51,7 +51,7 @@ class SoundManager:
 
     def load_settings(self):
         self.master_level = self.settings.get("audio", "master_level", 100)
-        self.bgm_level = self.settings.get("audio", "bgm_level", 80)
+        self.bgm_level = self.settings.get("audio", "bgm_level", 100)
         self.bfx_level = self.settings.get("audio", "bfx_level", 100)
 
         # Calculate volume(float) and Apply using int values
