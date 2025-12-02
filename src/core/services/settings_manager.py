@@ -29,8 +29,8 @@ class SettingsManager:
         },
         "audio": {
             "master_volume": 100,
-            "music_volume": 80,
-            "sfx_volume": 100,
+            "music_volume": 100,
+            "bfx_volume": 100,
             "muted": False
         },
         "controls": {
@@ -122,7 +122,7 @@ class SettingsManager:
             with open(self.settings_file, 'r') as f:
                 loaded = json.load(f)
             self._merge_recursive(merged_settings, loaded)
-            DebugLogger.system(f"Loaded user settings from {self.user_file}")
+            DebugLogger.system(f"Loaded user settings from {self.settings_file}")
 
         except (json.JSONDecodeError, IOError, OSError) as e:
             DebugLogger.warn(f"Failed to load settings: {e}")
