@@ -109,37 +109,37 @@ class SettingsManager:
 
     def _load(self):
         """Load settings from file or use defaults."""
+
+        # 1. Start with defaults
+        merged_settings = copy.deepcopy(self.DEFAULTS)
+
+        # 2. Load and return defaults if setting file doesn't exist
         if not os.path.exists(self.settings_file):
             DebugLogger.system("Using default settings")
-            return copy.deepcopy(self.DEFAULTS)
+            return merged_settings
 
         try:
             with open(self.settings_file, 'r') as f:
                 loaded = json.load(f)
-            DebugLogger.system(f"Loaded settings from {self.settings_file}")
-            return self._merge_with_defaults(loaded)
+            self._merge_recursive(merged_settings, loaded)
+            DebugLogger.system(f"Loaded user settings from {self.user_file}")
 
         except (json.JSONDecodeError, IOError, OSError) as e:
             DebugLogger.warn(f"Failed to load settings: {e}")
             return copy.deepcopy(self.DEFAULTS)
 
-    def _merge_with_defaults(self, loaded):
-        """
-        Merge loaded settings with defaults.
-        Defaults provide missing keys, loaded values take priority.
-        """
-        merged = copy.deepcopy(self.DEFAULTS)
+        return merged_settings
 
-        for category, values in loaded.items():
-            if not isinstance(values, dict):
-                continue
-
-            if category in merged:
-                merged[category].update(values)
+    def _merge_recursive(self, base, update):
+        """
+        Recursively merge 'update' dict into 'base' dict.
+        Allows partial updates (e.g., only changing volume).
+        """
+        for key, value in update.items():
+            if isinstance(value, dict) and key in base and isinstance(base[key], dict):
+                self._merge_recursive(base[key], value)
             else:
-                merged[category] = values
-
-        return merged
+                base[key] = value
 
 
 # ===========================================================
