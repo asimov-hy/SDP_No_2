@@ -108,7 +108,7 @@ class BossPart:
         self.pos.y = boss_pos.y + self.offset.y
         self.rect.center = (int(self.pos.x), int(self.pos.y))
 
-    def rotate_towards_player(self, player_ref):
+    def rotate_towards_player(self, player_ref, dt=1/60):
         """Rotate gun to point at player with custom pivot."""
         if not self.active or not player_ref or not self._base_image:
             return
@@ -130,7 +130,7 @@ class BossPart:
 
         # 3. Smooth rotation towards target (rotation_speed degrees/sec)
         diff = clamped - self.angle
-        max_step = self.rotation_speed * (1 / 60)  # assuming update runs at 60 FPS
+        max_step = self.rotation_speed * dt
         step = max(-max_step, min(max_step, diff))
         self.angle += step
 
@@ -205,7 +205,11 @@ class EnemyBoss(BaseEnemy):
     - Phase changes can trigger new attack patterns
     """
 
-    __slots__ = ('parts', 'body_image', '_boss_config', 'player_ref')
+    __slots__ = (
+        'parts', 'body_image', '_boss_config', 'player_ref',
+        'anchor_pos', 'wander_radius', 'noise_time', 'noise_seed',
+        'hover_velocity'
+    )
 
     __registry_category__ = EntityCategory.ENEMY
     __registry_name__ = "boss"
@@ -219,14 +223,14 @@ class EnemyBoss(BaseEnemy):
             cls._boss_data = load_config("bosses.json") or {}
         return cls._boss_data
 
-    def __init__(self, x, y, boss_type="mech_boss", draw_manager=None,
+    def __init__(self, x, y, boss_type="boss_juggernaut", draw_manager=None,
                  player_ref=None, bullet_manager=None, **kwargs):
         """
         Initialize boss from JSON config.
 
         Args:
             x, y: Spawn position
-            boss_type: Key in bosses.json (e.g., "mech_boss")
+            boss_type: Key in bosses.json (e.g., "boss_juggernaut")
             draw_manager: For rendering
             player_ref: Player entity reference (for targeting)
             bullet_manager: For spawning boss bullets
@@ -270,6 +274,14 @@ class EnemyBoss(BaseEnemy):
 
         self._rotation_enabled = False
         self.exp_value = config.get("exp", 1000)
+
+        self.anchor_pos = pygame.Vector2(x, y)
+
+        # Noise-based hover settings
+        self.wander_radius = 100
+        self.noise_time = 0.0
+        self.noise_seed = random.randint(0, 10000)
+        self.hover_velocity = pygame.Vector2(0, 0)
 
         # Load weapon parts
         self.parts = {}
@@ -326,12 +338,62 @@ class EnemyBoss(BaseEnemy):
 
     def _update_behavior(self, dt: float):
         """Boss-specific per-frame logic."""
+
+        # 1. Calculate the drift
+        self._update_wander(dt)
+
+        # 2. Sync Rect to new Position
+        self.rect.center = (int(self.pos.x), int(self.pos.y))
+
+        # 3. Update Parts (Standard)
         for part in self.parts.values():
             if part.active:
                 part.update_position(self.pos)
-                # Rotate guns to track player
                 if hasattr(self, 'player_ref') and self.player_ref:
-                    part.rotate_towards_player(self.player_ref)
+                    part.rotate_towards_player(self.player_ref, dt)
+
+    def _update_wander(self, dt: float):
+        """Continuous organic hover using velocity."""
+        self.noise_time += dt
+
+        # Get noise velocities instead of positions
+        vel_x = self._value_noise(self.noise_time * 1.5) * 20  # pixels/sec
+        vel_y = self._value_noise(self.noise_time * 1.5 + 100) * 15
+
+        # Smooth velocity changes
+        target_vel = pygame.Vector2(vel_x, vel_y)
+        self.hover_velocity += (target_vel - self.hover_velocity) * 0.1
+
+        # Apply velocity
+        self.pos += self.hover_velocity * dt
+
+        # Spring back towards anchor if drifting too far
+        distance = self.pos.distance_to(self.anchor_pos)
+        if distance > self.wander_radius:
+            pull = (self.anchor_pos - self.pos).normalize() * (distance - self.wander_radius) * 2
+            self.pos += pull * dt
+
+    # ===================================================================
+    # Noise Generation for Organic Movement
+    # ===================================================================
+
+    def _hash_noise(self, x: float) -> float:
+        """Simple hash-based noise function."""
+        x = (x + self.noise_seed) * 12.9898
+        return (math.sin(x) * 43758.5453) % 1.0 * 2 - 1
+
+    def _smooth_interpolate(self, a: float, b: float, t: float) -> float:
+        """Smoothstep interpolation (ease in/out)."""
+        t = t * t * (3 - 2 * t)
+        return a + (b - a) * t
+
+    def _value_noise(self, x: float) -> float:
+        """Value noise - interpolate between hashed points."""
+        floor_x = math.floor(x)
+        frac_x = x - floor_x
+        a = self._hash_noise(floor_x)
+        b = self._hash_noise(floor_x + 1)
+        return self._smooth_interpolate(a, b, frac_x)
 
     # ===================================================================
     # Collision Handling
@@ -380,7 +442,7 @@ class EnemyBoss(BaseEnemy):
     # Object Pooling
     # ===================================================================
 
-    def reset(self, x, y, boss_type="mech_boss", **kwargs):
+    def reset(self, x, y, boss_type="boss_juggernaut", **kwargs):
         config = self._boss_data.get(boss_type, {})
         body_cfg = config.get("body", {})
         super().reset(x, y, health=body_cfg.get("hp", 500), speed=config.get("speed", 50), **kwargs)

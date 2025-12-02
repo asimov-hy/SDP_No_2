@@ -20,7 +20,7 @@
             "spawn_offset_y": 200,
             "count": 1,
             "enemy_params": {
-              "boss_type": "mech_boss",
+              "boss_type": "boss_juggernaut",
               "direction": [0, 0]
             }
           }

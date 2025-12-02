@@ -1,5 +1,5 @@
 {
-  "mech_boss": {
+  "boss_juggernaut": {
     "body": {
       "image": "assets/images/sprites/boss/boss.png",
       "scale": 0.75,
