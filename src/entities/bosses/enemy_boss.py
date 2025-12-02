@@ -20,7 +20,7 @@ from src.graphics.animations.animation_manager import AnimationManager
 
 from src.core.services.config_manager import load_config
 from src.core.debug.debug_logger import DebugLogger
-
+from src.core.runtime.game_settings import Debug
 
 class BossPart:
     """
@@ -36,7 +36,8 @@ class BossPart:
     __slots__ = (
         'name', 'image', 'offset', 'health', 'max_health', 'active', 'angle',
         'owner', 'pos', 'rect', 'hitbox', 'collision_tag', 'death_state', 'state',
-        '_base_image', '_anim_manager', 'anim_context', 'category'
+        '_base_image', '_anim_manager', 'anim_context', 'category',
+        'player_ref', 'base_angle', 'rotation_speed', 'min_angle', 'max_angle'
     )
 
     def __init__(self, name: str, image: pygame.Surface, offset: tuple,
@@ -58,6 +59,18 @@ class BossPart:
         self.max_health = health
         self.active = True
         self.angle = 0
+
+        # Rotation pivot (offset from image center, towards top of gun)
+        # Negative Y = pivot towards top of sprite
+        # Pivot at exact center of the sprite
+
+        self.player_ref = None
+        self.base_angle = 180  # Default facing down (180°)
+
+        # Rotation restrictions
+        self.rotation_speed = 120  # degrees per second
+        self.min_angle = -30  # left limit (relative to base_angle)
+        self.max_angle = 30  # right limit (relative to base_angle)
 
         # Parent reference
         self.owner = owner
@@ -93,6 +106,38 @@ class BossPart:
         self.pos.x = boss_pos.x + self.offset.x
         self.pos.y = boss_pos.y + self.offset.y
         self.rect.center = (int(self.pos.x), int(self.pos.y))
+
+    def rotate_towards_player(self, player_ref):
+        """Rotate gun to point at player with custom pivot."""
+        if not self.active or not player_ref or not self._base_image:
+            return
+
+        self.player_ref = player_ref
+
+        # Calculate direction to player from gun position
+        dx = player_ref.pos.x - self.pos.x
+        dy = player_ref.pos.y - self.pos.y
+
+        # Calculate angle (sprite faces DOWN by default, so base is 180)
+        import math
+        target_angle = math.degrees(math.atan2(dy, dx)) + 90  # +90 converts to "down-facing" reference
+
+        # 1. Compute angle relative to base
+        relative_angle = target_angle - self.base_angle
+
+        # 2. Clamp within allowed range
+        clamped = max(self.min_angle, min(self.max_angle, relative_angle))
+
+        # 3. Smooth rotation towards target (rotation_speed degrees/sec)
+        diff = clamped - self.angle
+        max_step = self.rotation_speed * (1 / 60)  # assuming update runs at 60 FPS
+        step = max(-max_step, min(max_step, diff))
+        self.angle += step
+
+        # 4. Apply rotation
+        final_angle = self.base_angle + self.angle
+        self.image = pygame.transform.rotate(self._base_image, -final_angle)
+        self.rect = self.image.get_rect(center=(int(self.pos.x), int(self.pos.y)))
 
     def on_collision(self, other, collision_tag=None):
         """
@@ -145,7 +190,6 @@ class BossPart:
         if self.hitbox:
             self.hitbox.set_active(True)
 
-
 class EnemyBoss(BaseEnemy):
     """
     Multi-part boss enemy with destructible components.
@@ -161,7 +205,7 @@ class EnemyBoss(BaseEnemy):
     - Phase changes can trigger new attack patterns
     """
 
-    __slots__ = ('parts', 'body_image', '_boss_config')
+    __slots__ = ('parts', 'body_image', '_boss_config', 'player_ref')
 
     __registry_category__ = EntityCategory.ENEMY
     __registry_name__ = "boss"
@@ -191,6 +235,9 @@ class EnemyBoss(BaseEnemy):
         boss_data = self._load_boss_data()
         config = boss_data.get(boss_type, {})
         self._boss_config = config
+
+        # Store player reference for gun tracking
+        self.player_ref = player_ref
 
         # Body setup
         body_cfg = config.get("body", {})
@@ -282,6 +329,9 @@ class EnemyBoss(BaseEnemy):
         for part in self.parts.values():
             if part.active:
                 part.update_position(self.pos)
+                # Rotate guns to track player
+                if hasattr(self, 'player_ref') and self.player_ref:
+                    part.rotate_towards_player(self.player_ref)
 
     # ===================================================================
     # Collision Handling
@@ -296,6 +346,7 @@ class EnemyBoss(BaseEnemy):
 
     def draw(self, draw_manager):
         """Draw boss body and gun parts."""
+
         draw_manager.draw_entity(self, layer=self.layer)
 
         for part in self.parts.values():
@@ -306,6 +357,16 @@ class EnemyBoss(BaseEnemy):
                 )
                 part_rect = part.image.get_rect(topleft=part_pos)
                 draw_manager.queue_draw(part.image, part_rect, layer=self.layer + 1)
+
+                # Debug: Draw pivot point
+                if Debug.HITBOX_VISIBLE:
+                    pivot_world = (int(part.pos.x), int(part.pos.y))
+
+                    debug_surf = pygame.Surface((10, 10), pygame.SRCALPHA)
+                    pygame.draw.circle(debug_surf, (255, 0, 255), (5, 5), 5)  # Magenta pivot
+                    pygame.draw.circle(debug_surf, (0, 255, 0), (5, 5), 2)  # Green center
+                    draw_manager.queue_draw(debug_surf,
+                                            debug_surf.get_rect(center=pivot_world), layer=self.layer + 2)
 
     # ===================================================================
     # Utility

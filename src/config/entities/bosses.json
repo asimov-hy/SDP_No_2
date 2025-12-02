@@ -19,14 +19,16 @@
         "anchor": [250, -120],
         "hp": 20,
         "flip": false,
-        "scale": 0.5
+        "scale": 0.5,
+        "pivot_offset": [0, -160]
       },
       "mg_right": {
         "image": "assets/images/sprites/boss/boss_mg.png",
         "anchor": [-250, -120],
         "hp": 20,
         "flip": true,
-        "scale": 0.5
+        "scale": 0.5,
+        "pivot_offset": [0, -160]
       }
     }
   }
