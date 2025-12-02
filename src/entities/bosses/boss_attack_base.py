@@ -95,6 +95,15 @@ class BossAttack:
         """Cleanup after attack ends."""
         pass
 
+    # --- Debug ---
+
+    def get_active_effects(self) -> list:
+        """
+        Override to return list of active effect names for debugging.
+        Example: ["tracking", "aim_laser", "beam"]
+        """
+        return []
+
     # --- Utility methods ---
 
     def angle_to_player(self) -> float:

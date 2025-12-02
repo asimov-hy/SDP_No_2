@@ -14,47 +14,19 @@
     "phases": [0.75, 0.50, 0.25],
 
     "parts": {
-      "artillery": {
-        "image": "assets/images/sprites/boss/boss_artillery.png",
-        "anchor": [0, -50],
-        "hp": 30,
-        "scale": 0.4
-      },
-      "laser": {
-        "image": "assets/images/sprites/boss/boss_laser.png",
-        "anchor": [0, 200],
-        "hp": 40,
-        "scale": 0.4
-      },
       "mg_left": {
         "image": "assets/images/sprites/boss/boss_mg.png",
-        "anchor": [-110, 140],
+        "anchor": [250, -120],
         "hp": 20,
         "flip": false,
-        "scale": 0.4
+        "scale": 0.5
       },
       "mg_right": {
         "image": "assets/images/sprites/boss/boss_mg.png",
-        "anchor": [110, 140],
+        "anchor": [-250, -120],
         "hp": 20,
         "flip": true,
-        "scale": 0.4
-      },
-      "missile_left": {
-        "image": "assets/images/sprites/boss/boss_missilepod.png",
-        "anchor": [-110, -140],
-        "hp": 25,
-        "flip": false,
-        "scale": 0.4,
-        "rotation": -15
-      },
-      "missile_right": {
-        "image": "assets/images/sprites/boss/boss_missilepod.png",
-        "anchor": [110, -140],
-        "hp": 25,
-        "flip": true,
-        "scale": 0.4,
-        "rotation": 20
+        "scale": 0.5
       }
     }
   }

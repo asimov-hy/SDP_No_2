@@ -180,6 +180,12 @@ class CollisionManager:
             e for e in self.spawn_manager.entities
             if collision_bounds.collidepoint(e.pos)
         ]
+        # Add boss parts to active entities
+        for entity in list(active_entities):
+            if hasattr(entity, 'parts'):
+                for part in entity.parts.values():
+                    if part.active and collision_bounds.collidepoint(part.pos):
+                        active_entities.append(part)
 
         # Cache player alive check
         player = None

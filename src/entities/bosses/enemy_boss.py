@@ -14,7 +14,6 @@ from src.entities.base_entity import BaseEntity
 from src.entities.entity_types import EntityCategory
 from src.entities.entity_state import LifecycleState, InteractionState
 from src.entities.entity_types import CollisionTags
-from src.entities.bosses.boss_attack_artillery import ArtilleryAttack
 
 from src.systems.entity_management.entity_registry import EntityRegistry
 from src.graphics.animations.animation_manager import AnimationManager
@@ -110,11 +109,15 @@ class BossPart:
             self.take_damage(damage)
 
     def take_damage(self, amount: int):
-        """Apply damage to this part."""
+        """Apply damage to this part and boss (2x to boss)."""
         if not self.active:
             return
 
         self.health -= amount
+
+        # Damage boss when part is hit (2x multiplier)
+        if self.owner:
+            self.owner.take_damage(amount * 2, source="part_damage")
 
         if self.health <= 0:
             self._destroy()
@@ -158,11 +161,7 @@ class EnemyBoss(BaseEnemy):
     - Phase changes can trigger new attack patterns
     """
 
-    __slots__ = (
-        'parts', 'body_image',
-        'player_ref', 'bullet_manager', '_boss_config', 'body_vulnerable',
-        'attacks', 'current_attack', 'attack_cooldown', 'attack_delay'
-    )
+    __slots__ = ('parts', 'body_image', '_boss_config')
 
     __registry_category__ = EntityCategory.ENEMY
     __registry_name__ = "boss"
@@ -227,23 +226,8 @@ class EnemyBoss(BaseEnemy):
 
         # Load weapon parts
         self.parts = {}
-        self._load_parts(scale, config.get("parts", {}))
-
-        # External references
-        self.player_ref = player_ref
-        self.bullet_manager = bullet_manager
-
-        # Body protection - immune to bullets until all parts destroyed
-        self.body_vulnerable = True
+        self._create_gun_parts(scale)
         self.collision_tag = CollisionTags.ENEMY
-
-        # Attack system
-        self.attacks = {}
-        self.current_attack = None
-        self.attack_cooldown = 2.0  # Initial delay before first attack
-        self.attack_delay = config.get("attack_delay", 3.0)
-
-        self._init_attacks(draw_manager)
 
         DebugLogger.init(
             f"Spawned {boss_type} at ({x}, {y}) | HP={health} | Parts={len(self.parts)}",
@@ -254,97 +238,40 @@ class EnemyBoss(BaseEnemy):
     # Part Management
     # ===================================================================
 
-    def _load_parts(self, scale: float, parts_config: dict):
-        """
-        Load weapon parts from config.
+    def _create_gun_parts(self, scale: float):
+        """Create gun attachments from JSON config."""
+        parts_config = self._boss_config.get("parts", {})
 
-        Args:
-            scale: Body scale factor (parts scale relative to this)
-            parts_config: Dict of part definitions from bosses.json
-        """
         for part_name, part_cfg in parts_config.items():
+            # Load image
             image_path = part_cfg.get("image")
             part_scale = part_cfg.get("scale", 1.0) * scale
 
             img = BaseEntity.load_and_scale_image(image_path, part_scale)
+            if not img:
+                continue
 
-            if img:
-                # Apply flip if configured
-                if part_cfg.get("flip", False):
-                    img = pygame.transform.flip(img, True, False)
+            # Apply flip if configured
+            if part_cfg.get("flip", False):
+                img = pygame.transform.flip(img, True, False)
 
-                # Apply rotation if configured
-                rotation = part_cfg.get("rotation", 0)
-                if rotation != 0:
-                    img = pygame.transform.rotate(img, rotation)
+            # Get offset (scaled with body)
+            anchor = part_cfg.get("anchor", [0, 0])
+            offset = (anchor[0] * scale, anchor[1] * scale)
 
-                # Scale anchor offset with body
-                anchor = part_cfg.get("anchor", [0, 0])
-                scaled_anchor = [anchor[0] * scale, anchor[1] * scale]
-                part_hp = part_cfg.get("hp", 20)
+            # Get HP
+            part_hp = part_cfg.get("hp", 20)
 
-                # Create part with owner reference
-                part = BossPart(part_name, img, scaled_anchor, part_hp, owner=self)
-                part.update_position(self.pos)
-                self.parts[part_name] = part
+            # Create part
+            self.parts[part_name] = BossPart(part_name, img, offset, part_hp, owner=self)
 
-    def _init_attacks(self, draw_manager):
-        """Initialize attack handlers for each part."""
-
-        # Map part names to attack classes
-        attack_map = {
-            "artillery": ArtilleryAttack,
-            # "mg_left": MachinegunAttack,
-            # "mg_right": MachinegunAttack,
-            # "missile_left": MissileAttack,
-            # "missile_right": MissileAttack,
-            # "laser": LaserAttack,
-        }
-
-        for part_name, part in self.parts.items():
-            attack_class = attack_map.get(part_name)
-            if attack_class:
-                self.attacks[part_name] = attack_class(
-                    part=part,
-                    boss=self,
-                    bullet_manager=self.bullet_manager,
-                    draw_manager=draw_manager
-                )
-
-    def register_parts_collision(self, collision_manager):
-        """
-        Register all part hitboxes with collision system.
-        Call this after spawning the boss.
-
-        Args:
-            collision_manager: Game's CollisionManager instance
-        """
+        # Sync positions
         for part in self.parts.values():
             part.update_position(self.pos)
-            collision_manager.register_hitbox(part, scale=0.9)
-            DebugLogger.init(f"Registered hitbox for part: {part.name}", category="enemy")
 
     def _on_part_destroyed(self, part_name: str):
-        """
-        Callback when a part is destroyed.
-        Checks if all parts are gone to enable body vulnerability.
-        """
-        active_parts = sum(1 for p in self.parts.values() if p.active)
-
-        DebugLogger.state(
-            f"Part '{part_name}' destroyed. {active_parts} remaining.",
-            category="enemy"
-        )
-
-        # All parts destroyed - body now takes bullet damage
-        if active_parts == 0:
-            self.body_vulnerable = True
-            self.collision_tag = CollisionTags.ENEMY  # Now bullets can hit
-            DebugLogger.state("Boss body now vulnerable!", category="enemy")
-
-    def get_active_parts(self):
-        """Return list of currently active part names."""
-        return [name for name, part in self.parts.items() if part.active]
+        """Called when a part is destroyed."""
+        DebugLogger.state(f"Part '{part_name}' destroyed.", category="enemy")
 
     # ===================================================================
     # Update Logic
@@ -352,104 +279,25 @@ class EnemyBoss(BaseEnemy):
 
     def _update_behavior(self, dt: float):
         """Boss-specific per-frame logic."""
-        # Sync part positions to body and update animations
         for part in self.parts.values():
             if part.active:
                 part.update_position(self.pos)
-                if part._anim_manager:
-                    part.anim_manager.update(dt)
-
-        # Update attack system
-        self._update_attacks(dt)
-
-    def _update_attacks(self, dt: float):
-        """Handle attack selection and execution."""
-
-        # Attack in progress
-        if self.current_attack and self.current_attack.is_active:
-            self.current_attack.update(dt)
-            return
-
-        # Cooldown between attacks
-        self.attack_cooldown -= dt
-        if self.attack_cooldown <= 0:
-            self._start_random_attack()
-            self.attack_cooldown = self.attack_delay
-
-    def _start_random_attack(self):
-        """Pick random available attack and start it."""
-
-        # Get attacks for active parts only
-        available = [
-            name for name, attack in self.attacks.items()
-            if self.parts.get(name) and self.parts[name].active
-        ]
-
-        if not available:
-            return
-
-        part_name = random.choice(available)
-        self.current_attack = self.attacks[part_name]
-        self.current_attack.start()
-
-        DebugLogger.state(f"Boss attack: {part_name}", category="enemy")
-
-    def take_damage(self, amount: int, source: str = "unknown"):
-        """Apply damage and sync damage animation to all active parts."""
-        super().take_damage(amount, source)
-
-        # Sync damage animation to active parts
-        if self.death_state == LifecycleState.ALIVE:
-            for part in self.parts.values():
-                if part.active:
-                    part.anim_manager.play("damage", duration=0.15)
-
-    def on_death(self, source):
-        """Handle boss death - kill all parts with body."""
-        # Kill all parts
-        for part in self.parts.values():
-            part.active = False
-            part.death_state = LifecycleState.DEAD
-            if part.hitbox:
-                part.hitbox.set_active(False)
-
-        # Call parent death handling
-        super().on_death(source)
 
     # ===================================================================
     # Collision Handling
     # ===================================================================
     def on_collision(self, other, collision_tag=None):
-        """
-        Handle collision with other entities.
-
-        Behavior:
-        - Player bullets: Ignored unless body_vulnerable is True
-        - Player contact: Passes through (player handles damage)
-        """
-        tag = collision_tag or getattr(other, "collision_tag", "")
-
-        if tag == "player_bullet":
-            if self.body_vulnerable:
-                # All parts destroyed - body takes damage
-                self.take_damage(getattr(other, "damage", 1), source="player_bullet")
-            # else: bullet blocked by armor (parts still alive)
-            return
-
-        if tag == "player":
-            # Contact damage handled by player.on_collision()
-            pass
+        """Use base enemy collision handling."""
+        super().on_collision(other, collision_tag)
 
     # ===================================================================
     # Rendering
     # ===================================================================
 
     def draw(self, draw_manager):
-        """Draw boss body and all active parts."""
-        # Draw body
+        """Draw boss body and gun parts."""
         draw_manager.draw_entity(self, layer=self.layer)
 
-        # Draw parts on top
         for part in self.parts.values():
             if part.active and part.image:
                 part_pos = (
@@ -457,7 +305,7 @@ class EnemyBoss(BaseEnemy):
                     self.rect.centery + int(part.offset.y) - part.image.get_height() // 2
                 )
                 part_rect = part.image.get_rect(topleft=part_pos)
-                draw_manager.queue_draw(part.image, part_rect, layer=self.layer)
+                draw_manager.queue_draw(part.image, part_rect, layer=self.layer + 1)
 
     # ===================================================================
     # Utility
@@ -472,24 +320,6 @@ class EnemyBoss(BaseEnemy):
     # ===================================================================
 
     def reset(self, x, y, boss_type="mech_boss", **kwargs):
-        """Reset boss state for object pooling."""
         config = self._boss_data.get(boss_type, {})
         body_cfg = config.get("body", {})
-
-        super().reset(
-            x, y,
-            health=body_cfg.get("hp", 500),
-            speed=config.get("speed", 50),
-            **kwargs
-        )
-
-        # Reset all parts
-        for part in self.parts.values():
-            part.reset()
-
-        # Reset vulnerability
-        self.body_vulnerable = True
-
-        # Reset attack system
-        self.current_attack = None
-        self.attack_cooldown = 2.0
+        super().reset(x, y, health=body_cfg.get("hp", 500), speed=config.get("speed", 50), **kwargs)
