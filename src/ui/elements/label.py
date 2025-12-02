@@ -11,7 +11,7 @@ from ..core.ui_element import UIElement, GradientColor
 from ..core.ui_loader import register_element
 
 
-@register_element('label')
+@register_element("label")
 class UILabel(UIElement):
     """Text display element."""
 
@@ -25,8 +25,8 @@ class UILabel(UIElement):
         super().__init__(config)
 
         # Label-specific: format string for bound values
-        data_dict = config.get('data', config)
-        self.format = data_dict.get('format', '{}')
+        data_dict = config.get("data", config)
+        self.format = data_dict.get("format", "{}")
 
         # Dynamic text from binding
         self.current_value = None
@@ -41,7 +41,7 @@ class UILabel(UIElement):
         if self.current_value is not None:
             try:
                 return self.format.format(self.current_value)
-            except: # noqa: E722
+            except:  # noqa: E722
                 return str(self.current_value)
         return self.text
 

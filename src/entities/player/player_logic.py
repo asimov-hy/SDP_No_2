@@ -47,7 +47,9 @@ def damage_collision(player, other):
 
     # RECOVERY state - shield entity handles collisions, skip damage
     if player.state_manager.has_state(PlayerEffectState.RECOVERY):
-        DebugLogger.trace("Player in RECOVERY - shield handles collisions", category="collision")
+        DebugLogger.trace(
+            "Player in RECOVERY - shield handles collisions", category="collision"
+        )
         return
 
     # Apply damage
@@ -55,13 +57,17 @@ def damage_collision(player, other):
     player.health -= damage
     DebugLogger.action(
         f"Player took {damage} damage ({prev_health} → {player.health})",
-        category="collision"
+        category="collision",
     )
 
     # Accumulate stress (we already returned early if in RECOVERY)
-    player.stress = min(player.stress_max, player.stress + damage * player.stress_per_damage)
+    player.stress = min(
+        player.stress_max, player.stress + damage * player.stress_per_damage
+    )
     player._time_since_damage = 0.0
-    DebugLogger.trace(f"Stress: {player.stress:.1f}/{player.stress_threshold}", category="collision")
+    DebugLogger.trace(
+        f"Stress: {player.stress:.1f}/{player.stress_threshold}", category="collision"
+    )
 
     # Calculate knockback direction
     dx = other.pos.x - player.pos.x
@@ -106,14 +112,16 @@ def damage_collision(player, other):
 
 def _apply_light_damage(player, previous_state, target_state):
     """Flash + particles only. No invincibility."""
-    DebugLogger.state(f"Light damage: {previous_state} → {target_state}", category="animation")
+    DebugLogger.state(
+        f"Light damage: {previous_state} → {target_state}", category="animation"
+    )
 
     player.anim_manager.play(
         "damage",
         duration=0.3,
         blink_interval=0.05,
         previous_state=previous_state,
-        target_state=target_state
+        target_state=target_state,
     )
     # No state change - player remains vulnerable
 
@@ -136,7 +144,7 @@ def _apply_heavy_damage(player, previous_state, target_state, direction):
         "stun",
         duration=stun_duration,
         previous_state=previous_state,
-        target_state=target_state
+        target_state=target_state,
     )
 
     # Enter STUN (auto-chains to DAMAGED via config)
@@ -152,7 +160,7 @@ def _apply_recovery_hit(player, previous_state, target_state):
         duration=0.2,
         blink_interval=0.05,
         previous_state=previous_state,
-        target_state=target_state
+        target_state=target_state,
     )
 
 

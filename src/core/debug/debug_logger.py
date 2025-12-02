@@ -12,6 +12,7 @@ from datetime import datetime
 # Logger Configuration
 # ===========================================================
 
+
 class LoggerConfig:
     """Controls which components emit log messages and at what verbosity."""
 
@@ -26,12 +27,10 @@ class LoggerConfig:
         "scene": True,
         "input": True,
         "debug_hud": True,
-
         # Game Loop
         "stage": True,
         "game_state": True,
         "timing": False,
-
         # Entities
         "entity_core": True,
         "entity_logic": True,
@@ -46,18 +45,15 @@ class LoggerConfig:
         "item": True,
         "level": False,
         "exp": False,
-
         # Rendering
         "drawing": False,
         "render": True,
-
         # User
         "user_action": False,
         "ui": True,
-
         # Optional
         "performance": False,
-        "audio": False
+        "audio": False,
     }
 
     SHOW_TIMESTAMP = True
@@ -69,8 +65,10 @@ class LoggerConfig:
 # ANSI Colors
 # ===========================================================
 
+
 class Colors:
     """ANSI escape codes for terminal colors."""
+
     RESET = "\033[0m"
     WHITE = "\033[97m"
     GREEN = "\033[92m"
@@ -84,6 +82,7 @@ class Colors:
 # ===========================================================
 # Debug Logger
 # ===========================================================
+
 
 class DebugLogger:
     """Static logger with category filtering and colored output."""
@@ -102,13 +101,7 @@ class DebugLogger:
         "fail": Colors.RED,
     }
 
-    LEVEL_VALUES = {
-        "NONE": 0,
-        "ERROR": 1,
-        "WARN": 2,
-        "INFO": 3,
-        "VERBOSE": 4
-    }
+    LEVEL_VALUES = {"NONE": 0, "ERROR": 1, "WARN": 2, "INFO": 3, "VERBOSE": 4}
 
     # ===========================================================
     # Caller Detection
@@ -121,12 +114,12 @@ class DebugLogger:
             frame = sys._getframe(3)
 
             # Case 1: instance method
-            if 'self' in frame.f_locals:
-                return frame.f_locals['self'].__class__.__name__
+            if "self" in frame.f_locals:
+                return frame.f_locals["self"].__class__.__name__
 
             # Case 2: classmethod
-            if 'cls' in frame.f_locals:
-                return frame.f_locals['cls'].__name__
+            if "cls" in frame.f_locals:
+                return frame.f_locals["cls"].__name__
 
             # Case 3: fallback to module
             filename = frame.f_code.co_filename.replace("\\", "/").split("/")[-1]
@@ -155,9 +148,14 @@ class DebugLogger:
         return level_val <= config_val
 
     @staticmethod
-    def _log(tag: str, message: str, color: str = "reset",
-             category: str = "system", level: str = "INFO",
-             meta_mode: str = "full"):
+    def _log(
+        tag: str,
+        message: str,
+        color: str = "reset",
+        category: str = "system",
+        level: str = "INFO",
+        meta_mode: str = "full",
+    ):
         """Internal logging method."""
         if not DebugLogger._should_log(category, level):
             return
@@ -284,7 +282,11 @@ class DebugLogger:
         gap = 1
 
         dots_start = max(dot_start - len(prefix), 1)
-        dot_count = max(DebugLogger.LINE_LENGTH - (len(prefix) + dots_start + gap + len(status_str)), 1)
+        dot_count = max(
+            DebugLogger.LINE_LENGTH
+            - (len(prefix) + dots_start + gap + len(status_str)),
+            1,
+        )
 
         return (
             f"{Colors.WHITE}{prefix}"

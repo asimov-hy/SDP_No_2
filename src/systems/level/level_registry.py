@@ -101,23 +101,25 @@ class LevelRegistry:
                 campaign_levels = campaign_data.get("missions", [])
                 start_level = campaign_data.get("start_level")
 
-                invalid_levels = [lvl for lvl in campaign_levels if lvl not in cls._levels]
+                invalid_levels = [
+                    lvl for lvl in campaign_levels if lvl not in cls._levels
+                ]
                 if invalid_levels:
                     DebugLogger.warn(
                         f"Campaign '{campaign_name}' references unknown missions: {invalid_levels}",
-                        category="loading"
+                        category="loading",
                     )
 
                 if start_level and start_level not in cls._levels:
                     DebugLogger.warn(
                         f"Campaign '{campaign_name}' has invalid start_level: '{start_level}'",
-                        category="loading"
+                        category="loading",
                     )
 
                 cls._campaigns[campaign_name] = {
                     "name": campaign_data.get("name", campaign_name),
                     "start_level": start_level,
-                    "missions": campaign_levels
+                    "missions": campaign_levels,
                 }
                 campaign_count += 1
 
@@ -129,7 +131,7 @@ class LevelRegistry:
                 if cls._default_campaign not in cls._campaigns:
                     DebugLogger.warn(
                         f"default_campaign '{cls._default_campaign}' does not exist",
-                        category="loading"
+                        category="loading",
                     )
                 else:
                     DebugLogger.init_sub(f"Default Campaign: {cls._default_campaign}")
@@ -285,7 +287,9 @@ class LevelRegistry:
         DebugLogger.system(f"Total Levels: {len(cls._levels)}")
         for level_id, config in cls._levels.items():
             status = "UNLOCKED" if config.unlocked else "LOCKED"
-            DebugLogger.system(f"  [{status}] {level_id}: {config.name} ({config.path})")
+            DebugLogger.system(
+                f"  [{status}] {level_id}: {config.name} ({config.path})"
+            )
 
         DebugLogger.system(f"\nTotal Campaigns: {len(cls._campaigns)}")
         for campaign_name, campaign_data in cls._campaigns.items():

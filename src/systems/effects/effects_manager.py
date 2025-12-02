@@ -30,7 +30,9 @@ class EffectsManager:
             effect: Object with update(dt, entities), draw(draw_manager), active property
         """
         self.active_effects.append(effect)
-        DebugLogger.action(f"Spawned effect: {type(effect).__name__}", category="effects")
+        DebugLogger.action(
+            f"Spawned effect: {type(effect).__name__}", category="effects"
+        )
 
     def update(self, dt):
         """Update all active effects."""

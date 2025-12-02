@@ -29,7 +29,7 @@ class BaseBullet(BaseEntity):
     """Base class for all bullet entities_animation."""
 
     # Add slots for bullet-specific attributes
-    __slots__ = ('vel', 'owner', 'radius', 'damage', 'state')
+    __slots__ = ("vel", "owner", "radius", "damage", "state")
 
     _cached_defaults = None
 
@@ -41,8 +41,18 @@ class BaseBullet(BaseEntity):
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(self, pos, vel, image=None, color=None,
-                 radius=None, owner="player", damage=None, hitbox_scale=None, draw_manager=None):
+    def __init__(
+        self,
+        pos,
+        vel,
+        image=None,
+        color=None,
+        radius=None,
+        owner="player",
+        damage=None,
+        hitbox_scale=None,
+        draw_manager=None,
+    ):
         """
         Initialize the base bullet entity.
 
@@ -60,20 +70,28 @@ class BaseBullet(BaseEntity):
 
         # Load defaults from JSON
         if BaseBullet._cached_defaults is None:
-            BaseBullet._cached_defaults = EntityRegistry.get_data("projectile", "straight")
+            BaseBullet._cached_defaults = EntityRegistry.get_data(
+                "projectile", "straight"
+            )
 
         defaults = BaseBullet._cached_defaults
         if not defaults:
             DebugLogger.fail(
                 "bullets.json not loaded or missing 'straight' definition",
-                category="loading"
+                category="loading",
             )
-            raise ValueError("BaseBullet requires bullets.json with 'straight' definition")
+            raise ValueError(
+                "BaseBullet requires bullets.json with 'straight' definition"
+            )
 
         # Apply overrides or use defaults
         damage = damage if damage is not None else defaults.get("damage", 1)
         radius = radius if radius is not None else defaults.get("radius", 3)
-        color = tuple(color) if color is not None else tuple(defaults.get("color", [255, 255, 255]))
+        color = (
+            tuple(color)
+            if color is not None
+            else tuple(defaults.get("color", [255, 255, 255]))
+        )
         hitbox_config = defaults.get("hitbox", {})
 
         radius = max(1, radius)
@@ -82,11 +100,7 @@ class BaseBullet(BaseEntity):
         # Build shape_data dict if no image
         shape_data = None
         if image is None:
-            shape_data = {
-                "type": "circle",
-                "color": color,
-                "size": size
-            }
+            shape_data = {"type": "circle", "color": color, "size": size}
 
         super().__init__(
             x=pos[0],
@@ -94,7 +108,7 @@ class BaseBullet(BaseEntity):
             image=image,
             shape_data=shape_data,
             draw_manager=draw_manager,
-            hitbox_config=hitbox_config
+            hitbox_config=hitbox_config,
         )
 
         # Core attributes
@@ -106,12 +120,16 @@ class BaseBullet(BaseEntity):
         self.damage = damage
 
         # Collision setup
-        self.collision_tag = CollisionTags.PLAYER_BULLET if owner == "player" else CollisionTags.ENEMY_BULLET
+        self.collision_tag = (
+            CollisionTags.PLAYER_BULLET
+            if owner == "player"
+            else CollisionTags.ENEMY_BULLET
+        )
         self.category = EntityCategory.PROJECTILE
         self.layer = game_settings.Layers.BULLETS
 
         # Enable rotation for image bullets (shapes don't need rotation)
-        self._rotation_enabled = (image is not None)
+        self._rotation_enabled = image is not None
 
     # ===========================================================
     # Update Logic
@@ -167,7 +185,7 @@ class BaseBullet(BaseEntity):
         self.death_state = LifecycleState.DEAD
         DebugLogger.state(
             f"{type(self).__name__} hit {type(target).__name__} → destroyed",
-            category="bullet"
+            category="bullet",
         )
 
     # ===========================================================
@@ -197,7 +215,9 @@ class BaseBullet(BaseEntity):
     # ===========================================================
     # Reset for Object Pooling
     # ===========================================================
-    def reset(self, pos, vel, color=None, radius=None, owner=None, damage=None, **kwargs):
+    def reset(
+        self, pos, vel, color=None, radius=None, owner=None, damage=None, **kwargs
+    ):
         """
         Reset bullet for object pooling reuse.
 
@@ -220,7 +240,11 @@ class BaseBullet(BaseEntity):
         # Update owner if provided
         if owner is not None:
             self.owner = owner
-            self.collision_tag = CollisionTags.PLAYER_BULLET if owner == "player" else CollisionTags.ENEMY_BULLET
+            self.collision_tag = (
+                CollisionTags.PLAYER_BULLET
+                if owner == "player"
+                else CollisionTags.ENEMY_BULLET
+            )
 
         # Update damage if provided
         if damage is not None:
@@ -229,18 +253,18 @@ class BaseBullet(BaseEntity):
         # Rebuild sprite if size/color changed
         if (color is not None or radius is not None) and self.draw_manager:
             new_radius = radius if radius is not None else self.radius
-            new_color = color if color is not None else self.shape_data.get("color", (255, 255, 255))
+            new_color = (
+                color
+                if color is not None
+                else self.shape_data.get("color", (255, 255, 255))
+            )
 
             # Update stored properties
             self.radius = new_radius
             size = (new_radius * 2, new_radius * 2)
 
             # Update shape_data
-            self.shape_data = {
-                "type": "circle",
-                "color": new_color,
-                "size": size
-            }
+            self.shape_data = {"type": "circle", "color": new_color, "size": size}
 
             # Rebuild sprite
             self.refresh_sprite(new_color=new_color, size=size)

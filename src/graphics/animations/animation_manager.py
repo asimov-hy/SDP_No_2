@@ -31,15 +31,15 @@ class AnimationManager:
     """Global animation controller handling per-entity animation execution."""
 
     __slots__ = (
-        'entity',  # Entity being animated
-        'active_type',  # Current animation name
-        'timer',  # Elapsed time
-        'duration',  # Total animation duration
-        'finished',  # Completion flag
-        'enabled',  # Global enable/disable
-        'on_complete',  # Completion callback
-        '_effect_queue',  # Scheduled effects
-        'context'  # Animation parameters dict
+        "entity",  # Entity being animated
+        "active_type",  # Current animation name
+        "timer",  # Elapsed time
+        "duration",  # Total animation duration
+        "finished",  # Completion flag
+        "enabled",  # Global enable/disable
+        "on_complete",  # Completion callback
+        "_effect_queue",  # Scheduled effects
+        "context",  # Animation parameters dict
     )
 
     # ===========================================================
@@ -74,7 +74,7 @@ class AnimationManager:
         if anims:
             DebugLogger.init(
                 f"AnimationManager for {type(entity).__name__} (category: {category}) - {len(anims)} animations available",
-                category="animation"
+                category="animation",
             )
         # else:
         #     DebugLogger.warn(
@@ -98,8 +98,8 @@ class AnimationManager:
             return
 
         # Get entity identifiers for lookup
-        category = getattr(self.entity, 'category', 'unknown')
-        entity_name = getattr(self.entity, '__registry_name__', 'default')
+        category = getattr(self.entity, "category", "unknown")
+        entity_name = getattr(self.entity, "__registry_name__", "default")
 
         # Load config from animation data
         config = get_animation_config(category, entity_name, anim_type)
@@ -123,12 +123,12 @@ class AnimationManager:
             "duration": duration,
             "elapsed_time": 0.0,
             "frames": frames,  # Now this overwrites config's paths with actual surfaces
-            **kwargs
+            **kwargs,
         }
 
         DebugLogger.state(
             f"{type(self.entity).__name__}: Animation '{anim_type}' started ({duration:.2f}s, {len(frames)} frames)",
-            category="animation"
+            category="animation",
         )
 
     def stop(self):
@@ -136,22 +136,24 @@ class AnimationManager:
         if self.active_type:
             DebugLogger.state(
                 f"{type(self.entity).__name__}: Animation '{self.active_type}' stopped",
-                category="animation"
+                category="animation",
             )
 
         # Restore original image if stored
-        if hasattr(self.entity, '_base_image') and self.entity._base_image:
-            death_state = getattr(self.entity, 'death_state', LifecycleState.ALIVE)
+        if hasattr(self.entity, "_base_image") and self.entity._base_image:
+            death_state = getattr(self.entity, "death_state", LifecycleState.ALIVE)
             if death_state == LifecycleState.ALIVE:
                 self.entity.image = self.entity._base_image
                 self.entity.image.set_alpha(255)
 
                 # Re-apply rotation using cached index
-                if getattr(self.entity, '_rotation_enabled', False):
+                if getattr(self.entity, "_rotation_enabled", False):
                     cached_idx = self.entity._cached_rotation_index
                     if cached_idx >= 0:
                         self.entity.image = self.entity._get_rotated_surface(cached_idx)
-                        self.entity.rect = self.entity.image.get_rect(center=self.entity.rect.center)
+                        self.entity.rect = self.entity.image.get_rect(
+                            center=self.entity.rect.center
+                        )
 
         self.active_type = None
         self.timer = 0.0
@@ -173,14 +175,16 @@ class AnimationManager:
                                      If str, it will call entity.effect_manager.trigger(name).
         """
         trigger_time = max(0.0, min(trigger_time, 1.0))
-        self._effect_queue.append({
-            "trigger": trigger_time,
-            "effects": effect,
-            "fired": False,
-        })
+        self._effect_queue.append(
+            {
+                "trigger": trigger_time,
+                "effects": effect,
+                "fired": False,
+            }
+        )
         DebugLogger.state(
             f"[BindEffect] {type(self.entity).__name__}: '{effect}' @ t={trigger_time}",
-            category="animation"
+            category="animation",
         )
 
     def _check_effect_triggers(self, t: float):
@@ -199,12 +203,12 @@ class AnimationManager:
                         else:
                             DebugLogger.warn(
                                 f"[EffectSkip] {self.entity.category} has no effect_manager for '{eff}'",
-                                category="animation_effects"
+                                category="animation_effects",
                             )
                 except Exception as e:
                     DebugLogger.warn(
                         f"[EffectFail] {eff} on {self.entity.category} → {e}",
-                        category="animation_effects"
+                        category="animation_effects",
                     )
 
     # ===========================================================
@@ -242,7 +246,7 @@ class AnimationManager:
             else:
                 DebugLogger.warn(
                     f"{type(self.entity).__name__}: No animation '{self.active_type}' registered for category '{self.entity.category}'",
-                    category="animation"
+                    category="animation",
                 )
                 self.stop()
                 return
@@ -255,7 +259,7 @@ class AnimationManager:
                     except Exception as e:
                         DebugLogger.warn(
                             f"Animation '{self.active_type}' callback failed → {e}",
-                            category="animation"
+                            category="animation",
                         )
                 self.stop()
                 return True
@@ -264,7 +268,7 @@ class AnimationManager:
             # Fail-safe: gracefully stop faulty animations
             DebugLogger.warn(
                 f"{type(self.entity).__name__}: Animation '{self.active_type}' failed → {e}",
-                category="animation"
+                category="animation",
             )
             self.stop()
 

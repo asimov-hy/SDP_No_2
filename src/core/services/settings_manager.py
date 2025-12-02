@@ -15,6 +15,7 @@ from src.core.debug.debug_logger import DebugLogger
 # Settings Manager
 # ===========================================================
 
+
 class SettingsManager:
     """Manages persistent user settings with safe defaults."""
 
@@ -25,17 +26,15 @@ class SettingsManager:
             "fps_limit": 60,
             "vsync": True,
             "fullscreen": False,
-            "resolution": [1280, 720]
+            "resolution": [1280, 720],
         },
         "audio": {
             "master_volume": 100,
             "music_volume": 100,
             "bfx_volume": 100,
-            "muted": False
+            "muted": False,
         },
-        "controls": {
-            "mouse_sensitivity": 1.0
-        }
+        "controls": {"mouse_sensitivity": 1.0},
     }
 
     def __init__(self, settings_file=None):
@@ -82,7 +81,7 @@ class SettingsManager:
     def save(self):
         """Save current settings to file."""
         try:
-            with open(self.settings_file, 'w') as f:
+            with open(self.settings_file, "w") as f:
                 json.dump(self.settings, f, indent=2)
             DebugLogger.system(f"Saved settings to {self.settings_file}")
         except (IOError, OSError, TypeError) as e:
@@ -119,7 +118,7 @@ class SettingsManager:
             return merged_settings
 
         try:
-            with open(self.settings_file, 'r') as f:
+            with open(self.settings_file, "r") as f:
                 loaded = json.load(f)
             self._merge_recursive(merged_settings, loaded)
             DebugLogger.system(f"Loaded user settings from {self.settings_file}")

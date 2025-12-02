@@ -38,6 +38,7 @@ _FILE_INDEX = None
 # Public API
 # ===========================================================
 
+
 def load_config(filename, default_dict=None, strict=False):
     """
     Load a configuration file.
@@ -73,7 +74,9 @@ def load_config(filename, default_dict=None, strict=False):
     except (json.JSONDecodeError, FileNotFoundError, IOError) as e:
         if strict:
             raise FileNotFoundError(f"Config not found: {filename}") from e
-        DebugLogger.warn(f"Failed to load {path}: {e} - using defaults", category="loading")
+        DebugLogger.warn(
+            f"Failed to load {path}: {e} - using defaults", category="loading"
+        )
         return default_dict.copy()
 
 
@@ -112,6 +115,7 @@ def get_indexed_files():
 # Path Resolution
 # ===========================================================
 
+
 def _resolve_search_path(filename):
     """O(1) lookup from pre-built index."""
     if _FILE_INDEX is None:
@@ -137,6 +141,7 @@ def _resolve_search_path(filename):
 # File Loaders
 # ===========================================================
 
+
 def _load_json(path):
     """Load JSON config file."""
     with open(path, "r", encoding="utf-8") as f:
@@ -151,16 +156,21 @@ def _load_py_module(path):
         spec = importlib.util.spec_from_file_location("config_module", path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
-        DebugLogger.system(f"Loaded {os.path.basename(path)} (Python)", category="loading")
+        DebugLogger.system(
+            f"Loaded {os.path.basename(path)} (Python)", category="loading"
+        )
         return getattr(module, "DEFAULT_CONFIG", {})
     except (ImportError, AttributeError, SyntaxError) as e:
-        DebugLogger.warn(f"Failed to load Python config {path}: {e}", category="loading")
+        DebugLogger.warn(
+            f"Failed to load Python config {path}: {e}", category="loading"
+        )
         return {}
 
 
 def _load_yaml(path):
     """Load YAML config file."""
     import yaml
+
     with open(path, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f)
     DebugLogger.system(f"Loaded {os.path.basename(path)}", category="loading")
@@ -170,6 +180,7 @@ def _load_yaml(path):
 # ===========================================================
 # Merge Utilities
 # ===========================================================
+
 
 def _merge_dicts(default, override):
     """Recursively merge two dicts. Ignores '_notes' keys."""

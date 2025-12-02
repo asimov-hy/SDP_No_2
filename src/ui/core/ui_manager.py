@@ -21,7 +21,14 @@ from src.scenes.transitions.transitions import UISlideAnimation
 class UIManager:
     """Manages all ui elements, screens, and rendering."""
 
-    def __init__(self, display_manager, draw_manager, input_manager=None, game_width: int = 1280, game_height: int = 720):
+    def __init__(
+        self,
+        display_manager,
+        draw_manager,
+        input_manager=None,
+        game_width: int = 1280,
+        game_height: int = 720,
+    ):
         """
         Initialize ui manager.
 
@@ -47,7 +54,7 @@ class UIManager:
 
         # State
         self.modal_stack: List[str] = []  # Stack of active modal screens
-        self._screen_animations: Dict[str, 'UISlideAnimation'] = {}  # Active animations
+        self._screen_animations: Dict[str, "UISlideAnimation"] = {}  # Active animations
         self._pending_hides: Dict[str, bool] = {}
 
         # HUD slide animation tracking
@@ -66,7 +73,7 @@ class UIManager:
     def _inject_draw_manager_to_tree(self, element: UIElement):
         """Recursively inject DrawManager reference to element tree."""
         element.set_draw_manager(self.draw_manager)
-        if hasattr(element, 'children'):
+        if hasattr(element, "children"):
             for child in element.children:
                 self._inject_draw_manager_to_tree(child)
 
@@ -95,7 +102,13 @@ class UIManager:
         root_element = self.loader.load(filename)
         self.register_screen(name, root_element)
 
-    def show_screen(self, name: str, modal: bool = False, slide_from: str = None, slide_duration: float = 0.3):
+    def show_screen(
+        self,
+        name: str,
+        modal: bool = False,
+        slide_from: str = None,
+        slide_duration: float = 0.3,
+    ):
         """
         Show a screen.
 
@@ -133,7 +146,12 @@ class UIManager:
         # Rebuild focus list when showing screen
         self.rebuild_focus_list()
 
-    def hide_screen(self, name: Optional[str] = None, slide_to: str = None, slide_duration: float = 0.3):
+    def hide_screen(
+        self,
+        name: Optional[str] = None,
+        slide_to: str = None,
+        slide_duration: float = 0.3,
+    ):
         """
         Hide a screen.
 
@@ -150,7 +168,9 @@ class UIManager:
 
         # Start slide-out animation if specified
         if slide_to:
-            self._screen_animations[name] = UISlideAnimation(slide_to, slide_duration, reverse=True)
+            self._screen_animations[name] = UISlideAnimation(
+                slide_to, slide_duration, reverse=True
+            )
             # Delay actual hide until animation completes
             self._pending_hides[name] = True
             return
@@ -177,13 +197,13 @@ class UIManager:
     def _on_screen_show(self, name: str):
         """Called when screen is shown."""
         screen = self.screens.get(name)
-        if screen and hasattr(screen, 'on_show'):
+        if screen and hasattr(screen, "on_show"):
             screen.on_show()
 
     def _on_screen_hide(self, name: str):
         """Called when screen is hidden."""
         screen = self.screens.get(name)
-        if screen and hasattr(screen, 'on_hide'):
+        if screen and hasattr(screen, "on_hide"):
             screen.on_hide()
 
     # ===================================================================
@@ -196,11 +216,11 @@ class UIManager:
             return
 
         # Check if element is focusable (has action = is a button)
-        if hasattr(element, 'action') and element.action:
+        if hasattr(element, "action") and element.action:
             result.append(element)
 
         # Recurse children
-        if hasattr(element, 'children'):
+        if hasattr(element, "children"):
             for child in element.children:
                 self._collect_focusables(child, result)
 
@@ -252,7 +272,7 @@ class UIManager:
     def transfer_hover_to_focus(self):
         """Find hovered button and set focus to it."""
         for i, element in enumerate(self.focusables):
-            if hasattr(element, 'is_hovered') and element.is_hovered:
+            if hasattr(element, "is_hovered") and element.is_hovered:
                 self.focus_index = i
                 element.is_focused = True
                 element.mark_dirty()
@@ -269,7 +289,7 @@ class UIManager:
         """Activate the currently focused element."""
         if 0 <= self.focus_index < len(self.focusables):
             element = self.focusables[self.focus_index]
-            if hasattr(element, 'action'):
+            if hasattr(element, "action"):
                 get_sound_manager().play_bfx("button_click")
                 return element.action
         return None
@@ -282,7 +302,9 @@ class UIManager:
         if inp.action_pressed("navigate_up") or inp.action_pressed("navigate_left"):
             self.transfer_hover_to_focus()
             self.navigate(-1)
-        elif inp.action_pressed("navigate_down") or inp.action_pressed("navigate_right"):
+        elif inp.action_pressed("navigate_down") or inp.action_pressed(
+            "navigate_right"
+        ):
             self.transfer_hover_to_focus()
             self.navigate(1)
 
@@ -332,7 +354,7 @@ class UIManager:
         self._set_auto_layer(root_element, Layers.UI)
 
         # If root is a container, add all children as separate HUD elements
-        if hasattr(root_element, 'children'):
+        if hasattr(root_element, "children"):
             for child in root_element.children:
                 self.register_hud(child)
         else:
@@ -372,7 +394,7 @@ class UIManager:
         for i, element in enumerate(elements):
             # Skip children that slide with parent (only if parent has real offset)
             if element.slide_with_parent and element.parent:
-                parent_anchor = getattr(element.parent, 'parent_anchor', 'center')
+                parent_anchor = getattr(element.parent, "parent_anchor", "center")
                 parent_offset = self.ANCHOR_TO_OFFSET.get(parent_anchor, (0, 0))
                 if parent_offset != (0, 0):
                     continue
@@ -381,7 +403,7 @@ class UIManager:
             if not element.rect:
                 element.rect = self.anchor_resolver.resolve(element, None)
 
-            anchor = getattr(element, 'parent_anchor', 'center')
+            anchor = getattr(element, "parent_anchor", "center")
             offset = self.ANCHOR_TO_OFFSET.get(anchor, (0, -100))
             delay = animated_count * stagger
             element.start_slide_in(offset, duration, delay)
@@ -394,14 +416,16 @@ class UIManager:
         elements = []
         self._flatten_elements(self.hud_elements, elements)
         # Sort by Y then X for natural top-to-bottom, left-to-right order
-        elements.sort(key=lambda e: (e.rect.y if e.rect else 0, e.rect.x if e.rect else 0))
+        elements.sort(
+            key=lambda e: (e.rect.y if e.rect else 0, e.rect.x if e.rect else 0)
+        )
         return elements
 
     def _flatten_elements(self, items: List, result: List):
         """Recursively flatten element tree."""
         for item in items:
             result.append(item)
-            if hasattr(item, 'children'):
+            if hasattr(item, "children"):
                 self._flatten_elements(item.children, result)
 
     def has_active_hud_animations(self) -> bool:
@@ -454,7 +478,7 @@ class UIManager:
             return element
 
         # Recurse children
-        if hasattr(element, 'children'):
+        if hasattr(element, "children"):
             for child in element.children:
                 result = self._find_in_tree(child, target_id)
                 if result:
@@ -526,7 +550,9 @@ class UIManager:
             if screen:
                 self._update_element_tree(screen, dt, mouse_pos)
 
-    def _update_element_tree(self, element: UIElement, dt: float, mouse_pos: Tuple[int, int]):
+    def _update_element_tree(
+        self, element: UIElement, dt: float, mouse_pos: Tuple[int, int]
+    ):
         """Recursively update element and children."""
         if not element.visible:
             return
@@ -535,7 +561,7 @@ class UIManager:
         element.update(dt, mouse_pos, self.bindings)
 
         # Update children
-        if hasattr(element, 'children'):
+        if hasattr(element, "children"):
             for child in element.children:
                 self._update_element_tree(child, dt, mouse_pos)
 
@@ -566,7 +592,8 @@ class UIManager:
             screen = self.screens.get(screen_name)
             if screen:
                 action = self._handle_click_tree(screen, mouse_pos)
-                if action: break
+                if action:
+                    break
 
         # Check active screen
         if not action and self.active_screen:
@@ -578,14 +605,17 @@ class UIManager:
         if not action:
             for element in self.hud_elements:
                 action = self._handle_click_tree(element, mouse_pos)
-                if action: break
+                if action:
+                    break
 
         if action:
             button_sound = get_sound_manager()
             button_sound.play_bfx("button_click")
         return action
 
-    def _handle_click_tree(self, element: UIElement, mouse_pos: Tuple[int, int]) -> Optional[str]:
+    def _handle_click_tree(
+        self, element: UIElement, mouse_pos: Tuple[int, int]
+    ) -> Optional[str]:
         """Recursively check element tree for clicks."""
         if not element.visible or not element.enabled:
             return None
@@ -597,7 +627,7 @@ class UIManager:
                 return action
 
         # Check children (front to back)
-        if hasattr(element, 'children'):
+        if hasattr(element, "children"):
             for child in reversed(element.children):
                 action = self._handle_click_tree(child, mouse_pos)
                 if action:
@@ -636,13 +666,15 @@ class UIManager:
                 anim_offset = offset.offset if offset else (0, 0)
                 self._draw_element_tree(screen, draw_manager, anim_offset=anim_offset)
 
-    def _draw_element_tree(self, element, draw_manager, parent=None, anim_offset=(0, 0)):
+    def _draw_element_tree(
+        self, element, draw_manager, parent=None, anim_offset=(0, 0)
+    ):
         """Recursively draw element and children."""
         if not element.visible:
             return
 
         # Only resolve position if cache is invalid
-        parent_invalid = parent and not getattr(parent, '_position_cache_valid', True)
+        parent_invalid = parent and not getattr(parent, "_position_cache_valid", True)
 
         if not element._position_cache_valid or parent_invalid:
             element.rect = self.anchor_resolver.resolve(element, parent)
@@ -658,19 +690,22 @@ class UIManager:
         # Apply animation offset + element slide offset to draw position
         slide = element.slide_offset
         draw_rect = element.rect.move(
-            anim_offset[0] + slide[0],
-            anim_offset[1] + slide[1]
+            anim_offset[0] + slide[0], anim_offset[1] + slide[1]
         )
 
         # Queue for drawing
         draw_manager.queue_draw(surface, draw_rect, element.layer)
 
         # Draw children (pass offset down)
-        if hasattr(element, 'children'):
+        if hasattr(element, "children"):
             combined_offset = (anim_offset[0] + slide[0], anim_offset[1] + slide[1])
             for child in element.children:
-                child_offset = combined_offset if child.slide_with_parent else anim_offset
-                self._draw_element_tree(child, draw_manager, parent=element, anim_offset=child_offset)
+                child_offset = (
+                    combined_offset if child.slide_with_parent else anim_offset
+                )
+                self._draw_element_tree(
+                    child, draw_manager, parent=element, anim_offset=child_offset
+                )
 
     def _set_auto_layer(self, element, layer):
         """
@@ -680,14 +715,14 @@ class UIManager:
             element: Root element
             layer: Layer to assign
         """
-        graphic_dict  = getattr(element, 'visual_dict', {})
+        graphic_dict = getattr(element, "visual_dict", {})
 
         # Only set if not explicitly specified in config
-        if 'layer' not in graphic_dict :
+        if "layer" not in graphic_dict:
             element.layer = layer
 
         # Recursively set for children
-        if hasattr(element, 'children'):
+        if hasattr(element, "children"):
             for child in element.children:
                 self._set_auto_layer(child, layer)
 

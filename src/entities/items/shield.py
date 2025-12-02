@@ -21,8 +21,15 @@ from src.graphics.particles.particle_manager import ParticleEmitter
 class Shield(BaseEntity):
     """Protective shield that follows owner and handles collisions."""
 
-    def __init__(self, owner, radius=56, color=(100, 200, 255), knockback_strength=350,
-                 can_damage=False, damage_amount=0):
+    def __init__(
+        self,
+        owner,
+        radius=56,
+        color=(100, 200, 255),
+        knockback_strength=350,
+        can_damage=False,
+        damage_amount=0,
+    ):
         """
         Args:
             owner: Entity to follow (Player, Item carrier, etc.)
@@ -97,7 +104,9 @@ class Shield(BaseEntity):
 
             # Inner highlight
             highlight = tuple(min(255, c + 50) for c in self.color)
-            pygame.draw.circle(self.image, (*highlight, alpha // 2), center, self.radius - 8, 2)
+            pygame.draw.circle(
+                self.image, (*highlight, alpha // 2), center, self.radius - 8, 2
+            )
 
     def set_warning_blink(self, enabled, blink_rate=0.08):
         """Enable rapid blinking to warn shield ending."""
@@ -119,9 +128,9 @@ class Shield(BaseEntity):
     def _on_bullet_hit(self, bullet):
         """Destroy bullet and spawn particles."""
         # Destroy bullet
-        if hasattr(bullet, 'kill'):
+        if hasattr(bullet, "kill"):
             bullet.kill()
-        elif hasattr(bullet, 'active'):
+        elif hasattr(bullet, "active"):
             bullet.active = False
 
         # Visual feedback
@@ -144,13 +153,19 @@ class Shield(BaseEntity):
 
         # Deal damage if item shield
         if self.can_damage and self.damage_amount > 0:
-            if hasattr(enemy, 'take_damage'):
+            if hasattr(enemy, "take_damage"):
                 enemy.take_damage(self.damage_amount)
-                DebugLogger.trace(f"Shield dealt {self.damage_amount} damage", category="collision")
+                DebugLogger.trace(
+                    f"Shield dealt {self.damage_amount} damage", category="collision"
+                )
 
         # Visual feedback
-        ParticleEmitter.burst("shield_impact", self.rect.center, count=8,
-                              direction=(dx, dy) if length > 0 else None)
+        ParticleEmitter.burst(
+            "shield_impact",
+            self.rect.center,
+            count=8,
+            direction=(dx, dy) if length > 0 else None,
+        )
         DebugLogger.trace("Shield deflected enemy", category="collision")
 
     def kill(self):

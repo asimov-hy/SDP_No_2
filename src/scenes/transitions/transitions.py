@@ -75,9 +75,7 @@ class UIFadeOverlay:
     """Overlay for pause/game over screens (not a scene transition)."""
 
     def __init__(self, color=(0, 0, 0), max_alpha=180):
-        self.surface = pygame.Surface(
-            (Display.WIDTH, Display.HEIGHT), pygame.SRCALPHA
-        )
+        self.surface = pygame.Surface((Display.WIDTH, Display.HEIGHT), pygame.SRCALPHA)
         self.color = color
         self.max_alpha = max_alpha
         self.alpha = 0
@@ -101,7 +99,9 @@ class UIFadeOverlay:
     def draw(self, draw_manager):
         if self.alpha > 0:
             self.surface.fill((*self.color[:3], int(self.alpha)))
-            draw_manager.queue_draw(self.surface, self.surface.get_rect(), layer=Layers.OVERLAY)
+            draw_manager.queue_draw(
+                self.surface, self.surface.get_rect(), layer=Layers.OVERLAY
+            )
 
     @property
     def is_visible(self) -> bool:
@@ -111,7 +111,9 @@ class UIFadeOverlay:
 class UISlideAnimation:
     """Slide animation for UI screens."""
 
-    def __init__(self, direction: str = "top", duration: float = 0.3, reverse: bool = False):
+    def __init__(
+        self, direction: str = "top", duration: float = 0.3, reverse: bool = False
+    ):
         """
         Args:
             direction: 'top', 'bottom', 'left', 'right'
@@ -164,7 +166,7 @@ class UISlideAnimation:
 
         self._offset = (
             int(self._start[0] + (self._end[0] - self._start[0]) * eased),
-            int(self._start[1] + (self._end[1] - self._start[1]) * eased)
+            int(self._start[1] + (self._end[1] - self._start[1]) * eased),
         )
 
         if progress >= 1.0:

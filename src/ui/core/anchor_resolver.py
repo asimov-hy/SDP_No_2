@@ -12,10 +12,19 @@ class AnchorResolver:
     """Resolves ui element positions from various anchor modes."""
 
     _ALIGNMENT_MULTIPLIERS = {
-        'top_left': (0, 0), 'top_center': (0.5, 0), 'top': (0.5, 0), 'top_right': (1, 0),
-        'center_left': (0, 0.5), 'left': (0, 0.5), 'center': (0.5, 0.5),
-        'center_right': (1, 0.5), 'right': (1, 0.5),
-        'bottom_left': (0, 1), 'bottom_center': (0.5, 1), 'bottom': (0.5, 1), 'bottom_right': (1, 1),
+        "top_left": (0, 0),
+        "top_center": (0.5, 0),
+        "top": (0.5, 0),
+        "top_right": (1, 0),
+        "center_left": (0, 0.5),
+        "left": (0, 0.5),
+        "center": (0.5, 0.5),
+        "center_right": (1, 0.5),
+        "right": (1, 0.5),
+        "bottom_left": (0, 1),
+        "bottom_center": (0.5, 1),
+        "bottom": (0.5, 1),
+        "bottom_right": (1, 1),
     }
 
     def __init__(self, game_width: int, game_height: int):
@@ -50,25 +59,35 @@ class AnchorResolver:
             Final positioned rect
         """
         # Check for absolute positioning via anchor
-        if element.parent_anchor == 'screen:absolute':
+        if element.parent_anchor == "screen:absolute":
             # Use offset as absolute x, y coordinates
-            offset_x, offset_y = self._parse_offset(element.offset, element.width, element.height)
-            return pygame.Rect(int(offset_x), int(offset_y), element.width, element.height)
+            offset_x, offset_y = self._parse_offset(
+                element.offset, element.width, element.height
+            )
+            return pygame.Rect(
+                int(offset_x), int(offset_y), element.width, element.height
+            )
 
         # Calculate anchor point
-        anchor_x, anchor_y = self._get_anchor_point(element.parent_anchor, parent, element)
+        anchor_x, anchor_y = self._get_anchor_point(
+            element.parent_anchor, parent, element
+        )
 
         # Apply offset
-        offset_x, offset_y = self._parse_offset(element.offset, element.width, element.height)
+        offset_x, offset_y = self._parse_offset(
+            element.offset, element.width, element.height
+        )
 
         # Apply layout position if set by parent container
-        if hasattr(element, '_layout_x') and element.parent_anchor is None:
+        if hasattr(element, "_layout_x") and element.parent_anchor is None:
             # Use layout positioning from parent
             final_x = element._layout_x
             final_y = element._layout_y
         else:
             # Calculate child's self_anchor offset from top-left
-            align_x, align_y = self._get_alignment_offset(element.self_anchor, element.width, element.height)
+            align_x, align_y = self._get_alignment_offset(
+                element.self_anchor, element.width, element.height
+            )
 
             # Position child so its self_anchor point touches parent's parent_anchor point
             final_x = anchor_x + offset_x - align_x
@@ -80,7 +99,9 @@ class AnchorResolver:
 
         return pygame.Rect(int(final_x), int(final_y), element.width, element.height)
 
-    def _calculate_rect_anchor(self, rect: pygame.Rect, position: str) -> Tuple[int, int]:
+    def _calculate_rect_anchor(
+        self, rect: pygame.Rect, position: str
+    ) -> Tuple[int, int]:
         """Calculate anchor point on a rectangle."""
         mult = self._ALIGNMENT_MULTIPLIERS.get(position, (0, 0))
         return int(rect.x + rect.width * mult[0]), int(rect.y + rect.height * mult[1])
@@ -99,7 +120,7 @@ class AnchorResolver:
         """
         if anchor is None:
             # No anchor - use top-left or layout position
-            if parent and hasattr(element, '_layout_x'):
+            if parent and hasattr(element, "_layout_x"):
                 return element._layout_x, element._layout_y
             return 0, 0
 
@@ -132,18 +153,18 @@ class AnchorResolver:
         """
 
         # New format: "prefix:position"
-        if ':' in name and not name.startswith('#'):
-            parts = name.split(':', 1)
+        if ":" in name and not name.startswith("#"):
+            parts = name.split(":", 1)
             prefix, position = parts[0], parts[1]
 
-            if prefix == 'screen':
-                if position == 'absolute':
+            if prefix == "screen":
+                if position == "absolute":
                     # Absolute positioning handled in resolve()
                     return (0, 0)
                 screen_rect = pygame.Rect(0, 0, self.game_width, self.game_height)
                 return self._calculate_rect_anchor(screen_rect, position)
 
-            elif prefix == 'parent':
+            elif prefix == "parent":
                 if not parent or not parent.rect:
                     # Fallback to screen if no parent
                     screen_rect = pygame.Rect(0, 0, self.game_width, self.game_height)
@@ -151,27 +172,29 @@ class AnchorResolver:
                 return self._calculate_rect_anchor(parent.rect, position)
 
         # Element ID reference (e.g., "#health_bar:center")
-        if name.startswith('#'):
-            parts = name[1:].split(':')
+        if name.startswith("#"):
+            parts = name[1:].split(":")
             element_id = parts[0]
-            position = parts[1] if len(parts) > 1 else 'center'
+            position = parts[1] if len(parts) > 1 else "center"
 
             target_element = self._find_element_by_id(element_id)
             if target_element and target_element.rect:
                 return self._calculate_rect_anchor(target_element.rect, position)
 
         # Legacy parent_ prefix (backwards compatibility)
-        if name.startswith('parent_'):
+        if name.startswith("parent_"):
             if not parent or not parent.rect:
-                return self._get_named_anchor(name.replace('parent_', ''), None)
-            parent_anchor = name.replace('parent_', '')
+                return self._get_named_anchor(name.replace("parent_", ""), None)
+            parent_anchor = name.replace("parent_", "")
             return self._calculate_rect_anchor(parent.rect, parent_anchor)
 
         # Default: screen anchor (legacy format)
         screen_rect = pygame.Rect(0, 0, self.game_width, self.game_height)
         return self._calculate_rect_anchor(screen_rect, name)
 
-    def _get_percentage_anchor(self, anchor: Union[List, Tuple], parent) -> Tuple[int, int]:
+    def _get_percentage_anchor(
+        self, anchor: Union[List, Tuple], parent
+    ) -> Tuple[int, int]:
         """
         Parse percentage-based anchor.
 
@@ -216,19 +239,21 @@ class AnchorResolver:
             Calculated dimension in pixels
         """
         if isinstance(value, str):
-            if '%' in value:
+            if "%" in value:
                 # Percentage of reference
-                percentage = float(value.strip('%')) / 100
+                percentage = float(value.strip("%")) / 100
                 return reference * percentage
-            elif value.startswith('parent:'):
+            elif value.startswith("parent:"):
                 # Parent percentage
-                percentage_str = value.replace('parent:', '').strip('%')
+                percentage_str = value.replace("parent:", "").strip("%")
                 percentage = float(percentage_str) / 100
                 return reference * percentage
 
         return float(value)
 
-    def _parse_offset(self, offset: Union[List, Tuple], elem_width: int, elem_height: int) -> Tuple[int, int]:
+    def _parse_offset(
+        self, offset: Union[List, Tuple], elem_width: int, elem_height: int
+    ) -> Tuple[int, int]:
         """
         Parse offset values (can be pixels or percentages).
 
@@ -246,22 +271,24 @@ class AnchorResolver:
         x_offset, y_offset = offset
 
         # Parse X offset
-        if isinstance(x_offset, str) and '%' in x_offset:
-            percentage = float(x_offset.strip('%')) / 100
+        if isinstance(x_offset, str) and "%" in x_offset:
+            percentage = float(x_offset.strip("%")) / 100
             x = int(self.game_width * percentage)
         else:
             x = int(x_offset)
 
         # Parse Y offset
-        if isinstance(y_offset, str) and '%' in y_offset:
-            percentage = float(y_offset.strip('%')) / 100
+        if isinstance(y_offset, str) and "%" in y_offset:
+            percentage = float(y_offset.strip("%")) / 100
             y = int(self.game_height * percentage)
         else:
             y = int(y_offset)
 
         return x, y
 
-    def _get_alignment_offset(self, align: str, width: int, height: int) -> Tuple[int, int]:
+    def _get_alignment_offset(
+        self, align: str, width: int, height: int
+    ) -> Tuple[int, int]:
         """
         Calculate offset from element's top-left to its self_anchor point.
 

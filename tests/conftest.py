@@ -15,20 +15,20 @@ import os
 from unittest.mock import MagicMock
 
 # Add src directory to Python path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 # Mock pygame globally before any imports that might use it
 mock_pygame = MagicMock()
-sys.modules['pygame'] = mock_pygame
-sys.modules['pygame.font'] = MagicMock()
-sys.modules['pygame.display'] = MagicMock()
-sys.modules['pygame.transform'] = MagicMock()
-sys.modules['pygame.Surface'] = MagicMock
-sys.modules['pygame.Rect'] = MagicMock
-sys.modules['pygame.Vector2'] = MagicMock
-sys.modules['pygame.mouse'] = MagicMock()
-sys.modules['pygame.event'] = MagicMock()
-sys.modules['pygame.key'] = MagicMock()
+sys.modules["pygame"] = mock_pygame
+sys.modules["pygame.font"] = MagicMock()
+sys.modules["pygame.display"] = MagicMock()
+sys.modules["pygame.transform"] = MagicMock()
+sys.modules["pygame.Surface"] = MagicMock
+sys.modules["pygame.Rect"] = MagicMock
+sys.modules["pygame.Vector2"] = MagicMock
+sys.modules["pygame.mouse"] = MagicMock()
+sys.modules["pygame.event"] = MagicMock()
+sys.modules["pygame.key"] = MagicMock()
 
 # Mock pygame constants
 mock_pygame.MOUSEBUTTONDOWN = 1
@@ -132,15 +132,9 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')"
     )
-    config.addinivalue_line(
-        "markers", "integration: marks tests as integration tests"
-    )
-    config.addinivalue_line(
-        "markers", "unit: marks tests as unit tests"
-    )
-    config.addinivalue_line(
-        "markers", "regression: marks tests as regression tests"
-    )
+    config.addinivalue_line("markers", "integration: marks tests as integration tests")
+    config.addinivalue_line("markers", "unit: marks tests as unit tests")
+    config.addinivalue_line("markers", "regression: marks tests as regression tests")
 
 
 def pytest_collection_modifyitems(config, items):

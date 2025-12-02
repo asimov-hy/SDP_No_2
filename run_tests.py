@@ -12,7 +12,7 @@ Usage:
 """
 
 import sys
-import os 
+import os
 import time
 import subprocess
 import argparse
@@ -21,7 +21,7 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 # Add src directory to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
 
 class TestRunner(FileSystemEventHandler):
@@ -40,9 +40,13 @@ class TestRunner(FileSystemEventHandler):
 
         # Only care about Python files in src/ or tests/
         file_path = Path(event.src_path)
-        file_path_str = str(file_path).replace('\\', '/')  # Convert to forward slashes for consistency
-        if not (file_path.suffix == '.py' and
-                ('src/' in file_path_str or 'tests/' in file_path_str)):
+        file_path_str = str(file_path).replace(
+            "\\", "/"
+        )  # Convert to forward slashes for consistency
+        if not (
+            file_path.suffix == ".py"
+            and ("src/" in file_path_str or "tests/" in file_path_str)
+        ):
             return
 
         # Debounce rapid file changes
@@ -55,25 +59,33 @@ class TestRunner(FileSystemEventHandler):
 
     def run_tests(self):
         """Run the test suite."""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("Running tests...")
-        print("="*60)
+        print("=" * 60)
 
         # Build pytest command
         cmd = ["python", "-m", "pytest"]
 
         if self.args.levelup_only:
-            cmd.extend(["tests/ui/test_level_up_ui.py", "tests/entities/test_player_leveling.py", "-v"])
+            cmd.extend(
+                [
+                    "tests/ui/test_level_up_ui.py",
+                    "tests/entities/test_player_leveling.py",
+                    "-v",
+                ]
+            )
         else:
             cmd.extend(["-v"])
 
         if self.args.coverage:
-            cmd.extend([
-                "--cov=src",
-                "--cov-report=term-missing",
-                "--cov-report=html",
-                "--cov-fail-under=70"
-            ])
+            cmd.extend(
+                [
+                    "--cov=src",
+                    "--cov-report=term-missing",
+                    "--cov-report=html",
+                    "--cov-fail-under=70",
+                ]
+            )
 
         # Run tests
         try:
@@ -97,18 +109,21 @@ class TestRunner(FileSystemEventHandler):
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(description="Auto-test runner for SDP-202X")
-    parser.add_argument("--run-once", action="store_true",
-                       help="Run tests once and exit")
-    parser.add_argument("--levelup-only", action="store_true",
-                       help="Run only LevelUpSystem tests")
-    parser.add_argument("--coverage", action="store_true",
-                       help="Generate coverage report")
+    parser.add_argument(
+        "--run-once", action="store_true", help="Run tests once and exit"
+    )
+    parser.add_argument(
+        "--levelup-only", action="store_true", help="Run only LevelUpSystem tests"
+    )
+    parser.add_argument(
+        "--coverage", action="store_true", help="Generate coverage report"
+    )
 
     args = parser.parse_args()
 
     # Check if pytest is available
     try:
-        import pytest # noqa: F401
+        import pytest  # noqa: F401
     except ImportError:
         print("pytest not found. Please install with:")
         print("   pip install -r requirements-test.txt")

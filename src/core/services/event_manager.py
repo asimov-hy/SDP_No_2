@@ -14,15 +14,18 @@ from src.core.debug.debug_logger import DebugLogger
 # Event Definitions
 # ===========================================================
 
+
 @dataclass(frozen=True)
 class BaseEvent:
     """Base class for all events."""
+
     pass
 
 
 @dataclass(frozen=True)
 class EnemyDiedEvent(BaseEvent):
     """Dispatched when an enemy dies."""
+
     position: tuple
     enemy_type_tag: str
     exp: int
@@ -31,18 +34,21 @@ class EnemyDiedEvent(BaseEvent):
 @dataclass(frozen=True)
 class ItemCollectedEvent(BaseEvent):
     """Dispatched when player collects an item."""
+
     effects: list
 
 
 @dataclass(frozen=True)
 class PlayerHealthEvent(BaseEvent):
     """Dispatched to modify player health."""
+
     amount: int
 
 
 @dataclass(frozen=True)
 class FireRateEvent(BaseEvent):
     """Dispatched to modify player fire rate."""
+
     multiplier: float
     duration: float
 
@@ -50,6 +56,7 @@ class FireRateEvent(BaseEvent):
 @dataclass(frozen=True)
 class ScreenShakeEvent(BaseEvent):
     """Dispatched to trigger screen shake effect."""
+
     intensity: float = 8.0
     duration: float = 0.3
 
@@ -57,6 +64,7 @@ class ScreenShakeEvent(BaseEvent):
 @dataclass(frozen=True)
 class BulletClearEvent(BaseEvent):
     """Dispatched to clear enemy bullets in an area."""
+
     center: tuple
     radius: float
     owner: str = "enemy"  # Which bullets to clear
@@ -65,6 +73,7 @@ class BulletClearEvent(BaseEvent):
 @dataclass(frozen=True)
 class SpawnPauseEvent(BaseEvent):
     """Dispatched to pause/resume enemy spawning."""
+
     paused: bool
 
 
@@ -97,10 +106,10 @@ class EventManager:
             return
 
         self._subscribers[event_type].append(callback)
-        callback_name = getattr(callback, '__name__', repr(callback))
+        callback_name = getattr(callback, "__name__", repr(callback))
         DebugLogger.system(
             f"Subscribed '{callback_name}' to '{event_type.__name__}'",
-            category="event_manager"
+            category="event_manager",
         )
 
     def unsubscribe(self, event_type: Type[BaseEvent], callback: Callable) -> None:
@@ -150,7 +159,7 @@ class EventManager:
             try:
                 callback(event)
             except Exception as e:
-                callback_name = getattr(callback, '__name__', repr(callback))
+                callback_name = getattr(callback, "__name__", repr(callback))
                 DebugLogger.warn(f"Error in event callback {callback_name}: {e}")
 
     # ===========================================================

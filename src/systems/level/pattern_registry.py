@@ -71,6 +71,7 @@ class PatternRegistry:
 # Built-in Formation Patterns
 # ===========================================================
 
+
 def pattern_line(count, game_width, game_height, config, **_):
     """
     Horizontal or vertical line formation.

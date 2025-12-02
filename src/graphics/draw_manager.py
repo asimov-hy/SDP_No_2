@@ -32,7 +32,7 @@ class DrawManager:
 
         # Layer queues
         self.surface_layers = {}  # {layer: [(surface, rect), ...]}
-        self.shape_layers = {}    # {layer: [shape_data, ...]}
+        self.shape_layers = {}  # {layer: [shape_data, ...]}
         self._layer_keys_cache = []
         self._layers_dirty = False
 
@@ -123,7 +123,9 @@ class DrawManager:
             DebugLogger.warn(f"No cached image for key '{key}'")
         return img
 
-    def get_entity_image(self, entity_type, size=None, config=None, color=None, image_path=None):
+    def get_entity_image(
+        self, entity_type, size=None, config=None, color=None, image_path=None
+    ):
         """
         Get entity image with automatic loading/generation.
 
@@ -160,12 +162,17 @@ class DrawManager:
             try:
                 img = pygame.image.load(image_path).convert_alpha()
                 if scale != 1.0:
-                    new_size = (int(img.get_width() * scale), int(img.get_height() * scale))
+                    new_size = (
+                        int(img.get_width() * scale),
+                        int(img.get_height() * scale),
+                    )
                     img = pygame.transform.scale(img, new_size)
                 else:
                     img = pygame.transform.scale(img, size)
                 self.images[cache_key] = img
-                DebugLogger.action(f"Loaded entity image: {entity_type} from {image_path}")
+                DebugLogger.action(
+                    f"Loaded entity image: {entity_type} from {image_path}"
+                )
                 return img
             except Exception as e:
                 DebugLogger.warn(f"Failed to load {image_path}: {e}, using fallback")
@@ -178,7 +185,9 @@ class DrawManager:
             return img
 
         # Fallback
-        DebugLogger.warn(f"No image/color for {entity_type}, using fallback placeholder")
+        DebugLogger.warn(
+            f"No image/color for {entity_type}, using fallback placeholder"
+        )
         img = self._generate_fallback(size, entity_type)
         self.images[cache_key] = img
         return img
@@ -208,9 +217,10 @@ class DrawManager:
             self.shake_timer -= dt
             t = self.shake_timer / self.shake_duration if self.shake_duration > 0 else 0
             import math
+
             self.shake_offset = (
                 int(math.sin(self.shake_timer * 50) * self.shake_intensity * t),
-                int(math.cos(self.shake_timer * 40) * self.shake_intensity * t)
+                int(math.cos(self.shake_timer * 40) * self.shake_intensity * t),
             )
         else:
             self.shake_offset = (0, 0)
@@ -327,10 +337,12 @@ class DrawManager:
                 "up": [(w // 2, 0), (0, h), (w, h)],
                 "down": [(w // 2, h), (0, 0), (w, 0)],
                 "left": [(0, h // 2), (w, 0), (w, h)],
-                "right": [(w, h // 2), (0, 0), (0, h)]
+                "right": [(w, h // 2), (0, 0), (0, h)],
             }
             if pointing not in directions:
-                DebugLogger.warn(f"Invalid triangle direction '{pointing}', defaulting to 'up'")
+                DebugLogger.warn(
+                    f"Invalid triangle direction '{pointing}', defaulting to 'up'"
+                )
                 pointing = "up"
             return directions[pointing]
 
@@ -351,7 +363,9 @@ class DrawManager:
             **kwargs: Shape params
         """
         width = kwargs.get("width", 0)
-        points = self._calculate_shape_points(shape_type, rect.width, rect.height, **kwargs)
+        points = self._calculate_shape_points(
+            shape_type, rect.width, rect.height, **kwargs
+        )
 
         if points:
             pygame.draw.polygon(surface, color, points, width)
@@ -396,7 +410,10 @@ class DrawManager:
         for layer in self._layer_keys_cache:
             if layer in self.surface_layers and self.surface_layers[layer]:
                 if self.shake_offset != (0, 0):
-                    shifted = [(surf, rect.move(self.shake_offset)) for surf, rect in self.surface_layers[layer]]
+                    shifted = [
+                        (surf, rect.move(self.shake_offset))
+                        for surf, rect in self.surface_layers[layer]
+                    ]
                     target_surface.blits(shifted)
                 else:
                     target_surface.blits(self.surface_layers[layer])
@@ -411,7 +428,10 @@ class DrawManager:
         if debug:
             surface_count = sum(len(items) for items in self.surface_layers.values())
             shape_count = sum(len(items) for items in self.shape_layers.values())
-            DebugLogger.state(f"Rendered {surface_count} surfaces and {shape_count} shapes", category="drawing")
+            DebugLogger.state(
+                f"Rendered {surface_count} surfaces and {shape_count} shapes",
+                category="drawing",
+            )
 
     def _render_background(self, target_surface):
         """Render background (scrolling, static, or fallback)."""

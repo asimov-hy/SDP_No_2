@@ -23,14 +23,23 @@ from src.systems.entity_management.entity_registry import EntityRegistry
 class EnemyWaypoint(BaseEnemy):
     """Enemy that follows a fixed path through waypoints."""
 
-    __slots__ = ('waypoints', 'current_waypoint_idx', 'arrival_threshold')
+    __slots__ = ("waypoints", "current_waypoint_idx", "arrival_threshold")
 
     __registry_category__ = EntityCategory.ENEMY
     __registry_name__ = "waypoint"
     _cached_defaults = None
 
-    def __init__(self, x, y, waypoints=None, speed=None, health=None,
-                 scale=None, draw_manager=None, **kwargs):
+    def __init__(
+        self,
+        x,
+        y,
+        waypoints=None,
+        speed=None,
+        health=None,
+        scale=None,
+        draw_manager=None,
+        **kwargs,
+    ):
         """
         Args:
             x, y: Spawn position
@@ -42,7 +51,9 @@ class EnemyWaypoint(BaseEnemy):
         """
         # Load defaults from JSON
         if EnemyWaypoint._cached_defaults is None:
-            EnemyWaypoint._cached_defaults = EntityRegistry.get_data("enemy", "waypoint")
+            EnemyWaypoint._cached_defaults = EntityRegistry.get_data(
+                "enemy", "waypoint"
+            )
         defaults = EnemyWaypoint._cached_defaults
 
         # Apply overrides or use defaults
@@ -57,14 +68,15 @@ class EnemyWaypoint(BaseEnemy):
         img = BaseEntity.load_and_scale_image(image_path, scale)
 
         super().__init__(
-            x, y,
+            x,
+            y,
             image=img,
             draw_manager=draw_manager,
             speed=speed,
             health=health,
             direction=(0, 1),  # Initial direction (overwritten by waypoint system)
             spawn_edge=kwargs.get("spawn_edge"),
-            hitbox_config=hitbox_config
+            hitbox_config=hitbox_config,
         )
 
         # Waypoint system
@@ -81,7 +93,7 @@ class EnemyWaypoint(BaseEnemy):
 
         DebugLogger.init(
             f"Spawned EnemyWaypoint at ({x}, {y}) | Waypoints={len(self.waypoints)}",
-            category="animation_effects"
+            category="animation_effects",
         )
 
     def update(self, dt: float):
@@ -96,7 +108,9 @@ class EnemyWaypoint(BaseEnemy):
             # Check if arrived at waypoint
             if distance < self.arrival_threshold:
                 # Advance to next waypoint (loop back to start)
-                self.current_waypoint_idx = (self.current_waypoint_idx + 1) % len(self.waypoints)
+                self.current_waypoint_idx = (self.current_waypoint_idx + 1) % len(
+                    self.waypoints
+                )
                 self._update_velocity_to_next_waypoint()
 
         # BaseEnemy.update() handles movement and rotation
@@ -114,7 +128,9 @@ class EnemyWaypoint(BaseEnemy):
             direction.normalize_ip()
             self.velocity = direction * self.speed
 
-    def reset(self, x, y, waypoints=None, speed=None, health=None, scale=None, **kwargs):
+    def reset(
+        self, x, y, waypoints=None, speed=None, health=None, scale=None, **kwargs
+    ):
         """Reset enemy for pooling."""
         # Load defaults from JSON
         defaults = EnemyWaypoint._cached_defaults
@@ -134,12 +150,13 @@ class EnemyWaypoint(BaseEnemy):
 
         # Call super to reset position/state
         super().reset(
-            x, y,
+            x,
+            y,
             direction=(0, 1),
             speed=speed,
             health=health,
             spawn_edge=kwargs.get("spawn_edge"),
-            hitbox_scale=hitbox_scale
+            hitbox_scale=hitbox_scale,
         )
 
         # Reload image if using image mode

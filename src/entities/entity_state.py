@@ -13,9 +13,10 @@ class LifecycleState(IntEnum):
     Tracks the life/death progression of an entity.
     Used for death animation control and cleanup timing.
     """
+
     ALIVE = 0
-    DYING = 1      # Playing death animation/effects
-    DEAD = 2       # Ready for cleanup
+    DYING = 1  # Playing death animation/effects
+    DEAD = 2  # Ready for cleanup
 
 
 class InteractionState(IntEnum):
@@ -36,6 +37,7 @@ class InteractionState(IntEnum):
       2 -> INTANGIBLE    self: X   opponent: X   hazard: X   environment: O
       3 -> CLIP_THROUGH  self: X   opponent: X   hazard: X   environment: X
     """
+
     DEFAULT = 0
     INVINCIBLE = 1
     INTANGIBLE = 2

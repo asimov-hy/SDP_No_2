@@ -42,7 +42,7 @@ class DebugHUD:
         self.smoothed_fps = 0.0
         self.recent_fps_sum = 0.0
         self.recent_fps_count = 0
-        self.min_fps = float('inf')
+        self.min_fps = float("inf")
         self.max_fps = 0.0
         self.min_fps_time = None
 
@@ -87,7 +87,7 @@ class DebugHUD:
 
         element.update(dt, mouse_pos, binding_system=None)
 
-        if hasattr(element, 'children'):
+        if hasattr(element, "children"):
             for child in element.children:
                 self._update_element_tree(child, dt, mouse_pos)
 
@@ -124,7 +124,7 @@ class DebugHUD:
                 return action
 
         # Check children (front to back)
-        if hasattr(element, 'children'):
+        if hasattr(element, "children"):
             for child in reversed(element.children):
                 action = self._handle_click_tree(child, mouse_pos)
                 if action:
@@ -171,9 +171,9 @@ class DebugHUD:
             return
 
         # NEW: Only resolve position if cache is invalid
-        parent_invalid = parent and not getattr(parent, '_position_cache_valid', True)
+        parent_invalid = parent and not getattr(parent, "_position_cache_valid", True)
 
-        if not getattr(element, '_position_cache_valid', False) or parent_invalid:
+        if not getattr(element, "_position_cache_valid", False) or parent_invalid:
             element.rect = self.anchor_resolver.resolve(element, parent)
             element._position_cache_valid = True
 
@@ -188,7 +188,7 @@ class DebugHUD:
         draw_manager.queue_draw(surface, element.rect, Layers.DEBUG)
 
         # Draw children
-        if hasattr(element, 'children'):
+        if hasattr(element, "children"):
             for child in element.children:
                 self._draw_element_tree(child, draw_manager, parent=element)
 
@@ -213,24 +213,48 @@ class DebugHUD:
 
         # Player info (if exists)
         if player:
-            self._draw_text(f"Pos: ({player.rect.x:.0f}, {player.rect.y:.0f})",
-                           x_offset, y_offset, (150, 255, 150), draw_manager)
+            self._draw_text(
+                f"Pos: ({player.rect.x:.0f}, {player.rect.y:.0f})",
+                x_offset,
+                y_offset,
+                (150, 255, 150),
+                draw_manager,
+            )
             y_offset += line_height
 
-            self._draw_text(f"Vel: ({player.velocity.x:.1f}, {player.velocity.y:.1f})",
-                           x_offset, y_offset, (150, 255, 150), draw_manager)
+            self._draw_text(
+                f"Vel: ({player.velocity.x:.1f}, {player.velocity.y:.1f})",
+                x_offset,
+                y_offset,
+                (150, 255, 150),
+                draw_manager,
+            )
             y_offset += line_height + 5
 
         # FPS metrics
-        recent_avg = (self.recent_fps_sum / self.recent_fps_count
-                     if self.recent_fps_count > 0 else 0.0)
+        recent_avg = (
+            self.recent_fps_sum / self.recent_fps_count
+            if self.recent_fps_count > 0
+            else 0.0
+        )
 
-        self._draw_text(f"FPS (smooth): {self.smoothed_fps:.1f}",
-                       x_offset, y_offset, (100, 255, 100), draw_manager, bold=True)
+        self._draw_text(
+            f"FPS (smooth): {self.smoothed_fps:.1f}",
+            x_offset,
+            y_offset,
+            (100, 255, 100),
+            draw_manager,
+            bold=True,
+        )
         y_offset += line_height
 
-        self._draw_text(f"FPS (recent): {recent_avg:.1f}",
-                       x_offset, y_offset, (100, 200, 255), draw_manager)
+        self._draw_text(
+            f"FPS (recent): {recent_avg:.1f}",
+            x_offset,
+            y_offset,
+            (100, 200, 255),
+            draw_manager,
+        )
         y_offset += line_height
 
         min_text = f"Min: {self.min_fps:.1f}"
@@ -239,21 +263,41 @@ class DebugHUD:
         self._draw_text(min_text, x_offset, y_offset, (255, 200, 100), draw_manager)
         y_offset += line_height
 
-        self._draw_text(f"Max: {self.max_fps:.1f}",
-                       x_offset, y_offset, (150, 200, 255), draw_manager)
+        self._draw_text(
+            f"Max: {self.max_fps:.1f}",
+            x_offset,
+            y_offset,
+            (150, 200, 255),
+            draw_manager,
+        )
         y_offset += line_height + 5
 
         # Frame timing
-        self._draw_text(f"Frame: {self.frame_time:.2f}ms",
-                       x_offset, y_offset, (255, 255, 150), draw_manager)
+        self._draw_text(
+            f"Frame: {self.frame_time:.2f}ms",
+            x_offset,
+            y_offset,
+            (255, 255, 150),
+            draw_manager,
+        )
         y_offset += line_height
 
-        self._draw_text(f"Update: {self.update_time:.2f}ms",
-                       x_offset, y_offset, (200, 255, 200), draw_manager)
+        self._draw_text(
+            f"Update: {self.update_time:.2f}ms",
+            x_offset,
+            y_offset,
+            (200, 255, 200),
+            draw_manager,
+        )
         y_offset += line_height
 
-        self._draw_text(f"Render: {self.render_time:.2f}ms",
-                       x_offset, y_offset, (200, 200, 255), draw_manager)
+        self._draw_text(
+            f"Render: {self.render_time:.2f}ms",
+            x_offset,
+            y_offset,
+            (200, 200, 255),
+            draw_manager,
+        )
 
     def _draw_text(self, text, x, y, color, draw_manager, bold=False):
         """Helper to render and queue text."""
@@ -270,7 +314,9 @@ class DebugHUD:
         state = "shown" if self.visible else "hidden"
         DebugLogger.action(f"DebugHUD {state}")
 
-    def record_frame_metrics(self, frame_time_ms: float, scene_time: float, render_time: float, fps: float):
+    def record_frame_metrics(
+        self, frame_time_ms: float, scene_time: float, render_time: float, fps: float
+    ):
         """
         Record all frame timing metrics. Called once per frame by Main Loop.
 
@@ -297,8 +343,7 @@ class DebugHUD:
 
         # Smoothed FPS (exponential moving average)
         self.smoothed_fps = (
-            self.smoothed_fps * 0.9 + fps * 0.1
-            if self.smoothed_fps > 0 else fps
+            self.smoothed_fps * 0.9 + fps * 0.1 if self.smoothed_fps > 0 else fps
         )
 
         # Recent average (rolling window)

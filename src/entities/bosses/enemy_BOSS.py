@@ -19,9 +19,11 @@ from src.core.debug.debug_logger import DebugLogger
 class BossPart:
     """Individual weapon/component attached to the boss."""
 
-    __slots__ = ('name', 'image', 'offset', 'health', 'max_health', 'active', 'angle')
+    __slots__ = ("name", "image", "offset", "health", "max_health", "active", "angle")
 
-    def __init__(self, name: str, image: pygame.Surface, offset: tuple, health: int = 10):
+    def __init__(
+        self, name: str, image: pygame.Surface, offset: tuple, health: int = 10
+    ):
         self.name = name
         self.image = image
         self.offset = pygame.Vector2(offset)
@@ -34,8 +36,15 @@ class BossPart:
 class EnemyBoss(BaseEnemy):
     """Multi-part boss enemy with destructible components."""
 
-    __slots__ = ('parts', 'body_image', 'phase', 'phase_thresholds',
-                 'player_ref', 'bullet_manager', '_boss_config')
+    __slots__ = (
+        "parts",
+        "body_image",
+        "phase",
+        "phase_thresholds",
+        "player_ref",
+        "bullet_manager",
+        "_boss_config",
+    )
 
     __registry_category__ = EntityCategory.ENEMY
     __registry_name__ = "boss"
@@ -49,8 +58,16 @@ class EnemyBoss(BaseEnemy):
             cls._boss_data = load_config("bosses.json") or {}
         return cls._boss_data
 
-    def __init__(self, x, y, boss_type="mech_boss", draw_manager=None,
-                 player_ref=None, bullet_manager=None, **kwargs):
+    def __init__(
+        self,
+        x,
+        y,
+        boss_type="mech_boss",
+        draw_manager=None,
+        player_ref=None,
+        bullet_manager=None,
+        **kwargs,
+    ):
         """
         Initialize boss from JSON config.
 
@@ -80,13 +97,14 @@ class EnemyBoss(BaseEnemy):
         hitbox_config = body_cfg.get("hitbox", {"scale": 0.8, "shape": "rect"})
 
         super().__init__(
-            x, y,
+            x,
+            y,
             image=body_img,
             draw_manager=draw_manager,
             speed=speed,
             health=health,
             direction=(0, 0),
-            hitbox_config=hitbox_config
+            hitbox_config=hitbox_config,
         )
 
         self._rotation_enabled = False
@@ -106,7 +124,7 @@ class EnemyBoss(BaseEnemy):
 
         DebugLogger.init(
             f"Spawned {boss_type} at ({x}, {y}) | HP={health} | Parts={len(self.parts)}",
-            category="enemy"
+            category="enemy",
         )
 
     def _load_parts(self, scale: float, parts_config: dict):
@@ -144,8 +162,12 @@ class EnemyBoss(BaseEnemy):
         for part in self.parts.values():
             if part.active and part.image:
                 part_pos = (
-                    self.rect.centerx + int(part.offset.x) - part.image.get_width() // 2,
-                    self.rect.centery + int(part.offset.y) - part.image.get_height() // 2
+                    self.rect.centerx
+                    + int(part.offset.x)
+                    - part.image.get_width() // 2,
+                    self.rect.centery
+                    + int(part.offset.y)
+                    - part.image.get_height() // 2,
                 )
                 surface.blit(part.image, part_pos)
 
@@ -157,14 +179,22 @@ class EnemyBoss(BaseEnemy):
                 part.health -= amount
                 if part.health <= 0:
                     part.active = False
-                    DebugLogger.state(f"Boss part '{part_name}' destroyed", category="enemy")
+                    DebugLogger.state(
+                        f"Boss part '{part_name}' destroyed", category="enemy"
+                    )
 
     def reset(self, x, y, boss_type="mech_boss", **kwargs):
         """Reset boss for pooling."""
         config = self._boss_data.get(boss_type, {})
         body_cfg = config.get("body", {})
 
-        super().reset(x, y, health=body_cfg.get("hp", 500), speed=config.get("speed", 50), **kwargs)
+        super().reset(
+            x,
+            y,
+            health=body_cfg.get("hp", 500),
+            speed=config.get("speed", 50),
+            **kwargs,
+        )
 
         for part in self.parts.values():
             part.health = part.max_health

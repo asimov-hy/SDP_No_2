@@ -11,7 +11,7 @@ from ..core.ui_element import UIElement
 from ..core.ui_loader import register_element
 
 
-@register_element('container')
+@register_element("container")
 class UIContainer(UIElement):
     """Container that layouts children automatically."""
 
@@ -25,18 +25,18 @@ class UIContainer(UIElement):
         super().__init__(config)
 
         # Extract config groups (support both old and new format)
-        position_dict = config.get('position', config)
+        position_dict = config.get("position", config)
 
         # Layout properties
-        self.layout = position_dict.get('layout')
-        self.spacing = position_dict.get('spacing', 0)
-        self.align = position_dict.get('align', 'start')
+        self.layout = position_dict.get("layout")
+        self.spacing = position_dict.get("spacing", 0)
+        self.align = position_dict.get("align", "start")
 
         # Children
         self.children: List[UIElement] = []
 
         # Auto-calculate size if not specified
-        self.auto_size = position_dict.get('auto_size', False)
+        self.auto_size = position_dict.get("auto_size", False)
 
         # Layout batching
         self._layout_pending = False
@@ -99,11 +99,11 @@ class UIContainer(UIElement):
         if not self.children:
             return
 
-        if self.layout == 'vertical':
+        if self.layout == "vertical":
             self._layout_vertical()
-        elif self.layout == 'horizontal':
+        elif self.layout == "horizontal":
             self._layout_horizontal()
-        elif self.layout == 'grid':
+        elif self.layout == "grid":
             self._layout_grid()
 
     def _layout_vertical(self):
@@ -119,9 +119,11 @@ class UIContainer(UIElement):
             y_offset += child.margin_top
 
             # Calculate X based on alignment
-            if self.align == 'center':
-                x_pos = self.padding + (self.width - self.padding * 2 - child.width) // 2
-            elif self.align == 'end':
+            if self.align == "center":
+                x_pos = (
+                    self.padding + (self.width - self.padding * 2 - child.width) // 2
+                )
+            elif self.align == "end":
                 x_pos = self.width - self.padding - child.width - child.margin_right
             else:  # start
                 x_pos = self.padding + child.margin_left
@@ -146,9 +148,11 @@ class UIContainer(UIElement):
             x_offset += child.margin_left
 
             # Calculate Y based on alignment
-            if self.align == 'center':
-                y_pos = self.padding + (self.height - self.padding * 2 - child.height) // 2
-            elif self.align == 'end':
+            if self.align == "center":
+                y_pos = (
+                    self.padding + (self.height - self.padding * 2 - child.height) // 2
+                )
+            elif self.align == "end":
                 y_pos = self.height - self.padding - child.height - child.margin_bottom
             else:  # start
                 y_pos = self.padding + child.margin_top
@@ -196,8 +200,13 @@ class UIContainer(UIElement):
         # Border
         if self.border > 0:
             if self.border_radius > 0:
-                pygame.draw.rect(surf, self.border_color, surf.get_rect(),
-                                 self.border, border_radius=self.border_radius)
+                pygame.draw.rect(
+                    surf,
+                    self.border_color,
+                    surf.get_rect(),
+                    self.border,
+                    border_radius=self.border_radius,
+                )
             else:
                 pygame.draw.rect(surf, self.border_color, surf.get_rect(), self.border)
 

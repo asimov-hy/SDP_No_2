@@ -20,9 +20,11 @@ EFFECT_HANDLERS = {}
 
 def effect_handler(effect_name: str):
     """Decorator to auto-register effects handlers."""
+
     def decorator(func):
         EFFECT_HANDLERS[effect_name] = func
         return func
+
     return decorator
 
 
@@ -37,9 +39,13 @@ def _validate_effect(effect_data: dict, required: list, effect_name: str) -> boo
             DebugLogger.warn(f"{effect_name}: missing '{key}'", category="item")
             return False
         if not isinstance(val, expected_type):
-            DebugLogger.warn(f"{effect_name}: '{key}' should be {expected_type.__name__}", category="item")
+            DebugLogger.warn(
+                f"{effect_name}: '{key}' should be {expected_type.__name__}",
+                category="item",
+            )
             return False
     return True
+
 
 @effect_handler("ADD_HEALTH")
 def handle_ADD_HEALTH(player, effect_data):
@@ -52,14 +58,18 @@ def handle_ADD_HEALTH(player, effect_data):
     player.health = min(player.max_health, player.health + amount)
 
     DebugLogger.action(
-        f"Health +{amount} ({old_health} → {player.health})",
-        category="item"
+        f"Health +{amount} ({old_health} → {player.health})", category="item"
     )
+
 
 @effect_handler("SPEED_BOOST")
 def handle_SPEED_BOOST(player, effect_data):
     """Temporarily multiply player movement speed."""
-    if not _validate_effect(effect_data, [("multiplier", (int, float)), ("duration", (int, float))], "SPEED_BOOST"):
+    if not _validate_effect(
+        effect_data,
+        [("multiplier", (int, float)), ("duration", (int, float))],
+        "SPEED_BOOST",
+    ):
         return
 
     multiplier = effect_data.get("multiplier", 1.0)
@@ -73,32 +83,33 @@ def handle_SPEED_BOOST(player, effect_data):
     if particle_preset:
         player.add_buff_emitter("speed", particle_preset)
 
-    DebugLogger.action(
-        f"Speed {multiplier}x for {duration}s",
-        category="item"
-    )
+    DebugLogger.action(f"Speed {multiplier}x for {duration}s", category="item")
+
 
 @effect_handler("MULTIPLY_FIRE_RATE")
 def handle_MULTIPLY_FIRE_RATE(player, effect_data):
     """Temporarily multiply player fire rate."""
-    if not _validate_effect(effect_data, [("multiplier", (int, float)), ("duration", (int, float))], "MULTIPLY_FIRE_RATE"):
+    if not _validate_effect(
+        effect_data,
+        [("multiplier", (int, float)), ("duration", (int, float))],
+        "MULTIPLY_FIRE_RATE",
+    ):
         return
 
     multiplier = effect_data.get("multiplier", 1.0)
     duration = effect_data.get("duration", 5.0)
     stack_type = effect_data.get("stack_type", "MULTIPLY")
 
-    player.state_manager.add_stat_modifier("fire_rate", multiplier, duration, stack_type)
+    player.state_manager.add_stat_modifier(
+        "fire_rate", multiplier, duration, stack_type
+    )
 
     # Start buff particle emitter
     particle_preset = effect_data.get("particle_preset")
     if particle_preset:
         player.add_buff_emitter("fire_rate", particle_preset)
 
-    DebugLogger.action(
-        f"Fire rate {multiplier}x for {duration}s",
-        category="item"
-    )
+    DebugLogger.action(f"Fire rate {multiplier}x for {duration}s", category="item")
 
 
 @effect_handler("USE_NUKE")
@@ -143,7 +154,7 @@ def handle_SPAWN_SHIELD(player, effect_data):
             radius=radius,
             knockback=knockback,
             damage=damage,
-            color=color
+            color=color,
         )
         DebugLogger.action(f"Item shield spawned for {duration}s", category="item")
 
