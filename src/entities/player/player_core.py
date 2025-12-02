@@ -90,7 +90,6 @@ class Player(BaseEntity):
         if self.render_mode == "image":
             if image is None:
                 sprite_path = render.get("sprite", {}).get("path")
-                scale = (size[0], size[1])  # tuple scale for target dimensions
                 # Calculate scale factor from original image size
                 if sprite_path and os.path.exists(sprite_path):
                     temp_img = pygame.image.load(sprite_path).convert_alpha()
@@ -312,7 +311,7 @@ class Player(BaseEntity):
 
         # Track STUN state before update
         was_stunned = self.state_manager.has_state(PlayerEffectState.STUN)
-        in_recovery = self.state_manager.has_state(PlayerEffectState.RECOVERY)
+        self.state_manager.has_state(PlayerEffectState.RECOVERY)
 
         self.anim_manager.update(dt)
         self.state_manager.update(dt)

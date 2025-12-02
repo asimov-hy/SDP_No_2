@@ -108,7 +108,7 @@ def main():
 
     # Check if pytest is available
     try:
-        import pytest
+        import pytest # noqa: F401
     except ImportError:
         print("pytest not found. Please install with:")
         print("   pip install -r requirements-test.txt")

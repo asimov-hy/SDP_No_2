@@ -41,7 +41,7 @@ class UILabel(UIElement):
         if self.current_value is not None:
             try:
                 return self.format.format(self.current_value)
-            except:
+            except: # noqa: E722
                 return str(self.current_value)
         return self.text
 

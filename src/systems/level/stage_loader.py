@@ -183,7 +183,6 @@ class StageLoader:
                     continue
 
                 wave_entry = spawn.copy()
-                delay = spawn.get("delay", 0)
                 wave_entry["time"] = time_float
                 waves.append(wave_entry)
 

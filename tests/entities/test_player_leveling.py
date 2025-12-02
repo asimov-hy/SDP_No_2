@@ -132,7 +132,6 @@ class TestPlayerLevelUpCore:
         Prevents progression balance issues and ensures all enemy types give EXP properly.
         """
         player = mock_player_with_levelup
-        initial_exp = player.exp
         initial_level = player.level
         initial_total_gained = player._mock_session_stats.total_exp_gained if hasattr(player, '_mock_session_stats') else 0
 
@@ -173,7 +172,7 @@ class TestPlayerLevelUpCore:
         original_health = player.health
         original_max_health = player.max_health
         original_base_speed = player.base_speed
-        original_position = (player.pos.x, player.pos.y) if hasattr(player, 'pos') else (100, 100)
+        (player.pos.x, player.pos.y) if hasattr(player, 'pos') else (100, 100)
         original_visible = player.visible
         original_layer = player.layer
 

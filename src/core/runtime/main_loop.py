@@ -187,7 +187,6 @@ class MainLoop:
         Args:
             frame_time: Time since last frame (for debug HUD update)
         """
-        game_surface = self.display.get_game_surface()
         self.draw_manager.clear()
 
         # Profile and render based on debug state

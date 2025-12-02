@@ -254,9 +254,6 @@ class ParticleEmitter:
     @classmethod
     def update_all(cls, dt):
         """Update all active particles (call once per frame)."""
-        wobble_map = {id(p): PARTICLE_PRESETS.get("ember", {}).get("wobble", 0)
-                      for p in cls._active_particles}
-
         cls._active_particles = [
             p for p in cls._active_particles
             if p.update(dt, wobble=0)  # Wobble handled per-preset below

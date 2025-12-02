@@ -80,7 +80,6 @@ class SettingsScene(BaseScene):
                     self.scene_manager.pop_scene()
                 else:
                     # Return to main menu
-                    target = self.caller_scene if self.caller_scene else "MainMenu"
                     self.scene_manager.set_scene("MainMenu", transition=FadeTransition(0.3))
 
             elif action == "toggle_fullscreen":

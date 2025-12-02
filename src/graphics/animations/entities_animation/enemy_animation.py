@@ -53,7 +53,6 @@ def damage_enemy(entity, t):
         t: Normalized time (0.0 to 1.0)
     """
     ctx = getattr(entity, 'anim_context', {})
-    interval = ctx.get('blink_interval', 0.08)  # Faster blink than player
 
     damage_flash(entity, t)
     # flash_white(entity, t, interval=interval)
