@@ -7,6 +7,7 @@ Body becomes vulnerable to bullets only after all parts are destroyed.
 """
 
 import pygame
+import math
 import random
 
 from src.entities.enemies.base_enemy import BaseEnemy
@@ -119,7 +120,6 @@ class BossPart:
         dy = player_ref.pos.y - self.pos.y
 
         # Calculate angle (sprite faces DOWN by default, so base is 180)
-        import math
         target_angle = math.degrees(math.atan2(dy, dx)) + 90  # +90 converts to "down-facing" reference
 
         # 1. Compute angle relative to base
