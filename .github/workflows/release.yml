@@ -18,6 +18,7 @@ jobs:
           mode: bump
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           with-v: true
+          require-release-notes: true
 
       - name: create a github release
         uses: ncipollo/release-action@v1
