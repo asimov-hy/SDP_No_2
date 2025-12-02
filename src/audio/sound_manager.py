@@ -41,18 +41,19 @@ class SoundManager:
         self.bfx_volume = 1.0
         self.bgm_volume = 1.0
         self.master_volume = 1.0
+
+        self.settings = get_settings()
         self.load_assets()
 
         self.current_bgm = None
         self.current_bgm_id = None
 
-        self.settings = get_settings()
         self.load_settings()
 
     def load_settings(self):
-        self.master_level = self.settings.get("audio", "master_level", 100)
-        self.bgm_level = self.settings.get("audio", "bgm_level", 100)
-        self.bfx_level = self.settings.get("audio", "bfx_level", 100)
+        self.master_level = self.settings.get("audio", "master_volume", 100)
+        self.bgm_level = self.settings.get("audio", "music_volume", 100)
+        self.bfx_level = self.settings.get("audio", "bfx_volume", 100)
 
         # Calculate volume(float) and Apply using int values
         self.master_volume = self.volume_scale(self.master_level)
@@ -113,7 +114,7 @@ class SoundManager:
         self.bfx_volume = self.volume_scale(level)
         self.update_bfx()
 
-        self.settings.set("audio", "bfx_level", level)
+        self.settings.set("audio", "bfx_volume", level)
         self.settings.save()
 
     # Set BGM volume (0 - 100)
@@ -123,7 +124,7 @@ class SoundManager:
         self.update_bgm()
 
         # Save volume to settings
-        self.settings.set("audio", "bgm_level", level)
+        self.settings.set("audio", "music_volume", level)
         self.settings.save()
 
     # Set master volume (0 - 100)
@@ -134,7 +135,7 @@ class SoundManager:
         self.update_bgm()
 
         # Save volume to settings
-        self.settings.set("audio", "master_level", level)
+        self.settings.set("audio", "master_volume", level)
         self.settings.save()
 
     # Update BFX

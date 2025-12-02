@@ -160,7 +160,7 @@ settings:
     # Master Volume Value Display (Only numbers)
     - type: label
       id: "volume_value_label"
-      text: "100%"
+      text: ""
       size: [60, 40]
       parent_anchor: "#btn_vol_down:right"
       self_anchor: left
@@ -217,7 +217,7 @@ settings:
     # BGM Volume Value Display (Only numbers)
     - type: label
       id: "bgm_volume_value_label"
-      text: "100%"
+      text: ""
       size: [ 60, 40 ]
       parent_anchor: "#btn_bgm_vol_down:right"
       self_anchor: left
@@ -274,7 +274,7 @@ settings:
     # BFX Volume Value Display (Only numbers)
     - type: label
       id: "bfx_volume_value_label"
-      text: "100%"
+      text: ""
       size: [ 60, 40 ]
       parent_anchor: "#btn_bfx_vol_down:right"
       self_anchor: left

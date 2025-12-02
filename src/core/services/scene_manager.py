@@ -60,7 +60,6 @@ class SceneManager:
         DebugLogger.init_sub("Entity configs pre-loaded")
 
         # setting sound files
-        self.sound_manager.set_master_volume(100)
         self.services.register_global("sound_manager", self.sound_manager)
 
         # Scene registry - map names to classes
