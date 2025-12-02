@@ -1,6 +1,7 @@
 import pygame
 
 from src.core.debug.debug_logger import DebugLogger
+from src.core.services.settings_manager import get_settings
 
 INSTANCE = None
 
@@ -37,6 +38,12 @@ class SoundManager:
         pygame.mixer.init()
         self.bfx = {}
         self.bgm = {}
+
+        # Store UI int level separately from internal calculation float
+        self.bfx_level = 100
+        self.bgm_level = 100
+        self.master_level = 100 # default volume = 100
+
         self.bfx_volume = 1.0
         self.bgm_volume = 1.0
         self.master_volume = 1.0
@@ -44,6 +51,23 @@ class SoundManager:
 
         self.current_bgm = None
         self.current_bgm_id = None
+
+        self.settings = get_settings()
+        self.load_settings()
+
+    def load_settings(self):
+        self.master_level = self.settings.get("audio", "master_level", 100)
+        self.bgm_level = self.settings.get("audio", "bgm_level", 80)
+        self.bfx_level = self.settings.get("audio", "bfx_level", 100)
+
+        # Calculate volume(float) and Apply using int values
+        self.master_volume = self.volume_scale(self.master_level)
+        self.bgm_volume = self.volume_scale(self.bgm_level)
+        self.bfx_volume = self.volume_scale(self.bfx_level)
+
+        # Apply volume changes
+        self.update_bfx()
+        self.update_bgm()
 
     def load_assets(self):
         # DebugLogger.init("Loading Audio Assets...")
@@ -92,19 +116,33 @@ class SoundManager:
 
     # Set BFX volume (0 - 100)
     def set_bfx_volume(self, level):
+        self.bfx_level = level # int value for UI
         self.bfx_volume = self.volume_scale(level)
         self.update_bfx()
 
+        self.settings.set("audio", "bfx_level", level)
+        self.settings.save()
+
     # Set BGM volume (0 - 100)
     def set_bgm_volume(self, level):
+        self.bgm_level = level # int value for UI
         self.bgm_volume = self.volume_scale(level)
         self.update_bgm()
 
+        # Save volume to settings
+        self.settings.set("audio", "bgm_level", level)
+        self.settings.save()
+
     # Set master volume (0 - 100)
     def set_master_volume(self, level): # Set master volume
-        self.master_volume = self.volume_scale(level)
+        self.master_level = level # int value for UI
+        self.master_volume = self.volume_scale(level) # float value for sound calculations
         self.update_bfx()
         self.update_bgm()
+
+        # Save volume to settings
+        self.settings.set("audio", "master_level", level)
+        self.settings.save()
 
     # Update BFX
     def update_bfx(self):
@@ -117,3 +155,13 @@ class SoundManager:
     def update_bgm(self):
         volume = self.master_volume * self.bgm_volume
         pygame.mixer.music.set_volume(volume)
+
+    # Get master volume level (Renew UI)
+    def get_master_volume_level(self):
+        return self.master_level
+
+    def get_bgm_level(self):
+        return self.bgm_level
+
+    def get_bfx_level(self):
+        return self.bfx_level

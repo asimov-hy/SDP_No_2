@@ -28,9 +28,9 @@ class SettingsManager:
             "resolution": [1280, 720]
         },
         "audio": {
-            "master_volume": 1.0,
-            "music_volume": 0.8,
-            "sfx_volume": 1.0,
+            "master_volume": 100,
+            "music_volume": 80,
+            "sfx_volume": 100,
             "muted": False
         },
         "controls": {

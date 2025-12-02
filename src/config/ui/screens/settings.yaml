@@ -128,31 +128,178 @@ settings:
       text_align: left
       layer: Layers.UI
 
-    # Master Volume Label
+    # Master Volume Controls Container
     - type: label
-      id: "volume_label"
-      text: "Master Volume: 80%"
-      size: [250, 40]
+      id: "master_volume_text_label"
+      text: "Master Volume"
+      size: [150, 40]
       parent_anchor: "#audio_title:bottom_left"
       self_anchor: top_left
-      offset: [20, 20]
+      offset: [20, 10]
       font_size: 20
       color: [180, 180, 180]
+      text_align: left
       layer: Layers.UI
 
-    # Volume Info
+    # Master Volume Down Button (-)
+    - type: button
+      id: "btn_vol_down"
+      text: "-"
+      action: "master_vol_down"
+      size: [40, 40]
+      parent_anchor: "#master_volume_text_label:right"
+      self_anchor: left
+      offset: [20, 0]
+      color: [96, 96, 96, 100]
+      font_size: 24
+      border: 2
+      border_color: [120, 140, 180, 0]
+      border_radius: 5
+      layer: Layers.UI
+
+    # Master Volume Value Display (Only numbers)
     - type: label
-      id: "volume_info"
-      text: "(Coming soon)"
-      size: [200, 30]
-      parent_anchor: "#volume_label:top_right"
-      self_anchor: top_left
-      offset: [20, 5]
-      font_size: 14
-      color: [120, 120, 120]
+      id: "volume_value_label"
+      text: "100%"
+      size: [60, 40]
+      parent_anchor: "#btn_vol_down:right"
+      self_anchor: left
+      offset: [10, 0]
+      font_size: 20
+      color: [255, 255, 255]
       layer: Layers.UI
 
-    # Back Button
+    # Master Volume Up Button (+)
+    - type: button
+      id: "btn_vol_up"
+      text: "+"
+      action: "master_vol_up"
+      size: [40, 40]
+      parent_anchor: "#volume_value_label:right"
+      self_anchor: left
+      offset: [10, 0]
+      color: [96, 96, 96, 100]
+      font_size: 24
+      border: 2
+      border_color: [120, 140, 180, 0]
+      border_radius: 5
+      layer: Layers.UI
+
+    # BGM Volume Controls Container
+    - type: label
+      id: "bgm_volume_text_label"
+      text: "BGM Volume"
+      size: [ 150, 40 ]
+      parent_anchor: "#audio_title:bottom_left"
+      self_anchor: top_left
+      offset: [ 20, 60 ]
+      font_size: 20
+      color: [ 180, 180, 180 ]
+      text_align: left
+      layer: Layers.UI
+
+    # BGM Volume Down Button (-)
+    - type: button
+      id: "btn_bgm_vol_down"
+      text: "-"
+      action: "bgm_vol_down"
+      size: [ 40, 40 ]
+      parent_anchor: "#bgm_volume_text_label:right"
+      self_anchor: left
+      offset: [ 20, 0 ]
+      color: [ 96, 96, 96, 100 ]
+      font_size: 24
+      border: 2
+      border_color: [ 120, 140, 180, 0 ]
+      border_radius: 5
+      layer: Layers.UI
+
+    # BGM Volume Value Display (Only numbers)
+    - type: label
+      id: "bgm_volume_value_label"
+      text: "100%"
+      size: [ 60, 40 ]
+      parent_anchor: "#btn_bgm_vol_down:right"
+      self_anchor: left
+      offset: [ 10, 0 ]
+      font_size: 20
+      color: [ 255, 255, 255 ]
+      layer: Layers.UI
+
+    # BGM Volume Up Button (+)
+    - type: button
+      id: "btn_bgm_vol_up"
+      text: "+"
+      action: "bgm_vol_up"
+      size: [ 40, 40 ]
+      parent_anchor: "#bgm_volume_value_label:right"
+      self_anchor: left
+      offset: [ 10, 0 ]
+      color: [ 96, 96, 96, 100 ]
+      font_size: 24
+      border: 2
+      border_color: [ 120, 140, 180, 0 ]
+      border_radius: 5
+      layer: Layers.UI
+
+    # BFX Volume Controls Container
+    - type: label
+      id: "bfx_volume_text_label"
+      text: "Effect Volume"
+      size: [ 150, 40 ]
+      parent_anchor: "#audio_title:bottom_left"
+      self_anchor: top_left
+      offset: [ 20, 110 ]
+      font_size: 20
+      color: [ 180, 180, 180 ]
+      text_align: left
+      layer: Layers.UI
+
+    # BFX Volume Down Button (-)
+    - type: button
+      id: "btn_bfx_vol_down"
+      text: "-"
+      action: "bfx_vol_down"
+      size: [ 40, 40 ]
+      parent_anchor: "#bfx_volume_text_label:right"
+      self_anchor: left
+      offset: [ 20, 0 ]
+      color: [ 96, 96, 96, 100 ]
+      font_size: 24
+      border: 2
+      border_color: [ 120, 140, 180, 0 ]
+      border_radius: 5
+      layer: Layers.UI
+
+    # BFX Volume Value Display (Only numbers)
+    - type: label
+      id: "bfx_volume_value_label"
+      text: "100%"
+      size: [ 60, 40 ]
+      parent_anchor: "#btn_bfx_vol_down:right"
+      self_anchor: left
+      offset: [ 10, 0 ]
+      font_size: 20
+      color: [ 255, 255, 255 ]
+      layer: Layers.UI
+
+    # BFX Volume Up Button (+)
+    - type: button
+      id: "btn_bfx_vol_up"
+      text: "+"
+      action: "bfx_vol_up"
+      size: [ 40, 40 ]
+      parent_anchor: "#bfx_volume_value_label:right"
+      self_anchor: left
+      offset: [ 10, 0 ]
+      color: [ 96, 96, 96, 100 ]
+      font_size: 24
+      border: 2
+      border_color: [ 120, 140, 180, 0 ]
+      border_radius: 5
+      layer: Layers.UI
+
+      # Back Button
     - type: button
       id: "btn_back"
       text: "BACK"
