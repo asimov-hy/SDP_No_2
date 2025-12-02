@@ -28,7 +28,7 @@ level_up_modal:
       parent_anchor: "#title:bottom_center"
       self_anchor: top_center
       offset: [0, -10]
-      size: [170, 50]
+      size: [200, 50]
       font_size: 24
       text_color: [200, 200, 200]
 
