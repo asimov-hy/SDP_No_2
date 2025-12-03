@@ -97,7 +97,7 @@ class BossPart:
         self.fire_rate = 0.15  # seconds between shots
         self.fire_timer = 0.0
         self.bullet_speed = 400
-        self.bullet_offset = (0, 300)  # offset along gun direction
+        self.bullet_offset = (0, 30)  # offset along gun direction
         self.bullet_image = None  # loaded by owner
 
     @property
@@ -150,6 +150,7 @@ class BossPart:
         # NEW METHOD TO ADD:
     def update_shooting(self, dt, bullet_manager):
         """Fire bullets in the direction the gun is pointing."""
+        print(f"[PART SHOOT] active={self.active}, bm={bullet_manager is not None}, timer={self.fire_timer:.2f}")
         if not self.active or not bullet_manager:
             return
 
@@ -159,6 +160,9 @@ class BossPart:
 
         self.fire_timer = 0.0
 
+        if not self.player_ref:
+            return
+
         # Calculate firing direction from gun angle
         # base_angle + self.angle gives the world rotation
         fire_angle_deg = self.base_angle + self.angle
@@ -166,11 +170,13 @@ class BossPart:
 
         # Direction vector (down is 180°, so we need to convert)
         dir_x = math.sin(fire_angle_rad)
-        dir_y = math.cos(fire_angle_rad)
+        dir_y = -math.cos(fire_angle_rad)
 
         # Spawn position: gun center + offset along firing direction
-        spawn_x = self.pos.x + dir_x * self.bullet_offset[1]
-        spawn_y = self.pos.y + dir_y * self.bullet_offset[1]
+        muzzle_offset = self.image.get_height() / 2
+
+        spawn_x = self.pos.x + dir_x * muzzle_offset
+        spawn_y = self.pos.y + dir_y * muzzle_offset
 
         # Velocity
         vel_x = dir_x * self.bullet_speed
@@ -183,6 +189,7 @@ class BossPart:
             owner="enemy",
             damage=1
         )
+        print(f"[BULLET SPAWNED] pos=({spawn_x:.0f}, {spawn_y:.0f}) vel=({vel_x:.0f}, {vel_y:.0f})")
 
     def on_collision(self, other, collision_tag=None):
         """
@@ -343,11 +350,13 @@ class EnemyBoss(BaseEnemy):
 
         # Store bullet manager reference
         self.bullet_manager = bullet_manager
+        print(f"[BOSS DEBUG] bullet_manager received: {bullet_manager is not None}")
 
         # Load MG bullet image
         self._mg_bullet_image = BaseEntity.load_and_scale_image(
-            "assets/images/sprites/projectiles/tracer.png", 0.5
+            "assets/images/sprites/projectiles/tracer.png", 0.2
         )
+        print(f"[BOSS DEBUG] _mg_bullet_image loaded: {self._mg_bullet_image is not None}")
 
         # Load weapon parts
         self.parts = {}
@@ -392,6 +401,7 @@ class EnemyBoss(BaseEnemy):
             # Assign bullet image to MG parts
             if "mg" in part_name:
                 part.bullet_image = self._mg_bullet_image
+                print(f"[BOSS DEBUG] Part {part_name} bullet_image: {part.bullet_image is not None}")
 
             self.parts[part_name] = part
 

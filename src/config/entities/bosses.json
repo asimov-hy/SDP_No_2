@@ -1,7 +1,7 @@
 {
   "boss_juggernaut": {
     "body": {
-      "image": "assets/images/sprites/boss/boss.png",
+      "image": "assets/images/sprites/boss/boss_body.png",
       "scale": 0.6,
       "hp": 500,
       "hitbox": {
@@ -13,13 +13,24 @@
     "exp": 1000,
     "phases": [0.75, 0.50, 0.25],
 
+    "shoulder_left": {
+      "image": "assets/images/sprites/boss/boss_left.png",
+      "anchor": [-250, -120],
+      "scale": 1.5
+    },
+    "shoulder_right": {
+      "image": "assets/images/sprites/boss/boss_right.png",
+      "anchor": [250, -120],
+      "hp": 20,
+      "scale": 1.5
+    },
     "parts": {
       "mg_left": {
         "image": "assets/images/sprites/boss/boss_mg.png",
         "anchor": [250, -120],
         "hp": 20,
         "flip": false,
-        "scale": 0.5,
+        "scale": 1.5,
         "pivot_offset": [0, -160]
       },
       "mg_right": {
@@ -27,7 +38,7 @@
         "anchor": [-250, -120],
         "hp": 20,
         "flip": true,
-        "scale": 0.5,
+        "scale": 1.5,
         "pivot_offset": [0, -160]
       }
     }
