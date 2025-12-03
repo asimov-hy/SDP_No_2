@@ -38,9 +38,9 @@ class BossPart:
         'name', 'image', 'offset', 'health', 'max_health', 'active', 'angle',
         'owner', 'pos', 'rect', 'hitbox', 'collision_tag', 'death_state', 'state',
         '_base_image', '_anim_manager', 'anim_context', 'category',
-        'player_ref', 'base_angle', 'rotation_speed', 'min_angle', 'max_angle',
+        'player_ref', 'base_angle', 'rotation_speed', 'spray_speed', 'min_angle', 'max_angle',
         'fire_rate', 'fire_timer', 'bullet_speed', 'bullet_offset', 'bullet_image',
-        'is_static', 'z_order'
+        'is_static', 'z_order', 'spray_direction'
     )
 
     def __init__(self, name: str, image: pygame.Surface, offset: tuple,
@@ -72,6 +72,7 @@ class BossPart:
 
         # Rotation restrictions
         self.rotation_speed = 120  # degrees per second
+        self.spray_speed = 45
         self.min_angle = -30  # left limit (relative to base_angle)
         self.max_angle = 30  # right limit (relative to base_angle)
 
@@ -100,6 +101,9 @@ class BossPart:
         self.bullet_speed = 400
         self.bullet_offset = (0, 30)  # offset along gun direction
         self.bullet_image = None  # loaded by owner
+
+        # Spray pattern support
+        self.spray_direction = 1     # 1 = towards max, -1 = towards min
 
     @property
     def anim_manager(self):
@@ -149,6 +153,29 @@ class BossPart:
         self.rect = self.image.get_rect(center=(int(self.pos.x), int(self.pos.y)))
 
         # NEW METHOD TO ADD:
+
+    def spray_rotate(self, dt=1 / 60):
+        """Sweep gun back and forth within min/max angle range."""
+        if not self.active or not self._base_image:
+            return
+
+        # Move angle in current direction
+        step = self.spray_speed * dt * self.spray_direction
+        self.angle += step
+
+        # Reverse at limits
+        if self.angle >= self.max_angle:
+            self.angle = self.max_angle
+            self.spray_direction = -1
+        elif self.angle <= self.min_angle:
+            self.angle = self.min_angle
+            self.spray_direction = 1
+
+        # Apply rotation
+        final_angle = self.base_angle + self.angle
+        self.image = pygame.transform.rotate(self._base_image, -final_angle)
+        self.rect = self.image.get_rect(center=(int(self.pos.x), int(self.pos.y)))
+
     def update_shooting(self, dt, bullet_manager):
         """Fire bullets in the direction the gun is pointing."""
         print(f"[PART SHOOT] active={self.active}, bm={bullet_manager is not None}, timer={self.fire_timer:.2f}")
@@ -264,7 +291,8 @@ class EnemyBoss(BaseEnemy):
         'hover_velocity', 'bullet_manager', '_mg_bullet_image',
         'track_target_x', 'target_follow_rate', 'track_speed_max',
         'track_speed_multiplier', '_rotation_enabled', 'exp_value',
-        'tilt_angle', 'tilt_max', 'tilt_speed', 'velocity_x'
+        'tilt_angle', 'tilt_max', 'tilt_speed', 'velocity_x',
+        'spray_mode', 'tilt_enabled'
     )
 
     __registry_category__ = EntityCategory.ENEMY
@@ -313,6 +341,7 @@ class EnemyBoss(BaseEnemy):
         self.tilt_angle = 0.0  # current tilt (degrees)
         self.tilt_max = 15.0  # max tilt angle
         self.tilt_speed = 5.0  # how fast to tilt (lerp rate)
+        self.tilt_enabled = False  # toggle body tilt
         self.velocity_x = 0.0  # track horizontal velocity
 
         # Load body image
@@ -357,7 +386,8 @@ class EnemyBoss(BaseEnemy):
         self._mg_bullet_image = BaseEntity.load_and_scale_image(
             "assets/images/sprites/projectiles/tracer.png", 0.2
         )
-        print(f"[BOSS DEBUG] _mg_bullet_image loaded: {self._mg_bullet_image is not None}")
+
+        self.spray_mode = True
 
         # Load weapon parts
         self.parts = {}
@@ -401,10 +431,22 @@ class EnemyBoss(BaseEnemy):
             part.is_static = is_static
             part.z_order = part_cfg.get("z_order", 1)
 
+            # Alternate spray direction for opposite sweep
+            if "left" in part_name:
+                part.spray_direction = 1
+            elif "right" in part_name:
+                part.spray_direction = -1
+
             # Assign bullet image to MG parts
             if "mg" in part_name:
                 part.bullet_image = self._mg_bullet_image
                 print(f"[BOSS DEBUG] Part {part_name} bullet_image: {part.bullet_image is not None}")
+
+            # Load rotation/spray settings from config
+            part.min_angle = part_cfg.get("min_angle", part.min_angle)
+            part.max_angle = part_cfg.get("max_angle", part.max_angle)
+            part.rotation_speed = part_cfg.get("rotation_speed", part.rotation_speed)
+            part.base_angle = part_cfg.get("base_angle", part.base_angle)
 
             self.parts[part_name] = part
 
@@ -425,7 +467,8 @@ class EnemyBoss(BaseEnemy):
 
         # 1. Calculate the drift
         self._update_wander(dt)
-        self._update_tilt(dt)
+        if self.tilt_enabled:
+            self._update_tilt(dt)
 
         # 2. Sync Rect to new Position
         self.rect.center = (int(self.pos.x), int(self.pos.y))
@@ -437,7 +480,10 @@ class EnemyBoss(BaseEnemy):
                 if getattr(part, 'is_static', False):
                     continue  # Static parts don't rotate or shoot
                 if hasattr(self, 'player_ref') and self.player_ref:
-                    part.rotate_towards_player(self.player_ref, dt)
+                    if self.spray_mode:
+                        part.spray_rotate(dt)
+                    else:
+                        part.rotate_towards_player(self.player_ref, dt)
                 # Fire bullets from MG parts
                 if "mg" in part.name:
                     part.update_shooting(dt, self.bullet_manager)
