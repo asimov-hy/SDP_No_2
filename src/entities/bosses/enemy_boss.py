@@ -53,6 +53,8 @@ class EnemyBoss(BaseEnemy):
         'track_target_x', 'target_follow_rate', 'track_speed_max', 'track_speed_multiplier',
         # Tilt
         'tilt_angle', 'tilt_max', 'tilt_speed', 'velocity_x', 'tilt_enabled',
+        # Rotation
+        'body_rotation',
         # Flags
         '_rotation_enabled', 'exp_value'
     )
@@ -104,6 +106,8 @@ class EnemyBoss(BaseEnemy):
         self.tilt_max = 15.0  # max tilt angle
         self.tilt_speed = 5.0  # how fast to tilt (lerp rate)
         self.tilt_enabled = False  # toggle body tilt
+        self.body_rotation = 0.0  # Attack-controlled rotation
+
         self.velocity_x = 0.0  # track horizontal velocity
 
         # Load body image
@@ -279,7 +283,12 @@ class EnemyBoss(BaseEnemy):
     def _update_wander(self, dt: float):
         self.noise_time += dt
 
-        # Entrance phase: move toward home position
+        # Skip wander if attack has full position control
+        override = self.attack_manager.get_movement_override()
+        if override == (0, 0):
+            return
+
+            # Entrance phase: move toward home position
         if not self.entrance_complete:
             direction = self.home_pos - self.pos
             dist = direction.length()
@@ -313,7 +322,15 @@ class EnemyBoss(BaseEnemy):
             else:
                 self.velocity_x = 0.0
 
-            self.anchor_pos.y = min(max(150, self.player_ref.pos.y - 200), 150)
+            # Clamp X position to screen bounds (with padding for boss width)
+            half_width = self.rect.width // 2
+            screen_width = 1280  # Or get from display_manager
+            padding = 20
+            self.pos.x = max(half_width + padding, min(screen_width - half_width - padding, self.pos.x))
+
+            min_y = 100  # Don't go too high
+            max_y = 300  # Don't go too low
+            self.anchor_pos.y = min(max(min_y, self.player_ref.pos.y - 200), max_y)
             self.anchor_pos.x = self.pos.x
         else:
             # IDLE: smoothly return anchor to home
@@ -406,8 +423,9 @@ class EnemyBoss(BaseEnemy):
         if self.death_state != LifecycleState.ALIVE:
             return
 
-        if abs(self.tilt_angle) > 0.5:
-            rotated_img = pygame.transform.rotate(self.body_image, -self.tilt_angle)
+        total_rotation = self.tilt_angle + self.body_rotation
+        if abs(total_rotation) > 0.5:
+            rotated_img = pygame.transform.rotate(self.body_image, -total_rotation)
             rotated_rect = rotated_img.get_rect(center=self.rect.center)
             draw_manager.queue_draw(rotated_img, rotated_rect, layer=self.layer)
         else:
