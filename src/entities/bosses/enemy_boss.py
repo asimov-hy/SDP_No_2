@@ -39,7 +39,8 @@ class BossPart:
         'owner', 'pos', 'rect', 'hitbox', 'collision_tag', 'death_state', 'state',
         '_base_image', '_anim_manager', 'anim_context', 'category',
         'player_ref', 'base_angle', 'rotation_speed', 'min_angle', 'max_angle',
-        'fire_rate', 'fire_timer', 'bullet_speed', 'bullet_offset', 'bullet_image'
+        'fire_rate', 'fire_timer', 'bullet_speed', 'bullet_offset', 'bullet_image',
+        'is_static', 'z_order'
     )
 
     def __init__(self, name: str, image: pygame.Surface, offset: tuple,
@@ -394,9 +395,11 @@ class EnemyBoss(BaseEnemy):
             offset = (anchor[0] * scale, anchor[1] * scale)
 
             # Get HP
-            part_hp = part_cfg.get("hp", 20)
-
-            part = BossPart(part_name, img, offset, part_hp, owner=self)
+            is_static = part_cfg.get("static", False)
+            part_hp = 0 if is_static else part_cfg.get("hp", 20)
+            part = BossPart(part_name, img, offset, part_hp, owner=None if is_static else self)
+            part.is_static = is_static
+            part.z_order = part_cfg.get("z_order", 1)
 
             # Assign bullet image to MG parts
             if "mg" in part_name:
@@ -431,6 +434,8 @@ class EnemyBoss(BaseEnemy):
         for part in self.parts.values():
             if part.active:
                 part.update_position(self.pos)
+                if getattr(part, 'is_static', False):
+                    continue  # Static parts don't rotate or shoot
                 if hasattr(self, 'player_ref') and self.player_ref:
                     part.rotate_towards_player(self.player_ref, dt)
                 # Fire bullets from MG parts
@@ -555,14 +560,19 @@ class EnemyBoss(BaseEnemy):
                 rotated_offset_y = part.offset.x * sin_a + part.offset.y * cos_a
 
                 # Rotate part image to match body tilt
-                rotated_part_img = pygame.transform.rotate(part.image, self.tilt_angle)
+                if getattr(part, 'is_static', False):
+                    # Static parts: rotate base image with body (match body's negative sign)
+                    rotated_part_img = pygame.transform.rotate(part._base_image, -self.tilt_angle)
+                else:
+                    # Gun parts: already have tracking rotation applied, add tilt
+                    rotated_part_img = pygame.transform.rotate(part.image, self.tilt_angle)
 
                 part_pos = (
                     self.rect.centerx + int(rotated_offset_x) - rotated_part_img.get_width() // 2,
                     self.rect.centery + int(rotated_offset_y) - rotated_part_img.get_height() // 2
                 )
                 part_rect = rotated_part_img.get_rect(topleft=part_pos)
-                draw_manager.queue_draw(rotated_part_img, part_rect, layer=self.layer + 1)
+                draw_manager.queue_draw(rotated_part_img, part_rect, layer=self.layer + part.z_order)
 
                 # Debug: Draw pivot point
                 if Debug.HITBOX_VISIBLE:
