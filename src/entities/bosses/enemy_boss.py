@@ -15,6 +15,8 @@ from src.entities.base_entity import BaseEntity
 from src.entities.entity_types import EntityCategory
 from src.entities.entity_state import LifecycleState, InteractionState
 from src.entities.entity_types import CollisionTags
+from src.entities.bosses.boss_attack_manager import BossAttackManager
+
 
 from src.systems.entity_management.entity_registry import EntityRegistry
 from src.graphics.animations.animation_manager import AnimationManager
@@ -39,7 +41,8 @@ class BossPart:
         'owner', 'pos', 'rect', 'hitbox', 'collision_tag', 'death_state', 'state',
         '_base_image', '_anim_manager', 'anim_context', 'category',
         'player_ref', 'base_angle', 'rotation_speed', 'spray_speed', 'min_angle', 'max_angle',
-        'fire_rate', 'fire_timer', 'bullet_speed', 'bullet_offset', 'bullet_image',
+        'fire_rate', 'fire_timer', 'bullet_speed', 'bullet_offset',
+        'bullet_image', 'spray_bullet_image', 'trace_bullet_image',
         'is_static', 'z_order', 'spray_direction'
     )
 
@@ -100,7 +103,10 @@ class BossPart:
         self.fire_timer = 0.0
         self.bullet_speed = 400
         self.bullet_offset = (0, 30)  # offset along gun direction
-        self.bullet_image = None  # loaded by owner
+
+        self.bullet_image = None
+        self.spray_bullet_image = None
+        self.trace_bullet_image = None
 
         # Spray pattern support
         self.spray_direction = 1     # 1 = towards max, -1 = towards min
@@ -176,7 +182,7 @@ class BossPart:
         self.image = pygame.transform.rotate(self._base_image, -final_angle)
         self.rect = self.image.get_rect(center=(int(self.pos.x), int(self.pos.y)))
 
-    def update_shooting(self, dt, bullet_manager):
+    def update_shooting(self, dt, bullet_manager, spray_mode=False):
         """Fire bullets in the direction the gun is pointing."""
         print(f"[PART SHOOT] active={self.active}, bm={bullet_manager is not None}, timer={self.fire_timer:.2f}")
         if not self.active or not bullet_manager:
@@ -188,8 +194,8 @@ class BossPart:
 
         self.fire_timer = 0.0
 
-        if not self.player_ref:
-            return
+        # if not self.player_ref:
+        #     return
 
         # Calculate firing direction from gun angle
         # base_angle + self.angle gives the world rotation
@@ -210,14 +216,17 @@ class BossPart:
         vel_x = dir_x * self.bullet_speed
         vel_y = dir_y * self.bullet_speed
 
+        # Select bullet based on mode
+        bullet_img = self.spray_bullet_image if spray_mode else self.trace_bullet_image
+
         bullet_manager.spawn(
             pos=(spawn_x, spawn_y),
             vel=(vel_x, vel_y),
-            image=self.bullet_image,
+            image=bullet_img,
             owner="enemy",
             damage=1
         )
-        print(f"[BULLET SPAWNED] pos=({spawn_x:.0f}, {spawn_y:.0f}) vel=({vel_x:.0f}, {vel_y:.0f})")
+        # print(f"[BULLET SPAWNED] pos=({spawn_x:.0f}, {spawn_y:.0f}) vel=({vel_x:.0f}, {vel_y:.0f})")
 
     def on_collision(self, other, collision_tag=None):
         """
@@ -288,11 +297,11 @@ class EnemyBoss(BaseEnemy):
     __slots__ = (
         'parts', 'body_image', '_boss_config', 'player_ref',
         'anchor_pos', 'wander_radius', 'noise_time', 'noise_seed',
-        'hover_velocity', 'bullet_manager', '_mg_bullet_image',
+        'hover_velocity', 'bullet_manager', '_mg_spray_bullet', '_mg_trace_bullet',
         'track_target_x', 'target_follow_rate', 'track_speed_max',
         'track_speed_multiplier', '_rotation_enabled', 'exp_value',
         'tilt_angle', 'tilt_max', 'tilt_speed', 'velocity_x',
-        'spray_mode', 'tilt_enabled'
+        'spray_mode', 'tilt_enabled', 'attack_manager'
     )
 
     __registry_category__ = EntityCategory.ENEMY
@@ -382,12 +391,18 @@ class EnemyBoss(BaseEnemy):
         self.bullet_manager = bullet_manager
         print(f"[BOSS DEBUG] bullet_manager received: {bullet_manager is not None}")
 
-        # Load MG bullet image
-        self._mg_bullet_image = BaseEntity.load_and_scale_image(
-            "assets/images/sprites/projectiles/tracer.png", 0.2
+        # Load MG bullet images (spray vs trace mode)
+        self._mg_spray_bullet = BaseEntity.load_and_scale_image(
+            "assets/images/sprites/projectiles/fire_bullet.png", 0.2
+        )
+        self._mg_trace_bullet = BaseEntity.load_and_scale_image(
+            "assets/images/sprites/projectiles/tracer.png", 0.25
         )
 
         self.spray_mode = True
+
+        # Attack manager
+        self.attack_manager = BossAttackManager(self, bullet_manager)
 
         # Load weapon parts
         self.parts = {}
@@ -438,9 +453,11 @@ class EnemyBoss(BaseEnemy):
                 part.spray_direction = -1
 
             # Assign bullet image to MG parts
+            # Assign bullet images to MG parts
             if "mg" in part_name:
-                part.bullet_image = self._mg_bullet_image
-                print(f"[BOSS DEBUG] Part {part_name} bullet_image: {part.bullet_image is not None}")
+                part.spray_bullet_image = self._mg_spray_bullet
+                part.trace_bullet_image = self._mg_trace_bullet
+                # print(f"[BOSS DEBUG] Part {part_name} bullet images assigned")
 
             # Load rotation/spray settings from config
             part.min_angle = part_cfg.get("min_angle", part.min_angle)
@@ -465,28 +482,27 @@ class EnemyBoss(BaseEnemy):
     def _update_behavior(self, dt: float):
         """Boss-specific per-frame logic."""
 
-        # 1. Calculate the drift
-        self._update_wander(dt)
+        # 1. Movement (check for attack override)
+        movement_override = self.attack_manager.get_movement_override()
+        if movement_override:
+            self.pos.x += movement_override[0] * dt
+            self.pos.y += movement_override[1] * dt
+        else:
+            self._update_wander(dt)
+
         if self.tilt_enabled:
             self._update_tilt(dt)
 
         # 2. Sync Rect to new Position
         self.rect.center = (int(self.pos.x), int(self.pos.y))
 
-        # 3. Update Parts (Standard)
+        # 3. Update part positions
         for part in self.parts.values():
             if part.active:
                 part.update_position(self.pos)
-                if getattr(part, 'is_static', False):
-                    continue  # Static parts don't rotate or shoot
-                if hasattr(self, 'player_ref') and self.player_ref:
-                    if self.spray_mode:
-                        part.spray_rotate(dt)
-                    else:
-                        part.rotate_towards_player(self.player_ref, dt)
-                # Fire bullets from MG parts
-                if "mg" in part.name:
-                    part.update_shooting(dt, self.bullet_manager)
+
+        # 4. Update attack manager (handles part rotation + shooting)
+        self.attack_manager.update(dt)
 
     def _update_wander(self, dt: float):
         self.noise_time += dt

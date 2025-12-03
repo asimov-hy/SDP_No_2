@@ -1,7 +1,10 @@
 """
 boss_attack_base.py
 -------------------
-Base class for all boss part attacks.
+Base class for boss attacks. Each attack controls:
+- Gun part behavior (rotation, shooting)
+- Boss movement during attack
+- Attack duration and timing
 """
 
 import math
@@ -10,117 +13,83 @@ import pygame
 
 class BossAttack:
     """
-    Abstract base for boss weapon attacks.
+    Base class for all boss attacks.
 
-    Lifecycle:
-        start() → update(dt) loop → finish  ()
+    Lifecycle: start() → update(dt) each frame → finish()
 
     Subclasses override:
-        - _on_start(): Setup attack state
-        - _on_update(dt): Per-frame logic, return True when done
+        - duration: How long attack lasts
+        - _on_start(): Setup
+        - _on_update(dt): Per-frame logic
         - _on_finish(): Cleanup
+        - get_movement_override(): Control boss movement
     """
 
-    def __init__(self, part, boss, bullet_manager, draw_manager):
-        """
-        Args:
-            part: BossPart this attack belongs to
-            boss: Parent EnemyBoss (for player_ref, position)
-            bullet_manager: For spawning projectiles
-            draw_manager: For visual effects (lasers, beams)
-        """
-        self.part = part
+    def __init__(self, boss, bullet_manager):
         self.boss = boss
         self.bullet_manager = bullet_manager
-        self.draw_manager = draw_manager
 
         self.is_active = False
         self.timer = 0.0
+        self.duration = 1.0  # Override in subclass
+
+    @property
+    def parts(self):
+        """All boss gun parts."""
+        return self.boss.parts
 
     @property
     def player_ref(self):
         return self.boss.player_ref
 
-    @property
-    def part_pos(self):
-        """Current world position of the part."""
-        return self.part.pos.copy()
+    # === Lifecycle ===
 
     def start(self):
-        """Begin attack sequence."""
-        if not self.part.active:
-            return False
-
+        """Begin attack."""
         self.is_active = True
         self.timer = 0.0
         self._on_start()
-        return True
 
     def update(self, dt):
-        """Update attack state. Called each frame while active."""
+        """Called each frame while active."""
         if not self.is_active:
             return
 
-        # Part destroyed mid-attack
-        if not self.part.active:
-            self.finish()
-            return
-
         self.timer += dt
+        self._on_update(dt)
 
-        if self._on_update(dt):
+        if self.timer >= self.duration:
             self.finish()
 
     def finish(self):
-        """End attack and cleanup."""
+        """End attack."""
         self.is_active = False
         self._on_finish()
 
-    # --- Override these ---
+    # === Override these ===
 
     def _on_start(self):
-        """Setup attack state."""
         pass
 
-    def _on_update(self, dt) -> bool:
-        """
-        Per-frame logic.
-
-        Returns:
-            True when attack is complete
-        """
-        return True
+    def _on_update(self, dt):
+        pass
 
     def _on_finish(self):
-        """Cleanup after attack ends."""
         pass
 
-    # --- Debug ---
-
-    def get_active_effects(self) -> list:
+    def get_movement_override(self):
         """
-        Override to return list of active effect names for debugging.
-        Example: ["tracking", "aim_laser", "beam"]
+        Return (vel_x, vel_y) to override boss movement.
+        Return None for default movement.
         """
-        return []
+        return None
 
-    # --- Utility methods ---
+    # === Helpers ===
 
-    def angle_to_player(self) -> float:
-        """Get angle from part to player in degrees."""
+    def angle_to_player(self, from_pos) -> float:
+        """Angle from position to player in degrees."""
         if not self.player_ref:
-            return 270  # Default: aim down
-
-        dx = self.player_ref.pos.x - self.part.pos.x
-        dy = self.player_ref.pos.y - self.part.pos.y
+            return 180
+        dx = self.player_ref.pos.x - from_pos.x
+        dy = self.player_ref.pos.y - from_pos.y
         return math.degrees(math.atan2(dy, dx))
-
-    def direction_to_player(self) -> pygame.Vector2:
-        """Get normalized direction vector to player."""
-        if not self.player_ref:
-            return pygame.Vector2(0, 1)
-
-        direction = self.player_ref.pos - self.part.pos
-        if direction.length() > 0:
-            direction.normalize_ip()
-        return direction
