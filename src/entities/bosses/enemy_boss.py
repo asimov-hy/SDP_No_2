@@ -452,7 +452,7 @@ class EnemyBoss(BaseEnemy):
 
             # 2. Boss chases ghost - speed scales with distance
             chase_dx = self.track_target_x - self.pos.x
-            distance = abs(chase_dx)
+            distance = max(0, abs(chase_dx) - 50)
 
             # Speed increases with distance, capped at max
             track_speed = min(distance * self.track_speed_multiplier, self.track_speed_max)
@@ -542,6 +542,9 @@ class EnemyBoss(BaseEnemy):
 
     def draw(self, draw_manager):
         """Draw boss body and gun parts."""
+
+        if self.death_state != LifecycleState.ALIVE:
+            return
 
         if abs(self.tilt_angle) > 0.5:
             rotated_img = pygame.transform.rotate(self.body_image, -self.tilt_angle)
