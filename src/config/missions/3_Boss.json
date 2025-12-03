@@ -17,7 +17,7 @@
             "enemy": "boss",
             "spawn_edge": "top",
             "spawn_position": 0.5,
-            "spawn_offset_y": 200,
+            "spawn_offset_y": -300,
             "count": 1,
             "enemy_params": {
               "boss_type": "boss_juggernaut",

@@ -3,7 +3,6 @@ enemy_boss.py
 -------------
 Boss entity composed of a main body with multiple weapon attachments.
 Each part has independent health and can be destroyed.
-Body becomes vulnerable to bullets only after all parts are destroyed.
 """
 
 import pygame
@@ -16,268 +15,12 @@ from src.entities.entity_types import EntityCategory
 from src.entities.entity_state import LifecycleState, InteractionState
 from src.entities.entity_types import CollisionTags
 from src.entities.bosses.boss_attack_manager import BossAttackManager
+from src.entities.bosses.boss_part import BossPart
 
-
-from src.systems.entity_management.entity_registry import EntityRegistry
-from src.graphics.animations.animation_manager import AnimationManager
 
 from src.core.services.config_manager import load_config
 from src.core.debug.debug_logger import DebugLogger
 from src.core.runtime.game_settings import Debug
-
-class BossPart:
-    """
-    Individual weapon/component attached to the boss.
-
-    Each part:
-    - Has its own health pool
-    - Can be independently targeted and destroyed
-    - Syncs position to parent boss
-    - Reports destruction to parent for vulnerability check
-    """
-
-    __slots__ = (
-        'name', 'image', 'offset', 'health', 'max_health', 'active', 'angle',
-        'owner', 'pos', 'rect', 'hitbox', 'collision_tag', 'death_state', 'state',
-        '_base_image', '_anim_manager', 'anim_context', 'category',
-        'player_ref', 'base_angle', 'rotation_speed', 'spray_speed', 'min_angle', 'max_angle',
-        'fire_rate', 'fire_timer', 'bullet_speed', 'bullet_offset',
-        'bullet_image', 'spray_bullet_image', 'trace_bullet_image',
-        'is_static', 'z_order', 'spray_direction'
-    )
-
-    def __init__(self, name: str, image: pygame.Surface, offset: tuple,
-                 health: int = 10, owner=None):
-        """
-        Initialize a boss part.
-
-        Args:
-            name: Part identifier (e.g., "mg_left", "laser")
-            image: Part sprite
-            offset: Position offset from boss center
-            health: Part HP
-            owner: Parent EnemyBoss reference
-        """
-        self.name = name
-        self.image = image
-        self.offset = pygame.Vector2(offset)
-        self.health = health
-        self.max_health = health
-        self.active = True
-        self.angle = 0
-
-        # Rotation pivot (offset from image center, towards top of gun)
-        # Negative Y = pivot towards top of sprite
-        # Pivot at exact center of the sprite
-
-        self.player_ref = None
-        self.base_angle = 180  # Default facing down (180°)
-
-        # Rotation restrictions
-        self.rotation_speed = 120  # degrees per second
-        self.spray_speed = 45
-        self.min_angle = -30  # left limit (relative to base_angle)
-        self.max_angle = 30  # right limit (relative to base_angle)
-
-        # Parent reference
-        self.owner = owner
-
-        # Position (updated each frame to follow boss)
-        self.pos = pygame.Vector2(0, 0)
-        self.rect = image.get_rect() if image else pygame.Rect(0, 0, 40, 40)
-
-        # Collision system fields
-        self.hitbox = None  # Assigned by CollisionManager.register_hitbox()
-        self.collision_tag = "boss_part"
-        self.death_state = LifecycleState.ALIVE
-        self.state = InteractionState.DEFAULT
-        self.category = EntityCategory.ENEMY
-
-        # Animation support (sync with body)
-        self._base_image = image
-        self._anim_manager = None
-        self.anim_context = {}
-
-        # Shooting properties
-        self.fire_rate = 0.15  # seconds between shots
-        self.fire_timer = 0.0
-        self.bullet_speed = 400
-        self.bullet_offset = (0, 30)  # offset along gun direction
-
-        self.bullet_image = None
-        self.spray_bullet_image = None
-        self.trace_bullet_image = None
-
-        # Spray pattern support
-        self.spray_direction = 1     # 1 = towards max, -1 = towards min
-
-    @property
-    def anim_manager(self):
-        """Lazy-load AnimationManager on first access."""
-        if self._anim_manager is None:
-            self._anim_manager = AnimationManager(self)
-        return self._anim_manager
-
-    def update_position(self, boss_pos):
-        """
-        Sync part position to boss body.
-        Called each frame from boss._update_behavior().
-        """
-        self.pos.x = boss_pos.x + self.offset.x
-        self.pos.y = boss_pos.y + self.offset.y
-        self.rect.center = (int(self.pos.x), int(self.pos.y))
-
-    def rotate_towards_player(self, player_ref, dt=1/60):
-        """Rotate gun to point at player with custom pivot."""
-        if not self.active or not player_ref or not self._base_image:
-            return
-
-        self.player_ref = player_ref
-
-        # Calculate direction to player from gun position
-        dx = player_ref.pos.x - self.pos.x
-        dy = player_ref.pos.y - self.pos.y
-
-        # Calculate angle (sprite faces DOWN by default, so base is 180)
-        target_angle = math.degrees(math.atan2(dy, dx)) + 90  # +90 converts to "down-facing" reference
-
-        # 1. Compute angle relative to base
-        relative_angle = target_angle - self.base_angle
-
-        # 2. Clamp within allowed range
-        clamped = max(self.min_angle, min(self.max_angle, relative_angle))
-
-        # 3. Smooth rotation towards target (rotation_speed degrees/sec)
-        diff = clamped - self.angle
-        max_step = self.rotation_speed * dt
-        step = max(-max_step, min(max_step, diff))
-        self.angle += step
-
-        # 4. Apply rotation
-        final_angle = self.base_angle + self.angle
-        self.image = pygame.transform.rotate(self._base_image, -final_angle)
-        self.rect = self.image.get_rect(center=(int(self.pos.x), int(self.pos.y)))
-
-        # NEW METHOD TO ADD:
-
-    def spray_rotate(self, dt=1 / 60):
-        """Sweep gun back and forth within min/max angle range."""
-        if not self.active or not self._base_image:
-            return
-
-        # Move angle in current direction
-        step = self.spray_speed * dt * self.spray_direction
-        self.angle += step
-
-        # Reverse at limits
-        if self.angle >= self.max_angle:
-            self.angle = self.max_angle
-            self.spray_direction = -1
-        elif self.angle <= self.min_angle:
-            self.angle = self.min_angle
-            self.spray_direction = 1
-
-        # Apply rotation
-        final_angle = self.base_angle + self.angle
-        self.image = pygame.transform.rotate(self._base_image, -final_angle)
-        self.rect = self.image.get_rect(center=(int(self.pos.x), int(self.pos.y)))
-
-    def update_shooting(self, dt, bullet_manager, spray_mode=False):
-        """Fire bullets in the direction the gun is pointing."""
-        print(f"[PART SHOOT] active={self.active}, bm={bullet_manager is not None}, timer={self.fire_timer:.2f}")
-        if not self.active or not bullet_manager:
-            return
-
-        self.fire_timer += dt
-        if self.fire_timer < self.fire_rate:
-            return
-
-        self.fire_timer = 0.0
-
-        # if not self.player_ref:
-        #     return
-
-        # Calculate firing direction from gun angle
-        # base_angle + self.angle gives the world rotation
-        fire_angle_deg = self.base_angle + self.angle
-        fire_angle_rad = math.radians(fire_angle_deg)
-
-        # Direction vector (down is 180°, so we need to convert)
-        dir_x = math.sin(fire_angle_rad)
-        dir_y = -math.cos(fire_angle_rad)
-
-        # Spawn position: gun center + offset along firing direction
-        muzzle_offset = self.image.get_height() / 2
-
-        spawn_x = self.pos.x + dir_x * muzzle_offset
-        spawn_y = self.pos.y + dir_y * muzzle_offset
-
-        # Velocity
-        vel_x = dir_x * self.bullet_speed
-        vel_y = dir_y * self.bullet_speed
-
-        # Select bullet based on mode
-        bullet_img = self.spray_bullet_image if spray_mode else self.trace_bullet_image
-
-        bullet_manager.spawn(
-            pos=(spawn_x, spawn_y),
-            vel=(vel_x, vel_y),
-            image=bullet_img,
-            owner="enemy",
-            damage=1
-        )
-        # print(f"[BULLET SPAWNED] pos=({spawn_x:.0f}, {spawn_y:.0f}) vel=({vel_x:.0f}, {vel_y:.0f})")
-
-    def on_collision(self, other, collision_tag=None):
-        """
-        Handle collision with other entities.
-        Only responds to player bullets.
-        """
-        if not self.active:
-            return
-
-        tag = collision_tag or getattr(other, "collision_tag", "")
-
-        if tag == "player_bullet":
-            damage = getattr(other, "damage", 1)
-            self.take_damage(damage)
-
-    def take_damage(self, amount: int):
-        """Apply damage to this part and boss (2x to boss)."""
-        if not self.active:
-            return
-
-        self.health -= amount
-
-        # Damage boss when part is hit (2x multiplier)
-        if self.owner:
-            self.owner.take_damage(amount * 2, source="part_damage")
-
-        if self.health <= 0:
-            self._destroy()
-
-    def _destroy(self):
-        """Handle part destruction."""
-        self.active = False
-        self.death_state = LifecycleState.DEAD
-
-        # Disable hitbox
-        if self.hitbox:
-            self.hitbox.set_active(False)
-
-        # Notify parent boss
-        if self.owner:
-            self.owner._on_part_destroyed(self.name)
-
-    def reset(self):
-        """Reset part for boss pooling."""
-        self.health = self.max_health
-        self.active = True
-        self.death_state = LifecycleState.ALIVE
-        self.state = InteractionState.DEFAULT
-
-        if self.hitbox:
-            self.hitbox.set_active(True)
 
 class EnemyBoss(BaseEnemy):
     """
@@ -295,13 +38,23 @@ class EnemyBoss(BaseEnemy):
     """
 
     __slots__ = (
-        'parts', 'body_image', '_boss_config', 'player_ref',
-        'anchor_pos', 'wander_radius', 'noise_time', 'noise_seed',
-        'hover_velocity', 'bullet_manager', '_mg_spray_bullet', '_mg_trace_bullet',
-        'track_target_x', 'target_follow_rate', 'track_speed_max',
-        'track_speed_multiplier', '_rotation_enabled', 'exp_value',
-        'tilt_angle', 'tilt_max', 'tilt_speed', 'velocity_x',
-        'spray_mode', 'tilt_enabled', 'attack_manager'
+        # Config
+        '_boss_config', '_weapon_config',
+        # References
+        'player_ref', 'bullet_manager', 'attack_manager',
+        # Parts
+        'parts', 'body_image',
+        # Bullet images (loaded from config)
+        '_spray_bullet_img', '_trace_bullet_img',
+        # Movement
+        'anchor_pos', 'home_pos', 'entrance_complete',
+        'wander_radius', 'noise_time', 'noise_seed', 'hover_velocity', 'bob_time',
+        # Player tracking
+        'track_target_x', 'target_follow_rate', 'track_speed_max', 'track_speed_multiplier',
+        # Tilt
+        'tilt_angle', 'tilt_max', 'tilt_speed', 'velocity_x', 'tilt_enabled',
+        # Flags
+        '_rotation_enabled', 'exp_value'
     )
 
     __registry_category__ = EntityCategory.ENEMY
@@ -344,8 +97,8 @@ class EnemyBoss(BaseEnemy):
 
         self.track_target_x = x
         self.target_follow_rate = 3.0
-        self.track_speed_max = 600
-        self.track_speed_multiplier = 4.0
+        self.track_speed_max = 300
+        self.track_speed_multiplier = 2.0
 
         self.tilt_angle = 0.0  # current tilt (degrees)
         self.tilt_max = 15.0  # max tilt angle
@@ -376,30 +129,27 @@ class EnemyBoss(BaseEnemy):
             hitbox_config=hitbox_config
         )
 
-        self._rotation_enabled = False
         self.exp_value = config.get("exp", 1000)
 
-        self.anchor_pos = pygame.Vector2(x, y)
+        # Home position is where boss should end up (on-screen)
+        home_y = config.get("home_y", 150)  # Default 150px from top
+        self.home_pos = pygame.Vector2(x, home_y)
+        self.anchor_pos = pygame.Vector2(x, home_y)
+        self.entrance_complete = False
 
         # Noise-based hover settings
         self.wander_radius = 100
         self.noise_time = 0.0
         self.noise_seed = random.randint(0, 10000)
         self.hover_velocity = pygame.Vector2(0, 0)
+        self.bob_time = 0.0
 
         # Store bullet manager reference
         self.bullet_manager = bullet_manager
-        print(f"[BOSS DEBUG] bullet_manager received: {bullet_manager is not None}")
 
-        # Load MG bullet images (spray vs trace mode)
-        self._mg_spray_bullet = BaseEntity.load_and_scale_image(
-            "assets/images/sprites/projectiles/fire_bullet.png", 0.2
-        )
-        self._mg_trace_bullet = BaseEntity.load_and_scale_image(
-            "assets/images/sprites/projectiles/tracer.png", 0.25
-        )
-
-        self.spray_mode = True
+        # Load weapon config from JSON
+        self._weapon_config = config.get("weapon_config", {})
+        self._load_weapon_images()
 
         # Attack manager
         self.attack_manager = BossAttackManager(self, bullet_manager)
@@ -417,6 +167,20 @@ class EnemyBoss(BaseEnemy):
     # ===================================================================
     # Part Management
     # ===================================================================
+
+    def _load_weapon_images(self):
+        """Load bullet images from weapon_config."""
+        cfg = self._weapon_config
+        spray_cfg = cfg.get("spray_bullet", {})
+        trace_cfg = cfg.get("trace_bullet", {})
+
+        self._spray_bullet_img = BaseEntity.load_and_scale_image(
+            spray_cfg.get("image"), spray_cfg.get("scale", 1.0)
+        ) if spray_cfg.get("image") else None
+
+        self._trace_bullet_img = BaseEntity.load_and_scale_image(
+            trace_cfg.get("image"), trace_cfg.get("scale", 1.0)
+        ) if trace_cfg.get("image") else None
 
     def _create_gun_parts(self, scale: float):
         """Create gun attachments from JSON config."""
@@ -452,17 +216,13 @@ class EnemyBoss(BaseEnemy):
             elif "right" in part_name:
                 part.spray_direction = -1
 
-            # Assign bullet image to MG parts
-            # Assign bullet images to MG parts
-            if "mg" in part_name:
-                part.spray_bullet_image = self._mg_spray_bullet
-                part.trace_bullet_image = self._mg_trace_bullet
-                # print(f"[BOSS DEBUG] Part {part_name} bullet images assigned")
+            # Apply shared weapon config to gun parts (not static)
+            if not is_static:
+                self._apply_weapon_config(part)
 
-            # Load rotation/spray settings from config
+            # Per-part overrides (from parts config)
             part.min_angle = part_cfg.get("min_angle", part.min_angle)
             part.max_angle = part_cfg.get("max_angle", part.max_angle)
-            part.rotation_speed = part_cfg.get("rotation_speed", part.rotation_speed)
             part.base_angle = part_cfg.get("base_angle", part.base_angle)
 
             self.parts[part_name] = part
@@ -470,6 +230,16 @@ class EnemyBoss(BaseEnemy):
         # Sync positions
         for part in self.parts.values():
             part.update_position(self.pos)
+
+    def _apply_weapon_config(self, part):
+        """Apply shared weapon settings to a gun part."""
+        cfg = self._weapon_config
+        part.fire_rate = cfg.get("fire_rate", part.fire_rate)
+        part.bullet_speed = cfg.get("bullet_speed", part.bullet_speed)
+        part.spray_speed = cfg.get("spray_speed", part.spray_speed)
+        part.rotation_speed = cfg.get("rotation_speed", part.rotation_speed)
+        part.spray_bullet_image = self._spray_bullet_img
+        part.trace_bullet_image = self._trace_bullet_img
 
     def _on_part_destroyed(self, part_name: str):
         """Called when a part is destroyed."""
@@ -500,6 +270,8 @@ class EnemyBoss(BaseEnemy):
         for part in self.parts.values():
             if part.active:
                 part.update_position(self.pos)
+            if part._anim_manager:
+                part._anim_manager.update(dt)
 
         # 4. Update attack manager (handles part rotation + shooting)
         self.attack_manager.update(dt)
@@ -507,7 +279,22 @@ class EnemyBoss(BaseEnemy):
     def _update_wander(self, dt: float):
         self.noise_time += dt
 
-        if self.player_ref:
+        # Entrance phase: move toward home position
+        if not self.entrance_complete:
+            direction = self.home_pos - self.pos
+            dist = direction.length()
+            if dist < 5:
+                self.entrance_complete = True
+                self.pos.xy = self.home_pos.xy
+            else:
+                direction.normalize_ip()
+                self.pos += direction * 150 * dt  # entrance speed
+            return  # Skip normal movement during entrance
+
+        # Only track player when ATTACKING, hover near spawn when IDLE
+        is_attacking = self.attack_manager.state == "ATTACKING"
+
+        if self.player_ref and is_attacking:
             # 1. Ghost target follows player with delay
             target_dx = self.player_ref.pos.x - self.track_target_x
             self.track_target_x += target_dx * self.target_follow_rate * dt
@@ -515,37 +302,48 @@ class EnemyBoss(BaseEnemy):
             # 2. Boss chases ghost - speed scales with distance
             chase_dx = self.track_target_x - self.pos.x
             distance = max(0, abs(chase_dx) - 50)
-
-            # Speed increases with distance, capped at max
             track_speed = min(distance * self.track_speed_multiplier, self.track_speed_max)
 
-            # Move toward ghost
             if distance > 1:
                 direction = 1 if chase_dx > 0 else -1
                 max_move = track_speed * dt
                 move_amount = min(distance, max_move) * direction
                 self.pos.x += move_amount
-                self.velocity_x = move_amount / dt  # track velocity for tilt
+                self.velocity_x = move_amount / dt
             else:
                 self.velocity_x = 0.0
 
-            # Y anchor unchanged
             self.anchor_pos.y = min(max(150, self.player_ref.pos.y - 200), 150)
             self.anchor_pos.x = self.pos.x
+        else:
+            # IDLE: smoothly return anchor to home
+            return_speed = 1.0  # Adjust for faster/slower return
+            self.anchor_pos.x += (self.home_pos.x - self.anchor_pos.x) * return_speed * dt
+            self.anchor_pos.y += (self.home_pos.y - self.anchor_pos.y) * return_speed * dt
+            self.velocity_x *= 0.95  # Gradual slowdown
 
-        # --- KEPT: Organic wobble ---
-        vel_x = self._value_noise(self.noise_time * 1.5) * 20
-        vel_y = self._value_noise(self.noise_time * 1.5 + 100) * 15
+        # --- Layered noise: slow drift + faster jitter ---
+        drift_x = self._value_noise(self.noise_time * 0.8) * 40
+        drift_y = self._value_noise(self.noise_time * 0.8 + 100) * 25
+        jitter_x = self._value_noise(self.noise_time * 3.0 + 200) * 15
+        jitter_y = self._value_noise(self.noise_time * 3.0 + 300) * 10
 
-        target_vel = pygame.Vector2(vel_x, vel_y)
-        self.hover_velocity += (target_vel - self.hover_velocity) * 0.1
+        vel_x = drift_x + jitter_x
+        vel_y = drift_y + jitter_y
+
+        # --- Vertical bobbing (sine wave) ---
+        self.bob_time += dt
+        bob_offset = math.sin(self.bob_time * 2.5) * 4  # 2.5 Hz, 8px amplitude
+
+        target_vel = pygame.Vector2(vel_x, vel_y + bob_offset * 10)
+        self.hover_velocity += (target_vel - self.hover_velocity) * 0.25  # Snappier response
 
         self.pos += self.hover_velocity * dt
 
-        # --- KEPT: Spring back to anchor ---
+        # --- Tighter spring back to anchor ---
         distance = self.pos.distance_to(self.anchor_pos)
         if distance > self.wander_radius:
-            pull = (self.anchor_pos - self.pos).normalize() * (distance - self.wander_radius) * 2
+            pull = (self.anchor_pos - self.pos).normalize() * (distance - self.wander_radius) * 4
             self.pos += pull * dt
 
     def _update_tilt(self, dt: float):
@@ -616,6 +414,7 @@ class EnemyBoss(BaseEnemy):
             draw_manager.draw_entity(self, layer=self.layer)
 
         for part in self.parts.values():
+
             if part.active and part.image:
                 # Rotate offset by body tilt
                 rad = math.radians(self.tilt_angle)
@@ -624,13 +423,11 @@ class EnemyBoss(BaseEnemy):
                 rotated_offset_x = part.offset.x * cos_a - part.offset.y * sin_a
                 rotated_offset_y = part.offset.x * sin_a + part.offset.y * cos_a
 
-                # Rotate part image to match body tilt
+                draw_img = part.get_draw_image()
                 if getattr(part, 'is_static', False):
-                    # Static parts: rotate base image with body (match body's negative sign)
-                    rotated_part_img = pygame.transform.rotate(part._base_image, -self.tilt_angle)
+                    rotated_part_img = pygame.transform.rotate(draw_img, -self.tilt_angle)
                 else:
-                    # Gun parts: already have tracking rotation applied, add tilt
-                    rotated_part_img = pygame.transform.rotate(part.image, self.tilt_angle)
+                    rotated_part_img = pygame.transform.rotate(draw_img, self.tilt_angle)
 
                 part_pos = (
                     self.rect.centerx + int(rotated_offset_x) - rotated_part_img.get_width() // 2,
@@ -657,11 +454,12 @@ class EnemyBoss(BaseEnemy):
         """Boss never dies from going off-screen."""
         return False
 
-    # ===================================================================
-    # Object Pooling
-    # ===================================================================
+    def take_damage(self, amount: int, source: str = "unknown"):
+        """Override to flash all parts when boss takes any damage."""
+        super().take_damage(amount, source)
 
-    def reset(self, x, y, boss_type="boss_juggernaut", **kwargs):
-        config = self._boss_data.get(boss_type, {})
-        body_cfg = config.get("body", {})
-        super().reset(x, y, health=body_cfg.get("hp", 500), speed=config.get("speed", 50), **kwargs)
+        # Flash all active parts whenever boss takes damage (body or part hit)
+        if self.health > 0:
+            for part in self.parts.values():
+                if part.active:
+                    part.anim_manager.play("damage", duration=0.15)

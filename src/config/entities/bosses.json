@@ -2,16 +2,31 @@
   "boss_juggernaut": {
     "body": {
       "image": "assets/images/sprites/boss/boss_body.png",
-      "scale": 0.6,
+      "scale": 1.0,
       "hp": 500,
       "hitbox": {
-        "scale": 0.8,
+        "scale": 0.7,
         "shape": "rect"
       }
     },
     "speed": 50,
     "exp": 0,
-    "phases": [0.75, 0.50, 0.25],
+    "home_y": 50,
+
+    "weapon_config": {
+      "fire_rate": 0.15,
+      "bullet_speed": 400,
+      "spray_speed": 45,
+      "rotation_speed": 120,
+      "spray_bullet": {
+        "image": "assets/images/sprites/projectiles/fire_bullet.png",
+        "scale": 0.2
+      },
+      "trace_bullet": {
+        "image": "assets/images/sprites/projectiles/tracer.png",
+        "scale": 0.25
+      }
+    },
 
     "parts": {
       "shoulder_left": {
