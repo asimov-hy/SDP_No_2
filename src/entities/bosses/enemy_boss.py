@@ -43,7 +43,7 @@ class EnemyBoss(BaseEnemy):
         # References
         'player_ref', 'bullet_manager', 'attack_manager',
         # Parts
-        'parts', 'body_image',
+        'parts', 'body_image', 'hazard_manager',
         # Bullet images (loaded from config)
         '_spray_bullet_img', '_trace_bullet_img',
         # Movement
@@ -72,7 +72,7 @@ class EnemyBoss(BaseEnemy):
         return cls._boss_data
 
     def __init__(self, x, y, boss_type="boss_juggernaut", draw_manager=None,
-                 player_ref=None, bullet_manager=None, **kwargs):
+                 player_ref=None, bullet_manager=None, hazard_manager=None, **kwargs):
         """
         Initialize boss from JSON config.
 
@@ -150,6 +150,7 @@ class EnemyBoss(BaseEnemy):
 
         # Store bullet manager reference
         self.bullet_manager = bullet_manager
+        self.hazard_manager = hazard_manager
 
         # Load weapon config from JSON
         self._weapon_config = config.get("weapon_config", {})

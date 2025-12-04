@@ -170,6 +170,7 @@ class GameScene(BaseScene):
         self.bullet_manager = systems['bullet_manager']
         self.level_manager = systems['level_manager']
         self.effects_manager = systems['effects_manager']
+        self.hazard_manager = systems['hazard_manager']
         self.spawn_manager._effects_manager = self.effects_manager
         self.ui = systems['ui']
 
@@ -617,6 +618,7 @@ class GameScene(BaseScene):
         self.player.update(dt)
         self.spawn_manager.update(dt)
         self.bullet_manager.update(dt)
+        self.hazard_manager.update(dt)
         self.level_manager.update(dt)
         self.effects_manager.update(dt)
 
@@ -626,6 +628,7 @@ class GameScene(BaseScene):
 
         # Entity cleanup
         self.spawn_manager.cleanup()
+        self.hazard_manager.cleanup()
 
         # UI update
         mouse_pos = self.input_manager.get_effective_mouse_pos()
@@ -656,6 +659,7 @@ class GameScene(BaseScene):
         self.player.draw(draw_manager)
         self.spawn_manager.draw()
         self.bullet_manager.draw(draw_manager)
+        self.hazard_manager.draw()
 
         # Screen effects
         self.effects_manager.draw(draw_manager)

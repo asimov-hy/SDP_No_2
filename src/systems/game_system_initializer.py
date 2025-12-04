@@ -25,6 +25,7 @@ from src.systems.level.stage_loader import StageLoader
 from src.systems.level.wave_scheduler import WaveScheduler
 
 from src.systems.effects.effects_manager import EffectsManager
+from src.systems.entity_management.hazard_manager import HazardManager
 
 # Animation auto-register imports
 from src.graphics.animations.entities_animation import player_animation  # noqa: F401
@@ -39,6 +40,7 @@ EntityRegistry.discover_entities(
     "src.entities.bullets",
     "src.entities.items",
     "src.entities.bosses",
+    "src.entities.environments",
 )
 
 
@@ -79,7 +81,8 @@ class GameSystemInitializer(SystemInitializer):
         systems['level_manager'] = self._init_level_system(
             systems['spawn_manager'],
             systems['player'],
-            systems['bullet_manager']
+            systems['bullet_manager'],
+            systems['hazard_manager']
         )
 
         DebugLogger.init_entry("Game Systems Initialized")
@@ -151,9 +154,13 @@ class GameSystemInitializer(SystemInitializer):
         collision_manager.register_hitbox(player)
         DebugLogger.init_sub("Registered [Player] with [CollisionManager]")
 
+        hazard_manager = HazardManager(self.draw_manager, collision_manager)
+        DebugLogger.init_sub("Initialized [HazardManager]")
+
         return {
             "bullet_manager": bullet_manager,
-            "collision_manager": collision_manager
+            "collision_manager": collision_manager,
+            "hazard_manager": hazard_manager
         }
 
     def _init_spawning(self, collision_manager) -> dict:
@@ -190,7 +197,7 @@ class GameSystemInitializer(SystemInitializer):
             "effects_manager": effects_manager
         }
 
-    def _init_level_system(self, spawn_manager, player, bullet_manager) -> LevelManager:
+    def _init_level_system(self, spawn_manager, player, bullet_manager, hazard_manager) -> LevelManager:
         """
         Initialize level management with dependency injection.
 
@@ -203,5 +210,5 @@ class GameSystemInitializer(SystemInitializer):
             LevelManager instance
         """
         stage_loader = StageLoader(spawn_manager)
-        wave_scheduler = WaveScheduler(spawn_manager, player, bullet_manager)
+        wave_scheduler = WaveScheduler(spawn_manager, player, bullet_manager, hazard_manager)
         return LevelManager(stage_loader, wave_scheduler)

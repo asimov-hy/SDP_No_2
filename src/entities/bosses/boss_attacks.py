@@ -9,6 +9,7 @@ import pygame
 
 from src.core.services.event_manager import get_events, ScreenShakeEvent
 from src.core.runtime.game_settings import Layers
+from src.entities.environments.hazard_mine import MineHazard
 
 # =====================
 # ATTACK REGISTRY
@@ -169,7 +170,6 @@ class TraceAttack(BossAttack):
             if is_shooting and "mg" in part.name:
                 part.update_shooting(dt, self.bullet_manager, spray_mode=False)
 
-
 @attack(enabled=False)
 class SprayAttack(BossAttack):
     """Sweep guns back and forth while firing."""
@@ -210,6 +210,10 @@ class ChargeAttack(BossAttack):
         self.total_charges = 4
         self.duration = 15.0
 
+        # Mine trail config
+        self.mine_interval = 0.1
+        self.mine_timer = 0.0
+
         # State
         self.phase = "warn"
         self.phase_timer = 0.0
@@ -228,6 +232,7 @@ class ChargeAttack(BossAttack):
         self.charge_count = 0
         self.going_down = True
         self.boss.entrance_complete = True
+        self.mine_timer = 0.0
 
         half_height = self.boss.rect.height // 2
         self.bottom_y = self.screen_height + half_height
@@ -242,8 +247,14 @@ class ChargeAttack(BossAttack):
                 self._next_phase("charge")
             return
 
-        # Phase: Charge (move off-screen)
+        # Phase: Charge (move off-screen, drop mines)
         if self.phase == "charge":
+            # Drop mines at interval
+            self.mine_timer += dt
+            if self.mine_timer >= self.mine_interval:
+                self.mine_timer = 0.0
+                self._spawn_mine()
+
             if self.going_down:
                 self.boss.pos.y += self.charge_speed * dt
                 if self.boss.pos.y >= self.bottom_y:
@@ -304,6 +315,21 @@ class ChargeAttack(BossAttack):
             self.going_down = not self.going_down
             self.boss.body_rotation = 0 if self.going_down else 180
             self.charge_count += 1
+
+    def _spawn_mine(self):
+        """Drop a mine at boss position."""
+        if not self.boss.hazard_manager:
+            return
+
+        # Only spawn if on screen
+        if 0 < self.boss.pos.y < self.screen_height:
+            self.boss.hazard_manager.spawn(
+                MineHazard,
+                self.boss.pos.x,
+                self.boss.pos.y,
+                telegraph_time=0.15,
+                active_time=1.8
+            )
 
     def _on_finish(self):
         self.phase = "idle"
