@@ -273,7 +273,7 @@ class EnemyBoss(BaseEnemy):
         # 3. Update part positions
         for part in self.parts.values():
             if part.active:
-                part.update_position(self.pos)
+                part.update_position(self.pos, self.body_rotation)
             if part._anim_manager:
                 part._anim_manager.update(dt)
 
@@ -434,18 +434,20 @@ class EnemyBoss(BaseEnemy):
         for part in self.parts.values():
 
             if part.active and part.image:
-                # Rotate offset by body tilt
-                rad = math.radians(self.tilt_angle)
+                # Rotate offset by body tilt + body rotation
+                total_rotation = self.tilt_angle + self.body_rotation
+                rad = math.radians(total_rotation)
                 cos_a, sin_a = math.cos(rad), math.sin(rad)
 
                 rotated_offset_x = part.offset.x * cos_a - part.offset.y * sin_a
                 rotated_offset_y = part.offset.x * sin_a + part.offset.y * cos_a
 
                 draw_img = part.get_draw_image()
+                total_rotation = self.tilt_angle + self.body_rotation
                 if getattr(part, 'is_static', False):
-                    rotated_part_img = pygame.transform.rotate(draw_img, -self.tilt_angle)
+                    rotated_part_img = pygame.transform.rotate(draw_img, -total_rotation)
                 else:
-                    rotated_part_img = pygame.transform.rotate(draw_img, self.tilt_angle)
+                    rotated_part_img = pygame.transform.rotate(draw_img, total_rotation)
 
                 part_pos = (
                     self.rect.centerx + int(rotated_offset_x) - rotated_part_img.get_width() // 2,

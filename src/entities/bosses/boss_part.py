@@ -75,13 +75,20 @@ class BossPart(BaseEntity):
         """Parts never go offscreen independently."""
         return False
 
-    def update_position(self, boss_pos):
+    def update_position(self, boss_pos, body_rotation=0):
         """
         Sync part position to boss body.
         Called each frame from boss._update_behavior().
         """
-        self.pos.x = boss_pos.x + self.offset.x
-        self.pos.y = boss_pos.y + self.offset.y
+        rad = math.radians(body_rotation)
+        cos_a, sin_a = math.cos(rad), math.sin(rad)
+
+        rotated_offset_x = self.offset.x * cos_a - self.offset.y * sin_a
+        rotated_offset_y = self.offset.x * sin_a + self.offset.y * cos_a
+
+        self.pos.x = boss_pos.x + rotated_offset_x
+        self.pos.y = boss_pos.y + rotated_offset_y
+
         self.rect.center = (int(self.pos.x), int(self.pos.y))
 
     def rotate_towards_player(self, player_ref, dt=1/60):

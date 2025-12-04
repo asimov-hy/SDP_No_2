@@ -200,7 +200,7 @@ class ChargeAttack(BossAttack):
         self.rev_up_time = 1.0
         self.pause_time = 1.0     # Tracks player
         self.warn_time = 0.5      # Locked, no tracking
-        self.charge_speed = 2000
+        self.charge_speed = 1000
         self.return_speed = 100
         self.screen_height = 720
 
