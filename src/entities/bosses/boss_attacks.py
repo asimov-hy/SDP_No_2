@@ -8,6 +8,7 @@ import math
 import pygame
 
 from src.core.services.event_manager import get_events, ScreenShakeEvent
+from src.core.runtime.game_settings import Layers
 
 # =====================
 # ATTACK REGISTRY
@@ -217,6 +218,10 @@ class ChargeAttack(BossAttack):
         self.bottom_y = 0
         self.top_y = 0
 
+        # Warning zone visual
+        self.show_warning = False
+        self.warning_alpha = 0
+
     def _on_start(self):
         self.phase = "warn"
         self.phase_timer = 0.0
@@ -287,8 +292,11 @@ class ChargeAttack(BossAttack):
         # One-time actions on phase entry
         if phase == "warn":
             get_events().dispatch(ScreenShakeEvent(intensity=3.0, duration=self.warn_time+0.5))
+            self.show_warning = True
+            self.warning_alpha = 0
 
         elif phase == "charge":
+            self.show_warning = False
             get_events().dispatch(ScreenShakeEvent(intensity=8.0, duration=2.0))
 
         # One-time actions on phase entry
@@ -303,3 +311,22 @@ class ChargeAttack(BossAttack):
 
     def get_movement_override(self):
         return (0, 0)
+
+    def draw_warning(self, draw_manager):
+        """Draw vertical danger zone during warn phase."""
+        if not self.show_warning:
+            return
+
+        # Pulsing alpha
+        pulse = abs(math.sin(self.phase_timer * 6))  # Fast pulse
+        self.warning_alpha = int(40 + 60 * pulse)  # 40-100 alpha range
+
+        # Vertical stripe at boss X, full screen height
+        width = self.boss.rect.width + 40  # Slightly wider than boss
+        x = int(self.boss.pos.x - width // 2)
+
+        surf = pygame.Surface((width, self.screen_height), pygame.SRCALPHA)
+        surf.fill((255, 0, 0, self.warning_alpha))
+
+        rect = surf.get_rect(topleft=(x, 0))
+        draw_manager.queue_draw(surf, rect, layer=Layers.BACKGROUND + 1)

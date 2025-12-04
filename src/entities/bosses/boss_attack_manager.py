@@ -66,3 +66,8 @@ class BossAttackManager:
         if self.current_attack and self.current_attack.is_active:
             return self.current_attack.get_movement_override()
         return None
+
+    def draw(self, draw_manager):
+        """Draw attack visuals (warning zones, etc.)"""
+        if self.current_attack and hasattr(self.current_attack, 'draw_warning'):
+            self.current_attack.draw_warning(draw_manager)

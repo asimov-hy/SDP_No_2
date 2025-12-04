@@ -431,6 +431,8 @@ class EnemyBoss(BaseEnemy):
         else:
             draw_manager.draw_entity(self, layer=self.layer)
 
+        self.attack_manager.draw(draw_manager)
+
         for part in self.parts.values():
 
             if part.active and part.image:
@@ -463,6 +465,7 @@ class EnemyBoss(BaseEnemy):
                     debug_surf = pygame.Surface((10, 10), pygame.SRCALPHA)
                     pygame.draw.circle(debug_surf, (255, 0, 255), (5, 5), 5)  # Magenta pivot
                     pygame.draw.circle(debug_surf, (0, 255, 0), (5, 5), 2)  # Green center
+
                     draw_manager.queue_draw(debug_surf,
                                             debug_surf.get_rect(center=pivot_world), layer=self.layer + 2)
 
