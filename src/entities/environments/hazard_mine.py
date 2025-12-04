@@ -57,6 +57,20 @@ class MineHazard(BaseHazard):
         super().update(dt)
         self._update_visual()
 
+    def on_collision(self, other, collision_tag=None):
+        """Trigger explosion on contact with player or bullet."""
+        if self.hazard_state != HazardState.ACTIVE:
+            return  # Only explode when armed
+
+        if collision_tag in ("player", "player_bullet"):
+            self.explode()
+
+    def explode(self):
+        """Trigger explosion and destroy mine."""
+        # Deal damage to player if in radius (optional AOE)
+        # Spawn explosion particle/effect here
+        self.mark_dead(immediate=True)
+
     def _update_visual(self):
         """Update visual based on hazard state."""
         # Start fresh from base image

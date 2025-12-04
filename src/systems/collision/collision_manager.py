@@ -43,6 +43,8 @@ class CollisionManager:
             ("player", "enemy"),
             ("player", "pickup"),
             ("player_bullet", "enemy"),
+            ("player", "hazard"),  # Mine damages player
+            ("player_bullet", "hazard"),  # Bullets destroy mines
             ("enemy_bullet", "player"),
             # ("player_bullet", "enemy_bullet"),
             ("shield", "enemy"),
