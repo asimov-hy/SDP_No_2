@@ -7,6 +7,8 @@ Base class and concrete attack implementations.
 import math
 import pygame
 
+from src.core.services.event_manager import get_events, ScreenShakeEvent
+
 # =====================
 # ATTACK REGISTRY
 # =====================
@@ -197,35 +199,29 @@ class ChargeAttack(BossAttack):
         super().__init__(boss, bullet_manager)
 
         # Config
-        self.rev_up_time = 1.0
-        self.pause_time = 1.0     # Tracks player
-        self.warn_time = 0.5      # Locked, no tracking
+        self.warn_time = 1.0       # Visible pause before charge
+        self.rotate_time = 0.3    # Off-screen rotation
+        self.track_time = 0.8     # Off-screen player tracking
         self.charge_speed = 1000
         self.return_speed = 100
         self.screen_height = 720
 
-        self.total_charges = 4    # down, up, down, up
-
+        self.total_charges = 4
         self.duration = 15.0
 
         # State
-        self.phase = "rev_up"
-        self.phase_timer = 0.0
-        self.charge_count = 0
-        self.going_down = True    # First charge goes down
-        self.bottom_y = 0
-        self.top_y = 0
-
-        # Rotation
-        self.target_rotation = 0
-        self.rotation_speed = 360
-
-    def _on_start(self):
-        self.phase = "rev_up"
+        self.phase = "warn"
         self.phase_timer = 0.0
         self.charge_count = 0
         self.going_down = True
-        self.target_rotation = 0
+        self.bottom_y = 0
+        self.top_y = 0
+
+    def _on_start(self):
+        self.phase = "warn"
+        self.phase_timer = 0.0
+        self.charge_count = 0
+        self.going_down = True
         self.boss.entrance_complete = True
 
         half_height = self.boss.rect.height // 2
@@ -235,54 +231,46 @@ class ChargeAttack(BossAttack):
     def _on_update(self, dt):
         self.phase_timer += dt
 
-        # Phase: Rev up
-        if self.phase == "rev_up":
-            if self.phase_timer >= self.rev_up_time:
+        # Phase: Warn (on-screen, visible pause before charge)
+        if self.phase == "warn":
+            if self.phase_timer >= self.warn_time:
                 self._next_phase("charge")
             return
 
-        # Phase: Charge (no rotation change during charge)
+        # Phase: Charge (move off-screen)
         if self.phase == "charge":
             if self.going_down:
                 self.boss.pos.y += self.charge_speed * dt
                 if self.boss.pos.y >= self.bottom_y:
                     self.boss.pos.y = self.bottom_y
-                    self._charge_complete()
+                    self._next_phase("rotate")
             else:
                 self.boss.pos.y -= self.charge_speed * dt
                 if self.boss.pos.y <= self.top_y:
                     self.boss.pos.y = self.top_y
-                    self._charge_complete()
+                    self._next_phase("rotate")
             return
 
-        # Phase: Pause (tracks player) - snap rotation for next charge
-        if self.phase == "pause_track":
+        # Phase: Rotate (off-screen, just wait)
+        if self.phase == "rotate":
+            if self.phase_timer >= self.rotate_time:
+                if self.charge_count >= self.total_charges:
+                    self._next_phase("return")
+                else:
+                    self._next_phase("track")
+            return
+
+        # Phase: Track (off-screen, follow player X)
+        if self.phase == "track":
             if self.player_ref:
                 self.boss.pos.x = self.player_ref.pos.x
-            # Snap once on phase entry (going_down hasn't flipped yet, so invert)
-            new_rotation = 180 if self.going_down else 0
-            self.boss.body_rotation = new_rotation
-
-            if self.phase_timer >= self.pause_time:
+            if self.phase_timer >= self.track_time:
                 self._next_phase("warn")
-            return
-
-        # Phase: Warn (locked position)
-        if self.phase == "warn":
-            if self.phase_timer >= self.warn_time:
-                self.going_down = not self.going_down  # Flip direction
-                self._next_phase("charge")
-            return
-
-        # Phase: Final pause before return - snap to face down
-        if self.phase == "pause_final":
-            self.boss.body_rotation = 0  # Face down for return
-            if self.phase_timer >= self.pause_time:
-                self._next_phase("return")
             return
 
         # Phase: Return home
         if self.phase == "return":
+            self.boss.body_rotation = 0
             direction = self.boss.home_pos - self.boss.pos
             dist = direction.length()
             if dist < 10:
@@ -292,32 +280,22 @@ class ChargeAttack(BossAttack):
                 direction.normalize_ip()
                 self.boss.pos += direction * self.return_speed * dt
 
-    def _update_rotation(self, dt):
-        current = self.boss.body_rotation
-        diff = self.target_rotation - current
-
-        # Shortest path
-        if diff > 180:
-            diff -= 360
-        elif diff < -180:
-            diff += 360
-
-        max_step = self.rotation_speed * dt
-        if abs(diff) < max_step:
-            self.boss.body_rotation = self.target_rotation
-        else:
-            self.boss.body_rotation += max_step if diff > 0 else -max_step
-
-    def _charge_complete(self):
-        self.charge_count += 1
-        if self.charge_count >= self.total_charges:
-            self._next_phase("return")
-        else:
-            self._next_phase("pause_track")
-
     def _next_phase(self, phase):
         self.phase = phase
         self.phase_timer = 0.0
+
+        # One-time actions on phase entry
+        if phase == "warn":
+            get_events().dispatch(ScreenShakeEvent(intensity=3.0, duration=self.warn_time+0.5))
+
+        elif phase == "charge":
+            get_events().dispatch(ScreenShakeEvent(intensity=8.0, duration=2.0))
+
+        # One-time actions on phase entry
+        if phase == "rotate":
+            self.going_down = not self.going_down
+            self.boss.body_rotation = 0 if self.going_down else 180
+            self.charge_count += 1
 
     def _on_finish(self):
         self.phase = "idle"
