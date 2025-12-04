@@ -281,6 +281,20 @@ class EnemyBoss(BaseEnemy):
         # 4. Update attack manager (handles part rotation + shooting)
         self.attack_manager.update(dt)
 
+        # 5. Sync part orientations (after animations which may reset images)
+        self.sync_parts_to_body()
+
+    def sync_parts_to_body(self):
+        """Sync part orientations to current body_rotation."""
+        for part in self.parts.values():
+            if not part.active or getattr(part, 'is_static', False):
+                continue
+            if part._base_image:
+                # Bake full rotation into part image (base + local + body)
+                final_angle = part.base_angle + part.angle + self.body_rotation
+                part.image = pygame.transform.rotate(part._base_image, -final_angle)
+                part.rect = part.image.get_rect(center=(int(part.pos.x), int(part.pos.y)))
+
     def _update_wander(self, dt: float):
         self.noise_time += dt
 
@@ -446,11 +460,13 @@ class EnemyBoss(BaseEnemy):
                 rotated_offset_y = part.offset.x * sin_a + part.offset.y * cos_a
 
                 draw_img = part.get_draw_image()
-                total_rotation = self.tilt_angle + self.body_rotation
+
+                # Static parts: apply full body rotation at draw time
+                # Non-static parts: body_rotation already baked in, only apply tilt
                 if getattr(part, 'is_static', False):
                     rotated_part_img = pygame.transform.rotate(draw_img, -total_rotation)
                 else:
-                    rotated_part_img = pygame.transform.rotate(draw_img, total_rotation)
+                    rotated_part_img = pygame.transform.rotate(draw_img, -self.tilt_angle)
 
                 part_pos = (
                     self.rect.centerx + int(rotated_offset_x) - rotated_part_img.get_width() // 2,

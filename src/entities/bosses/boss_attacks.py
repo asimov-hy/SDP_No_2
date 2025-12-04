@@ -9,7 +9,7 @@ import pygame
 
 from src.core.services.event_manager import get_events, ScreenShakeEvent
 from src.core.runtime.game_settings import Layers
-from src.entities.environments.hazard_mine import MineHazard
+from src.entities.environments.hazard_mine import TimedMine
 
 # =====================
 # ATTACK REGISTRY
@@ -203,6 +203,7 @@ class ChargeAttack(BossAttack):
         self.warn_time = 1.0       # Visible pause before charge
         self.rotate_time = 0.3    # Off-screen rotation
         self.track_time = 0.8     # Off-screen player tracking
+        self.cooldown_time = 1.0
         self.charge_speed = 1000
         self.return_speed = 100
         self.screen_height = 720
@@ -271,9 +272,15 @@ class ChargeAttack(BossAttack):
         if self.phase == "rotate":
             if self.phase_timer >= self.rotate_time:
                 if self.charge_count >= self.total_charges:
-                    self._next_phase("return")
+                    self._next_phase("cooldown")
                 else:
                     self._next_phase("track")
+            return
+
+        # Phase: Cooldown (brief pause after charges complete)
+        if self.phase == "cooldown":
+            if self.phase_timer >= self.cooldown_time:
+                self._next_phase("return")
             return
 
         # Phase: Track (off-screen, follow player X)
@@ -302,7 +309,7 @@ class ChargeAttack(BossAttack):
 
         # One-time actions on phase entry
         if phase == "warn":
-            get_events().dispatch(ScreenShakeEvent(intensity=3.0, duration=self.warn_time+0.5))
+            get_events().dispatch(ScreenShakeEvent(intensity=3.0, duration=self.warn_time + 0.5))
             self.show_warning = True
             self.warning_alpha = 0
 
@@ -314,6 +321,7 @@ class ChargeAttack(BossAttack):
         if phase == "rotate":
             self.going_down = not self.going_down
             self.boss.body_rotation = 0 if self.going_down else 180
+            self.boss.sync_parts_to_body()
             self.charge_count += 1
 
     def _spawn_mine(self):
@@ -324,11 +332,9 @@ class ChargeAttack(BossAttack):
         # Only spawn if on screen
         if 0 < self.boss.pos.y < self.screen_height:
             self.boss.hazard_manager.spawn(
-                MineHazard,
+                TimedMine,
                 self.boss.pos.x,
-                self.boss.pos.y,
-                telegraph_time=0.15,
-                active_time=1.8
+                self.boss.pos.y
             )
 
     def _on_finish(self):

@@ -154,13 +154,9 @@ class GameSystemInitializer(SystemInitializer):
         collision_manager.register_hitbox(player)
         DebugLogger.init_sub("Registered [Player] with [CollisionManager]")
 
-        hazard_manager = HazardManager(self.draw_manager, collision_manager)
-        DebugLogger.init_sub("Initialized [HazardManager]")
-
         return {
             "bullet_manager": bullet_manager,
             "collision_manager": collision_manager,
-            "hazard_manager": hazard_manager
         }
 
     def _init_spawning(self, collision_manager) -> dict:
@@ -191,10 +187,14 @@ class GameSystemInitializer(SystemInitializer):
         effects_manager = EffectsManager(spawn_manager)
         DebugLogger.init_sub("Connected [EffectsManager] → [SpawnManager]")
 
+        hazard_manager = HazardManager(self.draw_manager, collision_manager, spawn_manager=spawn_manager)
+        DebugLogger.init_sub("Initialized [HazardManager]")
+
         return {
             "spawn_manager": spawn_manager,
             "item_manager": item_manager,
-            "effects_manager": effects_manager
+            "effects_manager": effects_manager,
+            "hazard_manager": hazard_manager
         }
 
     def _init_level_system(self, spawn_manager, player, bullet_manager, hazard_manager) -> LevelManager:

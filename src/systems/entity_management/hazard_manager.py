@@ -11,9 +11,11 @@ from src.core.debug.debug_logger import DebugLogger
 class HazardManager:
     """Spawns and manages boss/environmental hazards."""
 
-    def __init__(self, draw_manager, collision_manager=None):
+    def __init__(self, draw_manager, collision_manager=None, effects_manager=None, spawn_manager=None):
         self.draw_manager = draw_manager
         self.collision_manager = collision_manager
+        self.effects_manager = effects_manager
+        self.spawn_manager = spawn_manager
         self.hazards = []
         self._alive_cache = []
         self._cache_dirty = True
@@ -31,11 +33,19 @@ class HazardManager:
             Hazard instance
         """
         kwargs.setdefault("draw_manager", self.draw_manager)
+        kwargs.setdefault("collision_manager", self.collision_manager)
+        kwargs.setdefault("hazard_manager", self)
         hazard = hazard_class(x, y, **kwargs)
+
         self.hazards.append(hazard)
         self._cache_dirty = True
 
-        if self.collision_manager:
+        # Register with spawn_manager for collision detection
+        if self.spawn_manager:
+            self.spawn_manager.entities.append(hazard)
+            self.spawn_manager._alive_cache_dirty = True
+
+        if self.collision_manager and not hasattr(hazard, 'hitbox'):
             self.collision_manager.register_hitbox(hazard)
 
         DebugLogger.system(
