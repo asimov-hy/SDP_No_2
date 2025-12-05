@@ -407,13 +407,24 @@ class EnemyBoss(BaseEnemy):
     def sync_parts_to_body(self):
         """Sync part orientations to current body_rotation."""
         for part in self.parts.values():
-            if not part.active or getattr(part, 'is_static', False):
+            if getattr(part, 'is_static', False):
+                # Static parts: set rotation_angle for hitbox (visual rotation done in draw)
+                part.rotation_angle = self.tilt_angle + self.body_rotation
+                if part.hitbox:
+                    part.hitbox.update()
+                continue
+            if not part.active:
                 continue
             if part._base_image:
                 # Bake full rotation into part image (base + local + body)
                 final_angle = part.base_angle + part.angle + self.body_rotation
                 part.image = pygame.transform.rotate(part._base_image, -final_angle)
                 part.rect = part.image.get_rect(center=(int(part.pos.x), int(part.pos.y)))
+                # Set rotation_angle for hitbox system
+                part.rotation_angle = final_angle
+                # Force hitbox to update with new rect dimensions
+                if part.hitbox:
+                    part.hitbox.update()
 
     def _update_tilt(self, dt: float):
         """Tilt boss based on horizontal velocity."""
@@ -534,8 +545,10 @@ class EnemyBoss(BaseEnemy):
                 # Non-static parts: body_rotation already baked in, only apply tilt
                 if getattr(part, 'is_static', False):
                     rotated_part_img = pygame.transform.rotate(draw_img, -total_rotation)
-                else:
+                elif self.tilt_enabled and self.tilt_angle != 0:
                     rotated_part_img = pygame.transform.rotate(draw_img, -self.tilt_angle)
+                else:
+                    rotated_part_img = draw_img
 
                 part_pos = (
                     self.rect.centerx + int(rotated_offset_x) - rotated_part_img.get_width() // 2,

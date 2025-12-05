@@ -76,10 +76,6 @@ class BossPart(BaseEntity):
         return False
 
     def update_position(self, boss_pos, body_rotation=0):
-        """
-        Sync part position to boss body.
-        Called each frame from boss._update_behavior().
-        """
         rad = math.radians(body_rotation)
         cos_a, sin_a = math.cos(rad), math.sin(rad)
 
@@ -88,8 +84,6 @@ class BossPart(BaseEntity):
 
         self.pos.x = boss_pos.x + rotated_offset_x
         self.pos.y = boss_pos.y + rotated_offset_y
-
-        self.rect.center = (int(self.pos.x), int(self.pos.y))
 
     def rotate_towards_player(self, player_ref, dt=1/60):
         """Rotate gun to point at player with custom pivot."""
@@ -253,6 +247,7 @@ class BossPart(BaseEntity):
         self.health = self.max_health
         self.active = True
         self.angle = 0
+        self.rotation_angle = 0
         self.fire_timer = 0.0
 
         if self.hitbox:

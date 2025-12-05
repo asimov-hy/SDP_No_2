@@ -5,6 +5,7 @@ Base class and concrete attack implementations.
 """
 
 import math
+import random
 import pygame
 
 from src.core.services.event_manager import get_events, ScreenShakeEvent
@@ -131,7 +132,7 @@ class BossAttack:
 # =====================
 # ATTACKS
 # =====================
-@attack(enabled=False)
+@attack(enabled=True)
 class TraceAttack(BossAttack):
     """Track player and fire in bursts."""
 
@@ -151,6 +152,10 @@ class TraceAttack(BossAttack):
 
         self.fire_rate = 0.05
         self.bullet_speed = 450
+
+        self.movement_type = "chase"  # idle, chase, strafe_left, strafe_right, charge, retreat
+        self.movement_speed = 50
+
 
     def _on_update(self, dt):
         # Phase 1: Idle start
@@ -254,7 +259,7 @@ class SprayAttack(BossAttack):
         )
 
 
-@attack(enabled=False)
+@attack(enabled=True)
 class ChargeAttack(BossAttack):
     """Multi-phase charge attack with off-screen dives."""
 
@@ -444,3 +449,231 @@ class ChargeAttack(BossAttack):
     def draw_warning(self, draw_manager):
         """Draw debris warning effect."""
         self.warning_emitter.render(draw_manager, layer=Layers.BACKGROUND + 1)
+
+
+@attack(enabled=False)
+class MineCharge(BossAttack):
+    """Horizontal charge attack. TODO: Add mine trail."""
+
+    def __init__(self, boss, bullet_manager):
+        super().__init__(boss, bullet_manager)
+
+        # Timing config
+        self.warn_time = 0.8  # Initial warning on screen
+        self.retreat_speed = 150  # Slow retreat upward
+        self.track_time = 0.6  # Off-screen player Y tracking
+        self.charge_warn_time = 0.8  # Warning before charge
+        self.charge_speed = 1800  # Fast horizontal charge
+        self.return_speed = 120  # Slow return to home
+
+        self.duration = 15.0  # Failsafe max duration
+
+        self.screen_width = Display.WIDTH
+        self.screen_height = Display.HEIGHT
+
+        # State
+        self.phase = "warn"
+        self.phase_timer = 0.0
+        self.charge_direction = 1  # 1 = left→right, -1 = right→left
+        self.charge_y = 0
+
+        # Boundary positions (set in _on_start)
+        self.top_y = 0
+        self.left_x = 0
+        self.right_x = 0
+
+        # Warning emitter (horizontal band)
+        dirt_colors = [
+            (139, 90, 43),
+            (160, 120, 80),
+            (100, 80, 60),
+            (120, 100, 70),
+            (90, 60, 30),
+        ]
+        self.warning_emitter = DebrisEmitter(
+            emit_rate=200,
+            max_particles=600,
+            colors=dirt_colors
+        )
+
+    def _on_start(self):
+        self.phase = "warn"
+        self.phase_timer = 0.0
+        self.charge_direction = random.choice([-1, 1])
+        self.boss.entrance_complete = True
+
+        # Disable arm hitboxes during charge
+        for part in self.parts.values():
+            if not getattr(part, 'is_static', False) and part.hitbox:
+                part.hitbox.set_active(False)
+
+        self._original_body_image = self.boss.body_image
+        self._original_part_images = {
+            name: part._base_image for name, part in self.parts.items()
+        }
+        self._original_part_offsets = {
+            name: pygame.Vector2(part.offset.x, part.offset.y) for name, part in self.parts.items()
+        }
+        self.charge_scale = 0.8
+
+        # Calculate offset from boss body image + buffer
+        if self.boss.body_image:
+            boss_height = self.boss.body_image.get_height()
+            boss_width = self.boss.body_image.get_width()
+        else:
+            boss_height = 300
+            boss_width = 300
+
+        buffer = 200  # Extra clearance
+        self.top_y = -(boss_height // 2) - buffer
+        self.left_x = -(boss_width // 2) - buffer
+        self.right_x = self.screen_width + (boss_width // 2) + buffer
+
+        get_events().dispatch(ScreenShakeEvent(intensity=1.5, duration=self.warn_time))
+
+    def _on_update(self, dt):
+        self.phase_timer += dt
+        self.warning_emitter.update(dt)
+
+        if self.phase == "warn":
+            # Initial warning while visible
+            if self.phase_timer >= self.warn_time:
+                self._next_phase("retreat")
+
+        elif self.phase == "retreat":
+            # Slow move up off screen
+            self.boss.pos.y -= self.retreat_speed * dt
+            # Sync anchor to prevent spring-back
+            self.boss.anchor_pos.xy = self.boss.pos.xy
+            if self.boss.pos.y < self.top_y:
+                self._next_phase("reposition")
+
+        elif self.phase == "reposition":
+            # Shrink boss for charge
+            self._apply_scale(self.charge_scale)
+
+            # Instant teleport to side
+            if self.charge_direction == 1:
+                self.boss.pos.x = self.left_x
+                self.boss.body_rotation = -90  # Face right
+            else:
+                self.boss.pos.x = self.right_x
+                self.boss.body_rotation = 90  # Face left
+
+            self.boss.sync_parts_to_body()
+
+            # Set Y to exact screen center
+            self.charge_y = self.screen_height / 2
+            self.boss.pos.y = self.charge_y
+            self.boss.anchor_pos.xy = self.boss.pos.xy
+            self._next_phase("charge_warn")
+
+        elif self.phase == "charge_warn":
+            # Emit horizontal warning band
+            self._emit_warning_debris(dt)
+            self.boss.sync_parts_to_body()
+            if self.phase_timer >= self.charge_warn_time:
+                self._next_phase("charge")
+
+        elif self.phase == "charge":
+            # Fast horizontal charge
+            self._emit_warning_debris(dt)
+            self.boss.pos.x += self.charge_direction * self.charge_speed * dt
+            self.boss.anchor_pos.xy = self.boss.pos.xy
+
+            self.boss.sync_parts_to_body()
+
+            if self.charge_direction == 1 and self.boss.pos.x > self.right_x:
+                self._next_phase("reposition_top")
+            elif self.charge_direction == -1 and self.boss.pos.x < self.left_x:
+                self._next_phase("reposition_top")
+
+        elif self.phase == "reposition_top":
+            # Restore original size
+            self._restore_scale()
+
+            self.boss.pos.x = self.screen_width // 2
+            self.boss.pos.y = self.top_y
+            self.boss.body_rotation = 0  # Face down (normal)
+            self.boss.sync_parts_to_body()
+            self._next_phase("return")
+
+        elif self.phase == "return":
+            # Slow descent to home
+            direction = self.boss.home_pos - self.boss.pos
+            dist = direction.length()
+            if dist < 10:
+                self.boss.pos.xy = self.boss.home_pos.xy
+                self.boss.anchor_pos.xy = self.boss.home_pos.xy
+                self.finish()
+            else:
+                direction.normalize_ip()
+                self.boss.pos += direction * self.return_speed * dt
+                self.boss.anchor_pos.xy = self.boss.pos.xy
+
+    def _next_phase(self, phase):
+        self.phase = phase
+        self.phase_timer = 0.0
+
+        if phase == "charge_warn":
+            get_events().dispatch(ScreenShakeEvent(intensity=2.0, duration=self.charge_warn_time))
+        elif phase == "charge":
+            get_events().dispatch(ScreenShakeEvent(intensity=6.0, duration=1.5))
+
+    def _emit_warning_debris(self, dt):
+        """Emit debris in horizontal warning band."""
+        height = self.boss.rect.height + 40
+        y = int(self.charge_y - height // 2)
+        warn_rect = pygame.Rect(0, y, self.screen_width, height)
+        self.warning_emitter.emit_continuous(warn_rect, dt)
+
+    def _on_finish(self):
+        """Ensure scale is restored if attack ends early."""
+        self._restore_scale()
+        self.boss.body_rotation = 0
+        self.boss.sync_parts_to_body()
+
+        # Re-enable arm hitboxes
+        for part in self.parts.values():
+            if not getattr(part, 'is_static', False) and part.hitbox:
+                part.hitbox.set_active(True)
+
+    def get_movement_override(self):
+        return (0, 0)
+
+    def draw_warning(self, draw_manager):
+        """Draw debris warning effect."""
+        self.warning_emitter.render(draw_manager, layer=Layers.BACKGROUND + 1)
+
+    def _apply_scale(self, scale):
+        """Shrink boss and parts."""
+        # Scale body
+        orig = self._original_body_image
+        new_size = (int(orig.get_width() * scale), int(orig.get_height() * scale))
+        self.boss.body_image = pygame.transform.scale(orig, new_size)
+        self.boss.rect = self.boss.body_image.get_rect(center=(int(self.boss.pos.x), int(self.boss.pos.y)))
+
+        # Scale parts
+        for name, part in self.parts.items():
+            orig_part = self._original_part_images.get(name)
+            if orig_part:
+                new_size = (int(orig_part.get_width() * scale), int(orig_part.get_height() * scale))
+                part._base_image = pygame.transform.scale(orig_part, new_size)
+                part.image = part._base_image
+                part.offset.x *= scale
+                part.offset.y *= scale
+
+    def _restore_scale(self):
+        """Restore original boss size."""
+        self.boss.body_image = self._original_body_image
+        self.boss.rect = self.boss.body_image.get_rect(center=(int(self.boss.pos.x), int(self.boss.pos.y)))
+
+        for name, part in self.parts.items():
+            orig_part = self._original_part_images.get(name)
+            orig_offset = self._original_part_offsets.get(name)
+            if orig_part:
+                part._base_image = orig_part
+                part.image = orig_part
+            if orig_offset:
+                part.offset.x = orig_offset.x
+                part.offset.y = orig_offset.y
