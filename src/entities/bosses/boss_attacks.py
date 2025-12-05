@@ -8,7 +8,9 @@ import math
 import pygame
 
 from src.core.services.event_manager import get_events, ScreenShakeEvent
-from src.core.runtime.game_settings import Layers, Display
+from src.entities.bullets.bullet_bouncing import BouncingBullet
+from src.core.runtime.game_settings import Display, Layers
+from src.graphics.particles.particle_manager import DebrisEmitter
 from src.entities.environments.hazard_mine import TimedMine
 
 # =====================
@@ -43,9 +45,10 @@ class BossAttack:
         self.timer = 0.0
         self.duration = 1.0
 
-        # Movement override
-        self.movement_type = None
+        # Movement config
+        self.movement_type = "idle"  # idle, chase, strafe_left, strafe_right, charge, retreat
         self.movement_speed = 0
+        self.bob_enabled = True  # Vertical bobbing
 
         # Bullet overrides (None = use part defaults)
         self.fire_rate = None
@@ -90,7 +93,10 @@ class BossAttack:
         pass
 
     def get_movement_override(self):
-        if self.movement_type == "strafe_left":
+        """Return (vx, vy) or None for chase."""
+        if self.movement_type == "chase":
+            return None
+        elif self.movement_type == "strafe_left":
             return (-self.movement_speed, 0)
         elif self.movement_type == "strafe_right":
             return (self.movement_speed, 0)
@@ -98,7 +104,7 @@ class BossAttack:
             return (0, self.movement_speed)
         elif self.movement_type == "retreat":
             return (0, -self.movement_speed)
-        return None
+        return (0, 0)  # idle
 
     def _apply_attack_config(self):
         for name, part in self.parts.items():
@@ -134,16 +140,16 @@ class TraceAttack(BossAttack):
 
         # Tweakable timing parameters
         self.idle_start = 1.0  # Idle before bursts
-        self.burst_time = 1.0  # Shooting duration per cycle
-        self.pause_time = 1.0  # Pause between bursts
+        self.burst_time = 0.7  # Shooting duration per cycle
+        self.pause_time = 0.5  # Pause between bursts
         self.burst_count = 5  # Number of burst cycles
-        self.idle_end = 1.0  # Idle after bursts
+        self.idle_end = 0.5  # Idle after bursts
 
         # Auto-calculate total duration
         self.cycle_time = self.burst_time + self.pause_time
         self.duration = self.idle_start + (self.cycle_time * self.burst_count) + self.idle_end
 
-        self.fire_rate = 0.12
+        self.fire_rate = 0.05
         self.bullet_speed = 450
 
     def _on_update(self, dt):
@@ -167,22 +173,39 @@ class TraceAttack(BossAttack):
                 continue
             if self.player_ref:
                 part.rotate_towards_player(self.player_ref, dt)
+
             if is_shooting and "mg" in part.name:
                 part.update_shooting(dt, self.bullet_manager, spray_mode=False)
 
-@attack(enabled=False)
+
+@attack(enabled=True)
 class SprayAttack(BossAttack):
-    """Sweep guns back and forth while firing."""
+    """Sweep guns back and forth while firing bouncing bullets."""
 
     def __init__(self, boss, bullet_manager):
         super().__init__(boss, bullet_manager)
-        self.duration = 5.0
 
-        self.movement_type = "strafe_left"
-        self.movement_speed = 10
+        # Sweep config
+        self.num_sweeps = 1  # Number of full back-and-forth sweeps
+        self.sweep_speed = 60  # Degrees per second (overrides part default)
+        self.angle_range = 60  # Total angle range (min to max)
+
+        # Calculate duration from sweeps
+        # One sweep = go left-to-right-to-left = 2x angle range
+        sweep_time = (self.angle_range * 2) / self.sweep_speed
+        self.duration = sweep_time * self.num_sweeps
+
+        self.movement_type = "idle"  # idle, chase, strafe_left, strafe_right, charge, retreat
+        self.movement_speed = 0
 
         self.fire_rate = 0.25
         self.bullet_speed = 300
+
+    def _on_start(self):
+        # Override part spray speed
+        for part in self.parts.values():
+            if not getattr(part, 'is_static', False):
+                part.spray_speed = self.sweep_speed
 
     def _on_update(self, dt):
         for part in self.parts.values():
@@ -190,7 +213,46 @@ class SprayAttack(BossAttack):
                 continue
             part.spray_rotate(dt)
             if "mg" in part.name:
-                part.update_shooting(dt, self.bullet_manager, spray_mode=True)
+                self._shoot_bouncing(part, dt)
+
+    def _shoot_bouncing(self, part, dt):
+        """Fire bouncing bullets from part."""
+
+        if not part.active or not self.bullet_manager:
+            return
+
+        part.fire_timer += dt
+        if part.fire_timer < part.fire_rate:
+            return
+        part.fire_timer = 0.0
+
+        # Calculate firing direction
+        fire_angle_deg = part.base_angle + part.angle
+        fire_angle_rad = math.radians(fire_angle_deg)
+
+        dir_x = math.sin(fire_angle_rad)
+        dir_y = -math.cos(fire_angle_rad)
+
+        # Spawn position
+        muzzle_offset = part.image.get_height() / 2
+        spawn_x = part.pos.x + dir_x * muzzle_offset
+        spawn_y = part.pos.y + dir_y * muzzle_offset
+
+        # Velocity
+        vel_x = dir_x * part.bullet_speed
+        vel_y = dir_y * part.bullet_speed
+
+        # Spawn bouncing bullet
+        self.bullet_manager.spawn_custom(
+            BouncingBullet,
+            pos=(spawn_x, spawn_y),
+            vel=(vel_x, vel_y),
+            image=part.spray_bullet_image,  # Use trace bullet sprite
+            owner="enemy",
+            damage=1,
+            max_bounces=3
+        )
+
 
 @attack(enabled=False)
 class ChargeAttack(BossAttack):
@@ -229,6 +291,20 @@ class ChargeAttack(BossAttack):
         self.show_warning = False
         self.warning_alpha = 0
 
+        # Debris warning emitter (dirt brown colors)
+        dirt_colors = [
+            (139, 90, 43),   # Dark brown
+            (160, 120, 80),  # Tan
+            (100, 80, 60),   # Deep brown
+            (120, 100, 70),  # Olive brown
+            (90, 60, 30),    # Dark dirt
+        ]
+        self.warning_emitter = DebrisEmitter(
+            emit_rate=200,
+            max_particles=600,
+            colors=dirt_colors
+        )
+
     def _on_start(self):
         self.phase = "warn"
         self.phase_timer = 0.0
@@ -238,20 +314,28 @@ class ChargeAttack(BossAttack):
         self.mine_timer = 0.0
 
         half_height = self.boss.rect.height // 2
-        self.bottom_y = self.screen_height + half_height
-        self.top_y = -half_height
+        self.bottom_y = self.screen_height + half_height + 200
+        self.top_y = -half_height - 200
+
+        get_events().dispatch(ScreenShakeEvent(intensity=1.5, duration=self.warn_time))
 
     def _on_update(self, dt):
         self.phase_timer += dt
 
+        # Always update debris particles
+        self.warning_emitter.update(dt)
+
         # Phase: Warn (on-screen, visible pause before charge)
         if self.phase == "warn":
+            self._emit_warning_debris(dt)
             if self.phase_timer >= self.warn_time:
                 self._next_phase("charge")
             return
 
         # Phase: Charge (move off-screen, drop mines)
         if self.phase == "charge":
+            self._emit_warning_debris(dt)
+
             # Drop mines at interval
             if self.mines_enabled:
                 self.mine_timer += dt
@@ -347,24 +431,16 @@ class ChargeAttack(BossAttack):
         self.phase = "idle"
         self.boss.body_rotation = 0
 
+    def _emit_warning_debris(self, dt):
+        """Emit debris in warning zone at boss X position."""
+        width = self.boss.rect.width + 40
+        x = int(self.boss.pos.x - width // 2)
+        warn_rect = pygame.Rect(x, 0, width, self.screen_height)
+        self.warning_emitter.emit_continuous(warn_rect, dt)
+
     def get_movement_override(self):
         return (0, 0)
 
     def draw_warning(self, draw_manager):
-        """Draw vertical danger zone during warn phase."""
-        if not self.show_warning:
-            return
-
-        # Pulsing alpha
-        pulse = abs(math.sin(self.phase_timer * 6))  # Fast pulse
-        self.warning_alpha = int(40 + 60 * pulse)  # 40-100 alpha range
-
-        # Vertical stripe at boss X, full screen height
-        width = self.boss.rect.width + 40  # Slightly wider than boss
-        x = int(self.boss.pos.x - width // 2)
-
-        surf = pygame.Surface((width, self.screen_height), pygame.SRCALPHA)
-        surf.fill((255, 0, 0, self.warning_alpha))
-
-        rect = surf.get_rect(topleft=(x, 0))
-        draw_manager.queue_draw(surf, rect, layer=Layers.BACKGROUND + 1)
+        """Draw debris warning effect."""
+        self.warning_emitter.render(draw_manager, layer=Layers.BACKGROUND + 1)

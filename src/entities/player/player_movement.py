@@ -107,7 +107,7 @@ def clamp_to_screen(player):
     half_w = player.rect.width * 0.5
     half_h = player.rect.height * 0.5
 
-    SOFT_MARGIN = 30  # pixels from edge (tune to taste)
+    SOFT_MARGIN = 10  # pixels from edge (tune to taste)
 
     old_x, old_y = player.pos.x, player.pos.y
 

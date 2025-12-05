@@ -236,7 +236,7 @@ class EnemyBoss(BaseEnemy):
             # Get HP
             is_static = part_cfg.get("static", False)
             part_hp = 0 if is_static else part_cfg.get("hp", 20)
-            part = BossPart(part_name, img, offset, part_hp, owner=None if is_static else self)
+            part = BossPart(part_name, img, offset, part_hp, owner=self)
             part.is_static = is_static
             part.z_order = part_cfg.get("z_order", 1)
 
@@ -282,13 +282,8 @@ class EnemyBoss(BaseEnemy):
     def _update_behavior(self, dt: float):
         """Boss-specific per-frame logic."""
 
-        # 1. Movement (check for attack override)
-        movement_override = self.attack_manager.get_movement_override()
-        if movement_override:
-            self.pos.x += movement_override[0] * dt
-            self.pos.y += movement_override[1] * dt
-        else:
-            self._update_wander(dt)
+        # 1. Movement (wander handles everything: direction, chase, noise, bob)
+        self._update_wander(dt)
 
         if self.tilt_enabled:
             self._update_tilt(dt)
@@ -324,6 +319,91 @@ class EnemyBoss(BaseEnemy):
         # 5. Sync part orientations (after animations which may reset images)
         self.sync_parts_to_body()
 
+    def _update_wander(self, dt: float):
+        """Handles all movement: directional, chase, noise, bob."""
+        self.noise_time += dt
+
+        # Entrance phase: move toward home position
+        if not self.entrance_complete:
+            direction = self.home_pos - self.pos
+            dist = direction.length()
+            if dist < 5:
+                self.entrance_complete = True
+                self.pos.xy = self.home_pos.xy
+            else:
+                direction.normalize_ip()
+                self.pos += direction * 150 * dt
+            return
+
+        # 1. Directional movement (from attack override)
+        override = self.attack_manager.get_movement_override()
+        if override is not None:
+            vx, vy = override
+            self.pos.x += vx * dt
+            self.pos.y += vy * dt
+
+        # 2. Chase tracking (only when no override and attacking)
+        if override is None:
+            is_attacking = self.attack_manager.state == "ATTACKING"
+
+            if self.player_ref and is_attacking:
+                # Ghost target follows player with delay
+                target_dx = self.player_ref.pos.x - self.track_target_x
+                self.track_target_x += target_dx * self.target_follow_rate * dt
+
+                # Boss chases ghost - speed scales with distance
+                chase_dx = self.track_target_x - self.pos.x
+                distance = max(0, abs(chase_dx) - 50)
+                track_speed = min(distance * self.track_speed_multiplier, self.track_speed_max)
+
+                if distance > 1:
+                    dir_sign = 1 if chase_dx > 0 else -1
+                    max_move = track_speed * dt
+                    move_amount = min(distance, max_move) * dir_sign
+                    self.pos.x += move_amount
+                    self.velocity_x = move_amount / dt
+                else:
+                    self.velocity_x = 0.0
+
+                # Clamp X position to screen bounds
+                half_width = self.rect.width // 2
+                screen_width = 1280
+                padding = 20
+                self.pos.x = max(half_width + padding, min(screen_width - half_width - padding, self.pos.x))
+
+                self.anchor_pos.y = self.home_pos.y
+                self.anchor_pos.x = self.pos.x
+            else:
+                # IDLE: smoothly return anchor to home
+                return_speed = 1.0
+                self.anchor_pos.x += (self.home_pos.x - self.anchor_pos.x) * return_speed * dt
+                self.anchor_pos.y += (self.home_pos.y - self.anchor_pos.y) * return_speed * dt
+                self.velocity_x *= 0.95
+
+        # 3. Organic noise (always runs)
+        drift_x = self._value_noise(self.noise_time * 0.8) * 40
+        drift_y = self._value_noise(self.noise_time * 0.8 + 100) * 25
+        jitter_x = self._value_noise(self.noise_time * 3.0 + 200) * 15
+        jitter_y = self._value_noise(self.noise_time * 3.0 + 300) * 10
+
+        vel_x = drift_x + jitter_x
+        vel_y = drift_y + jitter_y
+
+        # 4. Vertical bob (always runs)
+        self.bob_time += dt
+        bob_offset = math.sin(self.bob_time * 2.5) * 4
+
+        target_vel = pygame.Vector2(vel_x, vel_y + bob_offset * 10)
+        self.hover_velocity += (target_vel - self.hover_velocity) * 0.25
+
+        self.pos += self.hover_velocity * dt
+
+        # 5. Spring back to anchor
+        distance = self.pos.distance_to(self.anchor_pos)
+        if distance > self.wander_radius:
+            pull = (self.anchor_pos - self.pos).normalize() * (distance - self.wander_radius) * 4
+            self.pos += pull * dt
+
     def sync_parts_to_body(self):
         """Sync part orientations to current body_rotation."""
         for part in self.parts.values():
@@ -334,89 +414,6 @@ class EnemyBoss(BaseEnemy):
                 final_angle = part.base_angle + part.angle + self.body_rotation
                 part.image = pygame.transform.rotate(part._base_image, -final_angle)
                 part.rect = part.image.get_rect(center=(int(part.pos.x), int(part.pos.y)))
-
-    def _update_wander(self, dt: float):
-        self.noise_time += dt
-
-        # Skip wander if attack has full position control
-        override = self.attack_manager.get_movement_override()
-        if override == (0, 0):
-            return
-
-            # Entrance phase: move toward home position
-        if not self.entrance_complete:
-            direction = self.home_pos - self.pos
-            dist = direction.length()
-            if dist < 5:
-                self.entrance_complete = True
-                self.pos.xy = self.home_pos.xy
-            else:
-                direction.normalize_ip()
-                self.pos += direction * 150 * dt  # entrance speed
-            return  # Skip normal movement during entrance
-
-        # Only track player when ATTACKING, hover near spawn when IDLE
-        is_attacking = self.attack_manager.state == "ATTACKING"
-
-        if self.player_ref and is_attacking:
-            # 1. Ghost target follows player with delay
-            target_dx = self.player_ref.pos.x - self.track_target_x
-            self.track_target_x += target_dx * self.target_follow_rate * dt
-
-            # 2. Boss chases ghost - speed scales with distance
-            chase_dx = self.track_target_x - self.pos.x
-            distance = max(0, abs(chase_dx) - 50)
-            track_speed = min(distance * self.track_speed_multiplier, self.track_speed_max)
-
-            if distance > 1:
-                direction = 1 if chase_dx > 0 else -1
-                max_move = track_speed * dt
-                move_amount = min(distance, max_move) * direction
-                self.pos.x += move_amount
-                self.velocity_x = move_amount / dt
-            else:
-                self.velocity_x = 0.0
-
-            # Clamp X position to screen bounds (with padding for boss width)
-            half_width = self.rect.width // 2
-            screen_width = 1280  # Or get from display_manager
-            padding = 20
-            self.pos.x = max(half_width + padding, min(screen_width - half_width - padding, self.pos.x))
-
-            min_y = 100  # Don't go too high
-            max_y = 300  # Don't go too low
-            self.anchor_pos.y = min(max(min_y, self.player_ref.pos.y - 200), max_y)
-            self.anchor_pos.x = self.pos.x
-        else:
-            # IDLE: smoothly return anchor to home
-            return_speed = 1.0  # Adjust for faster/slower return
-            self.anchor_pos.x += (self.home_pos.x - self.anchor_pos.x) * return_speed * dt
-            self.anchor_pos.y += (self.home_pos.y - self.anchor_pos.y) * return_speed * dt
-            self.velocity_x *= 0.95  # Gradual slowdown
-
-        # --- Layered noise: slow drift + faster jitter ---
-        drift_x = self._value_noise(self.noise_time * 0.8) * 40
-        drift_y = self._value_noise(self.noise_time * 0.8 + 100) * 25
-        jitter_x = self._value_noise(self.noise_time * 3.0 + 200) * 15
-        jitter_y = self._value_noise(self.noise_time * 3.0 + 300) * 10
-
-        vel_x = drift_x + jitter_x
-        vel_y = drift_y + jitter_y
-
-        # --- Vertical bobbing (sine wave) ---
-        self.bob_time += dt
-        bob_offset = math.sin(self.bob_time * 2.5) * 4  # 2.5 Hz, 8px amplitude
-
-        target_vel = pygame.Vector2(vel_x, vel_y + bob_offset * 10)
-        self.hover_velocity += (target_vel - self.hover_velocity) * 0.25  # Snappier response
-
-        self.pos += self.hover_velocity * dt
-
-        # --- Tighter spring back to anchor ---
-        distance = self.pos.distance_to(self.anchor_pos)
-        if distance > self.wander_radius:
-            pull = (self.anchor_pos - self.pos).normalize() * (distance - self.wander_radius) * 4
-            self.pos += pull * dt
 
     def _update_tilt(self, dt: float):
         """Tilt boss based on horizontal velocity."""

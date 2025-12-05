@@ -205,7 +205,7 @@ class BossPart(BaseEntity):
         Handle collision with other entities.
         Only responds to player bullets.
         """
-        if not self.active or self.is_static:
+        if not self.active:
             return
 
         tag = collision_tag or getattr(other, "collision_tag", "")
@@ -217,6 +217,11 @@ class BossPart(BaseEntity):
     def take_damage(self, amount: int):
         """Apply damage to this part and boss (2x to boss)."""
         if not self.active:
+            return
+
+        if self.is_static:
+            if self.owner:
+                self.owner.take_damage(amount, source="static_part_damage")
             return
 
         self.health -= amount
