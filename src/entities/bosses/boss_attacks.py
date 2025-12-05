@@ -8,7 +8,7 @@ import math
 import pygame
 
 from src.core.services.event_manager import get_events, ScreenShakeEvent
-from src.core.runtime.game_settings import Layers
+from src.core.runtime.game_settings import Layers, Display
 from src.entities.environments.hazard_mine import TimedMine
 
 # =====================
@@ -192,7 +192,7 @@ class SprayAttack(BossAttack):
             if "mg" in part.name:
                 part.update_shooting(dt, self.bullet_manager, spray_mode=True)
 
-@attack(enabled=True)
+@attack(enabled=False)
 class ChargeAttack(BossAttack):
     """Multi-phase charge attack with off-screen dives."""
 
@@ -204,14 +204,16 @@ class ChargeAttack(BossAttack):
         self.rotate_time = 0.3    # Off-screen rotation
         self.track_time = 0.8     # Off-screen player tracking
         self.cooldown_time = 1.0
-        self.charge_speed = 1000
+        self.charge_speed = 2000
         self.return_speed = 100
-        self.screen_height = 720
+        self.screen_width = Display.WIDTH
+        self.screen_height = Display.HEIGHT
 
         self.total_charges = 4
         self.duration = 15.0
 
         # Mine trail config
+        self.mines_enabled = False
         self.mine_interval = 0.1
         self.mine_timer = 0.0
 
@@ -251,10 +253,11 @@ class ChargeAttack(BossAttack):
         # Phase: Charge (move off-screen, drop mines)
         if self.phase == "charge":
             # Drop mines at interval
-            self.mine_timer += dt
-            if self.mine_timer >= self.mine_interval:
-                self.mine_timer = 0.0
-                self._spawn_mine()
+            if self.mines_enabled:
+                self.mine_timer += dt
+                if self.mine_timer >= self.mine_interval:
+                    self.mine_timer = 0.0
+                    self._spawn_mine()
 
             if self.going_down:
                 self.boss.pos.y += self.charge_speed * dt
@@ -316,6 +319,9 @@ class ChargeAttack(BossAttack):
         elif phase == "charge":
             self.show_warning = False
             get_events().dispatch(ScreenShakeEvent(intensity=8.0, duration=2.0))
+
+        elif phase == "return":
+            self.boss.pos.x = Display.WIDTH // 2
 
         # One-time actions on phase entry
         if phase == "rotate":

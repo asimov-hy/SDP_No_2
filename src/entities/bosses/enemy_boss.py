@@ -17,6 +17,7 @@ from src.entities.entity_types import CollisionTags
 from src.entities.bosses.boss_attack_manager import BossAttackManager
 from src.entities.bosses.boss_part import BossPart
 
+from src.graphics.particles.particle_manager import DebrisEmitter
 
 from src.core.services.config_manager import load_config
 from src.core.debug.debug_logger import DebugLogger
@@ -44,6 +45,8 @@ class EnemyBoss(BaseEnemy):
         'player_ref', 'bullet_manager', 'attack_manager',
         # Parts
         'parts', 'body_image', 'hazard_manager',
+        # Particles
+        'debris_emitters', 'debris_zones',
         # Bullet images (loaded from config)
         '_spray_bullet_img', '_trace_bullet_img',
         # Movement
@@ -159,6 +162,28 @@ class EnemyBoss(BaseEnemy):
         # Attack manager
         self.attack_manager = BossAttackManager(self, bullet_manager)
 
+        # Ground shake debris particles - snow/dirt colors
+        snow_colors = [
+            (255, 255, 255),  # Pure white
+            (240, 248, 255),  # Alice blue (slightly blue-white)
+            (245, 245, 245),  # White smoke
+            (220, 220, 220),  # Light gray
+            (139, 119, 101),  # Dirt brown (less frequent)
+            (160, 140, 120),  # Light dirt
+        ]
+
+        self.debris_emitters = [
+            DebrisEmitter(emit_rate=50, colors=snow_colors) for _ in range(4)
+        ]
+
+        # Debris zone config: [x_offset, y_offset, width, height] relative to boss center
+        self.debris_zones = {
+            'top': {'offset': (0, -270), 'size': (450, 50)},
+            'bottom': {'offset': (0, 270), 'size': (450, 50)},
+            'left': {'offset': (-170, 0), 'size': (100, 500)},
+            'right': {'offset': (170, 0), 'size': (100, 500)},
+        }
+
         # Load weapon parts
         self.parts = {}
         self._create_gun_parts(scale)
@@ -268,8 +293,23 @@ class EnemyBoss(BaseEnemy):
         if self.tilt_enabled:
             self._update_tilt(dt)
 
-        # 2. Sync Rect to new Position
+        # Sync Rect to new Position (before debris calculation)
         self.rect.center = (int(self.pos.x), int(self.pos.y))
+
+        # Emit ground shake debris (4 zones around boss)
+        cx, cy = self.pos.x, self.pos.y
+
+        debris_rects = []
+        for zone in ['top', 'bottom', 'left', 'right']:
+            cfg = self.debris_zones[zone]
+            ox, oy = cfg['offset']
+            w, h = cfg['size']
+            rect = pygame.Rect(cx + ox - w // 2, cy + oy - h // 2, w, h)
+            debris_rects.append(rect)
+
+        for emitter, rect in zip(self.debris_emitters, debris_rects):
+            emitter.emit_continuous(rect, dt)
+            emitter.update(dt)
 
         # 3. Update part positions
         for part in self.parts.values():
@@ -399,6 +439,24 @@ class EnemyBoss(BaseEnemy):
 
         self.tilt_angle += (target_tilt - self.tilt_angle) * self.tilt_speed * dt
 
+    def get_full_bounds(self):
+        """Get bounding rect that includes body and all active parts."""
+        # Start with body rect
+        min_x = self.rect.left
+        max_x = self.rect.right
+        min_y = self.rect.top
+        max_y = self.rect.bottom
+
+        # Expand to include all active parts
+        for part in self.parts.values():
+            if part.active and part.rect:
+                min_x = min(min_x, part.rect.left)
+                max_x = max(max_x, part.rect.right)
+                min_y = min(min_y, part.rect.top)
+                max_y = max(max_y, part.rect.bottom)
+
+        return pygame.Rect(min_x, min_y, max_x - min_x, max_y - min_y)
+
     # ===================================================================
     # Noise Generation for Organic Movement
     # ===================================================================
@@ -437,6 +495,20 @@ class EnemyBoss(BaseEnemy):
 
         if self.death_state != LifecycleState.ALIVE:
             return
+
+        # Draw debris below boss
+        for emitter in self.debris_emitters:
+            emitter.render(draw_manager, layer=self.layer - 1)
+
+        if Debug.HITBOX_VISIBLE:
+            cx, cy = self.pos.x, self.pos.y
+            colors = [(255, 100, 100), (100, 255, 100), (100, 100, 255), (255, 255, 100)]
+
+            for (zone, cfg), color in zip(self.debris_zones.items(), colors):
+                ox, oy = cfg['offset']
+                w, h = cfg['size']
+                rect = pygame.Rect(cx + ox - w // 2, cy + oy - h // 2, w, h)
+                draw_manager.queue_hitbox(rect, color=color, width=2)
 
         total_rotation = self.tilt_angle + self.body_rotation
         if abs(total_rotation) > 0.5:
