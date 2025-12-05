@@ -40,20 +40,29 @@ class CollisionManager:
         (-1, -1),
     ]
 
-    def __init__(self, player, bullet_manager, spawn_manager):
+    def __init__(self, player, bullet_manager, spawn_manager, hazard_manager=None):
         self.player = player
         self.bullet_manager = bullet_manager
         self.spawn_manager = spawn_manager
+        self.hazard_manager = hazard_manager
         self.CELL_SIZE = self.BASE_CELL_SIZE
 
         self.rules = {
             ("player", "enemy"),
             ("player", "pickup"),
             ("player_bullet", "enemy"),
+            ("player", "hazard"),  # Mine damages player
+            ("player_bullet", "hazard"),  # Bullets destroy mines
             ("enemy_bullet", "player"),
             # ("player_bullet", "enemy_bullet"),
             ("shield", "enemy"),
             ("shield", "enemy_bullet"),
+            ("player_bullet", "boss_part"),
+            ("player", "boss_body"),  # Boss can damage player
+            ("shield", "boss_body"),
+            # Hazard collisions
+            ("player", "hazard"),  # Mine damages player
+            ("player_bullet", "hazard"),  # Bullets destroy mines
         }
 
         self.hitboxes = {}
@@ -193,6 +202,17 @@ class CollisionManager:
             for e in self.spawn_manager.entities
             if collision_bounds.collidepoint(e.pos)
         ]
+        if hasattr(self, 'hazard_manager') and self.hazard_manager:
+            for h in self.hazard_manager.hazards:
+                if h.death_state < LifecycleState.DEAD and collision_bounds.collidepoint(h.pos):
+                    active_entities.append(h)
+
+        # Add boss parts to active entities
+        for entity in list(active_entities):
+            if hasattr(entity, 'parts'):
+                for part in entity.parts.values():
+                    if part.active and collision_bounds.collidepoint(part.pos):
+                        active_entities.append(part)
 
         # Cache player alive check
         player = None

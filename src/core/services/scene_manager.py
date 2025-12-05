@@ -102,6 +102,10 @@ class SceneManager:
             transition: ITransition instance (None = instant)
             **scene_data: Data to pass to on_load() hook
         """
+        # Block new transitions while one is active
+        if self._active_transition:
+            return
+
         if name not in self.scene_classes:
             DebugLogger.warn(f"Unknown scene: '{name}'")
             return
@@ -288,22 +292,26 @@ class SceneManager:
             if not self._fade_in_overlay.is_visible:
                 self._fade_in_overlay = None
 
-        # Handle pause toggle - only in Game scene
+        # Handle pause toggle - only in Game scene after intro complete
         if self._active_name == "Game":
-            pause_pressed = False
+            # Block pause during intro cutscene
+            if not getattr(self._active_scene, '_intro_complete', True):
+                pass  # Skip pause handling during intro
+            else:
+                pause_pressed = False
 
-            if self.input_manager.context == "gameplay":
-                pause_pressed = self.input_manager.action_pressed("pause")
-            elif self.input_manager.context == "ui":
-                pause_pressed = self.input_manager.action_pressed("back")
+                if self.input_manager.context == "gameplay":
+                    pause_pressed = self.input_manager.action_pressed("pause")
+                elif self.input_manager.context == "ui":
+                    pause_pressed = self.input_manager.action_pressed("back")
 
-            if pause_pressed:
-                if self._active_scene.state == SceneState.ACTIVE:
-                    self.pause_active_scene()
-                    return
-                elif self._active_scene.state == SceneState.PAUSED:
-                    self.resume_active_scene()
-                    return
+                if pause_pressed:
+                    if self._active_scene.state == SceneState.ACTIVE:
+                        self.pause_active_scene()
+                        return
+                    elif self._active_scene.state == SceneState.PAUSED:
+                        self.resume_active_scene()
+                        return
 
         # Normal scene update (only if ACTIVE)
         if self._active_scene and self._active_scene.state in (

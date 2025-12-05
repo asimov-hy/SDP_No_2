@@ -66,15 +66,15 @@ class SpriteCache:
     _cache = {}
 
     @classmethod
-    def get_sprite(cls, color, size, glow=False):
+    def get_sprite(cls, color, size, glow=False, shape="circle"):
         """Get or create cached particle sprite."""
-        key = (color, size, glow)
+        key = (color, size, glow, shape)
         if key not in cls._cache:
-            cls._cache[key] = cls._create_sprite(color, size, glow)
+            cls._cache[key] = cls._create_sprite(color, size, glow, shape)
         return cls._cache[key]
 
     @classmethod
-    def _create_sprite(cls, color, size, glow):
+    def _create_sprite(cls, color, size, glow, shape="circle"):
         """Create a single particle sprite."""
         if glow:
             # Larger surface for glow effect
@@ -84,13 +84,19 @@ class SpriteCache:
 
             # Outer glow (low alpha)
             glow_color = (*color, 40)
-            pygame.draw.circle(surf, glow_color, (center, center), size + 2)
-
-            # Inner core (full alpha)
-            pygame.draw.circle(surf, (*color, 255), (center, center), size)
+            if shape == "square":
+                pygame.draw.rect(surf, glow_color,
+                                 (center - size - 2, center - size - 2, (size + 2) * 2, (size + 2) * 2))
+                pygame.draw.rect(surf, (*color, 255), (center - size, center - size, size * 2, size * 2))
+            else:
+                pygame.draw.circle(surf, glow_color, (center, center), size + 2)
+                pygame.draw.circle(surf, (*color, 255), (center, center), size)
         else:
             surf = pygame.Surface((size * 2, size * 2), pygame.SRCALPHA)
-            pygame.draw.circle(surf, (*color, 255), (size, size), size)
+            if shape == "square":
+                pygame.draw.rect(surf, (*color, 255), (0, 0, size * 2, size * 2))
+            else:
+                pygame.draw.circle(surf, (*color, 255), (size, size), size)
 
         return surf
 
@@ -185,6 +191,64 @@ class Particle:
     @property
     def alive(self):
         return self.lifetime > 0
+
+
+# ===========================================================
+# Debris Particle (bouncing ground particles)
+# ===========================================================
+
+class DebrisParticle:
+    """Particle with gravity and bounce behavior for ground shake effects."""
+
+    __slots__ = ('x', 'y', 'vx', 'vy', 'spawn_y', 'size', 'color',
+                 'lifetime', 'gravity', 'bounce_damping', 'min_velocity', 'active')
+
+    def __init__(self, x, y, vx, vy, size, color, lifetime,
+                 gravity=800, bounce_damping=0.3, min_velocity=10):
+        self.x = x
+        self.y = y
+        self.vx = vx
+        self.vy = vy
+        self.spawn_y = y  # Remember ground level
+        self.size = size
+        self.color = color
+        self.lifetime = lifetime
+        self.gravity = gravity
+        self.bounce_damping = bounce_damping  # 30% velocity retained
+        self.min_velocity = min_velocity  # Stop bouncing below this
+        self.active = True
+
+    def update(self, dt):
+        """Update with gravity and bounce logic."""
+        if not self.active:
+            return False
+
+        # Apply gravity
+        self.vy += self.gravity * dt
+
+        # Move
+        self.x += self.vx * dt
+        self.y += self.vy * dt
+
+        # Bounce check: hit ground (at or below spawn_y) while moving down
+        if self.y >= self.spawn_y and self.vy > 0:
+            self.y = self.spawn_y  # Snap to ground
+
+            # Check if velocity is strong enough to bounce
+            if abs(self.vy) > self.min_velocity:
+                self.vy = -self.vy * self.bounce_damping
+                self.vx *= 0.8  # Slight horizontal friction
+            else:
+                # Too slow, stop bouncing
+                self.vy = 0
+                self.vx = 0
+
+        # Lifetime countdown
+        self.lifetime -= dt
+        if self.lifetime <= 0:
+            self.active = False
+
+        return self.active
 
 
 # ===========================================================
@@ -322,6 +386,111 @@ class ParticleEmitter:
         """Get current active particle count."""
         return len(cls._active_particles)
 
+# ===========================================================
+# Debris Emitter (for ground shake effects)
+# ===========================================================
+
+class DebrisEmitter:
+    """
+    Spawns bouncing debris particles to simulate ground shake.
+    Particles spawn within a rect, pop upward, and bounce back to their spawn point.
+    """
+
+    def __init__(self, emit_rate=100, max_particles=400,
+                 colors=None, size_range=(4, 7),
+                 speed_range=(150, 280), lifetime=0.5,
+                 gravity=1000, bounce_damping=0.6, min_velocity=15):
+        """
+        Args:
+            emit_rate: Particles per second
+            max_particles: Maximum concurrent particles for this emitter
+            colors: List of RGB tuples (defaults to earthy browns)
+            size_range: (min, max) particle size
+            speed_range: (min, max) initial upward velocity
+            lifetime: How long particles live
+            gravity: Pull strength (higher = faster fall)
+            bounce_damping: Velocity retained per bounce (0.3 = 30%)
+            min_velocity: Stop bouncing below this speed
+        """
+        self.emit_rate = emit_rate
+        self.emit_timer = 0
+        self.max_particles = max_particles
+        self.particles = []
+        self.active = True
+
+        # Debris settings
+        self.colors = colors or [(139, 90, 43), (160, 120, 80), (100, 80, 60), (120, 100, 70)]
+        self.size_range = size_range
+        self.speed_range = speed_range
+        self.lifetime = lifetime
+        self.gravity = gravity
+        self.bounce_damping = bounce_damping
+        self.min_velocity = min_velocity
+
+    def emit(self, spawn_rect, count=1):
+        """Emit debris particles within spawn_rect area."""
+        if not self.active:
+            return
+
+        for _ in range(count):
+            if len(self.particles) >= self.max_particles:
+                break
+
+            # Random spawn position anywhere within rect
+            x = random.uniform(spawn_rect.left, spawn_rect.right)
+            y = random.uniform(spawn_rect.top, spawn_rect.bottom)
+
+            # Random properties
+            color = random.choice(self.colors)
+            size = random.randint(*self.size_range)
+            speed = random.uniform(*self.speed_range)
+
+            # Launch upward with slight horizontal drift
+            vx = random.uniform(-30, 30)
+            vy = -speed  # Negative = upward
+
+            particle = DebrisParticle(
+                x=x,
+                y=y,
+                vx=vx,
+                vy=vy,
+                size=size,
+                color=color,
+                lifetime=self.lifetime,
+                gravity=self.gravity,
+                bounce_damping=self.bounce_damping,
+                min_velocity=self.min_velocity,
+            )
+            self.particles.append(particle)
+
+    def emit_continuous(self, spawn_rect, dt):
+        """Emit debris over time (call each frame)."""
+        self.emit_timer += dt
+        interval = 1.0 / self.emit_rate if self.emit_rate > 0 else 1.0
+
+        while self.emit_timer >= interval:
+            self.emit(spawn_rect, count=1)
+            self.emit_timer -= interval
+
+    def update(self, dt):
+        """Update all particles in this emitter."""
+        self.particles = [p for p in self.particles if p.update(dt)]
+
+    def render(self, draw_manager, layer=Layers.PARTICLES):
+        """Render all particles as squares."""
+        for p in self.particles:
+            sprite = SpriteCache.get_sprite(p.color, p.size, glow=False, shape="square")
+            rect = sprite.get_rect(center=(int(p.x), int(p.y)))
+            draw_manager.queue_draw(sprite, rect, layer=layer)
+
+    def clear(self):
+        """Clear all particles."""
+        self.particles.clear()
+
+    @property
+    def particle_count(self):
+        """Get current active particle count."""
+        return len(self.particles)
 
 # ===========================================================
 # Particle Overlay (ambient effects: embers, rain)

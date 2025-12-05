@@ -38,7 +38,7 @@ class WaveScheduler:
         "waypoint_speed",
     }
 
-    def __init__(self, spawn_manager, player_ref=None, bullet_manager=None):
+    def __init__(self, spawn_manager, player_ref=None, bullet_manager=None, hazard_manager=None):
         """
         Initialize wave scheduler.
 
@@ -46,10 +46,12 @@ class WaveScheduler:
             spawn_manager: SpawnManager for entity creation
             player_ref: Player entity reference for homing/targeting
             bullet_manager: BulletManager for shooting enemies
+            hazard_manager: HazardManager for boss hazards
         """
         self.spawner = spawn_manager
         self.player = player_ref
         self.bullet_manager = bullet_manager
+        self.hazard_manager = hazard_manager
 
         # Wave state
         self.waves = []
@@ -209,6 +211,12 @@ class WaveScheduler:
             if entity_type == "waypoint_shooter":
                 base_params["player_ref"] = self.player
                 base_params["bullet_manager"] = self.bullet_manager
+
+            # Inject references for boss
+            if entity_type == "boss":
+                base_params["player_ref"] = self.player
+                base_params["bullet_manager"] = self.bullet_manager
+                base_params["hazard_manager"] = self.hazard_manager
 
             # Merge movement params with priority system:
             # 1. Explicit enemy_params.direction (highest priority)

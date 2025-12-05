@@ -11,6 +11,7 @@ Provides multi-layer scrolling backgrounds with:
 """
 
 import pygame
+import math
 from src.core.debug.debug_logger import DebugLogger
 
 
@@ -121,13 +122,13 @@ class BackgroundLayer:
         tiles_x = (self.screen_width // self.width) + 2
         tiles_y = (self.screen_height // self.height) + 2
 
-        start_x = -self.render_offset_x
-        start_y = -self.render_offset_y
+        start_x = math.floor(-self.render_offset_x)
+        start_y = math.floor(-self.render_offset_y)
 
         for tx in range(tiles_x):
             for ty in range(tiles_y):
-                x = int(round(start_x + tx * self.width))
-                y = int(round(start_y + ty * self.height))
+                x = start_x + tx * self.width  # Clean integer math
+                y = start_y + ty * self.height
                 surface.blit(self.image, (x, y))
 
 

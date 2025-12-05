@@ -48,6 +48,11 @@ class MissionSelectScene(BaseScene):
         """Update selection logic."""
         self._update_background(dt)
 
+        # ESC key to go back
+        if self.input_manager.action_pressed("back"):
+            self.scene_manager.set_scene("MainMenu", transition=FadeTransition(0.3))
+            return
+
         mouse_pos = self.input_manager.get_effective_mouse_pos()
         self.ui.update(dt, mouse_pos)
 

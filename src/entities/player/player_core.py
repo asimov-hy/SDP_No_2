@@ -548,7 +548,7 @@ class Player(BaseEntity):
             return
 
         # damaging collisions
-        if tag in (CollisionTags.ENEMY, CollisionTags.ENEMY_BULLET):
+        if tag in (CollisionTags.ENEMY, CollisionTags.ENEMY_BULLET, CollisionTags.HAZARD):
             damage_collision(self, other)
 
     # ===========================================================

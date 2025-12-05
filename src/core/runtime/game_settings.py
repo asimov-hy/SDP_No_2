@@ -96,8 +96,8 @@ class Layers:
 
     BACKGROUND: int = 0
     PICKUPS: int = 100
-    BULLETS: int = 200
-    ENEMIES: int = 300
+    ENEMIES: int = 200
+    BULLETS: int = 300
     PLAYER: int = 400
     PARTICLES: int = 500
     UI: int = 600

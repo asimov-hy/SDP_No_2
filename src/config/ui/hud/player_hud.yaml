@@ -8,7 +8,7 @@
 
       - type: container
         id: "left_main_bar"
-        size: [383, 72]
+        size: [383, 36]
         parent_anchor: bottom_left
         self_anchor: bottom_left
         offset: [0, 0]
@@ -42,7 +42,7 @@
 
       - type: container
         id: "right_main_bar"
-        size: [383, 72]
+        size: [383, 36]
         parent_anchor: bottom_right
         self_anchor: bottom_right
         offset: [0, 0]
