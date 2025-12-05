@@ -1,5 +1,5 @@
 import pygame
-
+import random
 from src.core.services.settings_manager import get_settings
 
 INSTANCE = None
@@ -22,6 +22,13 @@ class SoundManager:
             "enemy_destroy": "assets/audio/bfx/EnemyDestroy.wav",
             "player_destroy": "assets/audio/bfx/PlayerDestroy.wav",
             "player_shoot": "assets/audio/bfx/PlayerShoot.wav",
+            "player_damage1": "assets/audio/bfx/PlayerDamage1.wav",
+            "player_damage2": "assets/audio/bfx/PlayerDamage2.wav",
+            "player_damage3" : "assets/audio/bfx/PlayerDamage3.wav",
+            "score_sound1": "assets/audio/bfx/ScoreSound1.wav",
+            "score_sound2": "assets/audio/bfx/ScoreSound2.wav",
+            "score_sound3": "assets/audio/bfx/ScoreSound3.wav",
+            "level_up": "assets/audio/bfx/LevelUpSound.wav",
             "button_click": "assets/audio/ui/ButtonClick.wav",
         },
     }
@@ -90,6 +97,10 @@ class SoundManager:
     def play_bfx(self, name):  # play BFX
         bfx = self.bfx[name]
         bfx.play()
+
+    def play_random_bfx(self, bfx_list):
+        chosen_name = random.choice(bfx_list)
+        self.play_bfx(chosen_name)
 
     def play_bgm(self, name, loop):  # play BGM
         if self.current_bgm_id == name:
@@ -160,3 +171,6 @@ class SoundManager:
 
     def get_bfx_level(self):
         return self.bfx_level
+
+    def stop_all_bfx(self):
+        pygame.mixer.stop()
