@@ -15,7 +15,6 @@ from src.core.services.event_manager import (
 
 from src.entities.entity_state import LifecycleState
 from src.entities.player.player_state import PlayerEffectState
-
 from src.graphics.particles.particle_manager import ParticleEmitter
 
 
@@ -55,6 +54,14 @@ def damage_collision(player, other):
     # Apply damage
     prev_health = player.health
     player.health -= damage
+
+    # play hit sound
+    if hasattr(player, "services"):
+        sound_manager = player.services.get_global("sound_manager")
+        if player.health > 0:
+            damage_sound = ["player_damage1", "player_damage2", "player_damage3"]
+            sound_manager.play_random_bfx(damage_sound)
+
     DebugLogger.action(
         f"Player took {damage} damage ({prev_health} → {player.health})",
         category="collision",

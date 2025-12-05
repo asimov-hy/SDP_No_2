@@ -581,6 +581,10 @@ class GameScene(BaseScene):
                 self.input_manager.set_context("ui")
                 self.level_up_ui.show()
                 self.last_player_level = self.player.level
+
+                sound_manager = self.services.get_global("sound_manager")
+                sound_manager.stop_all_bfx()
+                sound_manager.play_bfx("level_up")
                 return True
             else:
                 # Player died while leveling - update tracker only
@@ -747,6 +751,10 @@ class GameScene(BaseScene):
         sound_manager = self.services.get_global("sound_manager")
         sound_manager.play_bfx("enemy_destroy")
 
+        if get_session_stats().score > 0 and get_session_stats().score % 100 == 0:
+            score_sound = ["score_sound1", "score_sound2", "score_sound3"]
+            sound_manager.play_random_bfx(score_sound)
+
     def _on_screen_shake(self, event):
         """Handle screen shake event."""
         self.draw_manager.trigger_shake(event.intensity, event.duration)
@@ -777,7 +785,10 @@ class GameScene(BaseScene):
 
         # Audio transition
         sound_manager = self.services.get_global("sound_manager")
-        sound_manager.play_bgm("game_over", -1)
+        if victory:
+            sound_manager.play_bgm("game_clear", -1)
+        else:
+            sound_manager.play_bgm("game_over", -1)
 
         # Update title based on outcome
         self._update_game_over_title(victory)
