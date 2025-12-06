@@ -13,6 +13,7 @@ from src.entities.bullets.bullet_bouncing import BouncingBullet
 from src.core.runtime.game_settings import Display, Layers
 from src.graphics.particles.particle_manager import DebrisEmitter
 from src.entities.environments.hazard_mine import TimedMine
+from src.audio.sound_manager import get_sound_manager
 
 # =====================
 # ATTACK REGISTRY
@@ -166,7 +167,16 @@ class TraceAttack(BossAttack):
         burst_phase_time = self.timer - self.idle_start
         burst_phase_end = self.cycle_time * self.burst_count
 
+        if burst_phase_time >= 0 and not getattr(self, 'trace_sound_played', False):
+            get_sound_manager().play_bfx_loop("boss_trace_player", loop=-1)
+            self.trace_sound_played = True
+
+        played_sound_current_frame = False
+
         if burst_phase_time >= burst_phase_end:
+            if getattr(self, 'motor_sound_played', False):
+                get_sound_manager().stop_bfx("boss_trace_player")
+                self.trace_sound_played = False
             # Phase 3: Idle end
             return
 
@@ -180,7 +190,10 @@ class TraceAttack(BossAttack):
                 part.rotate_towards_player(self.player_ref, dt)
 
             if is_shooting and "mg" in part.name:
-                part.update_shooting(dt, self.bullet_manager, spray_mode=False)
+                if part.update_shooting(dt, self.bullet_manager, spray_mode=False):
+                    if not played_sound_current_frame:
+                        get_sound_manager().play_bfx("boss_trace_fire")
+                        played_sound_current_frame = True
 
 
 @attack(enabled=True)
@@ -213,22 +226,27 @@ class SprayAttack(BossAttack):
                 part.spray_speed = self.sweep_speed
 
     def _on_update(self, dt):
+        played_sound_current_frame = False
         for part in self.parts.values():
             if not part.active or getattr(part, 'is_static', False):
                 continue
             part.spray_rotate(dt)
             if "mg" in part.name:
-                self._shoot_bouncing(part, dt)
+                if self._shoot_bouncing(part, dt):
+                    if not played_sound_current_frame:
+                        get_sound_manager().play_bfx("boss_bounce_shot")
+                        played_sound_current_frame = True
 
     def _shoot_bouncing(self, part, dt):
         """Fire bouncing bullets from part."""
 
         if not part.active or not self.bullet_manager:
-            return
+            return False
 
         part.fire_timer += dt
         if part.fire_timer < part.fire_rate:
-            return
+            return False
+
         part.fire_timer = 0.0
 
         # Calculate firing direction
@@ -257,6 +275,7 @@ class SprayAttack(BossAttack):
             damage=1,
             max_bounces=3
         )
+        return True
 
 
 @attack(enabled=True)
@@ -408,6 +427,8 @@ class ChargeAttack(BossAttack):
         self.bottom_y = Display.HEIGHT + half_height + 200
         self.top_y = -half_height - 200
 
+        get_sound_manager().play_bfx("boss_charge_load")
+
         get_events().dispatch(ScreenShakeEvent(intensity=1.5, duration=self.warn_time))
 
     # === PHASE TRANSITION ===
@@ -418,8 +439,10 @@ class ChargeAttack(BossAttack):
         self.phase_timer = 0.0
 
         if phase == "warn":
+            get_sound_manager().play_bfx("boss_charge_load")
             get_events().dispatch(ScreenShakeEvent(intensity=3.0, duration=self.warn_time + 0.5))
         elif phase == "charge":
+            get_sound_manager().play_bfx("boss_charge")
             get_events().dispatch(ScreenShakeEvent(intensity=8.0, duration=2.0))
         elif phase == "rotate":
             self.going_down = not self.going_down
@@ -519,6 +542,8 @@ class MineCharge(BossAttack):
         self.charge_direction = random.choice([-1, 1])
         self.boss.entrance_complete = True
 
+        get_sound_manager().play_bfx("boss_charge_load")
+
         # Disable arm hitboxes during charge
         for part in self.parts.values():
             if not getattr(part, 'is_static', False) and part.hitbox:
@@ -586,6 +611,7 @@ class MineCharge(BossAttack):
             self._next_phase("charge_warn")
 
         elif self.phase == "charge_warn":
+            get_sound_manager().play_bfx("boss_charge_load")
             # Emit horizontal warning band
             self._emit_warning_debris(dt)
             self.boss.sync_parts_to_body()
@@ -593,6 +619,7 @@ class MineCharge(BossAttack):
                 self._next_phase("charge")
 
         elif self.phase == "charge":
+            get_sound_manager().play_bfx("boss_charge")
             # Fast horizontal charge
             self._emit_warning_debris(dt)
             self.boss.pos.x += self.charge_direction * self.charge_speed * dt

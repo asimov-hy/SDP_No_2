@@ -68,6 +68,8 @@ from src.systems.game_system_initializer import GameSystemInitializer
 # UI
 from src.scenes.level_up_screen import LevelUp
 
+# Sound
+from src.audio.sound_manager import get_sound_manager
 
 # ===========================================================
 # Constants
@@ -270,6 +272,8 @@ class GameScene(BaseScene):
         boss = event.boss_ref
         if not boss:
             return
+
+        get_sound_manager().play_bfx("boss_intro")
 
         actions = [
             # Phase 1: Warning shake + banner slide

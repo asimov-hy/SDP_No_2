@@ -9,6 +9,7 @@ import pygame
 import math
 import random
 
+from src.audio.sound_manager import get_sound_manager
 from src.entities.enemies.base_enemy import BaseEnemy
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_types import EntityCategory
@@ -63,6 +64,9 @@ class EnemyBoss(BaseEnemy):
         '_rotation_enabled', 'exp_value',
         # death data
          '_death_phase', '_death_timer', '_explosion_timer', '_shake_origin',
+        # current boss health ratio tracking
+        '_hp_75_triggered', '_hp_50_triggered', '_hp_25_triggered',
+
     )
 
     __registry_category__ = EntityCategory.ENEMY
@@ -192,6 +196,11 @@ class EnemyBoss(BaseEnemy):
         self._create_gun_parts(scale)
         self.collision_tag = CollisionTags.ENEMY
 
+        # check boss health
+        self._hp_75_triggered = False
+        self._hp_50_triggered = False
+        self._hp_25_triggered = False
+
         DebugLogger.init(
             f"Spawned {boss_type} at ({x}, {y}) | HP={health} | Parts={len(self.parts)}",
             category="enemy"
@@ -294,6 +303,7 @@ class EnemyBoss(BaseEnemy):
     def on_death(self, source):
         """Override for cinematic boss death sequence."""
         self.death_state = LifecycleState.DYING
+        get_sound_manager().stop_all_bfx()
         self._death_phase = "shake"
         self._death_timer = 0.0
         self._explosion_timer = 0.0
@@ -327,12 +337,14 @@ class EnemyBoss(BaseEnemy):
             self._explosion_timer += dt
             if self._explosion_timer >= 0.1:
                 self._spawn_random_explosion()
+                get_sound_manager().play_bfx("boss_explosion")
                 self._explosion_timer = 0.0
 
             if self._death_timer >= 2.0:
                 self._death_phase = "explode"
                 self._death_timer = 0.0
                 self._spawn_final_explosion()
+                get_sound_manager().play_bfx("boss_final_explosion")
 
         elif self._death_phase == "explode":
             # Boss already invisible, wait for explosion to finish
@@ -682,6 +694,21 @@ class EnemyBoss(BaseEnemy):
     def take_damage(self, amount: int, source: str = "unknown"):
         """Override to flash all parts when boss takes any damage."""
         super().take_damage(amount, source)
+
+        if self.health > 0:
+            hp_ratio = self.health / self.max_health
+
+            if hp_ratio <= 0.75 and not self._hp_75_triggered:
+                self._hp_75_triggered = True
+                get_sound_manager().play_bfx("boss_ratio_75")
+
+            if hp_ratio <= 0.5 and not self._hp_50_triggered:
+                self._hp_50_triggered = True
+                get_sound_manager().play_bfx("boss_ratio_50")
+
+            if hp_ratio <= 0.25 and not self._hp_25_triggered:
+                self._hp_25_triggered = True
+                get_sound_manager().play_bfx("boss_ratio_25")
 
         # Flash all active parts whenever boss takes damage (body or part hit)
         if self.health > 0:

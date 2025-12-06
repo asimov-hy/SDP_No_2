@@ -30,6 +30,18 @@ class SoundManager:
             "score_sound3": "assets/audio/bfx/ScoreSound3.wav",
             "level_up": "assets/audio/bfx/LevelUpSound.wav",
             "button_click": "assets/audio/ui/ButtonClick.wav",
+
+            "boss_intro": "assets/audio/bfx/BossIntro.wav",
+            "boss_explosion":"assets/audio/bfx/BossExplosion.wav",
+            "boss_final_explosion":"assets/audio/bfx/BossFinalExplosion.wav",
+            "boss_charge_load":"assets/audio/bfx/BossChargeLoad.wav",
+            "boss_charge":"assets/audio/bfx/BossCharge.wav",
+            "boss_bounce_shot":"assets/audio/bfx/BossBounceShot.wav",
+            "boss_trace_player":"assets/audio/bfx/BossTracePlayer.wav",
+            "boss_trace_fire":"assets/audio/bfx/BossTraceShot.wav",
+            "boss_ratio_25":"assets/audio/bfx/BossRatio25.wav",
+            "boss_ratio_50":"assets/audio/bfx/BossRatio50.wav",
+            "boss_ratio_75":"assets/audio/bfx/BossRatio75.wav",
         },
     }
 
@@ -79,7 +91,7 @@ class SoundManager:
         for name, path in self.ASSET_PATHS["bfx"].items():  # load BFX / UI sound
             self.load_bfx(name, path)
 
-    def volume_scale(self, level):  # log scale volume control(0-100)
+    def volume_scale(self, level):  # natural scale volume control(0-100)
         if level < 0:
             return 0
         else:
@@ -97,6 +109,10 @@ class SoundManager:
     def play_bfx(self, name):  # play BFX
         bfx = self.bfx[name]
         bfx.play()
+
+    def play_bfx_loop(self, name, loop):  # play BFX for n times
+        bfx = self.bfx[name]
+        bfx.play(loops = loop)
 
     def play_random_bfx(self, bfx_list):
         chosen_name = random.choice(bfx_list)
@@ -118,6 +134,9 @@ class SoundManager:
     def stop_bgm(self):  # stop BGM
         pygame.mixer.music.stop()
         self.current_bgm_id = None
+
+    def stop_bfx(self, name): # stop BFX
+        self.bfx[name].stop()
 
     # Set BFX volume (0 - 100)
     def set_bfx_volume(self, level):

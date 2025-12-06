@@ -155,11 +155,11 @@ class BossPart(BaseEntity):
         """Fire bullets in the direction the gun is pointing."""
 
         if not self.active or not bullet_manager:
-            return
+            return False
 
         self.fire_timer += dt
         if self.fire_timer < self.fire_rate:
-            return
+            return False
 
         self.fire_timer = 0.0
 
@@ -193,6 +193,7 @@ class BossPart(BaseEntity):
             damage=1
         )
         # print(f"[BULLET SPAWNED] pos=({spawn_x:.0f}, {spawn_y:.0f}) vel=({vel_x:.0f}, {vel_y:.0f})")
+        return True
 
     def on_collision(self, other, collision_tag=None):
         """
