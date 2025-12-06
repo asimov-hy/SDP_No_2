@@ -16,8 +16,9 @@ from src.entities.entity_state import LifecycleState, InteractionState
 from src.entities.entity_types import CollisionTags
 from src.entities.bosses.boss_attack_manager import BossAttackManager
 from src.entities.bosses.boss_part import BossPart
+from src.core.services.event_manager import get_events, SpawnPauseEvent, BossDeathEvent, ScreenShakeEvent
 
-from src.graphics.particles.particle_manager import DebrisEmitter
+from src.graphics.particles.particle_manager import DebrisEmitter, ParticleEmitter
 
 from src.core.services.config_manager import load_config
 from src.core.debug.debug_logger import DebugLogger
@@ -59,7 +60,9 @@ class EnemyBoss(BaseEnemy):
         # Rotation
         'body_rotation',
         # Flags
-        '_rotation_enabled', 'exp_value'
+        '_rotation_enabled', 'exp_value',
+        # death data
+         '_death_phase', '_death_timer', '_explosion_timer', '_shake_origin',
     )
 
     __registry_category__ = EntityCategory.ENEMY
@@ -278,6 +281,103 @@ class EnemyBoss(BaseEnemy):
     # ===================================================================
     # Update Logic
     # ===================================================================
+
+    def update(self, dt: float):
+        """Override to handle custom boss death sequence."""
+        if self.death_state == LifecycleState.DYING:
+            self._update_death_sequence(dt)
+            return
+
+        # Normal update via parent
+        super().update(dt)
+
+    def on_death(self, source):
+        """Override for cinematic boss death sequence."""
+        self.death_state = LifecycleState.DYING
+        self._death_phase = "shake"
+        self._death_timer = 0.0
+        self._explosion_timer = 0.0
+        self._shake_origin = (self.pos.x, self.pos.y)
+
+        # Stop boss attacks
+        self.attack_manager.state = "IDLE"
+
+        # Freeze spawning (affects player in game_scene)
+        get_events().dispatch(SpawnPauseEvent(paused=True))
+
+        # Disable hitbox
+        if hasattr(self, 'hitbox') and self.hitbox:
+            self.hitbox.set_active(False)
+        self.collision_tag = CollisionTags.NEUTRAL
+
+        # Disable part hitboxes
+        for part in self.parts.values():
+            if part.hitbox:
+                part.hitbox.set_active(False)
+
+    def _update_death_sequence(self, dt):
+        """Handle boss death: shake + explosions -> big boom + disappear."""
+        self._death_timer += dt
+
+        if self._death_phase == "shake":
+            # Shake for 2 seconds with explosions
+            self._apply_shake(min(1.0, self._death_timer / 2.0))
+
+            # Random explosions during shake
+            self._explosion_timer += dt
+            if self._explosion_timer >= 0.1:
+                self._spawn_random_explosion()
+                self._explosion_timer = 0.0
+
+            if self._death_timer >= 2.0:
+                self._death_phase = "explode"
+                self._death_timer = 0.0
+                self._spawn_final_explosion()
+
+        elif self._death_phase == "explode":
+            # Boss already invisible, wait for explosion to finish
+            if self._death_timer >= 1.5:
+                self.death_state = LifecycleState.DEAD
+                get_events().dispatch(SpawnPauseEvent(paused=False))
+                get_events().dispatch(BossDeathEvent(boss_type="boss"))
+
+    def _apply_shake(self, t):
+        """Shake boss position with decreasing intensity."""
+        import math
+        intensity = 8 * (1.0 - t * 0.5)  # Start strong, fade slightly
+        frequency = 40
+
+        offset_x = int(math.sin(t * frequency * math.pi) * intensity)
+        offset_y = int(math.cos(t * frequency * math.pi * 0.7) * intensity)
+
+        self.pos.x = self._shake_origin[0] + offset_x
+        self.pos.y = self._shake_origin[1] + offset_y
+        self.rect.center = (int(self.pos.x), int(self.pos.y))
+
+    def _spawn_random_explosion(self):
+        """Spawn explosion at random point on boss."""
+        bounds = self.get_full_bounds()
+        x = random.randint(bounds.left + 20, bounds.right - 20)
+        y = random.randint(bounds.top + 20, bounds.bottom - 20)
+        ParticleEmitter.burst("boss_explosion", (x, y), count=15)
+
+        # Screen shake on each explosion
+        get_events().dispatch(ScreenShakeEvent(intensity=4, duration=0.1))
+
+    def _spawn_final_explosion(self):
+        """Massive final explosion clustered at boss center."""
+        center_x, center_y = self.pos.x, self.pos.y
+
+        # Main burst at center
+        ParticleEmitter.burst("boss_explosion_final", self.pos, count=80)
+
+        # Clustered bursts around center (small random offset)
+        for _ in range(6):
+            offset_x = random.randint(-40, 40)
+            offset_y = random.randint(-40, 40)
+            ParticleEmitter.burst("boss_explosion_final", (center_x + offset_x, center_y + offset_y), count=35)
+
+        get_events().dispatch(ScreenShakeEvent(intensity=20, duration=0.8))
 
     def _update_behavior(self, dt: float):
         """Boss-specific per-frame logic."""
@@ -501,7 +601,10 @@ class EnemyBoss(BaseEnemy):
     def draw(self, draw_manager):
         """Draw boss body and gun parts."""
 
-        if self.death_state != LifecycleState.ALIVE:
+        if self.death_state == LifecycleState.DEAD:
+            return
+
+        if self.death_state == LifecycleState.DYING and self._death_phase == "explode":
             return
 
         # Draw debris below boss
