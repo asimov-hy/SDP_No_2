@@ -1,69 +1,101 @@
-player_hud:
-  type: container
-  width: 1280
-  height: 720
-  layer: Layers.UI
+  player_hud:
+    type: container
+    size: [1280, 720]
+    parent_anchor: center
+    self_anchor: center
+    layer: Layers.UI
+    children:
 
-  children:
-    # Health bar
-    - type: bar
-      id: health_bar
-      anchor: top_left
-      offset: [20, 20]
-      width: 200
-      height: 24
-      max_value: 100
-      bind: player.health
-      color: [0, 255, 0]
-      gradient:
-        100: [0, 255, 0]
-        50: [255, 255, 0]
-        25: [255, 100, 0]
-        0: [255, 0, 0]
-      background: [30, 30, 30]
-      border: 2
-      border_color: [200, 200, 200]
-      border_radius: 3
-      layer: Layers.UI
+      - type: container
+        id: "left_main_bar"
+        size: [383, 36]
+        parent_anchor: bottom_left
+        self_anchor: bottom_left
+        offset: [0, 0]
+        image: "ui/bars/left_bar.png"
 
-    # Health text
-    - type: label
-      id: health_text
-      anchor: "#health_bar:center"
-      align: center
-      width: 80
-      height: 24
-      bind: player.health
-      format: "{:.0f} HP"
-      font_size: 18
-      color: [255, 255, 255]
-      text_align: center
-      layer: Layers.UI
+      - type: container
+        id: "health_frame"
+        size: [300, 78]
+        parent_anchor: top_left
+        self_anchor: top_left
+        offset: [3, 4]
+        image: "ui/bars/default_frame.png"
 
-    # Score label
-    - type: label
-      id: score
-      anchor: top_right
-      offset: [-20, 20]
-      width: 200
-      height: 30
-      bind: player.score
-      format: "Score: {:,}"
-      font_size: 24
-      color: [255, 255, 255]
-      text_align: right
-      layer: Layers.UI
+        children:
 
-    # Ammo counter
-    - type: label
-      id: ammo
-      anchor: bottom_center
-      offset: [0, -50]
-      width: 150
-      height: 30
-      bind: player.ammo
-      format: "Ammo: {}"
-      font_size: 20
-      color: [255, 255, 255]
-      text_align: center
-      layer: Layers.UI
+        - type: bar
+          id: "health_bar"
+          size: [260, 32]
+          parent_anchor: "#health_frame:center"
+          self_anchor: center
+          offset: [8, 1]
+
+          image: "ui/bars/health_bar.png"
+          background: [0, 0, 0, 0]
+          animated: true
+          direction: horizontal
+
+          bind: player.health_ratio
+          max_value: 1.0
+          min_value: 0.0
+
+
+      - type: container
+        id: "exp_frame"
+        size: [ 300, 78 ]
+        parent_anchor: top_right
+        self_anchor: top_right
+        offset: [ 3, 4 ]
+        image: "ui/bars/default_frame.png"
+
+        children:
+
+          - type: bar
+            id: "exp_bar"
+            size: [ 260, 32 ]
+            parent_anchor: "#exp_frame:center"
+            self_anchor: center
+            offset: [ 8, 1 ]
+
+            image: "ui/bars/exp_bar.png"
+            background: [ 0, 0, 0, 0 ]
+            animated: true
+            direction: horizontal
+
+            bind: player.exp_ratio
+            max_value: 1.0
+            min_value: 0.0
+
+      - type: container
+        id: "right_main_bar"
+        size: [383, 36]
+        parent_anchor: bottom_right
+        self_anchor: bottom_right
+        offset: [0, 0]
+        image: "ui/bars/right_bar.png"
+
+        children:
+        - type: container
+          id: "stress_gauge"
+          size: [150, 105]
+          parent_anchor: bottom
+          self_anchor: bottom
+          offset: [0, 0]
+          image: "ui/stress/stress_gauge.png"
+
+
+        - type: needle
+          id: "stress_needle"
+          parent_anchor: bottom
+          self_anchor: center
+          offset: [0, -33]
+          size: [200, 200]
+          image: "ui/stress/stress_needle.png"
+
+          bind: player.stress
+          bind_max: player.stress_max
+
+          min_value: 0
+          min_angle: 80
+          max_angle: -80

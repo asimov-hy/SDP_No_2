@@ -18,7 +18,7 @@ Performance
 - Campaign ordering: O(1) list access
 """
 
-from src.core.services.config_manager import load_config
+from src.core.services.config_manager import load_config, _resolve_search_path
 from src.core.debug.debug_logger import DebugLogger
 
 
@@ -33,7 +33,7 @@ class LevelConfig:
             level_id: Unique identifier for the level
             data: Level config from config
                 {
-                    "path": "levels/Stage_1.json",
+                    "path": "missions/Stage_1.json",
                     "name": "First Contact",
                     "unlocked": false,
                     "campaign": "main"
@@ -41,9 +41,7 @@ class LevelConfig:
         """
         self.id = level_id
         path = data["path"]
-        if not path.startswith("levels/") and not path.startswith("config/"):
-            path = f"levels/{path}"
-        self.path = path
+        self.path = _resolve_search_path(path)
         self.name = data.get("name", level_id)
         self.unlocked = data.get("unlocked", False)
         self.campaign = data.get("campaign", None)
@@ -62,7 +60,7 @@ class LevelRegistry:
     """
 
     _levels = {}  # {level_id: LevelConfig}
-    _campaigns = {}  # {campaign_name: {"name": str, "levels": [level_ids]}}
+    _campaigns = {}  # {campaign_name: {"name": str, "missions": [level_ids]}}
     _default_campaign = None
     _initialized = False
 
@@ -71,14 +69,14 @@ class LevelRegistry:
     # ===========================================================
 
     @classmethod
-    def load_config(cls, config_path: str = "config/campaigns.json"):
+    def load_config(cls, config_path: str = "Campaigns.json"):
         """
         Load level definitions from JSON config.
 
         Should be called once at game startup.
 
         Args:
-            config_path: Path to levels configuration file
+            config_path: Path to missions configuration file
         """
         if cls._initialized:
             DebugLogger.warn("[LevelRegistry] Already initialized, skipping reload")
@@ -87,39 +85,41 @@ class LevelRegistry:
         DebugLogger.init_entry("Loading Level Registry")
 
         try:
-            data = load_config(config_path, {"levels": {}, "campaigns": {}})
+            data = load_config(config_path, {"missions": {}, "campaigns": {}})
 
-            # Register levels
+            # Register missions
             level_count = 0
-            for level_id, level_data in data.get("levels", {}).items():
+            for level_id, level_data in data.get("missions", {}).items():
                 cls._levels[level_id] = LevelConfig(level_id, level_data)
                 level_count += 1
 
-            DebugLogger.init_sub(f"Registered {level_count} levels")
+            DebugLogger.init_sub(f"Registered {level_count} missions")
 
             # Register campaigns
             campaign_count = 0
             for campaign_name, campaign_data in data.get("campaigns", {}).items():
-                campaign_levels = campaign_data.get("levels", [])
+                campaign_levels = campaign_data.get("missions", [])
                 start_level = campaign_data.get("start_level")
 
-                invalid_levels = [lvl for lvl in campaign_levels if lvl not in cls._levels]
+                invalid_levels = [
+                    lvl for lvl in campaign_levels if lvl not in cls._levels
+                ]
                 if invalid_levels:
                     DebugLogger.warn(
-                        f"Campaign '{campaign_name}' references unknown levels: {invalid_levels}",
-                        category="loading"
+                        f"Campaign '{campaign_name}' references unknown missions: {invalid_levels}",
+                        category="loading",
                     )
 
                 if start_level and start_level not in cls._levels:
                     DebugLogger.warn(
                         f"Campaign '{campaign_name}' has invalid start_level: '{start_level}'",
-                        category="loading"
+                        category="loading",
                     )
 
                 cls._campaigns[campaign_name] = {
                     "name": campaign_data.get("name", campaign_name),
                     "start_level": start_level,
-                    "levels": campaign_levels
+                    "missions": campaign_levels,
                 }
                 campaign_count += 1
 
@@ -131,7 +131,7 @@ class LevelRegistry:
                 if cls._default_campaign not in cls._campaigns:
                     DebugLogger.warn(
                         f"default_campaign '{cls._default_campaign}' does not exist",
-                        category="loading"
+                        category="loading",
                     )
                 else:
                     DebugLogger.init_sub(f"Default Campaign: {cls._default_campaign}")
@@ -163,20 +163,20 @@ class LevelRegistry:
     @classmethod
     def get_campaign(cls, campaign_name: str):
         """
-        Get ordered list of levels for a campaign.
+        Get ordered list of missions for a campaign.
 
         Args:
             campaign_name: Campaign identifier (e.g., "main", "test")
 
         Returns:
-            list[LevelConfig]: Ordered campaign levels
+            list[LevelConfig]: Ordered campaign missions
         """
         campaign = cls._campaigns.get(campaign_name)
         if not campaign:
             DebugLogger.warn(f"[LevelRegistry] Unknown campaign: {campaign_name}")
             return []
 
-        level_ids = campaign["levels"]
+        level_ids = campaign["missions"]
         return [cls._levels[lid] for lid in level_ids if lid in cls._levels]
 
     @classmethod
@@ -199,16 +199,16 @@ class LevelRegistry:
             return cls.get(start_level_id)
 
         # Fallback: first level in campaign
-        levels = campaign.get("levels", [])
+        levels = campaign.get("missions", [])
         return cls.get(levels[0]) if levels else None
 
     @classmethod
     def get_unlocked(cls):
         """
-        Get all unlocked levels.
+        Get all unlocked missions.
 
         Returns:
-            list[LevelConfig]: All unlocked levels
+            list[LevelConfig]: All unlocked missions
         """
         return [lvl for lvl in cls._levels.values() if lvl.unlocked]
 
@@ -281,18 +281,20 @@ class LevelRegistry:
 
     @classmethod
     def debug_print_all(cls):
-        """Print all registered levels and campaigns for debugging."""
+        """Print all registered missions and campaigns for debugging."""
         DebugLogger.section("=== Level Registry ===")
 
         DebugLogger.system(f"Total Levels: {len(cls._levels)}")
         for level_id, config in cls._levels.items():
             status = "UNLOCKED" if config.unlocked else "LOCKED"
-            DebugLogger.system(f"  [{status}] {level_id}: {config.name} ({config.path})")
+            DebugLogger.system(
+                f"  [{status}] {level_id}: {config.name} ({config.path})"
+            )
 
         DebugLogger.system(f"\nTotal Campaigns: {len(cls._campaigns)}")
         for campaign_name, campaign_data in cls._campaigns.items():
             DebugLogger.system(f"  {campaign_name}: {campaign_data['name']}")
-            DebugLogger.system(f"    Levels: {', '.join(campaign_data['levels'])}")
+            DebugLogger.system(f"    Levels: {', '.join(campaign_data['missions'])}")
 
         if cls._default_campaign:
             DebugLogger.system(f"\nDefault Start: {cls._default_campaign}")

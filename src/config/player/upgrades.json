@@ -1,0 +1,46 @@
+{
+  "health_up": {
+    "name": "Health +1",
+    "color": [100, 180, 100],
+    "effects": [
+      { "type": "ADD_MAX_HEALTH", "amount": 1 },
+      { "type": "ADD_HEALTH", "amount": 1 }
+    ]
+  },
+  "damage_up": {
+    "name": "Damage +10%",
+    "color": [180, 100, 100],
+    "effects": [
+      { "type": "MULTIPLY_DAMAGE", "multiplier": 1.1 }
+    ]
+  },
+  "speed_up": {
+    "name": "Speed +10%",
+    "color": [100, 100, 180],
+    "effects": [
+      { "type": "MULTIPLY_SPEED", "multiplier": 1.1 }
+    ]
+  },
+  "fire_rate_up": {
+    "name": "Fire Rate +15%",
+    "color": [180, 180, 100],
+    "effects": [
+      { "type": "MULTIPLY_FIRE_RATE", "multiplier": 1.15, "permanent": true }
+    ]
+  },
+  "health_up_2": {
+    "name": "Health +2",
+    "color": [50, 200, 50],
+    "effects": [
+      { "type": "ADD_MAX_HEALTH", "amount": 2 },
+      { "type": "ADD_HEALTH", "amount": 2 }
+    ]
+  },
+  "damage_up_2": {
+    "name": "Damage +20%",
+    "color": [220, 80, 80],
+    "effects": [
+      { "type": "MULTIPLY_DAMAGE", "multiplier": 1.2 }
+    ]
+  }
+}

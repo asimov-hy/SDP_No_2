@@ -1,0 +1,6 @@
+# Testing dependencies for SDP-202X
+pytest>=7.0.0
+pytest-watch>=4.2.0
+coverage>=6.0.0
+pytest-cov>=3.0.0
+watchdog>=2.1.0

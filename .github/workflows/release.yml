@@ -1,0 +1,41 @@
+name: release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jefflinse/pr-semver-bump@v1.6.0
+        name: create a tag
+        id: tag_version
+        with:
+          mode: bump
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          with-v: true
+          require-release-notes: true
+
+      - name: create a github release
+        uses: ncipollo/release-action@v1
+        id: create_release
+        with:
+          tag: ${{ steps.tag_version.outputs.version }}
+          name: Release ${{ steps.tag_version.outputs.version }}
+          body: ${{ steps.tag_version.outputs.release-notes }}
+
+    outputs:
+      tag: ${{ steps.tag_version.outputs.version }}
+      release_url: ${{ steps.create_release.outputs.upload_url }}
+
+  call-build-action:
+    needs: release
+    uses: ./.github/workflows/build.yml
+    secrets: inherit
+    with:
+      tags: ${{ needs.release.outputs.tag }}
+      release_urls: ${{ needs.release.outputs.release_url }}

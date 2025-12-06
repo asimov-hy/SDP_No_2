@@ -31,6 +31,7 @@ Directional attacks: hitbox.set_offset(8, 0) for forward extension
 
 import pygame
 import math
+
 from src.core.debug.debug_logger import DebugLogger
 from src.core.runtime.game_settings import Debug
 
@@ -117,8 +118,12 @@ class CollisionHitbox:
     def _init_rect_hitbox(self, rect):
         """Initialize rectangular hitbox with manual width/height override support."""
         # Manual overrides take priority over scale
-        w = self.shape_params.get('width')
-        h = self.shape_params.get('height')
+        size = self.shape_params.get('size')
+        if size and len(size) == 2:
+            w, h = size
+        else:
+            w = self.shape_params.get('width')
+            h = self.shape_params.get('height')
 
         if w is not None and h is not None:
             # Both manual dimensions provided

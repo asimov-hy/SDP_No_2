@@ -1,0 +1,64 @@
+pause_menu:
+  type: container
+  size: [1280, 720]
+  parent_anchor: center
+  self_anchor: center
+
+  children:
+    # Pause menu box
+    - type: container
+      id: "pause_menu_box"
+      size: [600, 350]
+      parent_anchor: center
+      self_anchor: center
+      background: [40, 40, 40, 100]
+      border: 3
+      border_color: [100, 100, 100]
+      border_radius: 10
+      layer: Layers.UI
+
+      children:
+        # Title
+        - type: label
+          id: "title"
+          text: "PAUSED"
+          size: [600, 60]
+          parent_anchor: "#pause_menu_box:middle"
+          anchor: middle
+          offset: [0, 30]
+          font_size: 48
+          color: [255, 255, 255]
+          text_align: center
+          layer: Layers.UI
+
+        # Resume button
+        - type: button
+          id: "resume_button"
+          text: "RESUME"
+          action: "resume"
+          size: [400, 60]
+          anchor: "#title:bottom"
+          align: top_center
+          offset: [0, 60]
+          color: [180, 180, 180, 200]
+          border: 2
+          border_color: [220, 220, 220]
+          border_radius: 8
+          font_size: 28
+          layer: Layers.UI
+
+        # Main Menu button
+        - type: button
+          id: "main_menu_button"
+          text: "MAIN MENU"
+          action: "quit"
+          size: [400, 60]
+          anchor: "#resume_button:bottom"
+          align: top_center
+          offset: [0, 20]
+          color: [140, 60, 60]
+          border: 2
+          border_color: [180, 100, 100]
+          border_radius: 8
+          font_size: 28
+          layer: Layers.UI

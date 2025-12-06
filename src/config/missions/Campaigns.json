@@ -1,0 +1,33 @@
+{
+  "default_campaign": "main",
+  "campaigns": {
+    "main": {
+      "name": "Main Campaign",
+      "start_level": "1_Tutorial",
+      "missions": ["1_Tutorial", "2_Mission", "3_Boss"]
+    }
+  },
+  "missions": {
+    "1_Tutorial": {
+      "path": "1_Tutorial.json",
+      "name": "Tutorial",
+      "description": "Learn the basics",
+      "unlocked": true,
+      "campaign": "main"
+    },
+    "2_Mission": {
+      "path": "2_Mission.json",
+      "name": "Mission",
+      "description": "More complicated waves",
+      "unlocked": true,
+      "campaign": "main"
+    },
+    "3_Boss": {
+      "path": "3_Boss.json",
+      "name": "Boss Fight",
+      "description": "Face the boss",
+      "unlocked": true,
+      "campaign": "main"
+    }
+  }
+}

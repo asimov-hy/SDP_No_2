@@ -59,16 +59,14 @@ def register(entity_tag: str, anim_name: str = None):
             registry[entity_tag] = {}
 
         if name in registry[entity_tag]:
-            DebugLogger.warn(
-                f"Overwriting animation '{entity_tag}.{name}'"
-            )
+            DebugLogger.warn(f"Overwriting animation '{entity_tag}.{name}'")
 
         registry[entity_tag][name] = func
 
         # Log successful registration
         DebugLogger.state(
             f"Registered animation [{entity_tag}.{name}] -> {func.__name__}",
-            category="loading"
+            category="loading",
         )
 
         return func

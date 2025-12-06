@@ -1,0 +1,84 @@
+{
+  "background": {
+    "layers": [
+      {
+        "image": "test_background.png"
+      }
+    ]
+  },
+  "stages": [
+    {
+      "name": "Enemy Introduction - Meet Your Opponents",
+      "exit_trigger": "all_waves_cleared",
+      "timeline": {
+        "1.0": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -50,
+            "count": 5,
+            "formation": "line",
+            "formation_config": { "spacing": 200 },
+            "enemy_params": {
+              "speed": 200,
+              "size": 15,
+              "direction": [0, 1]
+            },
+            "movement": { "type": "straight" }
+          }
+        ],
+
+        "5.0": [
+          {
+            "enemy": "homing_slow",
+            "spawn_edge": "top",
+            "spawn_position": 0.3,
+            "spawn_offset_y": -50,
+            "count": 1,
+            "enemy_params": {
+              "speed": 150,
+              "size": 20
+            },
+            "movement": { "type": "homing" }
+          },
+          {
+            "enemy": "homing_slow",
+            "spawn_edge": "top",
+            "spawn_position": 0.7,
+            "spawn_offset_y": -50,
+            "count": 1,
+            "enemy_params": {
+              "speed": 150,
+              "size": 20
+            },
+            "movement": { "type": "homing" }
+          }
+        ],
+
+
+
+        "13.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -50,
+            "count": 1,
+            "enemy_params": {
+              "waypoints": [
+                [640, 100],
+                [400, 200],
+                [400, 500],
+                [640, 600],
+                [880, 500],
+                [880, 200],
+                [640, 100]
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
