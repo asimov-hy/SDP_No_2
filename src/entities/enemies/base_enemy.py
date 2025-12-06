@@ -349,12 +349,17 @@ class BaseEnemy(BaseEntity):
         return pygame.Vector2(chosen)
 
     def reset(
-        self, x, y, direction=None, speed=None, health=None, spawn_edge=None, **kwargs
+            self, x, y, direction=None, speed=None, health=None, spawn_edge=None, **kwargs
     ):
         super().reset(x, y)
 
         # Reset state to DEFAULT in case it was pooled while blinking
         self.state = InteractionState.DEFAULT
+
+        # Re-enable hitbox and collision tag (disabled on death)
+        self.collision_tag = CollisionTags.ENEMY
+        if hasattr(self, "hitbox") and self.hitbox:
+            self.hitbox.set_active(True)
 
         # Reset spawn grace period
         self.spawn_time = 0.0

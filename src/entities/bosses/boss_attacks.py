@@ -132,7 +132,7 @@ class BossAttack:
 # =====================
 # ATTACKS
 # =====================
-@attack(enabled=False)
+@attack(enabled=True)
 class TraceAttack(BossAttack):
     """Track player and fire in bursts."""
 
@@ -183,7 +183,7 @@ class TraceAttack(BossAttack):
                 part.update_shooting(dt, self.bullet_manager, spray_mode=False)
 
 
-@attack(enabled=False)
+@attack(enabled=True)
 class SprayAttack(BossAttack):
     """Sweep guns back and forth while firing bouncing bullets."""
 
