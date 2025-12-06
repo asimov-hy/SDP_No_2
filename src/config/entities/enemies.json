@@ -1,7 +1,7 @@
 {
   "straight": {
-    "image": "assets/images/sprites/enemies/missile.png",
-    "scale": 0.1,
+    "image": "assets/images/sprites/enemies/sky_mine.png",
+    "scale": 0.3,
     "hp": 1,
     "speed": 400,
     "exp": 50,
@@ -10,8 +10,8 @@
     }
   },
   "homing_slow": {
-    "image": "assets/images/sprites/enemies/enemy_homing.png",
-    "scale": 0.5,
+    "image": "assets/images/sprites/enemies/slow_homing.png",
+    "scale": 0.2,
     "hp": 3,
     "speed": 250,
     "exp": 60,
@@ -22,8 +22,8 @@
     }
   },
   "homing_fast": {
-    "image": "assets/images/sprites/enemies/enemy_homing.png",
-    "scale": 0.5,
+    "image": "assets/images/sprites/enemies/fast_homing.png",
+    "scale": 0.2,
     "hp": 3,
     "speed": 300,
     "exp": 75,
@@ -34,7 +34,7 @@
     }
   },
   "homing_smart": {
-    "image": "assets/images/sprites/enemies/enemy_homing.png",
+    "image": "assets/images/sprites/enemies/smart_homing.png",
     "scale": 0.5,
     "hp": 3,
     "speed": 350,

@@ -12,6 +12,7 @@ Provides multi-layer scrolling backgrounds with:
 
 import pygame
 import math
+import random
 from src.core.debug.debug_logger import DebugLogger
 
 
@@ -76,6 +77,90 @@ class BackgroundLayer:
 
         self.width = self.image.get_width()
         self.height = self.image.get_height()
+
+    def random_scatter_objects(self, object_paths, count, min_distance=50, max_attempts=50):
+        """
+            Scatters objects onto the background layer.
+
+            1. Maintains the original image size without scaling.
+            2. Ensures a minimum separation distance (min_distance) from existing objects.
+            3. Calculates distance considering the map's seamless wrapping (Toroidal Check).
+
+            Args:
+                object_paths (list): List of image file paths.
+                count (int): Target number of objects to place.
+                min_distance (int): Minimum distance between objects (in pixels).
+                max_attempts (int): Maximum number of retries if position selection fails.
+            """
+        if not object_paths:
+            return
+
+        DebugLogger.init_sub(f"Scattering objects with dist_check={min_distance}...")
+
+        loaded_objs = []
+
+        for path in object_paths:
+            img = pygame.image.load(path).convert_alpha()
+            loaded_objs.append(img)
+
+        if not loaded_objs:
+            return
+
+        placed_positions = []
+
+        for _ in range(count):
+            img = random.choice(loaded_objs)
+            angle = random.uniform(0, 360)
+            img = pygame.transform.rotate(img, angle)
+
+            w, h = img.get_size()
+
+            valid_pos = False
+            best_x, best_y = 0, 0
+
+            for attempt in range(max_attempts):
+                cx = random.randint(0, self.width - 1)
+                cy = random.randint(0, self.height - 1)
+
+                # Distance Check
+                conflict = False
+                for (px, py) in placed_positions:
+                    dx = abs(cx - px)
+                    dy = abs(cy - py)
+
+                    if dx > self.width / 2:
+                        dx = self.width - dx
+                    if dy > self.height / 2:
+                        dy = self.height - dy
+
+                    dist = (dx * dx + dy * dy) ** 0.5
+
+                    if dist < min_distance:
+                        conflict = True
+                        break
+
+                if not conflict:
+                    valid_pos = True
+                    best_x, best_y = cx, cy
+                    break
+
+            if valid_pos:
+                placed_positions.append((best_x, best_y))
+
+                self.image.blit(img, (best_x, best_y))
+
+                if best_x + w > self.width:
+                    self.image.blit(img, (best_x - self.width, best_y))
+
+                if best_y + h > self.height:
+                    self.image.blit(img, (best_x, best_y - self.height))
+
+                if best_x + w > self.width and best_y + h > self.height:
+                    self.image.blit(img, (best_x - self.width, best_y - self.height))
+            else:
+                DebugLogger.warn("Could not find valid position for an object")
+
+        DebugLogger.init_sub("Decoration complete.")
 
     # ===========================================================
     # Update

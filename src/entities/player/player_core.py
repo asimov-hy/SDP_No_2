@@ -623,3 +623,13 @@ class Player(BaseEntity):
             "color": (255, 255, 100),
             "radius": 4,
         }
+
+    @property
+    def exp_ratio(self):
+        return float(self.exp) / float(self.exp_required)
+
+    @property
+    def health_ratio(self):
+        if self.max_health <= 0:
+            return 0.0
+        return float(self.health) / float(self.max_health)
