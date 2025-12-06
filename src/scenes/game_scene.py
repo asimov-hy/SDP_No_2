@@ -173,6 +173,9 @@ class GameScene(BaseScene):
         self.hazard_manager = systems['hazard_manager']
         self.spawn_manager._effects_manager = self.effects_manager
         self.ui = systems['ui']
+        self.player.services = self.services
+
+
 
     def _init_level_up_ui(self):
         """Initialize level up UI overlay."""
@@ -252,7 +255,7 @@ class GameScene(BaseScene):
         """Hide HUD elements off-screen before intro cutscene."""
         for element in self.ui.hud_elements:
             anchor = getattr(element, 'parent_anchor', 'center')
-            offset = self.ui.ANCHOR_TO_OFFSET.get(anchor, (0, -100))
+            offset = self.ui.ANCHOR_TO_OFFSET.get(anchor, (0, -300))
             element._slide_offset = offset
 
     def on_exit(self):
@@ -451,6 +454,30 @@ class GameScene(BaseScene):
             bg_config = DEFAULT_BACKGROUND
 
         self._setup_background(bg_config)
+
+        is_snow_map = False
+        base_image_path = bg_config["layers"][0]["image"]
+        if "snow" in base_image_path.lower():
+            is_snow_map = True
+
+        DebugLogger.init(f"[BG Check] Path: {base_image_path}, Is Snow?: {is_snow_map}")
+
+        if self.bg_manager.layer_count > 0 and is_snow_map:
+            base_layer = self.bg_manager.get_layer(0)
+
+            rock_images = [
+                "assets/images/maps/rock_1.png",
+                "assets/images/maps/rock_2.png",
+                "assets/images/maps/rock_3.png",
+                "assets/images/maps/rock_4.png",
+                "assets/images/maps/rock_5.png",
+            ]
+            if hasattr(base_layer, "random_scatter_objects"):
+                base_layer.random_scatter_objects(
+                    object_paths = rock_images,
+                    count = 7,
+                    min_distance = 200
+                )
 
     def _load_level_music(self, level_data):
         """

@@ -55,13 +55,6 @@ def damage_collision(player, other):
     prev_health = player.health
     player.health -= damage
 
-    # play hit sound
-    if hasattr(player, "services"):
-        sound_manager = player.services.get_global("sound_manager")
-        if player.health > 0:
-            damage_sound = ["player_damage1", "player_damage2", "player_damage3"]
-            sound_manager.play_random_bfx(damage_sound)
-
     DebugLogger.action(
         f"Player took {damage} damage ({prev_health} → {player.health})",
         category="collision",
@@ -139,6 +132,12 @@ def _apply_heavy_damage(player, previous_state, target_state, direction):
     stun_cfg = player.state_manager.state_config.get("stun", {})
     stun_duration = stun_cfg.get("duration", 0.5)
     knockback = stun_cfg.get("knockback_strength", 400)
+
+    if hasattr(player, "services") and player.services:
+        sound_manager = player.services.get_global("sound_manager")
+        if sound_manager and player.health > 0:
+            damage_sound = ["player_damage1", "player_damage2", "player_damage3"]
+            sound_manager.play_random_bfx(damage_sound)
 
     DebugLogger.state("HEAVY damage! Entering STUN", category="animation")
 

@@ -15,30 +15,57 @@
         image: "ui/bars/left_bar.png"
 
       - type: container
-        id: "exp_frame"
+        id: "health_frame"
         size: [300, 78]
         parent_anchor: top_left
         self_anchor: top_left
         offset: [3, 4]
-        image: "ui/bars/exp_frame.png"
+        image: "ui/bars/default_frame.png"
 
         children:
 
         - type: bar
-          id: "exp_bar"
+          id: "health_bar"
           size: [260, 32]
-          parent_anchor: "#exp_frame:center"
+          parent_anchor: "#health_frame:center"
           self_anchor: center
-          offset: [0, 0]
+          offset: [8, 1]
 
-          image: "ui/bars/exp_bar.png"
+          image: "ui/bars/health_bar.png"
           background: [0, 0, 0, 0]
           animated: true
           direction: horizontal
 
-          bind: player.exp
-          bind_max: player.max_exp
-          max_value: 400
+          bind: player.health_ratio
+          max_value: 1.0
+          min_value: 0.0
+
+
+      - type: container
+        id: "exp_frame"
+        size: [ 300, 78 ]
+        parent_anchor: top_right
+        self_anchor: top_right
+        offset: [ 3, 4 ]
+        image: "ui/bars/default_frame.png"
+
+        children:
+
+          - type: bar
+            id: "exp_bar"
+            size: [ 260, 32 ]
+            parent_anchor: "#exp_frame:center"
+            self_anchor: center
+            offset: [ 8, 1 ]
+
+            image: "ui/bars/exp_bar.png"
+            background: [ 0, 0, 0, 0 ]
+            animated: true
+            direction: horizontal
+
+            bind: player.exp_ratio
+            max_value: 1.0
+            min_value: 0.0
 
       - type: container
         id: "right_main_bar"
@@ -50,26 +77,25 @@
 
         children:
         - type: container
-          id: "health_gauge"
+          id: "stress_gauge"
           size: [150, 105]
-          parent_anchor: bottom_right
-          self_anchor: bottom_right
-          offset: [-50, 0]
-          image: "ui/health/health_gauge.png"
+          parent_anchor: bottom
+          self_anchor: bottom
+          offset: [0, 0]
+          image: "ui/stress/stress_gauge.png"
 
-          children:
 
-          - type: needle
-            id: "health_needle"
-            parent_anchor: "#health_gauge:center"
-            self_anchor: center
-            offset: [0, 20]
-            size: [200, 200]
-            image: "ui/health/health_needle.png"
+        - type: needle
+          id: "stress_needle"
+          parent_anchor: bottom
+          self_anchor: center
+          offset: [0, -33]
+          size: [200, 200]
+          image: "ui/stress/stress_needle.png"
 
-            bind: player.health
-            bind_max: player.max_health
+          bind: player.stress
+          bind_max: player.stress_max
 
-            min_value: 0
-            min_angle: -80
-            max_angle: 80
+          min_value: 0
+          min_angle: 80
+          max_angle: -80

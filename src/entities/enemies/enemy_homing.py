@@ -14,10 +14,12 @@ import math
 
 from src.entities.enemies.base_enemy import BaseEnemy
 from src.entities.base_entity import BaseEntity
+from src.entities.entity_state import LifecycleState
 from src.entities.entity_types import EntityCategory
 
 from src.core.debug.debug_logger import DebugLogger
 from src.systems.entity_management.entity_registry import EntityRegistry
+
 
 
 class EnemyHoming(BaseEnemy):
@@ -119,6 +121,13 @@ class EnemyHoming(BaseEnemy):
     # ===========================================================
     # Update Logic
     # ===========================================================
+    def update(self, dt: float):
+        """
+        Override update to enforce visual rotation towards player.
+        """
+        super().update(dt)
+        self._update_rotation()
+
     def _update_behavior(self, dt: float):
         if self.player_ref:
             if self.update_delay > 0:
@@ -128,6 +137,32 @@ class EnemyHoming(BaseEnemy):
                     self.update_timer = 0.0
             else:
                 self._update_homing_continuous(dt)
+
+    def _update_rotation(self):
+        """
+        Rotate the sprite to face the player visually.
+        """
+        if self.death_state != LifecycleState.ALIVE:
+            return
+
+        if not hasattr(self, "player_ref") or self.player_ref is None:
+            return
+
+        to_player = self.player_ref.pos - self.pos
+
+        if to_player.length_squared() < 1:
+            return
+
+        angle_rad = math.atan2(to_player.y, to_player.x)
+        angle_deg = math.degrees(angle_rad)
+
+        correction_angle = 90
+
+        final_angle = angle_deg + correction_angle
+
+        if hasattr(self, "_base_image") and self._base_image:
+            self.image = pygame.transform.rotate(self._base_image, -final_angle)
+            self.rect = self.image.get_rect(center=self.rect.center)
 
     def reset(self, x, y, direction=(0, 1), speed=None, health=None, **kwargs):
         """Reset enemy for pooling."""
@@ -163,6 +198,8 @@ class EnemyHoming(BaseEnemy):
 
         if "spawn_edge" in kwargs:
             self.spawn_edge = kwargs["spawn_edge"]
+
+        self._rotation_enabled = False
 
     def _update_homing_continuous(self, dt):
         """Smooth turn toward player each frame (or instant snap for high turn_rate)"""
