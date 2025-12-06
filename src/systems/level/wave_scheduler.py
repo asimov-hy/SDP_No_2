@@ -320,8 +320,8 @@ class WaveScheduler:
                 if spawn_edge:
                     # Only use auto-direction if direction is None or homing needs edge
                     if (
-                        spawn_params.get("direction") is None
-                        or spawn_params.get("homing") == "snapshot_axis"
+                            spawn_params.get("direction") is None
+                            or spawn_params.get("homing") == "snapshot_axis"
                     ):
                         spawn_kwargs["spawn_edge"] = spawn_edge
 
@@ -333,12 +333,13 @@ class WaveScheduler:
                     spawned += 1
                     if category == "enemy" and self._waiting_for_clear:
                         self._remaining_enemies += 1
+
+                    # Trigger boss intro cinematic
+                    if entity_type == "boss":
+                        from src.core.services.event_manager import BossSpawnEvent
+                        get_events().dispatch(BossSpawnEvent(boss_ref=entity))
                 else:
                     failed += 1
-
-            # Track enemies for wave clear
-            # if category == "enemy" and self._waiting_for_clear:
-            #     self._remaining_enemies += spawned
 
             # Report results
             if failed > 0:

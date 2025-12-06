@@ -32,6 +32,7 @@ from src.core.services.event_manager import (
     ScreenShakeEvent,
     SpawnPauseEvent,
     BossDeathEvent,
+    BossSpawnEvent,
 )
 
 # Entities
@@ -56,6 +57,9 @@ from src.scenes.cutscenes.cutscene_action import (
     UISlideInAction,
     TextScaleFadeAction,
     TextBlinkRevealAction,
+    ScreenShakeAction,
+    BossChargeAction,
+    ImageBlinkRevealAction,
 )
 
 # Systems
@@ -243,6 +247,7 @@ class GameScene(BaseScene):
         # Subscribe to screen shake events
         get_events().subscribe(ScreenShakeEvent, self._on_screen_shake)
         get_events().subscribe(BossDeathEvent, self._on_boss_death)
+        get_events().subscribe(BossSpawnEvent, self._on_boss_spawn)
 
         # Start level (loads but doesn't spawn yet)
         self._start_level()
@@ -256,6 +261,36 @@ class GameScene(BaseScene):
             anchor = getattr(element, 'parent_anchor', 'center')
             offset = self.ui.ANCHOR_TO_OFFSET.get(anchor, (0, -100))
             element._slide_offset = offset
+
+    def _on_boss_spawn(self, event):
+        """Play boss intro cinematic."""
+        boss = event.boss_ref
+        if not boss:
+            return
+
+        actions = [
+            # Phase 1: Warning shake + banner slide
+            ImageBlinkRevealAction(
+                image_path="assets/images/ui/bars/warning_banner.png",
+                duration=3.0,  # Total duration
+                fade_in=1.0,  # 0.5s to fade in
+                pulse_duration=1.5,  # 1.5s of pulsing
+                pulse_speed=1.0,  # 2 pulses per second
+                pulse_min_alpha=0.6,  # Pulses between 60% and 100% opacity
+                fade_out=1.0,  # 0.5s to fade out
+                scale=1.0,  # Scale image to 150%
+                y_offset=0  # Vertical offset from center
+            ),
+
+            # Phase 2: Boss charges bottom to top
+            BossChargeAction(boss, duration=0.6),
+
+            DelayAction(0.3),
+
+            # Phase 3: Normal intro begins (boss descends from top)
+        ]
+
+        self.cutscene_manager.play(actions)
 
     def on_exit(self):
         """
