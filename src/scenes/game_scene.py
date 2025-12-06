@@ -31,6 +31,7 @@ from src.core.services.event_manager import (
     EnemyDiedEvent,
     ScreenShakeEvent,
     SpawnPauseEvent,
+    BossDeathEvent,
 )
 
 # Entities
@@ -241,6 +242,7 @@ class GameScene(BaseScene):
 
         # Subscribe to screen shake events
         get_events().subscribe(ScreenShakeEvent, self._on_screen_shake)
+        get_events().subscribe(BossDeathEvent, self._on_boss_death)
 
         # Start level (loads but doesn't spawn yet)
         self._start_level()
@@ -743,6 +745,10 @@ class GameScene(BaseScene):
                 f"Level complete - game over in {GAME_OVER_DELAY}s",
                 category="game"
             )
+
+    def _on_boss_death(self, event):
+        """Handle boss death - trigger level complete."""
+        self._on_level_complete()
 
     def _on_enemy_died(self, event):
         """

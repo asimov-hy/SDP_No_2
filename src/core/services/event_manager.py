@@ -77,6 +77,12 @@ class SpawnPauseEvent(BaseEvent):
     paused: bool
 
 
+@dataclass(frozen=True)
+class BossDeathEvent(BaseEvent):
+    """Dispatched when boss death sequence completes."""
+    boss_type: str = "boss"
+
+
 # ===========================================================
 # Event Manager
 # ===========================================================

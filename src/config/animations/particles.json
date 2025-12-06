@@ -128,5 +128,23 @@
     "shrink": true,
     "glow": true,
     "fade_delay": 0.5
+  },
+  "boss_explosion": {
+    "colors": [[255, 200, 50], [255, 120, 30], [255, 80, 10], [255, 255, 200]],
+    "size_range": [10, 20],
+    "speed_range": [200, 450],
+    "lifetime": [0.4, 0.8],
+    "spread": 360,
+    "shrink": true,
+    "glow": true
+  },
+  "boss_explosion_final": {
+    "colors": [[255, 255, 255], [255, 220, 100], [255, 180, 50]],
+    "size_range": [16, 32],
+    "speed_range": [300, 600],
+    "lifetime": [0.6, 1.2],
+    "spread": 360,
+    "shrink": true,
+    "glow": true
   }
 }
