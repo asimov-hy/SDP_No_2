@@ -36,7 +36,7 @@
   "homing_smart": {
     "image": "assets/images/sprites/enemies/enemy_homing.png",
     "scale": 0.5,
-    "hp": 4,
+    "hp": 3,
     "speed": 350,
     "exp": 100,
     "turn_rate": 9999,

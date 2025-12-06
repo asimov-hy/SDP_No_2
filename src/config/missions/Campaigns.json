@@ -9,7 +9,7 @@
   },
   "missions": {
     "1_Tutorial": {
-      "path": "test_shooter.json",
+      "path": "1_Tutorial.json",
       "name": "Tutorial",
       "description": "Learn the basics",
       "unlocked": true,
