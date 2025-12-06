@@ -99,7 +99,7 @@ main_menu:
     # Version label
     - type: label
       id: "version"
-      text: "v0.9.0-alpha"
+      text: "v1.0.0-beta"
       size: [150, 25]
       parent_anchor: bottom_right
       self_anchor: bottom_right
