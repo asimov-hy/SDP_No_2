@@ -82,6 +82,11 @@ class BossDeathEvent(BaseEvent):
     """Dispatched when boss death sequence completes."""
     boss_type: str = "boss"
 
+@dataclass(frozen=True)
+class BossSpawnEvent(BaseEvent):
+    """Dispatched when a boss is about to spawn - triggers intro cinematic."""
+    boss_ref: object = None
+
 
 # ===========================================================
 # Event Manager
