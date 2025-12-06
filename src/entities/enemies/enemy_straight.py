@@ -116,6 +116,10 @@ class EnemyStraight(BaseEnemy):
         # Update exp value in case it changed
         self.exp_value = defaults.get("exp", 0)
 
+        # Reload and rescale image if using image mode (BEFORE rotation)
+        if image_path:
+            self._reload_image_cached(image_path, scale)
+
         # Call super to reset position/state
         super().reset(
             x,
@@ -126,7 +130,3 @@ class EnemyStraight(BaseEnemy):
             spawn_edge=kwargs.get("spawn_edge"),
             hitbox_scale=hitbox_scale,
         )
-
-        # Reload and rescale image if using image mode
-        if image_path:
-            self._reload_image_cached(image_path, scale)

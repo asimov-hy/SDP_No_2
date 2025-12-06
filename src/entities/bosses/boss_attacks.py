@@ -266,43 +266,127 @@ class ChargeAttack(BossAttack):
     def __init__(self, boss, bullet_manager):
         super().__init__(boss, bullet_manager)
 
-        # Config
-        self.warn_time = 1.0       # Visible pause before charge
-        self.rotate_time = 0.3    # Off-screen rotation
-        self.track_time = 0.8     # Off-screen player tracking
+        # === TIMING CONFIG ===
+        self.duration = float('inf')
+        self.warn_time = 1.0
+        self.rotate_time = 0.3
+        self.track_time = 0.8
         self.cooldown_time = 1.0
+
+        # === MOVEMENT CONFIG ===
         self.charge_speed = 2000
         self.return_speed = 100
-        self.screen_width = Display.WIDTH
-        self.screen_height = Display.HEIGHT
-
         self.total_charges = 4
-        self.duration = 15.0
 
-        # Mine trail config
+        # === MINE CONFIG ===
         self.mines_enabled = False
         self.mine_interval = 0.1
-        self.mine_timer = 0.0
 
-        # State
+        # === RUNTIME STATE (reset in _on_start) ===
         self.phase = "warn"
         self.phase_timer = 0.0
         self.charge_count = 0
         self.going_down = True
+        self.mine_timer = 0.0
+
+        # === COMPUTED (set in _on_start) ===
         self.bottom_y = 0
         self.top_y = 0
 
-        # Warning zone visual
-        self.show_warning = False
-        self.warning_alpha = 0
+        # === VISUALS ===
+        self._init_warning_emitter()
+        self._init_phase_handlers()
 
-        # Debris warning emitter (dirt brown colors)
+    def _on_update(self, dt):
+        self.phase_timer += dt
+        self.warning_emitter.update(dt)
+
+        # Dispatch to phase handler
+        handler = self._phase_handlers.get(self.phase)
+        if handler:
+            handler(dt)
+
+    def _init_phase_handlers(self):
+        """Map phase names to handler methods."""
+        self._phase_handlers = {
+            "warn": self._phase_warn,
+            "charge": self._phase_charge,
+            "rotate": self._phase_rotate,
+            "track": self._phase_track,
+            "cooldown": self._phase_cooldown,
+            "return": self._phase_return,
+        }
+
+    # --- Individual Phase Methods ---
+
+    def _phase_warn(self, dt):
+        """On-screen pause with debris warning."""
+        self._emit_warning_debris(dt)
+        if self.phase_timer >= self.warn_time:
+            self._next_phase("charge")
+
+    def _phase_charge(self, dt):
+        """Vertical charge through screen, optional mines."""
+        self._emit_warning_debris(dt)
+        self._try_spawn_mine(dt)
+
+        # Move vertically
+        direction = 1 if self.going_down else -1
+        self.boss.pos.y += direction * self.charge_speed * dt
+        self.boss.anchor_pos.xy = self.boss.pos.xy
+
+        # Check if reached edge
+        target_y = self.bottom_y if self.going_down else self.top_y
+        past_target = (self.boss.pos.y >= target_y) if self.going_down else (self.boss.pos.y <= target_y)
+
+
+        if past_target:
+            self.boss.pos.y = target_y
+            self._next_phase("rotate")
+
+    def _phase_rotate(self, dt):
+        """Off-screen rotation/flip."""
+        if self.phase_timer >= self.rotate_time:
+            next_phase = "cooldown" if self.charge_count >= self.total_charges else "track"
+            self._next_phase(next_phase)
+
+    def _phase_track(self, dt):
+        """Off-screen, follow player X position."""
+        if self.player_ref:
+            self.boss.pos.x = self.player_ref.pos.x
+        if self.phase_timer >= self.track_time:
+            self._next_phase("warn")
+
+    def _phase_cooldown(self, dt):
+        """Brief pause after all charges complete."""
+        if self.phase_timer >= self.cooldown_time:
+            self._next_phase("return")
+
+    def _phase_return(self, dt):
+        """Slow return to home position."""
+        self.boss.body_rotation = 0
+        direction = self.boss.home_pos - self.boss.pos
+        dist = direction.length()
+
+        if dist < 10:
+            self.boss.pos.xy = self.boss.home_pos.xy
+            self.boss.anchor_pos.xy = self.boss.home_pos.xy
+            self.finish()
+        else:
+            direction.normalize_ip()
+            self.boss.pos += direction * self.return_speed * dt
+            self.boss.anchor_pos.xy = self.boss.home_pos.xy
+
+    # === SETUP METHODS ===
+
+    def _init_warning_emitter(self):
+        """Initialize debris particle emitter."""
         dirt_colors = [
-            (139, 90, 43),   # Dark brown
-            (160, 120, 80),  # Tan
-            (100, 80, 60),   # Deep brown
-            (120, 100, 70),  # Olive brown
-            (90, 60, 30),    # Dark dirt
+            (139, 90, 43),
+            (160, 120, 80),
+            (100, 80, 60),
+            (120, 100, 70),
+            (90, 60, 30),
         ]
         self.warning_emitter = DebrisEmitter(
             emit_rate=200,
@@ -311,137 +395,70 @@ class ChargeAttack(BossAttack):
         )
 
     def _on_start(self):
+        """Reset state for new attack cycle."""
         self.phase = "warn"
         self.phase_timer = 0.0
         self.charge_count = 0
         self.going_down = True
-        self.boss.entrance_complete = True
         self.mine_timer = 0.0
+        self.boss.entrance_complete = True
 
+        # Compute screen bounds
         half_height = self.boss.rect.height // 2
-        self.bottom_y = self.screen_height + half_height + 200
+        self.bottom_y = Display.HEIGHT + half_height + 200
         self.top_y = -half_height - 200
 
         get_events().dispatch(ScreenShakeEvent(intensity=1.5, duration=self.warn_time))
 
-    def _on_update(self, dt):
-        self.phase_timer += dt
-
-        # Always update debris particles
-        self.warning_emitter.update(dt)
-
-        # Phase: Warn (on-screen, visible pause before charge)
-        if self.phase == "warn":
-            self._emit_warning_debris(dt)
-            if self.phase_timer >= self.warn_time:
-                self._next_phase("charge")
-            return
-
-        # Phase: Charge (move off-screen, drop mines)
-        if self.phase == "charge":
-            self._emit_warning_debris(dt)
-
-            # Drop mines at interval
-            if self.mines_enabled:
-                self.mine_timer += dt
-                if self.mine_timer >= self.mine_interval:
-                    self.mine_timer = 0.0
-                    self._spawn_mine()
-
-            if self.going_down:
-                self.boss.pos.y += self.charge_speed * dt
-                if self.boss.pos.y >= self.bottom_y:
-                    self.boss.pos.y = self.bottom_y
-                    self._next_phase("rotate")
-            else:
-                self.boss.pos.y -= self.charge_speed * dt
-                if self.boss.pos.y <= self.top_y:
-                    self.boss.pos.y = self.top_y
-                    self._next_phase("rotate")
-            return
-
-        # Phase: Rotate (off-screen, just wait)
-        if self.phase == "rotate":
-            if self.phase_timer >= self.rotate_time:
-                if self.charge_count >= self.total_charges:
-                    self._next_phase("cooldown")
-                else:
-                    self._next_phase("track")
-            return
-
-        # Phase: Cooldown (brief pause after charges complete)
-        if self.phase == "cooldown":
-            if self.phase_timer >= self.cooldown_time:
-                self._next_phase("return")
-            return
-
-        # Phase: Track (off-screen, follow player X)
-        if self.phase == "track":
-            if self.player_ref:
-                self.boss.pos.x = self.player_ref.pos.x
-            if self.phase_timer >= self.track_time:
-                self._next_phase("warn")
-            return
-
-        # Phase: Return home
-        if self.phase == "return":
-            self.boss.body_rotation = 0
-            direction = self.boss.home_pos - self.boss.pos
-            dist = direction.length()
-            if dist < 10:
-                self.boss.pos.xy = self.boss.home_pos.xy
-                self.finish()
-            else:
-                direction.normalize_ip()
-                self.boss.pos += direction * self.return_speed * dt
+    # === PHASE TRANSITION ===
 
     def _next_phase(self, phase):
+        """Transition to new phase with entry effects."""
         self.phase = phase
         self.phase_timer = 0.0
 
-        # One-time actions on phase entry
         if phase == "warn":
             get_events().dispatch(ScreenShakeEvent(intensity=3.0, duration=self.warn_time + 0.5))
-            self.show_warning = True
-            self.warning_alpha = 0
-
         elif phase == "charge":
-            self.show_warning = False
             get_events().dispatch(ScreenShakeEvent(intensity=8.0, duration=2.0))
-
-        elif phase == "return":
-            self.boss.pos.x = Display.WIDTH // 2
-
-        # One-time actions on phase entry
-        if phase == "rotate":
+        elif phase == "rotate":
             self.going_down = not self.going_down
             self.boss.body_rotation = 0 if self.going_down else 180
             self.boss.sync_parts_to_body()
             self.charge_count += 1
+        elif phase == "return":
+            self.boss.pos.x = Display.WIDTH // 2
+
+    # === HELPERS ===
+
+    def _try_spawn_mine(self, dt):
+        """Spawn mine at interval during charge."""
+        if not self.mines_enabled:
+            return
+        self.mine_timer += dt
+        if self.mine_timer >= self.mine_interval:
+            self.mine_timer = 0.0
+            self._spawn_mine()
 
     def _spawn_mine(self):
         """Drop a mine at boss position."""
         if not self.boss.hazard_manager:
             return
-
-        # Only spawn if on screen
-        if 0 < self.boss.pos.y < self.screen_height:
-            self.boss.hazard_manager.spawn(
-                TimedMine,
-                self.boss.pos.x,
-                self.boss.pos.y
-            )
-
-    def _on_finish(self):
-        self.phase = "idle"
-        self.boss.body_rotation = 0
+        if 0 < self.boss.pos.y < Display.HEIGHT:
+            self.boss.hazard_manager.spawn(TimedMine, self.boss.pos.x, self.boss.pos.y)
 
     def _emit_warning_debris(self, dt):
         """Emit debris in warning zone at boss X position."""
         width = self.boss.rect.width + 40
         x = int(self.boss.pos.x - width // 2)
-        warn_rect = pygame.Rect(x, 0, width, self.screen_height)
+        warn_rect = pygame.Rect(x, 0, width, Display.HEIGHT)
         self.warning_emitter.emit_continuous(warn_rect, dt)
+
+    # === CLEANUP & OVERRIDES ===
+
+    def _on_finish(self):
+        self.phase = "idle"
+        self.boss.body_rotation = 0
 
     def get_movement_override(self):
         return (0, 0)

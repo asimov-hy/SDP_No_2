@@ -694,6 +694,12 @@ class GameScene(BaseScene):
         Args:
             event: pygame event object
         """
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_n:
+            from src.entities.player.player_effects import handle_USE_NUKE
+            if self.player and self.player.death_state == LifecycleState.ALIVE:
+                handle_USE_NUKE(self.player, {})
+            return
+
         # UI event handling (includes level_up when active)
         action = self.ui.handle_event(event)
         self._handle_ui_action(action)

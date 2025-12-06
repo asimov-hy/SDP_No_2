@@ -409,7 +409,7 @@ class EnemyBoss(BaseEnemy):
         for part in self.parts.values():
             if getattr(part, 'is_static', False):
                 # Static parts: set rotation_angle for hitbox (visual rotation done in draw)
-                part.rotation_angle = self.tilt_angle + self.body_rotation
+                part.rotation_angle = -(self.tilt_angle + self.body_rotation)
                 if part.hitbox:
                     part.hitbox.update()
                 continue
@@ -421,7 +421,7 @@ class EnemyBoss(BaseEnemy):
                 part.image = pygame.transform.rotate(part._base_image, -final_angle)
                 part.rect = part.image.get_rect(center=(int(part.pos.x), int(part.pos.y)))
                 # Set rotation_angle for hitbox system
-                part.rotation_angle = final_angle
+                part.rotation_angle = -final_angle
                 # Force hitbox to update with new rect dimensions
                 if part.hitbox:
                     part.hitbox.update()
