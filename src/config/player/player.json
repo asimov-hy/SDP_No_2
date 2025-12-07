@@ -4,7 +4,7 @@
   "core_attributes": {
     "_notes": "Defines base physics and behavior values.",
     "scale": 0.9,
-    "health": 500,
+    "health": 5,
     "hitbox_scale": 0.85,
 
     "speed": 300,
