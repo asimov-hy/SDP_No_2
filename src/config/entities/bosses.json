@@ -3,7 +3,7 @@
     "body": {
       "image": "assets/images/sprites/boss/boss_body.png",
       "scale": 1.0,
-      "hp": 500,
+      "hp": 150,
       "hitbox": {
         "size": [300, 450],
         "shape": "rect"

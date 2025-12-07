@@ -19,7 +19,7 @@
     "primary": {
       "_notes": "Normal auto-fire (SPACE)",
       "cooldown": 0.2,
-      "damage": 2,
+      "damage": 1,
       "speed": 900
     },
 
