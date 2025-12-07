@@ -22,8 +22,7 @@ class BossAttackManager:
         self.current_attack = None
 
         self.attacks = {
-            name: cls(boss, bullet_manager)
-            for name, cls in ATTACK_REGISTRY.items()
+            name: cls(boss, bullet_manager) for name, cls in ATTACK_REGISTRY.items()
         }
 
     def _get_cooldown(self):
@@ -47,13 +46,15 @@ class BossAttackManager:
 
     def _update_idle(self, dt):
         for part in self.boss.parts.values():
-            if not part.active or getattr(part, 'is_static', False):
+            if not part.active or getattr(part, "is_static", False):
                 continue
             part.angle *= 0.95
             if part._base_image:
                 final_angle = part.base_angle + part.angle
                 part.image = pygame.transform.rotate(part._base_image, -final_angle)
-                part.rect = part.image.get_rect(center=(int(part.pos.x), int(part.pos.y)))
+                part.rect = part.image.get_rect(
+                    center=(int(part.pos.x), int(part.pos.y))
+                )
 
     def _start_random_attack(self):
         attack_name = random.choice(list(self.attacks.keys()))
@@ -69,5 +70,5 @@ class BossAttackManager:
 
     def draw(self, draw_manager):
         """Draw attack visuals (warning zones, etc.)"""
-        if self.current_attack and hasattr(self.current_attack, 'draw_warning'):
+        if self.current_attack and hasattr(self.current_attack, "draw_warning"):
             self.current_attack.draw_warning(draw_manager)

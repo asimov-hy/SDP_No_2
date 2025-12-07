@@ -295,7 +295,7 @@ class SceneManager:
         # Handle pause toggle - only in Game scene after intro complete
         if self._active_name == "Game":
             # Block pause during intro cutscene
-            if not getattr(self._active_scene, '_intro_complete', True):
+            if not getattr(self._active_scene, "_intro_complete", True):
                 pass  # Skip pause handling during intro
             else:
                 pause_pressed = False

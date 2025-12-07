@@ -349,7 +349,7 @@ class BaseEnemy(BaseEntity):
         return pygame.Vector2(chosen)
 
     def reset(
-            self, x, y, direction=None, speed=None, health=None, spawn_edge=None, **kwargs
+        self, x, y, direction=None, speed=None, health=None, spawn_edge=None, **kwargs
     ):
         super().reset(x, y)
 

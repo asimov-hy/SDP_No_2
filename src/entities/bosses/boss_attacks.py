@@ -23,10 +23,12 @@ ATTACK_REGISTRY = {}
 
 def attack(enabled=True):
     """Decorator to register attacks. Set enabled=False to disable."""
+
     def decorator(cls):
         if enabled:
             ATTACK_REGISTRY[cls.__name__] = cls
         return cls
+
     return decorator
 
 
@@ -48,7 +50,9 @@ class BossAttack:
         self.duration = 1.0
 
         # Movement config
-        self.movement_type = "idle"  # idle, chase, strafe_left, strafe_right, charge, retreat
+        self.movement_type = (
+            "idle"  # idle, chase, strafe_left, strafe_right, charge, retreat
+        )
         self.movement_speed = 0
         self.bob_enabled = True  # Vertical bobbing
 
@@ -110,11 +114,11 @@ class BossAttack:
 
     def _apply_attack_config(self):
         for name, part in self.parts.items():
-            if getattr(part, 'is_static', False):
+            if getattr(part, "is_static", False):
                 continue
             self._part_defaults[name] = {
-                'fire_rate': part.fire_rate,
-                'bullet_speed': part.bullet_speed,
+                "fire_rate": part.fire_rate,
+                "bullet_speed": part.bullet_speed,
             }
             if self.fire_rate is not None:
                 part.fire_rate = self.fire_rate
@@ -125,8 +129,8 @@ class BossAttack:
         for name, defaults in self._part_defaults.items():
             if name in self.parts:
                 part = self.parts[name]
-                part.fire_rate = defaults['fire_rate']
-                part.bullet_speed = defaults['bullet_speed']
+                part.fire_rate = defaults["fire_rate"]
+                part.bullet_speed = defaults["bullet_speed"]
         self._part_defaults.clear()
 
 
@@ -149,14 +153,17 @@ class TraceAttack(BossAttack):
 
         # Auto-calculate total duration
         self.cycle_time = self.burst_time + self.pause_time
-        self.duration = self.idle_start + (self.cycle_time * self.burst_count) + self.idle_end
+        self.duration = (
+            self.idle_start + (self.cycle_time * self.burst_count) + self.idle_end
+        )
 
         self.fire_rate = 0.05
         self.bullet_speed = 450
 
-        self.movement_type = "chase"  # idle, chase, strafe_left, strafe_right, charge, retreat
+        self.movement_type = (
+            "chase"  # idle, chase, strafe_left, strafe_right, charge, retreat
+        )
         self.movement_speed = 50
-
 
     def _on_update(self, dt):
         # Phase 1: Idle start
@@ -167,14 +174,14 @@ class TraceAttack(BossAttack):
         burst_phase_time = self.timer - self.idle_start
         burst_phase_end = self.cycle_time * self.burst_count
 
-        if burst_phase_time >= 0 and not getattr(self, 'trace_sound_played', False):
+        if burst_phase_time >= 0 and not getattr(self, "trace_sound_played", False):
             get_sound_manager().play_bfx_loop("boss_trace_player", loop=-1)
             self.trace_sound_played = True
 
         played_sound_current_frame = False
 
         if burst_phase_time >= burst_phase_end:
-            if getattr(self, 'motor_sound_played', False):
+            if getattr(self, "motor_sound_played", False):
                 get_sound_manager().stop_bfx("boss_trace_player")
                 self.trace_sound_played = False
             # Phase 3: Idle end
@@ -184,7 +191,7 @@ class TraceAttack(BossAttack):
         is_shooting = cycle_pos < self.burst_time
 
         for part in self.parts.values():
-            if not part.active or getattr(part, 'is_static', False):
+            if not part.active or getattr(part, "is_static", False):
                 continue
             if self.player_ref:
                 part.rotate_towards_player(self.player_ref, dt)
@@ -213,7 +220,9 @@ class SprayAttack(BossAttack):
         sweep_time = (self.angle_range * 2) / self.sweep_speed
         self.duration = sweep_time * self.num_sweeps
 
-        self.movement_type = "idle"  # idle, chase, strafe_left, strafe_right, charge, retreat
+        self.movement_type = (
+            "idle"  # idle, chase, strafe_left, strafe_right, charge, retreat
+        )
         self.movement_speed = 0
 
         self.fire_rate = 0.25
@@ -222,13 +231,13 @@ class SprayAttack(BossAttack):
     def _on_start(self):
         # Override part spray speed
         for part in self.parts.values():
-            if not getattr(part, 'is_static', False):
+            if not getattr(part, "is_static", False):
                 part.spray_speed = self.sweep_speed
 
     def _on_update(self, dt):
         played_sound_current_frame = False
         for part in self.parts.values():
-            if not part.active or getattr(part, 'is_static', False):
+            if not part.active or getattr(part, "is_static", False):
                 continue
             part.spray_rotate(dt)
             if "mg" in part.name:
@@ -273,7 +282,7 @@ class SprayAttack(BossAttack):
             image=part.spray_bullet_image,  # Use trace bullet sprite
             owner="enemy",
             damage=1,
-            max_bounces=3
+            max_bounces=3,
         )
         return True
 
@@ -286,7 +295,7 @@ class ChargeAttack(BossAttack):
         super().__init__(boss, bullet_manager)
 
         # === TIMING CONFIG ===
-        self.duration = float('inf')
+        self.duration = float("inf")
         self.warn_time = 1.0
         self.rotate_time = 0.3
         self.track_time = 0.8
@@ -356,8 +365,11 @@ class ChargeAttack(BossAttack):
 
         # Check if reached edge
         target_y = self.bottom_y if self.going_down else self.top_y
-        past_target = (self.boss.pos.y >= target_y) if self.going_down else (self.boss.pos.y <= target_y)
-
+        past_target = (
+            (self.boss.pos.y >= target_y)
+            if self.going_down
+            else (self.boss.pos.y <= target_y)
+        )
 
         if past_target:
             self.boss.pos.y = target_y
@@ -366,7 +378,9 @@ class ChargeAttack(BossAttack):
     def _phase_rotate(self, dt):
         """Off-screen rotation/flip."""
         if self.phase_timer >= self.rotate_time:
-            next_phase = "cooldown" if self.charge_count >= self.total_charges else "track"
+            next_phase = (
+                "cooldown" if self.charge_count >= self.total_charges else "track"
+            )
             self._next_phase(next_phase)
 
     def _phase_track(self, dt):
@@ -408,9 +422,7 @@ class ChargeAttack(BossAttack):
             (90, 60, 30),
         ]
         self.warning_emitter = DebrisEmitter(
-            emit_rate=200,
-            max_particles=600,
-            colors=dirt_colors
+            emit_rate=200, max_particles=600, colors=dirt_colors
         )
 
     def _on_start(self):
@@ -440,7 +452,9 @@ class ChargeAttack(BossAttack):
 
         if phase == "warn":
             get_sound_manager().play_bfx("boss_charge_load")
-            get_events().dispatch(ScreenShakeEvent(intensity=3.0, duration=self.warn_time + 0.5))
+            get_events().dispatch(
+                ScreenShakeEvent(intensity=3.0, duration=self.warn_time + 0.5)
+            )
         elif phase == "charge":
             get_sound_manager().play_bfx("boss_charge")
             get_events().dispatch(ScreenShakeEvent(intensity=8.0, duration=2.0))
@@ -531,9 +545,7 @@ class MineCharge(BossAttack):
             (90, 60, 30),
         ]
         self.warning_emitter = DebrisEmitter(
-            emit_rate=200,
-            max_particles=600,
-            colors=dirt_colors
+            emit_rate=200, max_particles=600, colors=dirt_colors
         )
 
     def _on_start(self):
@@ -546,7 +558,7 @@ class MineCharge(BossAttack):
 
         # Disable arm hitboxes during charge
         for part in self.parts.values():
-            if not getattr(part, 'is_static', False) and part.hitbox:
+            if not getattr(part, "is_static", False) and part.hitbox:
                 part.hitbox.set_active(False)
 
         self._original_body_image = self.boss.body_image
@@ -554,7 +566,8 @@ class MineCharge(BossAttack):
             name: part._base_image for name, part in self.parts.items()
         }
         self._original_part_offsets = {
-            name: pygame.Vector2(part.offset.x, part.offset.y) for name, part in self.parts.items()
+            name: pygame.Vector2(part.offset.x, part.offset.y)
+            for name, part in self.parts.items()
         }
         self.charge_scale = 0.8
 
@@ -660,7 +673,9 @@ class MineCharge(BossAttack):
         self.phase_timer = 0.0
 
         if phase == "charge_warn":
-            get_events().dispatch(ScreenShakeEvent(intensity=2.0, duration=self.charge_warn_time))
+            get_events().dispatch(
+                ScreenShakeEvent(intensity=2.0, duration=self.charge_warn_time)
+            )
         elif phase == "charge":
             get_events().dispatch(ScreenShakeEvent(intensity=6.0, duration=1.5))
 
@@ -679,7 +694,7 @@ class MineCharge(BossAttack):
 
         # Re-enable arm hitboxes
         for part in self.parts.values():
-            if not getattr(part, 'is_static', False) and part.hitbox:
+            if not getattr(part, "is_static", False) and part.hitbox:
                 part.hitbox.set_active(True)
 
     def get_movement_override(self):
@@ -695,13 +710,18 @@ class MineCharge(BossAttack):
         orig = self._original_body_image
         new_size = (int(orig.get_width() * scale), int(orig.get_height() * scale))
         self.boss.body_image = pygame.transform.scale(orig, new_size)
-        self.boss.rect = self.boss.body_image.get_rect(center=(int(self.boss.pos.x), int(self.boss.pos.y)))
+        self.boss.rect = self.boss.body_image.get_rect(
+            center=(int(self.boss.pos.x), int(self.boss.pos.y))
+        )
 
         # Scale parts
         for name, part in self.parts.items():
             orig_part = self._original_part_images.get(name)
             if orig_part:
-                new_size = (int(orig_part.get_width() * scale), int(orig_part.get_height() * scale))
+                new_size = (
+                    int(orig_part.get_width() * scale),
+                    int(orig_part.get_height() * scale),
+                )
                 part._base_image = pygame.transform.scale(orig_part, new_size)
                 part.image = part._base_image
                 part.offset.x *= scale
@@ -710,7 +730,9 @@ class MineCharge(BossAttack):
     def _restore_scale(self):
         """Restore original boss size."""
         self.boss.body_image = self._original_body_image
-        self.boss.rect = self.boss.body_image.get_rect(center=(int(self.boss.pos.x), int(self.boss.pos.y)))
+        self.boss.rect = self.boss.body_image.get_rect(
+            center=(int(self.boss.pos.x), int(self.boss.pos.y))
+        )
 
         for name, part in self.parts.items():
             orig_part = self._original_part_images.get(name)

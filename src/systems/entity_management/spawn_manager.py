@@ -207,7 +207,7 @@ class SpawnManager:
                 self.collision_manager.register_hitbox(entity)
 
                 # Register boss part hitboxes
-                if hasattr(entity, 'parts'):
+                if hasattr(entity, "parts"):
                     for part in entity.parts.values():
                         self.collision_manager.register_hitbox(part, scale=0.9)
             except Exception as e:

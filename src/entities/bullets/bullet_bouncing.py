@@ -16,7 +16,7 @@ class BouncingBullet(BaseBullet):
     __registry_category__ = EntityCategory.PROJECTILE
     __registry_name__ = "bouncing"
 
-    __slots__ = ('bounce_count', 'max_bounces', 'margin')
+    __slots__ = ("bounce_count", "max_bounces", "margin")
 
     def __init__(self, *args, max_bounces=3, **kwargs):
         """

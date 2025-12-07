@@ -417,14 +417,17 @@ class ScreenShakeAction(CutsceneAction):
 
     def update(self, dt: float) -> bool:
         from src.core.services.event_manager import get_events, ScreenShakeEvent
+
         self.elapsed += dt
         self._shake_timer += dt
 
         if self._shake_timer >= self._shake_interval:
-            get_events().dispatch(ScreenShakeEvent(
-                intensity=self.intensity * (1 - self.elapsed / self.duration),
-                duration=self._shake_interval
-            ))
+            get_events().dispatch(
+                ScreenShakeEvent(
+                    intensity=self.intensity * (1 - self.elapsed / self.duration),
+                    duration=self._shake_interval,
+                )
+            )
             self._shake_timer = 0.0
 
         return self.elapsed >= self.duration
@@ -464,16 +467,16 @@ class ImageBlinkRevealAction(CutsceneAction):
     """Image that fades in, pulses, then fades out."""
 
     def __init__(
-            self,
-            image_path: str,
-            duration: float = 3.0,
-            fade_in: float = 0.5,
-            pulse_duration: float = 1.5,
-            pulse_speed: float = 2.0,  # Hz (pulses per second)
-            pulse_min_alpha: float = 0.6,  # Minimum alpha during pulse (0.0-1.0)
-            fade_out: float = 0.5,
-            scale: float = 1.0,
-            y_offset: int = 0,
+        self,
+        image_path: str,
+        duration: float = 3.0,
+        fade_in: float = 0.5,
+        pulse_duration: float = 1.5,
+        pulse_speed: float = 2.0,  # Hz (pulses per second)
+        pulse_min_alpha: float = 0.6,  # Minimum alpha during pulse (0.0-1.0)
+        fade_out: float = 0.5,
+        scale: float = 1.0,
+        y_offset: int = 0,
     ):
         super().__init__(duration)
         self.image_path = image_path
@@ -505,6 +508,7 @@ class ImageBlinkRevealAction(CutsceneAction):
 
     def update(self, dt: float) -> bool:
         import math
+
         self.elapsed += dt
 
         # Phase 1: Fade in
@@ -518,7 +522,8 @@ class ImageBlinkRevealAction(CutsceneAction):
             pulse_range = 1.0 - self.pulse_min_alpha
             pulse_offset = self.pulse_min_alpha
             pulse_value = pulse_offset + pulse_range * (
-                        0.5 + 0.5 * math.sin(pulse_time * self.pulse_speed * 2 * math.pi))
+                0.5 + 0.5 * math.sin(pulse_time * self.pulse_speed * 2 * math.pi)
+            )
             self._alpha = int(255 * pulse_value)
 
         # Phase 3: Fade out

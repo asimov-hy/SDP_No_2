@@ -38,7 +38,9 @@ class WaveScheduler:
         "waypoint_speed",
     }
 
-    def __init__(self, spawn_manager, player_ref=None, bullet_manager=None, hazard_manager=None):
+    def __init__(
+        self, spawn_manager, player_ref=None, bullet_manager=None, hazard_manager=None
+    ):
         """
         Initialize wave scheduler.
 
@@ -320,8 +322,8 @@ class WaveScheduler:
                 if spawn_edge:
                     # Only use auto-direction if direction is None or homing needs edge
                     if (
-                            spawn_params.get("direction") is None
-                            or spawn_params.get("homing") == "snapshot_axis"
+                        spawn_params.get("direction") is None
+                        or spawn_params.get("homing") == "snapshot_axis"
                     ):
                         spawn_kwargs["spawn_edge"] = spawn_edge
 
@@ -337,6 +339,7 @@ class WaveScheduler:
                     # Trigger boss intro cinematic
                     if entity_type == "boss":
                         from src.core.services.event_manager import BossSpawnEvent
+
                         get_events().dispatch(BossSpawnEvent(boss_ref=entity))
                 else:
                     failed += 1

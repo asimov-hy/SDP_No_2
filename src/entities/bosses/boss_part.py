@@ -10,29 +10,48 @@ import math
 
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_types import EntityCategory, CollisionTags
-from src.entities.entity_state import LifecycleState
 from src.graphics.animations.animation_effects.damage_animation import damage_flash
+
 
 class BossPart(BaseEntity):
     """..."""
 
     __slots__ = (
         # Part identity
-        'name', 'owner', 'is_static', 'z_order',
+        "name",
+        "owner",
+        "is_static",
+        "z_order",
         # Part transform (separate from entity rotation)
-        'offset', 'angle',
+        "offset",
+        "angle",
         # Health
-        'health', 'max_health', 'active',
+        "health",
+        "max_health",
+        "active",
         # Gun rotation
-        'base_angle', 'rotation_speed', 'spray_speed', 'min_angle', 'max_angle',
+        "base_angle",
+        "rotation_speed",
+        "spray_speed",
+        "min_angle",
+        "max_angle",
         # Shooting
-        'fire_rate', 'fire_timer', 'bullet_speed',
-        'spray_bullet_image', 'trace_bullet_image',
-        'spray_direction',
+        "fire_rate",
+        "fire_timer",
+        "bullet_speed",
+        "spray_bullet_image",
+        "trace_bullet_image",
+        "spray_direction",
     )
 
-    def __init__(self, name: str, image: pygame.Surface, offset: tuple,
-                 health: int = 10, owner=None):
+    def __init__(
+        self,
+        name: str,
+        image: pygame.Surface,
+        offset: tuple,
+        health: int = 10,
+        owner=None,
+    ):
         """..."""
         # Initialize BaseEntity at origin (position updated by owner)
         super().__init__(x=0, y=0, image=image)
@@ -85,7 +104,7 @@ class BossPart(BaseEntity):
         self.pos.x = boss_pos.x + rotated_offset_x
         self.pos.y = boss_pos.y + rotated_offset_y
 
-    def rotate_towards_player(self, player_ref, dt=1/60):
+    def rotate_towards_player(self, player_ref, dt=1 / 60):
         """Rotate gun to point at player with custom pivot."""
         if not self.active or not player_ref or not self._base_image:
             return
@@ -95,7 +114,9 @@ class BossPart(BaseEntity):
         dy = player_ref.pos.y - self.pos.y
 
         # Calculate angle (sprite faces DOWN by default, so base is 180)
-        target_angle = math.degrees(math.atan2(dy, dx)) + 90  # +90 converts to "down-facing" reference
+        target_angle = (
+            math.degrees(math.atan2(dy, dx)) + 90
+        )  # +90 converts to "down-facing" reference
 
         # 1. Compute angle relative to base
         relative_angle = target_angle - self.base_angle
@@ -120,7 +141,9 @@ class BossPart(BaseEntity):
             t = self._anim_manager.timer / max(self._anim_manager.duration, 1e-6)
             intensity = int(255 * (1.0 - min(1.0, t)))
             img = self.image.copy()
-            img.fill((intensity, intensity, intensity), special_flags=pygame.BLEND_RGB_ADD)
+            img.fill(
+                (intensity, intensity, intensity), special_flags=pygame.BLEND_RGB_ADD
+            )
             return img
         return self.image
 
@@ -190,7 +213,7 @@ class BossPart(BaseEntity):
             vel=(vel_x, vel_y),
             image=bullet_img,
             owner="enemy",
-            damage=1
+            damage=1,
         )
         # print(f"[BULLET SPAWNED] pos=({spawn_x:.0f}, {spawn_y:.0f}) vel=({vel_x:.0f}, {vel_y:.0f})")
         return True

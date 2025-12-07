@@ -1,6 +1,7 @@
 """
 Mine hazard - deploys to position, arms, explodes.
 """
+
 import pygame
 import math
 from src.entities.base_entity import BaseEntity
@@ -23,6 +24,7 @@ MINE_CONFIG = {
 
 class MineState:
     """Mine lifecycle states."""
+
     DEPLOYING = 1
     ARMED = 2
     EXPLODING = 3
@@ -37,8 +39,18 @@ class MineExplosion(BaseEntity):
     __registry_category__ = EntityCategory.HAZARD
     __registry_name__ = "mine_explosion"
 
-    def __init__(self, x, y, damage_radius, damage, fade_time=None,
-                 draw_manager=None, collision_manager=None, hazard_manager=None, **kwargs):
+    def __init__(
+        self,
+        x,
+        y,
+        damage_radius,
+        damage,
+        fade_time=None,
+        draw_manager=None,
+        collision_manager=None,
+        hazard_manager=None,
+        **kwargs,
+    ):
         super().__init__(x, y, draw_manager=draw_manager, **kwargs)
 
         self.category = EntityCategory.HAZARD
@@ -46,7 +58,9 @@ class MineExplosion(BaseEntity):
 
         self.damage_radius = damage_radius
         self.damage = damage
-        self.fade_time = fade_time if fade_time is not None else MINE_CONFIG["fade_time"]
+        self.fade_time = (
+            fade_time if fade_time is not None else MINE_CONFIG["fade_time"]
+        )
         self.fade_timer = 0.0
 
         self.collision_manager = collision_manager
@@ -55,9 +69,7 @@ class MineExplosion(BaseEntity):
 
         if self.collision_manager:
             self.collision_manager.register_hitbox(
-                self,
-                shape="circle",
-                shape_params={"radius": self.damage_radius}
+                self, shape="circle", shape_params={"radius": self.damage_radius}
             )
 
         self.rect = pygame.Rect(0, 0, 1, 1)
@@ -93,7 +105,9 @@ class MineExplosion(BaseEntity):
         surf = pygame.Surface((size, size), pygame.SRCALPHA)
         center = size // 2
 
-        pygame.draw.circle(surf, (255, 50, 50, alpha), (center, center), int(self.damage_radius))
+        pygame.draw.circle(
+            surf, (255, 50, 50, alpha), (center, center), int(self.damage_radius)
+        )
 
         rect = surf.get_rect(center=(int(self.pos.x), int(self.pos.y)))
         draw_manager.queue_draw(surf, rect, layer=Layers.PICKUPS + 5)
@@ -107,9 +121,20 @@ class MineHazard(BaseEntity):
     __registry_category__ = EntityCategory.HAZARD
     __registry_name__ = "mine"
 
-    def __init__(self, x, y, target_x=None, target_y=None,
-                 deploy_speed=None, damage=None, damage_radius=None,
-                 draw_manager=None, hazard_manager=None, collision_manager=None, **kwargs):
+    def __init__(
+        self,
+        x,
+        y,
+        target_x=None,
+        target_y=None,
+        deploy_speed=None,
+        damage=None,
+        damage_radius=None,
+        draw_manager=None,
+        hazard_manager=None,
+        collision_manager=None,
+        **kwargs,
+    ):
         super().__init__(x, y, draw_manager=draw_manager, **kwargs)
 
         self.category = EntityCategory.HAZARD
@@ -118,9 +143,13 @@ class MineHazard(BaseEntity):
         self.target_x = target_x if target_x is not None else x
         self.target_y = target_y if target_y is not None else y
 
-        self.deploy_speed = deploy_speed if deploy_speed is not None else MINE_CONFIG["deploy_speed"]
+        self.deploy_speed = (
+            deploy_speed if deploy_speed is not None else MINE_CONFIG["deploy_speed"]
+        )
         self.damage = damage if damage is not None else MINE_CONFIG["damage"]
-        self.damage_radius = damage_radius if damage_radius is not None else MINE_CONFIG["damage_radius"]
+        self.damage_radius = (
+            damage_radius if damage_radius is not None else MINE_CONFIG["damage_radius"]
+        )
         self.hazard_manager = hazard_manager
 
         self.mine_state = MineState.DEPLOYING
@@ -135,17 +164,14 @@ class MineHazard(BaseEntity):
         self.collision_manager = collision_manager
         if self.collision_manager:
             self.collision_manager.register_hitbox(
-                self,
-                shape="circle",
-                shape_params={"radius": self.radius}
+                self, shape="circle", shape_params={"radius": self.radius}
             )
 
     def _load_image(self):
         """Load mine sprite."""
         target_size = self.radius * 2
         img = BaseEntity.load_and_scale_image(
-            "assets/images/sprites/projectiles/land_mine.png",
-            scale=1.0
+            "assets/images/sprites/projectiles/land_mine.png", scale=1.0
         )
         if img:
             scale_factor = target_size / max(img.get_width(), img.get_height())
@@ -156,7 +182,9 @@ class MineHazard(BaseEntity):
         # Fallback
         size = self.radius * 2
         fallback = pygame.Surface((size, size), pygame.SRCALPHA)
-        pygame.draw.circle(fallback, (255, 100, 0), (self.radius, self.radius), self.radius)
+        pygame.draw.circle(
+            fallback, (255, 100, 0), (self.radius, self.radius), self.radius
+        )
         return fallback
 
     def _at_target(self):
@@ -205,7 +233,7 @@ class MineHazard(BaseEntity):
                 self.pos.x,
                 self.pos.y,
                 damage_radius=self.damage_radius,
-                damage=self.damage
+                damage=self.damage,
             )
 
         self.mark_dead(immediate=True)
@@ -247,7 +275,9 @@ class TimedMine(MineHazard):
 
     def __init__(self, x, y, fuse_time=None, **kwargs):
         super().__init__(x, y, **kwargs)
-        self.fuse_time = fuse_time if fuse_time is not None else MINE_CONFIG["fuse_time"]
+        self.fuse_time = (
+            fuse_time if fuse_time is not None else MINE_CONFIG["fuse_time"]
+        )
         self.fuse_timer = 0.0
 
     def update(self, dt):
@@ -283,7 +313,9 @@ class TimedMine(MineHazard):
         if current_radius > 2:
             surf = pygame.Surface((size, size), pygame.SRCALPHA)
             alpha = int(100 + 120 * progress)
-            pygame.draw.circle(surf, (255, 50, 50, alpha), (center, center), int(current_radius), 3)
+            pygame.draw.circle(
+                surf, (255, 50, 50, alpha), (center, center), int(current_radius), 3
+            )
 
             rect = surf.get_rect(center=(int(self.pos.x), int(self.pos.y)))
             draw_manager.queue_draw(surf, rect, layer=Layers.PICKUPS + 2)

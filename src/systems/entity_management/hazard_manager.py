@@ -11,7 +11,13 @@ from src.core.debug.debug_logger import DebugLogger
 class HazardManager:
     """Spawns and manages boss/environmental hazards."""
 
-    def __init__(self, draw_manager, collision_manager=None, effects_manager=None, spawn_manager=None):
+    def __init__(
+        self,
+        draw_manager,
+        collision_manager=None,
+        effects_manager=None,
+        spawn_manager=None,
+    ):
         self.draw_manager = draw_manager
         self.collision_manager = collision_manager
         self.effects_manager = effects_manager
@@ -45,19 +51,20 @@ class HazardManager:
             self.spawn_manager.entities.append(hazard)
             self.spawn_manager._alive_cache_dirty = True
 
-        if self.collision_manager and not hasattr(hazard, 'hitbox'):
+        if self.collision_manager and not hasattr(hazard, "hitbox"):
             self.collision_manager.register_hitbox(hazard)
 
         DebugLogger.system(
-            f"Spawned {hazard_class.__name__} at ({x:.0f}, {y:.0f})",
-            category="hazard"
+            f"Spawned {hazard_class.__name__} at ({x:.0f}, {y:.0f})", category="hazard"
         )
         return hazard
 
     def update(self, dt):
         """Update all active hazards."""
         if self._cache_dirty:
-            self._alive_cache = [h for h in self.hazards if h.death_state < LifecycleState.DEAD]
+            self._alive_cache = [
+                h for h in self.hazards if h.death_state < LifecycleState.DEAD
+            ]
             self._cache_dirty = False
 
         for hazard in self._alive_cache:
@@ -78,7 +85,9 @@ class HazardManager:
                 removed += 1
 
         if removed > 0:
-            self.hazards = [h for h in self.hazards if h.death_state < LifecycleState.DEAD]
+            self.hazards = [
+                h for h in self.hazards if h.death_state < LifecycleState.DEAD
+            ]
             self._cache_dirty = True
 
     def clear_all(self):

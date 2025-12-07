@@ -202,14 +202,17 @@ class CollisionManager:
             for e in self.spawn_manager.entities
             if collision_bounds.collidepoint(e.pos)
         ]
-        if hasattr(self, 'hazard_manager') and self.hazard_manager:
+        if hasattr(self, "hazard_manager") and self.hazard_manager:
             for h in self.hazard_manager.hazards:
-                if h.death_state < LifecycleState.DEAD and collision_bounds.collidepoint(h.pos):
+                if (
+                    h.death_state < LifecycleState.DEAD
+                    and collision_bounds.collidepoint(h.pos)
+                ):
                     active_entities.append(h)
 
         # Add boss parts to active entities
         for entity in list(active_entities):
-            if hasattr(entity, 'parts'):
+            if hasattr(entity, "parts"):
                 for part in entity.parts.values():
                     if part.active and collision_bounds.collidepoint(part.pos):
                         active_entities.append(part)

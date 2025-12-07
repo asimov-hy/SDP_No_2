@@ -24,24 +24,23 @@ class SoundManager:
             "player_shoot": "assets/audio/bfx/PlayerShoot.wav",
             "player_damage1": "assets/audio/bfx/PlayerDamage1.wav",
             "player_damage2": "assets/audio/bfx/PlayerDamage2.wav",
-            "player_damage3" : "assets/audio/bfx/PlayerDamage3.wav",
+            "player_damage3": "assets/audio/bfx/PlayerDamage3.wav",
             "score_sound1": "assets/audio/bfx/ScoreSound1.wav",
             "score_sound2": "assets/audio/bfx/ScoreSound2.wav",
             "score_sound3": "assets/audio/bfx/ScoreSound3.wav",
             "level_up": "assets/audio/bfx/LevelUpSound.wav",
             "button_click": "assets/audio/ui/ButtonClick.wav",
-
             "boss_intro": "assets/audio/bfx/BossIntro.wav",
-            "boss_explosion":"assets/audio/bfx/BossExplosion.wav",
-            "boss_final_explosion":"assets/audio/bfx/BossFinalExplosion.wav",
-            "boss_charge_load":"assets/audio/bfx/BossChargeLoad.wav",
-            "boss_charge":"assets/audio/bfx/BossCharge.wav",
-            "boss_bounce_shot":"assets/audio/bfx/BossBounceShot.wav",
-            "boss_trace_player":"assets/audio/bfx/BossTracePlayer.wav",
-            "boss_trace_fire":"assets/audio/bfx/BossTraceShot.wav",
-            "boss_ratio_25":"assets/audio/bfx/BossRatio25.wav",
-            "boss_ratio_50":"assets/audio/bfx/BossRatio50.wav",
-            "boss_ratio_75":"assets/audio/bfx/BossRatio75.wav",
+            "boss_explosion": "assets/audio/bfx/BossExplosion.wav",
+            "boss_final_explosion": "assets/audio/bfx/BossFinalExplosion.wav",
+            "boss_charge_load": "assets/audio/bfx/BossChargeLoad.wav",
+            "boss_charge": "assets/audio/bfx/BossCharge.wav",
+            "boss_bounce_shot": "assets/audio/bfx/BossBounceShot.wav",
+            "boss_trace_player": "assets/audio/bfx/BossTracePlayer.wav",
+            "boss_trace_fire": "assets/audio/bfx/BossTraceShot.wav",
+            "boss_ratio_25": "assets/audio/bfx/BossRatio25.wav",
+            "boss_ratio_50": "assets/audio/bfx/BossRatio50.wav",
+            "boss_ratio_75": "assets/audio/bfx/BossRatio75.wav",
         },
     }
 
@@ -112,7 +111,7 @@ class SoundManager:
 
     def play_bfx_loop(self, name, loop):  # play BFX for n times
         bfx = self.bfx[name]
-        bfx.play(loops = loop)
+        bfx.play(loops=loop)
 
     def play_random_bfx(self, bfx_list):
         chosen_name = random.choice(bfx_list)
@@ -135,7 +134,7 @@ class SoundManager:
         pygame.mixer.music.stop()
         self.current_bgm_id = None
 
-    def stop_bfx(self, name): # stop BFX
+    def stop_bfx(self, name):  # stop BFX
         self.bfx[name].stop()
 
     # Set BFX volume (0 - 100)

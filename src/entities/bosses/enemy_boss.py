@@ -13,17 +13,23 @@ from src.audio.sound_manager import get_sound_manager
 from src.entities.enemies.base_enemy import BaseEnemy
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_types import EntityCategory
-from src.entities.entity_state import LifecycleState, InteractionState
+from src.entities.entity_state import LifecycleState
 from src.entities.entity_types import CollisionTags
 from src.entities.bosses.boss_attack_manager import BossAttackManager
 from src.entities.bosses.boss_part import BossPart
-from src.core.services.event_manager import get_events, SpawnPauseEvent, BossDeathEvent, ScreenShakeEvent
+from src.core.services.event_manager import (
+    get_events,
+    SpawnPauseEvent,
+    BossDeathEvent,
+    ScreenShakeEvent,
+)
 
 from src.graphics.particles.particle_manager import DebrisEmitter, ParticleEmitter
 
 from src.core.services.config_manager import load_config
 from src.core.debug.debug_logger import DebugLogger
 from src.core.runtime.game_settings import Debug
+
 
 class EnemyBoss(BaseEnemy):
     """
@@ -42,31 +48,56 @@ class EnemyBoss(BaseEnemy):
 
     __slots__ = (
         # Config
-        '_boss_config', '_weapon_config',
+        "_boss_config",
+        "_weapon_config",
         # References
-        'player_ref', 'bullet_manager', 'attack_manager',
+        "player_ref",
+        "bullet_manager",
+        "attack_manager",
         # Parts
-        'parts', 'body_image', 'hazard_manager',
+        "parts",
+        "body_image",
+        "hazard_manager",
         # Particles
-        'debris_emitters', 'debris_zones',
+        "debris_emitters",
+        "debris_zones",
         # Bullet images (loaded from config)
-        '_spray_bullet_img', '_trace_bullet_img',
+        "_spray_bullet_img",
+        "_trace_bullet_img",
         # Movement
-        'anchor_pos', 'home_pos', 'entrance_complete',
-        'wander_radius', 'noise_time', 'noise_seed', 'hover_velocity', 'bob_time',
+        "anchor_pos",
+        "home_pos",
+        "entrance_complete",
+        "wander_radius",
+        "noise_time",
+        "noise_seed",
+        "hover_velocity",
+        "bob_time",
         # Player tracking
-        'track_target_x', 'target_follow_rate', 'track_speed_max', 'track_speed_multiplier',
+        "track_target_x",
+        "target_follow_rate",
+        "track_speed_max",
+        "track_speed_multiplier",
         # Tilt
-        'tilt_angle', 'tilt_max', 'tilt_speed', 'velocity_x', 'tilt_enabled',
+        "tilt_angle",
+        "tilt_max",
+        "tilt_speed",
+        "velocity_x",
+        "tilt_enabled",
         # Rotation
-        'body_rotation',
+        "body_rotation",
         # Flags
-        '_rotation_enabled', 'exp_value',
+        "_rotation_enabled",
+        "exp_value",
         # death data
-         '_death_phase', '_death_timer', '_explosion_timer', '_shake_origin',
+        "_death_phase",
+        "_death_timer",
+        "_explosion_timer",
+        "_shake_origin",
         # current boss health ratio tracking
-        '_hp_75_triggered', '_hp_50_triggered', '_hp_25_triggered',
-
+        "_hp_75_triggered",
+        "_hp_50_triggered",
+        "_hp_25_triggered",
     )
 
     __registry_category__ = EntityCategory.ENEMY
@@ -81,8 +112,17 @@ class EnemyBoss(BaseEnemy):
             cls._boss_data = load_config("bosses.json") or {}
         return cls._boss_data
 
-    def __init__(self, x, y, boss_type="boss_juggernaut", draw_manager=None,
-                 player_ref=None, bullet_manager=None, hazard_manager=None, **kwargs):
+    def __init__(
+        self,
+        x,
+        y,
+        boss_type="boss_juggernaut",
+        draw_manager=None,
+        player_ref=None,
+        bullet_manager=None,
+        hazard_manager=None,
+        **kwargs,
+    ):
         """
         Initialize boss from JSON config.
 
@@ -134,13 +174,14 @@ class EnemyBoss(BaseEnemy):
 
         # Initialize base enemy
         super().__init__(
-            x, y,
+            x,
+            y,
             image=body_img,
             draw_manager=draw_manager,
             speed=speed,
             health=health,
             direction=(0, 0),
-            hitbox_config=hitbox_config
+            hitbox_config=hitbox_config,
         )
 
         self.exp_value = config.get("exp", 1000)
@@ -185,10 +226,10 @@ class EnemyBoss(BaseEnemy):
 
         # Debris zone config: [x_offset, y_offset, width, height] relative to boss center
         self.debris_zones = {
-            'top': {'offset': (0, -270), 'size': (450, 50)},
-            'bottom': {'offset': (0, 270), 'size': (450, 50)},
-            'left': {'offset': (-170, 0), 'size': (100, 500)},
-            'right': {'offset': (170, 0), 'size': (100, 500)},
+            "top": {"offset": (0, -270), "size": (450, 50)},
+            "bottom": {"offset": (0, 270), "size": (450, 50)},
+            "left": {"offset": (-170, 0), "size": (100, 500)},
+            "right": {"offset": (170, 0), "size": (100, 500)},
         }
 
         # Load weapon parts
@@ -203,7 +244,7 @@ class EnemyBoss(BaseEnemy):
 
         DebugLogger.init(
             f"Spawned {boss_type} at ({x}, {y}) | HP={health} | Parts={len(self.parts)}",
-            category="enemy"
+            category="enemy",
         )
 
     # ===================================================================
@@ -216,13 +257,21 @@ class EnemyBoss(BaseEnemy):
         spray_cfg = cfg.get("spray_bullet", {})
         trace_cfg = cfg.get("trace_bullet", {})
 
-        self._spray_bullet_img = BaseEntity.load_and_scale_image(
-            spray_cfg.get("image"), spray_cfg.get("scale", 1.0)
-        ) if spray_cfg.get("image") else None
+        self._spray_bullet_img = (
+            BaseEntity.load_and_scale_image(
+                spray_cfg.get("image"), spray_cfg.get("scale", 1.0)
+            )
+            if spray_cfg.get("image")
+            else None
+        )
 
-        self._trace_bullet_img = BaseEntity.load_and_scale_image(
-            trace_cfg.get("image"), trace_cfg.get("scale", 1.0)
-        ) if trace_cfg.get("image") else None
+        self._trace_bullet_img = (
+            BaseEntity.load_and_scale_image(
+                trace_cfg.get("image"), trace_cfg.get("scale", 1.0)
+            )
+            if trace_cfg.get("image")
+            else None
+        )
 
     def _create_gun_parts(self, scale: float):
         """Create gun attachments from JSON config."""
@@ -316,7 +365,7 @@ class EnemyBoss(BaseEnemy):
         get_events().dispatch(SpawnPauseEvent(paused=True))
 
         # Disable hitbox
-        if hasattr(self, 'hitbox') and self.hitbox:
+        if hasattr(self, "hitbox") and self.hitbox:
             self.hitbox.set_active(False)
         self.collision_tag = CollisionTags.NEUTRAL
 
@@ -356,6 +405,7 @@ class EnemyBoss(BaseEnemy):
     def _apply_shake(self, t):
         """Shake boss position with decreasing intensity."""
         import math
+
         intensity = 8 * (1.0 - t * 0.5)  # Start strong, fade slightly
         frequency = 40
 
@@ -387,7 +437,11 @@ class EnemyBoss(BaseEnemy):
         for _ in range(6):
             offset_x = random.randint(-40, 40)
             offset_y = random.randint(-40, 40)
-            ParticleEmitter.burst("boss_explosion_final", (center_x + offset_x, center_y + offset_y), count=35)
+            ParticleEmitter.burst(
+                "boss_explosion_final",
+                (center_x + offset_x, center_y + offset_y),
+                count=35,
+            )
 
         get_events().dispatch(ScreenShakeEvent(intensity=20, duration=0.8))
 
@@ -407,10 +461,10 @@ class EnemyBoss(BaseEnemy):
         cx, cy = self.pos.x, self.pos.y
 
         debris_rects = []
-        for zone in ['top', 'bottom', 'left', 'right']:
+        for zone in ["top", "bottom", "left", "right"]:
             cfg = self.debris_zones[zone]
-            ox, oy = cfg['offset']
-            w, h = cfg['size']
+            ox, oy = cfg["offset"]
+            w, h = cfg["size"]
             rect = pygame.Rect(cx + ox - w // 2, cy + oy - h // 2, w, h)
             debris_rects.append(rect)
 
@@ -466,7 +520,9 @@ class EnemyBoss(BaseEnemy):
                 # Boss chases ghost - speed scales with distance
                 chase_dx = self.track_target_x - self.pos.x
                 distance = max(0, abs(chase_dx) - 50)
-                track_speed = min(distance * self.track_speed_multiplier, self.track_speed_max)
+                track_speed = min(
+                    distance * self.track_speed_multiplier, self.track_speed_max
+                )
 
                 if distance > 1:
                     dir_sign = 1 if chase_dx > 0 else -1
@@ -481,15 +537,22 @@ class EnemyBoss(BaseEnemy):
                 half_width = self.rect.width // 2
                 screen_width = 1280
                 padding = 20
-                self.pos.x = max(half_width + padding, min(screen_width - half_width - padding, self.pos.x))
+                self.pos.x = max(
+                    half_width + padding,
+                    min(screen_width - half_width - padding, self.pos.x),
+                )
 
                 self.anchor_pos.y = self.home_pos.y
                 self.anchor_pos.x = self.pos.x
             else:
                 # IDLE: smoothly return anchor to home
                 return_speed = 1.0
-                self.anchor_pos.x += (self.home_pos.x - self.anchor_pos.x) * return_speed * dt
-                self.anchor_pos.y += (self.home_pos.y - self.anchor_pos.y) * return_speed * dt
+                self.anchor_pos.x += (
+                    (self.home_pos.x - self.anchor_pos.x) * return_speed * dt
+                )
+                self.anchor_pos.y += (
+                    (self.home_pos.y - self.anchor_pos.y) * return_speed * dt
+                )
                 self.velocity_x *= 0.95
 
         # 3. Organic noise (always runs)
@@ -513,13 +576,17 @@ class EnemyBoss(BaseEnemy):
         # 5. Spring back to anchor
         distance = self.pos.distance_to(self.anchor_pos)
         if distance > self.wander_radius:
-            pull = (self.anchor_pos - self.pos).normalize() * (distance - self.wander_radius) * 4
+            pull = (
+                (self.anchor_pos - self.pos).normalize()
+                * (distance - self.wander_radius)
+                * 4
+            )
             self.pos += pull * dt
 
     def sync_parts_to_body(self):
         """Sync part orientations to current body_rotation."""
         for part in self.parts.values():
-            if getattr(part, 'is_static', False):
+            if getattr(part, "is_static", False):
                 # Static parts: set rotation_angle for hitbox (visual rotation done in draw)
                 part.rotation_angle = -(self.tilt_angle + self.body_rotation)
                 if part.hitbox:
@@ -531,7 +598,9 @@ class EnemyBoss(BaseEnemy):
                 # Bake full rotation into part image (base + local + body)
                 final_angle = part.base_angle + part.angle + self.body_rotation
                 part.image = pygame.transform.rotate(part._base_image, -final_angle)
-                part.rect = part.image.get_rect(center=(int(part.pos.x), int(part.pos.y)))
+                part.rect = part.image.get_rect(
+                    center=(int(part.pos.x), int(part.pos.y))
+                )
                 # Set rotation_angle for hitbox system
                 part.rotation_angle = -final_angle
                 # Force hitbox to update with new rect dimensions
@@ -553,7 +622,9 @@ class EnemyBoss(BaseEnemy):
             tilt_strength = 1.0
         else:
             # Smooth interpolation between thresholds
-            tilt_strength = (abs_ratio - threshold_min) / (threshold_max - threshold_min)
+            tilt_strength = (abs_ratio - threshold_min) / (
+                threshold_max - threshold_min
+            )
 
         target_tilt = -speed_ratio * self.tilt_max * tilt_strength
 
@@ -625,11 +696,16 @@ class EnemyBoss(BaseEnemy):
 
         if Debug.HITBOX_VISIBLE:
             cx, cy = self.pos.x, self.pos.y
-            colors = [(255, 100, 100), (100, 255, 100), (100, 100, 255), (255, 255, 100)]
+            colors = [
+                (255, 100, 100),
+                (100, 255, 100),
+                (100, 100, 255),
+                (255, 255, 100),
+            ]
 
             for (zone, cfg), color in zip(self.debris_zones.items(), colors):
-                ox, oy = cfg['offset']
-                w, h = cfg['size']
+                ox, oy = cfg["offset"]
+                w, h = cfg["size"]
                 rect = pygame.Rect(cx + ox - w // 2, cy + oy - h // 2, w, h)
                 draw_manager.queue_hitbox(rect, color=color, width=2)
 
@@ -644,7 +720,6 @@ class EnemyBoss(BaseEnemy):
         self.attack_manager.draw(draw_manager)
 
         for part in self.parts.values():
-
             if part.active and part.image:
                 # Rotate offset by body tilt + body rotation
                 total_rotation = self.tilt_angle + self.body_rotation
@@ -658,30 +733,47 @@ class EnemyBoss(BaseEnemy):
 
                 # Static parts: apply full body rotation at draw time
                 # Non-static parts: body_rotation already baked in, only apply tilt
-                if getattr(part, 'is_static', False):
-                    rotated_part_img = pygame.transform.rotate(draw_img, -total_rotation)
+                if getattr(part, "is_static", False):
+                    rotated_part_img = pygame.transform.rotate(
+                        draw_img, -total_rotation
+                    )
                 elif self.tilt_enabled and self.tilt_angle != 0:
-                    rotated_part_img = pygame.transform.rotate(draw_img, -self.tilt_angle)
+                    rotated_part_img = pygame.transform.rotate(
+                        draw_img, -self.tilt_angle
+                    )
                 else:
                     rotated_part_img = draw_img
 
                 part_pos = (
-                    self.rect.centerx + int(rotated_offset_x) - rotated_part_img.get_width() // 2,
-                    self.rect.centery + int(rotated_offset_y) - rotated_part_img.get_height() // 2
+                    self.rect.centerx
+                    + int(rotated_offset_x)
+                    - rotated_part_img.get_width() // 2,
+                    self.rect.centery
+                    + int(rotated_offset_y)
+                    - rotated_part_img.get_height() // 2,
                 )
                 part_rect = rotated_part_img.get_rect(topleft=part_pos)
-                draw_manager.queue_draw(rotated_part_img, part_rect, layer=self.layer + part.z_order)
+                draw_manager.queue_draw(
+                    rotated_part_img, part_rect, layer=self.layer + part.z_order
+                )
 
                 # Debug: Draw pivot point
                 if Debug.HITBOX_VISIBLE:
                     pivot_world = (int(part.pos.x), int(part.pos.y))
 
                     debug_surf = pygame.Surface((10, 10), pygame.SRCALPHA)
-                    pygame.draw.circle(debug_surf, (255, 0, 255), (5, 5), 5)  # Magenta pivot
-                    pygame.draw.circle(debug_surf, (0, 255, 0), (5, 5), 2)  # Green center
+                    pygame.draw.circle(
+                        debug_surf, (255, 0, 255), (5, 5), 5
+                    )  # Magenta pivot
+                    pygame.draw.circle(
+                        debug_surf, (0, 255, 0), (5, 5), 2
+                    )  # Green center
 
-                    draw_manager.queue_draw(debug_surf,
-                                            debug_surf.get_rect(center=pivot_world), layer=self.layer + 2)
+                    draw_manager.queue_draw(
+                        debug_surf,
+                        debug_surf.get_rect(center=pivot_world),
+                        layer=self.layer + 2,
+                    )
 
     # ===================================================================
     # Utility

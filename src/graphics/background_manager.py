@@ -78,20 +78,22 @@ class BackgroundLayer:
         self.width = self.image.get_width()
         self.height = self.image.get_height()
 
-    def random_scatter_objects(self, object_paths, count, min_distance=50, max_attempts=50):
+    def random_scatter_objects(
+        self, object_paths, count, min_distance=50, max_attempts=50
+    ):
         """
-            Scatters objects onto the background layer.
+        Scatters objects onto the background layer.
 
-            1. Maintains the original image size without scaling.
-            2. Ensures a minimum separation distance (min_distance) from existing objects.
-            3. Calculates distance considering the map's seamless wrapping (Toroidal Check).
+        1. Maintains the original image size without scaling.
+        2. Ensures a minimum separation distance (min_distance) from existing objects.
+        3. Calculates distance considering the map's seamless wrapping (Toroidal Check).
 
-            Args:
-                object_paths (list): List of image file paths.
-                count (int): Target number of objects to place.
-                min_distance (int): Minimum distance between objects (in pixels).
-                max_attempts (int): Maximum number of retries if position selection fails.
-            """
+        Args:
+            object_paths (list): List of image file paths.
+            count (int): Target number of objects to place.
+            min_distance (int): Minimum distance between objects (in pixels).
+            max_attempts (int): Maximum number of retries if position selection fails.
+        """
         if not object_paths:
             return
 
@@ -124,7 +126,7 @@ class BackgroundLayer:
 
                 # Distance Check
                 conflict = False
-                for (px, py) in placed_positions:
+                for px, py in placed_positions:
                     dx = abs(cx - px)
                     dy = abs(cy - py)
 

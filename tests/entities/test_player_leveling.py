@@ -96,7 +96,6 @@ class TestPlayerLevelUpCore:
         )
         assert player.exp == 0, f"Expected 0 overflow EXP, got {player.exp}"
 
-
     def test_level_up_preserves_combat_state(self, mock_player_with_levelup):
         """
         CRITICAL: Test that level up doesn't break player combat state.

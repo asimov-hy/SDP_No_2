@@ -21,7 +21,6 @@ from src.core.debug.debug_logger import DebugLogger
 from src.systems.entity_management.entity_registry import EntityRegistry
 
 
-
 class EnemyHoming(BaseEnemy):
     """Enemy that tracks the player with configurable turn rates and speeds."""
 

@@ -62,7 +62,8 @@ def handle_ADD_HEALTH(player, effect_data):
     player.stress = 0.0
 
     DebugLogger.action(
-        f"Health +{amount} ({old_health} → {player.health}), Stress reset ({old_stress:.1f} → 0)", category="item"
+        f"Health +{amount} ({old_health} → {player.health}), Stress reset ({old_stress:.1f} → 0)",
+        category="item",
     )
 
 
