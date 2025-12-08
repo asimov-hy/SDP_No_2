@@ -15,12 +15,13 @@ Responsibilities
 """
 
 import pygame
-from src.core.runtime.game_settings import Debug
+
+from src.core.runtime.game_settings import Debug, Display
 from src.core.debug.debug_logger import DebugLogger
-from src.entities.entity_state import LifecycleState
-from src.entities.entity_state import InteractionState
+
+from src.entities.entity_state import LifecycleState, InteractionState
+
 from src.systems.collision.collision_hitbox import CollisionHitbox
-from src.core.runtime.game_settings import Display
 
 
 class CollisionManager:
@@ -28,22 +29,40 @@ class CollisionManager:
 
     BASE_CELL_SIZE = 64
     NEIGHBOR_OFFSETS = [
-        (0, 0), (1, 0), (-1, 0), (0, 1), (0, -1),
-        (1, 1), (-1, 1), (1, -1), (-1, -1)
+        (0, 0),
+        (1, 0),
+        (-1, 0),
+        (0, 1),
+        (0, -1),
+        (1, 1),
+        (-1, 1),
+        (1, -1),
+        (-1, -1),
     ]
 
-    def __init__(self, player, bullet_manager, spawn_manager):
+    def __init__(self, player, bullet_manager, spawn_manager, hazard_manager=None):
         self.player = player
         self.bullet_manager = bullet_manager
         self.spawn_manager = spawn_manager
+        self.hazard_manager = hazard_manager
         self.CELL_SIZE = self.BASE_CELL_SIZE
 
         self.rules = {
             ("player", "enemy"),
             ("player", "pickup"),
             ("player_bullet", "enemy"),
+            ("player", "hazard"),  # Mine damages player
+            ("player_bullet", "hazard"),  # Bullets destroy mines
             ("enemy_bullet", "player"),
-            ("player_bullet", "enemy_bullet"),
+            # ("player_bullet", "enemy_bullet"),
+            ("shield", "enemy"),
+            ("shield", "enemy_bullet"),
+            ("player_bullet", "boss_part"),
+            ("player", "boss_body"),  # Boss can damage player
+            ("shield", "boss_body"),
+            # Hazard collisions
+            ("player", "hazard"),  # Mine damages player
+            ("player_bullet", "hazard"),  # Bullets destroy mines
         }
 
         self.hitboxes = {}
@@ -63,15 +82,22 @@ class CollisionManager:
     # ===========================================================
     # Hitbox Lifecycle Management
     # ===========================================================
-    def register_hitbox(self, entity, scale=None, offset=(0, 0), shape=None, shape_params=None):
+    def register_hitbox(
+        self, entity, scale=None, offset=(0, 0), shape=None, shape_params=None
+    ):
         """Create and register a hitbox for an entity."""
         # Extract from entity if not provided (allows overrides)
-        scale = scale if scale is not None else getattr(entity, 'hitbox_scale', 1.0)
-        shape = shape if shape is not None else getattr(entity, 'hitbox_shape', 'rect')
-        shape_params = shape_params if shape_params is not None else getattr(entity, 'hitbox_params', {})
+        scale = scale if scale is not None else getattr(entity, "hitbox_scale", 1.0)
+        shape = shape if shape is not None else getattr(entity, "hitbox_shape", "rect")
+        shape_params = (
+            shape_params
+            if shape_params is not None
+            else getattr(entity, "hitbox_params", {})
+        )
 
-        hitbox = CollisionHitbox(entity, scale=scale, offset=offset,
-                                 shape=shape, shape_params=shape_params)
+        hitbox = CollisionHitbox(
+            entity, scale=scale, offset=offset, shape=shape, shape_params=shape_params
+        )
 
         self.hitboxes[id(entity)] = hitbox
         entity.hitbox = hitbox  # Store back-reference
@@ -80,7 +106,7 @@ class CollisionManager:
         entity_id = id(entity)
         self._entity_cache[entity_id] = {
             "collision_tag": getattr(entity, "collision_tag", None),
-            "has_state": hasattr(entity, 'state'),
+            "has_state": hasattr(entity, "state"),
         }
 
         DebugLogger.trace(f"Registered hitbox for {type(entity).__name__}")
@@ -160,27 +186,45 @@ class CollisionManager:
 
         # Broad-phase culling
         margin = 150
-        collision_bounds = pygame.Rect(-margin, -margin,
-                                       Display.WIDTH + margin * 2,
-                                       Display.HEIGHT + margin * 2)
+        collision_bounds = pygame.Rect(
+            -margin, -margin, Display.WIDTH + margin * 2, Display.HEIGHT + margin * 2
+        )
 
         # Filter active entities
         active_bullets = [
-            b for b in self.bullet_manager.active
+            b
+            for b in self.bullet_manager.active
             if collision_bounds.collidepoint(b.pos)
         ]
 
         active_entities = [
-            e for e in self.spawn_manager.entities
+            e
+            for e in self.spawn_manager.entities
             if collision_bounds.collidepoint(e.pos)
         ]
+        if hasattr(self, "hazard_manager") and self.hazard_manager:
+            for h in self.hazard_manager.hazards:
+                if (
+                    h.death_state < LifecycleState.DEAD
+                    and collision_bounds.collidepoint(h.pos)
+                ):
+                    active_entities.append(h)
+
+        # Add boss parts to active entities
+        for entity in list(active_entities):
+            if hasattr(entity, "parts"):
+                for part in entity.parts.values():
+                    if part.active and collision_bounds.collidepoint(part.pos):
+                        active_entities.append(part)
 
         # Cache player alive check
         player = None
         if self.player and self.player.death_state < LifecycleState.DEAD:
             player = self.player
 
-        total_entities = len(active_bullets) + len(active_entities) + (1 if player else 0)
+        total_entities = (
+            len(active_bullets) + len(active_entities) + (1 if player else 0)
+        )
 
         if total_entities == 0:
             return self._collisions
@@ -213,8 +257,10 @@ class CollisionManager:
                 neighbor_x = cx + dx
                 neighbor_y = cy + dy
 
-                if not (0 <= neighbor_x < self.GRID_COLS and
-                        0 <= neighbor_y < self.GRID_ROWS):
+                if not (
+                    0 <= neighbor_x < self.GRID_COLS
+                    and 0 <= neighbor_y < self.GRID_ROWS
+                ):
                     continue
 
                 neighbor_index = neighbor_x + neighbor_y * self.GRID_COLS
@@ -247,14 +293,20 @@ class CollisionManager:
                         b_cache = self._entity_cache.get(b_id, {})
                         b_tag = b_cache.get("collision_tag")
 
-                        if (a_tag, b_tag) not in self.rules and (b_tag, a_tag) not in self.rules:
+                        if (a_tag, b_tag) not in self.rules and (
+                            b_tag,
+                            a_tag,
+                        ) not in self.rules:
                             continue
 
                         # Check state if entities have it (some entities like items may not)
-                        a_state = getattr(a, 'state', InteractionState.DEFAULT)
-                        b_state = getattr(b, 'state', InteractionState.DEFAULT)
+                        a_state = getattr(a, "state", InteractionState.DEFAULT)
+                        b_state = getattr(b, "state", InteractionState.DEFAULT)
 
-                        if a_state >= InteractionState.INTANGIBLE or b_state >= InteractionState.INTANGIBLE:
+                        if (
+                            a_state >= InteractionState.INTANGIBLE
+                            or b_state >= InteractionState.INTANGIBLE
+                        ):
                             continue
 
                         if self._check_collision(a_hitbox, b_hitbox):
@@ -262,7 +314,9 @@ class CollisionManager:
                             b_collision_tag = b_tag
 
                             append_collision((a, b))
-                            self._process_collision(a, b, a_collision_tag, b_collision_tag)
+                            self._process_collision(
+                                a, b, a_collision_tag, b_collision_tag
+                            )
 
         return self._collisions
 
@@ -301,7 +355,7 @@ class CollisionManager:
             p1 = corners_a[i]
             p2 = corners_a[(i + 1) % len(corners_a)]
             edge = (p2[0] - p1[0], p2[1] - p1[1])
-            axes.append((-edge[1], edge[0])) # Normal
+            axes.append((-edge[1], edge[0]))  # Normal
 
         for i in range(len(corners_b)):
             p1 = corners_b[i]
@@ -312,20 +366,21 @@ class CollisionManager:
         # Project and check overlap
         for axis in axes:
             # Normalize axis (optional but good for stability)
-            length = (axis[0]**2 + axis[1]**2)**0.5
-            if length == 0: continue
-            axis = (axis[0]/length, axis[1]/length)
+            length = (axis[0] ** 2 + axis[1] ** 2) ** 0.5
+            if length == 0:
+                continue
+            axis = (axis[0] / length, axis[1] / length)
 
             # Project A
-            proj_a = [c[0]*axis[0] + c[1]*axis[1] for c in corners_a]
+            proj_a = [c[0] * axis[0] + c[1] * axis[1] for c in corners_a]
             min_a, max_a = min(proj_a), max(proj_a)
 
             # Project B
-            proj_b = [c[0]*axis[0] + c[1]*axis[1] for c in corners_b]
+            proj_b = [c[0] * axis[0] + c[1] * axis[1] for c in corners_b]
             min_b, max_b = min(proj_b), max(proj_b)
 
             if max_a < min_b or max_b < min_a:
-                return False # Gap found
+                return False  # Gap found
 
         return True
 

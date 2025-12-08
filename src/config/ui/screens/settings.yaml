@@ -1,183 +1,316 @@
-type: container
-id: settings_root
-size: [800, 600]
-anchor: center
-background: [20, 20, 30, 240]
-border: 2
-border_color: [100, 100, 120]
-border_radius: 10
+settings:
+  type: container
+  id: "settings_root"
+  size: [500, 600]
+  parent_anchor: center_left
+  self_anchor: center_left
+  offset: [50, 0]
+  background: [32, 32, 32, 100]
+  border: 2
+  border_color: [100, 100, 100]
+  border_radius: 10
+  layer: Layers.UI
 
-children:
-  # Title
-  - type: label
-    text: "SETTINGS"
-    size: [800, 80]
-    anchor: top_center
-    offset: [0, 20]
-    font_size: 48
-    text_color: [255, 255, 255]
+  children:
+    # Title
+    - type: label
+      id: "title"
+      text: "SETTINGS"
+      size: [200, 60]
+      parent_anchor: "#settings_root:top_center"
+      self_anchor: top_center
+      offset: [0, -30]
+      font_size: 32
+      font_color: [255, 255, 255]
+      background: [ 32, 32, 32, 0 ]
+      layer: Layers.UI
 
-  # Display Section
-  - type: container
-    size: [700, 280]
-    anchor: top_center
-    offset: [0, 120]
-    background: [30, 30, 40, 200]
-    border: 1
-    border_color: [80, 80, 100]
-    border_radius: 5
-    padding: 20
+    # Display Section Label
+    - type: label
+      id: "display_title"
+      text: "Display"
+      size: [660, 40]
+      parent_anchor: "#settings_root:top_center"
+      self_anchor: top_center
+      offset: [100, 30]
+      font_size: 24
+      color: [200, 200, 200]
+      text_align: left
+      layer: Layers.UI
 
-    children:
-      # Section Title
-      - type: label
-        text: "Display"
-        size: [700, 40]
-        anchor: top_left
-        font_size: 32
-        text_color: [200, 200, 255]
-        text_align: left
+    # Fullscreen Toggle Button
+    - type: button
+      id: "fullscreen_button"
+      text: "Toggle Fullscreen"
+      action: "toggle_fullscreen"
+      size: [250, 50]
+      parent_anchor: "#display_title:bottom_left"
+      self_anchor: top_left
+      offset: [20, 20]
+      color: [96, 96, 96, 100]
+      font_size: 24
+      border: 2
+      border_color: [32, 32, 32, 0]
+      border_radius: 5
+      layer: Layers.UI
 
-      # Fullscreen Toggle Button
-      - type: button
-        id: fullscreen_button
-        text: "Toggle Fullscreen"
-        action: "toggle_fullscreen"
-        size: [250, 50]
-        anchor: top_left
-        offset: [20, 60]
-        color: [60, 80, 120]
-        hover:
-          color: [80, 100, 140]
-        font_size: 24
-        border: 2
-        border_color: [100, 120, 160]
-        border_radius: 5
+    # Window Size Label
+    - type: label
+      id: "window_label"
+      text: "Window Size:"
+      size: [150, 40]
+      parent_anchor: "#display_title:bottom_left"
+      self_anchor: top_left
+      offset: [0, 100]
+      font_size: 24
+      color: [200, 200, 200]
+      text_align: left
+      layer: Layers.UI
 
-      # Window Size Label
-      - type: label
-        text: "Window Size:"
-        size: [150, 40]
-        anchor: top_left
-        offset: [20, 130]
-        font_size: 20
-        text_color: [200, 200, 200]
-        text_align: left
+    # Small Window Button (720p)
+    - type: button
+      id: "window_size_small"
+      text: "720p"
+      action: "window_size_small"
+      size: [120, 45]
+      parent_anchor: "#window_label:bottom_left"
+      self_anchor: top_left
+      offset: [20, 20]
+      color: [96, 96, 96, 100]
+      font_size: 20
+      border: 2
+      border_color: [100, 120, 160, 0]
+      border_radius: 5
+      layer: Layers.UI
 
-      # Small Window Button (720p)
-      - type: button
-        id: window_size_small
-        text: "720p"
-        action: "window_size_small"
-        size: [120, 45]
-        anchor: top_left
-        offset: [20, 175]
-        color: [60, 80, 120]
-        hover:
-          color: [80, 100, 140]
-        font_size: 20
-        border: 2
-        border_color: [100, 120, 160]
-        border_radius: 5
+    # Medium Window Button (1080p)
+    - type: button
+      id: "window_size_medium"
+      text: "1080p"
+      action: "window_size_medium"
+      size: [120, 45]
+      parent_anchor: "#window_size_small:right"
+      self_anchor: left
+      offset: [15, 0]
+      color: [96, 96, 96, 100]
+      font_size: 20
+      border: 2
+      border_color: [100, 120, 160, 0]
+      border_radius: 5
+      layer: Layers.UI
 
-      # Medium Window Button (1080p)
-      - type: button
-        id: window_size_medium
-        text: "1080p"
-        action: "window_size_medium"
-        size: [120, 45]
-        anchor: top_left
-        offset: [155, 175]
-        color: [60, 80, 120]
-        hover:
-          color: [80, 100, 140]
-        font_size: 20
-        border: 2
-        border_color: [100, 120, 160]
-        border_radius: 5
+    # Large Window Button (1440p)
+    - type: button
+      id: "window_size_large"
+      text: "1440p"
+      action: "window_size_large"
+      size: [120, 45]
+      parent_anchor: "#window_size_medium:top_right"
+      self_anchor: top_left
+      offset: [15, 0]
+      color: [96, 96, 96, 100]
+      font_size: 20
+      border: 2
+      border_color: [100, 120, 160, 0]
+      border_radius: 5
+      layer: Layers.UI
 
-      # Large Window Button (1440p)
-      - type: button
-        id: window_size_large
-        text: "1440p"
-        action: "window_size_large"
-        size: [120, 45]
-        anchor: top_left
-        offset: [290, 175]
-        color: [60, 80, 120]
-        hover:
-          color: [80, 100, 140]
-        font_size: 20
-        border: 2
-        border_color: [100, 120, 160]
-        border_radius: 5
+    # Audio Section Label
+    - type: label
+      id: "audio_title"
+      text: "Audio"
+      size: [660, 40]
+      parent_anchor: "#window_size_small:bottom_left"
+      self_anchor: top_left
+      offset: [-20, 40]
+      font_size: 24
+      color: [200, 200, 200]
+      text_align: left
+      layer: Layers.UI
 
-      # Window Size Info
-      - type: label
-        text: "(Changes apply immediately)"
-        size: [300, 30]
-        anchor: top_left
-        offset: [425, 185]
-        font_size: 14
-        text_color: [150, 150, 150]
-        text_align: left
+    # Master Volume Controls Container
+    - type: label
+      id: "master_volume_text_label"
+      text: "Master Volume"
+      size: [150, 40]
+      parent_anchor: "#audio_title:bottom_left"
+      self_anchor: top_left
+      offset: [20, 10]
+      font_size: 20
+      color: [180, 180, 180]
+      text_align: left
+      layer: Layers.UI
 
-  # Audio Section
-  - type: container
-    size: [700, 150]
-    anchor: top_center
-    offset: [0, 420]
-    background: [30, 30, 40, 200]
-    border: 1
-    border_color: [80, 80, 100]
-    border_radius: 5
-    padding: 20
+    # Master Volume Down Button (-)
+    - type: button
+      id: "btn_vol_down"
+      text: "-"
+      action: "master_vol_down"
+      size: [40, 40]
+      parent_anchor: "#master_volume_text_label:right"
+      self_anchor: left
+      offset: [20, 0]
+      color: [96, 96, 96, 100]
+      font_size: 24
+      border: 2
+      border_color: [120, 140, 180, 0]
+      border_radius: 5
+      layer: Layers.UI
 
-    children:
-      # Section Title
-      - type: label
-        text: "Audio"
-        size: [700, 40]
-        anchor: top_left
-        font_size: 32
-        text_color: [200, 200, 255]
-        text_align: left
+    # Master Volume Value Display (Only numbers)
+    - type: label
+      id: "volume_value_label"
+      text: ""
+      size: [60, 40]
+      parent_anchor: "#btn_vol_down:right"
+      self_anchor: left
+      offset: [10, 0]
+      font_size: 20
+      color: [255, 255, 255]
+      layer: Layers.UI
 
-      # Master Volume Label
-      - type: label
-        text: "Master Volume: 80%"
-        size: [250, 40]
-        anchor: top_left
-        offset: [20, 60]
-        font_size: 20
-        text_color: [180, 180, 180]
+    # Master Volume Up Button (+)
+    - type: button
+      id: "btn_vol_up"
+      text: "+"
+      action: "master_vol_up"
+      size: [40, 40]
+      parent_anchor: "#volume_value_label:right"
+      self_anchor: left
+      offset: [10, 0]
+      color: [96, 96, 96, 100]
+      font_size: 24
+      border: 2
+      border_color: [120, 140, 180, 0]
+      border_radius: 5
+      layer: Layers.UI
 
-      # Volume Info
-      - type: label
-        text: "(Coming soon)"
-        size: [200, 30]
-        anchor: top_left
-        offset: [280, 65]
-        font_size: 14
-        text_color: [120, 120, 120]
+    # BGM Volume Controls Container
+    - type: label
+      id: "bgm_volume_text_label"
+      text: "BGM Volume"
+      size: [ 150, 40 ]
+      parent_anchor: "#audio_title:bottom_left"
+      self_anchor: top_left
+      offset: [ 20, 60 ]
+      font_size: 20
+      color: [ 180, 180, 180 ]
+      text_align: left
+      layer: Layers.UI
 
-  # Bottom Buttons
-  - type: container
-    size: [700, 60]
-    anchor: bottom_center
-    offset: [0, -20]
+    # BGM Volume Down Button (-)
+    - type: button
+      id: "btn_bgm_vol_down"
+      text: "-"
+      action: "bgm_vol_down"
+      size: [ 40, 40 ]
+      parent_anchor: "#bgm_volume_text_label:right"
+      self_anchor: left
+      offset: [ 20, 0 ]
+      color: [ 96, 96, 96, 100 ]
+      font_size: 24
+      border: 2
+      border_color: [ 120, 140, 180, 0 ]
+      border_radius: 5
+      layer: Layers.UI
 
-    children:
-      # Back Button (centered)
-      - type: button
-        text: "Back"
-        action: "back"
-        size: [200, 50]
-        anchor: center
-        color: [80, 100, 140]
-        hover:
-          color: [100, 120, 160]
-        font_size: 24
-        border: 2
-        border_color: [120, 140, 180]
-        border_radius: 5
+    # BGM Volume Value Display (Only numbers)
+    - type: label
+      id: "bgm_volume_value_label"
+      text: ""
+      size: [ 60, 40 ]
+      parent_anchor: "#btn_bgm_vol_down:right"
+      self_anchor: left
+      offset: [ 10, 0 ]
+      font_size: 20
+      color: [ 255, 255, 255 ]
+      layer: Layers.UI
+
+    # BGM Volume Up Button (+)
+    - type: button
+      id: "btn_bgm_vol_up"
+      text: "+"
+      action: "bgm_vol_up"
+      size: [ 40, 40 ]
+      parent_anchor: "#bgm_volume_value_label:right"
+      self_anchor: left
+      offset: [ 10, 0 ]
+      color: [ 96, 96, 96, 100 ]
+      font_size: 24
+      border: 2
+      border_color: [ 120, 140, 180, 0 ]
+      border_radius: 5
+      layer: Layers.UI
+
+    # BFX Volume Controls Container
+    - type: label
+      id: "bfx_volume_text_label"
+      text: "Effect Volume"
+      size: [ 150, 40 ]
+      parent_anchor: "#audio_title:bottom_left"
+      self_anchor: top_left
+      offset: [ 20, 110 ]
+      font_size: 20
+      color: [ 180, 180, 180 ]
+      text_align: left
+      layer: Layers.UI
+
+    # BFX Volume Down Button (-)
+    - type: button
+      id: "btn_bfx_vol_down"
+      text: "-"
+      action: "bfx_vol_down"
+      size: [ 40, 40 ]
+      parent_anchor: "#bfx_volume_text_label:right"
+      self_anchor: left
+      offset: [ 20, 0 ]
+      color: [ 96, 96, 96, 100 ]
+      font_size: 24
+      border: 2
+      border_color: [ 120, 140, 180, 0 ]
+      border_radius: 5
+      layer: Layers.UI
+
+    # BFX Volume Value Display (Only numbers)
+    - type: label
+      id: "bfx_volume_value_label"
+      text: ""
+      size: [ 60, 40 ]
+      parent_anchor: "#btn_bfx_vol_down:right"
+      self_anchor: left
+      offset: [ 10, 0 ]
+      font_size: 20
+      color: [ 255, 255, 255 ]
+      layer: Layers.UI
+
+    # BFX Volume Up Button (+)
+    - type: button
+      id: "btn_bfx_vol_up"
+      text: "+"
+      action: "bfx_vol_up"
+      size: [ 40, 40 ]
+      parent_anchor: "#bfx_volume_value_label:right"
+      self_anchor: left
+      offset: [ 10, 0 ]
+      color: [ 96, 96, 96, 100 ]
+      font_size: 24
+      border: 2
+      border_color: [ 120, 140, 180, 0 ]
+      border_radius: 5
+      layer: Layers.UI
+
+      # Back Button
+    - type: button
+      id: "btn_back"
+      text: "BACK"
+      action: "back"
+      size: [200, 50]
+      parent_anchor: "#settings_root:bottom_center"
+      self_anchor: bottom_center
+      offset: [0, -30]
+      color: [96, 96, 96, 100]
+      font_size: 24
+      border: 2
+      border_color: [120, 140, 180, 0]
+      border_radius: 5
+      layer: Layers.UI

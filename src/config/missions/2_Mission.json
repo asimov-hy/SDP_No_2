@@ -1,0 +1,1580 @@
+{
+  "background": {
+    "layers": [
+      {
+        "image": "snow_map.png"
+      }
+    ]
+  },
+  "stages": [
+    {
+      "name": "Formation Training Mission",
+      "exit_trigger": "all_waves_cleared",
+      "timeline": {
+        "1.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "spawn_edge": "top",
+            "formation": "line",
+            "formation_config": { "spacing": 250 },
+            "spawn_position": 0.7,
+            "spawn_offset_y": -50,
+            "count": 1,
+            "enemy_params": {
+              "waypoints": [
+                [1080, 150],
+                [200, 150],
+                [200, 570],
+                [1080, 570]
+              ]
+            }
+          }
+        ],
+        "3.0": [
+          {
+            "enemy": "straight",
+            "formation": "line",
+            "formation_config": { "spacing": 250 },
+            "spawn_edge": "left",
+            "spawn_position": 0.5,
+            "spawn_offset_x": -100,
+            "count": 7,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [1, 0] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "5.0": [
+          {
+            "enemy": "straight",
+            "formation": "line",
+            "formation_config": { "spacing": 250 },
+            "spawn_edge": "right",
+            "spawn_position": 0.5,
+            "spawn_offset_x": 100,
+            "count": 2,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [-1, 0] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "7.0": [
+          {
+            "enemy": "straight",
+            "formation": "line",
+            "formation_config": { "spacing": 250 },
+            "spawn_edge": "left",
+            "spawn_position": 0.5,
+            "spawn_offset_x": -100,
+            "count": 2,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [1, 0] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "9.0": [
+          {
+            "enemy": "straight",
+            "formation": "line",
+            "formation_config": { "spacing": 250 },
+            "spawn_edge": "right",
+            "spawn_position": 0.5,
+            "spawn_offset_x": 100,
+            "count": 7,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [-1, 0] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "11.2": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.1,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "11.4": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.2,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "11.6": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.3,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "11.8": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.4,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "12.0": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "12.2": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.6,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "12.4": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.7,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "12.6": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.8,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "12.8": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.9,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "13.0": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 1.0,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "15.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "spawn_edge": "top",
+            "formation": "line",
+            "formation_config": { "spacing": 250 },
+            "spawn_position": 0.7,
+            "spawn_offset_y": -50,
+            "count": 2,
+            "enemy_params": {
+              "waypoints": [
+                [1080, 150],
+                [200, 150],
+                [200, 570],
+                [1080, 570]
+              ]
+            }
+          }
+        ],
+        "17.0": [
+          {
+            "enemy": "straight",
+            "formation": "v",
+            "formation_config": { "spacing": 80, "angle": 30 },
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -100,
+            "count": 11,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "19.0": [
+          {
+            "enemy": "straight",
+            "formation": "line",
+            "formation_config": { "spacing": 200, "angle": 30 },
+            "spawn_edge": "top",
+            "spawn_position": 1.0,
+            "spawn_offset_y": -100,
+            "count": 9,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [-1, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "22.0": [
+          {
+            "enemy": "homing_slow",
+            "formation": "line",
+            "formation_config": { "spacing": 500 },
+            "spawn_edge": "top",
+            "spawn_position": 0.3,
+            "spawn_offset_y": -50,
+            "count": 1,
+            "enemy_params": { "speed": 150, "size": 20 },
+            "movement": { "type": "homing" }
+          },
+          {
+            "enemy": "homing_slow",
+            "formation": "line",
+            "formation_config": { "spacing": 500 },
+            "spawn_edge": "top",
+            "spawn_position": 0.7,
+            "spawn_offset_y": -50,
+            "count": 1,
+            "enemy_params": { "speed": 150, "size": 20 },
+            "movement": { "type": "homing" }
+          }
+        ],
+        "24.0": [
+          {
+            "enemy": "straight",
+            "formation": "line",
+            "formation_config": { "spacing": 180 },
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -100,
+            "count": 7,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "25.0": [
+          {
+            "enemy": "homing_slow",
+            "formation": "line",
+            "formation_config": { "spacing": 500 },
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -50,
+            "count": 2,
+            "enemy_params": { "speed": 150, "size": 20 },
+            "movement": { "type": "homing" }
+          }
+        ],
+        "30.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "spawn_edge": "top",
+            "formation": "line",
+            "formation_config": { "spacing": 250 },
+            "spawn_position": 0.7,
+            "spawn_offset_y": -50,
+            "count": 1,
+            "enemy_params": {
+              "hp": 12,
+              "exp": 120,
+              "waypoints": [
+                [1080, 150],
+                [200, 150],
+                [200, 570],
+                [1080, 570]
+              ]
+            }
+          }
+        ],
+        "33.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "spawn_edge": "top",
+            "formation": "line",
+            "formation_config": { "spacing": 250 },
+            "spawn_position": 0.7,
+            "spawn_offset_y": -50,
+            "count": 2,
+            "enemy_params": {
+              "hp": 12,
+              "exp": 120,
+              "waypoints": [
+                [1080, 150],
+                [200, 150],
+                [200, 570],
+                [1080, 570]
+              ]
+            }
+          }
+        ],
+        "35.0": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.1,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "35.2": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.2,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "35.4": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.3,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "35.6": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.4,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "35.8": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "36.0": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.6,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "36.2": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.7,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "36.4": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.8,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "36.6": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.9,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "36.8": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 1.0,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "37.0": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 1.0,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "37.2": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.9,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "37.4": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.8,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "37.6": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.7,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "37.8": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.6,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "38.0": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "38.2": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.4,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "38.4": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.3,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "38.6": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.2,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "38.8": [
+          {
+            "enemy": "straight",
+            "spawn_edge": "top",
+            "spawn_position": 0.1,
+            "spawn_offset_y": -100,
+            "count": 1,
+            "enemy_params": { "speed": 200, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "40.0": [
+          {
+            "enemy": "homing_slow",
+            "formation": "line",
+            "formation_config": { "spacing": 400 },
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -50,
+            "count": 2,
+            "enemy_params": { "hp": 4.5, "exp": 90, "speed": 160, "size": 22 },
+            "movement": { "type": "homing" }
+          }
+        ],
+        "42.0": [
+          {
+            "enemy": "straight",
+            "formation": "line",
+            "formation_config": { "spacing": 250 },
+            "spawn_edge": "right",
+            "spawn_position": 0.5,
+            "spawn_offset_x": 100,
+            "count": 2,
+            "enemy_params": { "speed": 210, "size": 15, "direction": [-1, 0] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "45.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "spawn_edge": "top",
+            "formation": "line",
+            "formation_config": { "spacing": 200 },
+            "spawn_position": 0.6,
+            "spawn_offset_y": -50,
+            "count": 2,
+            "enemy_params": {
+              "hp": 18,
+              "exp": 180,
+              "waypoints": [
+                [800, 150],
+                [300, 150],
+                [300, 500],
+                [800, 500]
+              ]
+            }
+          }
+        ],
+        "47.0": [
+          {
+            "enemy": "straight",
+            "formation": "v",
+            "formation_config": { "spacing": 100, "angle": 40 },
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -100,
+            "count": 7,
+            "enemy_params": { "speed": 220, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "50.0": [
+          {
+            "enemy": "homing_slow",
+            "formation": "v",
+            "formation_config": { "spacing": 120, "angle": 25 },
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -80,
+            "count": 2,
+            "enemy_params": { "hp": 4.5, "exp": 90, "speed": 170, "size": 24 },
+            "movement": { "type": "homing" }
+          }
+        ],
+        "52.0": [
+          {
+            "enemy": "straight",
+            "formation": "line",
+            "formation_config": { "spacing": 250 },
+            "spawn_edge": "left",
+            "spawn_position": 0.5,
+            "spawn_offset_x": -100,
+            "count": 8,
+            "enemy_params": { "speed": 230, "size": 15, "direction": [1, 0] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "55.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "spawn_edge": "top",
+            "formation": "line",
+            "formation_config": { "spacing": 180 },
+            "spawn_position": 0.4,
+            "spawn_offset_y": -50,
+            "count": 2,
+            "enemy_params": {
+              "hp": 18,
+              "exp": 180,
+              "waypoints": [
+                [600, 120],
+                [480, 120],
+                [480, 550],
+                [600, 550]
+              ]
+            }
+          }
+        ],
+        "57.0": [
+          {
+            "enemy": "straight",
+            "formation": "v",
+            "formation_config": { "spacing": 90, "angle": 35 },
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -100,
+            "count": 9,
+            "enemy_params": { "speed": 240, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "60.0": [
+          {
+            "enemy": "homing_slow",
+            "formation": "circle",
+            "formation_config": { "radius": 100, "count": 5 },
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -100,
+            "count": 2,
+            "enemy_params": { "hp": 4.5, "exp": 90, "speed": 180, "size": 20 },
+            "movement": { "type": "homing" }
+          }
+        ],
+        "62.0": [
+          {
+            "enemy": "straight",
+            "formation": "line",
+            "formation_config": { "spacing": 250 },
+            "spawn_edge": "right",
+            "spawn_position": 0.5,
+            "spawn_offset_x": 100,
+            "count": 7,
+            "enemy_params": { "speed": 250, "size": 15, "direction": [-1, 0] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "65.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "spawn_edge": "top",
+            "formation": "line",
+            "formation_config": { "spacing": 150 },
+            "spawn_position": 0.7,
+            "spawn_offset_y": -50,
+            "count": 2,
+            "enemy_params": {
+              "hp": 18,
+              "exp": 180,
+              "waypoints": [
+                [900, 140],
+                [250, 140],
+                [250, 520],
+                [900, 520]
+              ]
+            }
+          }
+        ],
+        "67.0": [
+          {
+            "enemy": "straight",
+            "formation": "v",
+            "formation_config": { "spacing": 80, "angle": 30 },
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -100,
+            "count": 11,
+            "enemy_params": { "speed": 260, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "70.0": [
+          {
+            "enemy": "homing_slow",
+            "formation": "line",
+            "formation_config": { "spacing": 300 },
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -60,
+            "count": 2,
+            "enemy_params": { "hp": 4.5, "exp": 90, "speed": 190, "size": 22 },
+            "movement": { "type": "homing" }
+          }
+        ],
+        "72.0": [
+          {
+            "enemy": "straight",
+            "formation": "line",
+            "formation_config": { "spacing": 250 },
+            "spawn_edge": "left",
+            "spawn_position": 0.5,
+            "spawn_offset_x": -100,
+            "count": 9,
+            "enemy_params": { "speed": 270, "size": 15, "direction": [1, 0] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "75.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "spawn_edge": "top",
+            "formation": "line",
+            "formation_config": { "spacing": 120 },
+            "spawn_position": 0.5,
+            "spawn_offset_y": -50,
+            "count": 2,
+            "enemy_params": {
+              "hp": 18,
+              "exp": 180,
+              "waypoints": [
+                [700, 100],
+                [380, 100],
+                [380, 570],
+                [700, 570]
+              ]
+            }
+          }
+        ],
+        "77.0": [
+          {
+            "enemy": "straight",
+            "formation": "v",
+            "formation_config": { "spacing": 100, "angle": 25 },
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -100,
+            "count": 13,
+            "enemy_params": { "speed": 280, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "80.0": [
+          {
+            "enemy": "homing_slow",
+            "formation": "v",
+            "formation_config": { "spacing": 80, "angle": 35 },
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -100,
+            "count": 2,
+            "enemy_params": { "hp": 4.5, "exp": 90, "speed": 200, "size": 24 },
+            "movement": { "type": "homing" }
+          }
+        ],
+        "82.5": [
+          {
+            "enemy": "straight",
+            "formation": "line",
+            "formation_config": { "spacing": 100 },
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -100,
+            "count": 11,
+            "enemy_params": { "speed": 300, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "85.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "spawn_edge": "left",
+            "formation": "line",
+            "formation_config": { "spacing": 200 },
+            "spawn_position": 0.3,
+            "spawn_offset_x": -80,
+            "count": 1,
+            "enemy_params": {
+              "hp": 16,
+              "exp": 200,
+              "speed": 120,
+              "fire_rate": 2.0,
+              "waypoints": [
+                [-100, 200],
+                [100, 100],
+                [300, 50],
+                [600, 50],
+                [900, 100],
+                [1180, 200],
+                [1180, 400],
+                [900, 500],
+                [600, 550],
+                [300, 500],
+                [100, 400],
+                [-100, 300]
+              ]
+            }
+          },
+          {
+            "enemy": "waypoint_shooter",
+            "spawn_edge": "right",
+            "formation": "line",
+            "formation_config": { "spacing": 200 },
+            "spawn_position": 0.7,
+            "spawn_offset_x": 80,
+            "count": 1,
+            "enemy_params": {
+              "hp": 16,
+              "exp": 200,
+              "speed": 120,
+              "fire_rate": 2.0,
+              "waypoints": [
+                [1280, 400],
+                [1180, 500],
+                [900, 550],
+                [600, 500],
+                [300, 400],
+                [100, 200],
+                [100, 100],
+                [300, 50],
+                [600, 50],
+                [900, 100],
+                [1180, 300],
+                [1280, 300]
+              ]
+            }
+          }
+        ],
+        "87.5": [
+          {
+            "enemy": "straight",
+            "formation": "line",
+            "formation_config": { "spacing": 100 },
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -100,
+            "count": 11,
+            "enemy_params": { "speed": 310, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "90.0": [
+          {
+            "enemy": "homing_slow",
+            "formation": "line",
+            "formation_config": { "spacing": 500 },
+            "spawn_edge": "top",
+            "spawn_position": 0.3,
+            "spawn_offset_y": -80,
+            "count": 2,
+            "enemy_params": { "hp": 6, "exp": 120, "speed": 180, "size": 22, "turn_rate": 90 },
+            "movement": { "type": "homing" }
+          },
+          {
+            "enemy": "homing_slow",
+            "formation": "line",
+            "formation_config": { "spacing": 500 },
+            "spawn_edge": "top",
+            "spawn_position": 0.7,
+            "spawn_offset_y": -80,
+            "count": 2,
+            "enemy_params": { "hp": 6, "exp": 120, "speed": 180, "size": 22, "turn_rate": 90 },
+            "movement": { "type": "homing" }
+          }
+        ],
+        "92.5": [
+          {
+            "enemy": "straight",
+            "formation": "line",
+            "formation_config": { "spacing": 100 },
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -100,
+            "count": 11,
+            "enemy_params": { "speed": 320, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "95.0": [
+          {
+            "enemy": "homing_slow",
+            "formation": "v",
+            "formation_config": { "spacing": 120, "angle": 40 },
+            "spawn_edge": "top",
+            "spawn_position": 0.3,
+            "spawn_offset_y": -100,
+            "count": 2,
+            "enemy_params": { "hp": 6, "exp": 120, "speed": 190, "size": 24, "turn_rate": 95 },
+            "movement": { "type": "homing" }
+          },
+          {
+            "enemy": "homing_slow",
+            "formation": "v",
+            "formation_config": { "spacing": 120, "angle": 40 },
+            "spawn_edge": "top",
+            "spawn_position": 0.7,
+            "spawn_offset_y": -100,
+            "count": 2,
+            "enemy_params": { "hp": 6, "exp": 120, "speed": 190, "size": 24, "turn_rate": 95 },
+            "movement": { "type": "homing" }
+          }
+        ],
+        "97.5": [
+          {
+            "enemy": "straight",
+            "formation": "line",
+            "formation_config": { "spacing": 100 },
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -100,
+            "count": 11,
+            "enemy_params": { "speed": 330, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "100.0": [
+          {
+            "enemy": "homing_slow",
+            "formation": "line",
+            "formation_config": { "spacing": 400 },
+            "spawn_edge": "top",
+            "spawn_position": 0.3,
+            "spawn_offset_y": -80,
+            "count": 2,
+            "enemy_params": { "hp": 6, "exp": 120, "speed": 200, "size": 20, "turn_rate": 100 },
+            "movement": { "type": "homing" }
+          },
+          {
+            "enemy": "homing_slow",
+            "formation": "line",
+            "formation_config": { "spacing": 400 },
+            "spawn_edge": "top",
+            "spawn_position": 0.7,
+            "spawn_offset_y": -80,
+            "count": 2,
+            "enemy_params": { "hp": 6, "exp": 120, "speed": 200, "size": 20, "turn_rate": 100 },
+            "movement": { "type": "homing" }
+          }
+        ],
+        "102.5": [
+          {
+            "enemy": "straight",
+            "formation": "line",
+            "formation_config": { "spacing": 100 },
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -100,
+            "count": 11,
+            "enemy_params": { "speed": 340, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "105.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "spawn_edge": "top",
+            "formation": "line",
+            "formation_config": { "spacing": 250 },
+            "spawn_position": 0.2,
+            "spawn_offset_y": -80,
+            "count": 2,
+            "enemy_params": {
+              "hp": 16,
+              "exp": 200,
+              "speed": 100,
+              "fire_rate": 1.8,
+              "waypoints": [
+                [200, -50],
+                [200, 150],
+                [400, 250],
+                [600, 250],
+                [800, 150],
+                [1000, -50]
+              ]
+            }
+          },
+          {
+            "enemy": "homing_slow",
+            "formation": "line",
+            "formation_config": { "spacing": 400 },
+            "spawn_edge": "right",
+            "spawn_position": 0.5,
+            "spawn_offset_x": 80,
+            "count": 2,
+            "enemy_params": { "hp": 6, "exp": 120, "speed": 210, "size": 22, "turn_rate": 105 },
+            "movement": { "type": "homing" }
+          }
+        ],
+        "107.5": [
+          {
+            "enemy": "straight",
+            "formation": "line",
+            "formation_config": { "spacing": 100 },
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -100,
+            "count": 11,
+            "enemy_params": { "speed": 350, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "110.0": [
+          {
+            "enemy": "homing_slow",
+            "formation": "line",
+            "formation_config": { "spacing": 400 },
+            "spawn_edge": "top",
+            "spawn_position": 0.2,
+            "spawn_offset_y": -80,
+            "count": 2,
+            "enemy_params": { "hp": 6, "exp": 120, "speed": 220, "size": 24, "turn_rate": 110 },
+            "movement": { "type": "homing" }
+          },
+          {
+            "enemy": "homing_slow",
+            "formation": "line",
+            "formation_config": { "spacing": 400 },
+            "spawn_edge": "top",
+            "spawn_position": 0.8,
+            "spawn_offset_y": -80,
+            "count": 2,
+            "enemy_params": { "hp": 6, "exp": 120, "speed": 220, "size": 24, "turn_rate": 110 },
+            "movement": { "type": "homing" }
+          }
+        ],
+        "112.5": [
+          {
+            "enemy": "straight",
+            "formation": "line",
+            "formation_config": { "spacing": 100 },
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -100,
+            "count": 11,
+            "enemy_params": { "speed": 360, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "115.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "spawn_edge": "top",
+            "formation": "line",
+            "formation_config": { "spacing": 200 },
+            "spawn_position": 0.5,
+            "spawn_offset_y": -80,
+            "count": 2,
+            "enemy_params": {
+              "hp": 16,
+              "exp": 200,
+              "speed": 80,
+              "fire_rate": 1.5,
+              "waypoints": [
+                [540, -50],
+                [400, 100],
+                [300, 300],
+                [400, 500],
+                [600, 500],
+                [700, 300],
+                [600, 100],
+                [540, -50]
+              ]
+            }
+          }
+        ],
+        "117.5": [
+          {
+            "enemy": "straight",
+            "formation": "line",
+            "formation_config": { "spacing": 100 },
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -100,
+            "count": 11,
+            "enemy_params": { "speed": 370, "size": 15, "direction": [0, 1] },
+            "movement": { "type": "straight" }
+          }
+        ],
+        "120.0": [
+          {
+            "enemy": "homing_slow",
+            "formation": "line",
+            "formation_config": { "spacing": 500 },
+            "spawn_edge": "top",
+            "spawn_position": 0.2,
+            "spawn_offset_y": -80,
+            "count": 2,
+            "enemy_params": { "hp": 6, "exp": 120, "speed": 230, "size": 22, "turn_rate": 115 },
+            "movement": { "type": "homing" }
+          },
+          {
+            "enemy": "homing_slow",
+            "formation": "line",
+            "formation_config": { "spacing": 500 },
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -80,
+            "count": 2,
+            "enemy_params": { "hp": 6, "exp": 120, "speed": 230, "size": 22, "turn_rate": 115 },
+            "movement": { "type": "homing" }
+          },
+          {
+            "enemy": "homing_slow",
+            "formation": "line",
+            "formation_config": { "spacing": 500 },
+            "spawn_edge": "top",
+            "spawn_position": 0.8,
+            "spawn_offset_y": -80,
+            "count": 2,
+            "enemy_params": { "hp": 6, "exp": 120, "speed": 230, "size": 22, "turn_rate": 115 },
+            "movement": { "type": "homing" }
+          }
+        ],
+        "120.5": [
+          {
+            "enemy": "waypoint_shooter",
+            "formation": "line",
+            "formation_config": { "spacing": 300 },
+            "spawn_edge": "top",
+            "spawn_position": 0.3,
+            "spawn_offset_y": -80,
+            "count": 1,
+            "enemy_params": {
+              "hp": 16,
+              "exp": 200,
+              "speed": 80,
+              "fire_rate": 1.5,
+              "waypoints": [
+                [200, -50],
+                [200, 150],
+                [400, 250],
+                [600, 250],
+                [800, 150],
+                [1000, -50]
+              ]
+            }
+          },
+          {
+            "enemy": "waypoint_shooter",
+            "formation": "line",
+            "formation_config": { "spacing": 300 },
+            "spawn_edge": "top",
+            "spawn_position": 0.7,
+            "spawn_offset_y": -80,
+            "count": 1,
+            "enemy_params": {
+              "hp": 16,
+              "exp": 200,
+              "speed": 80,
+              "fire_rate": 1.5,
+              "waypoints": [
+                [1080, -50],
+                [900, 150],
+                [700, 250],
+                [500, 250],
+                [300, 150],
+                [200, -50]
+              ]
+            }
+          }
+        ],
+        "122.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "formation": "line",
+            "formation_config": { "spacing": 250 },
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -80,
+            "count": 3,
+            "enemy_params": {
+              "hp": 16,
+              "exp": 200,
+              "speed": 75,
+              "fire_rate": 1.4,
+              "waypoints": [
+                [540, -50],
+                [400, 100],
+                [300, 300],
+                [400, 500],
+                [600, 500],
+                [700, 300],
+                [600, 100],
+                [540, -50]
+              ]
+            }
+          }
+        ],
+        "128.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "formation": "line",
+            "formation_config": { "spacing": 200 },
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -80,
+            "count": 3,
+            "enemy_params": {
+              "hp": 16,
+              "exp": 200,
+              "speed": 70,
+              "fire_rate": 1.3,
+              "waypoints": [
+                [640, -50],
+                [640, 150],
+                [640, 300],
+                [640, 450],
+                [640, 600],
+                [640, -50]
+              ]
+            }
+          },
+          {
+            "enemy": "waypoint_shooter",
+            "formation": "line",
+            "formation_config": { "spacing": 300 },
+            "spawn_edge": "left",
+            "spawn_position": 0.5,
+            "spawn_offset_x": -80,
+            "count": 1,
+            "enemy_params": {
+              "hp": 16,
+              "exp": 200,
+              "speed": 70,
+              "fire_rate": 1.3,
+              "waypoints": [
+                [-80, 300],
+                [200, 300],
+                [400, 300],
+                [600, 300],
+                [800, 300],
+                [1000, 300],
+                [1280, 300],
+                [1000, 300],
+                [800, 300],
+                [600, 300],
+                [400, 300],
+                [200, 300],
+                [-80, 300]
+              ]
+            }
+          },
+          {
+            "enemy": "waypoint_shooter",
+            "formation": "line",
+            "formation_config": { "spacing": 300 },
+            "spawn_edge": "right",
+            "spawn_position": 0.5,
+            "spawn_offset_x": 80,
+            "count": 1,
+            "enemy_params": {
+              "hp": 16,
+              "exp": 200,
+              "speed": 70,
+              "fire_rate": 1.3,
+              "waypoints": [
+                [1360, 300],
+                [1200, 300],
+                [1000, 300],
+                [800, 300],
+                [600, 300],
+                [400, 300],
+                [200, 300],
+                [-80, 300],
+                [200, 300],
+                [400, 300],
+                [600, 300],
+                [800, 300],
+                [1000, 300],
+                [1360, 300]
+              ]
+            }
+          }
+        ],
+        "140.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "spawn_edge": "top",
+            "formation": "line",
+            "formation_config": { "spacing": 150 },
+            "spawn_position": 0.5,
+            "spawn_offset_y": -50,
+            "count": 5,
+            "enemy_params": {
+              "hp": 20,
+              "exp": 250,
+              "speed": 90,
+              "fire_rate": 1.2,
+              "waypoints": [
+                [1080, 150],
+                [200, 150],
+                [200, 570],
+                [1080, 570]
+              ]
+            }
+          }
+        ],
+        "150.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "spawn_edge": "top",
+            "formation": "line",
+            "formation_config": { "spacing": 150 },
+            "spawn_position": 0.5,
+            "spawn_offset_y": -50,
+            "count": 6,
+            "enemy_params": {
+              "hp": 22,
+              "exp": 270,
+              "speed": 95,
+              "fire_rate": 1.1,
+              "waypoints": [
+                [1080, 150],
+                [200, 150],
+                [200, 570],
+                [1080, 570]
+              ]
+            }
+          }
+        ],
+        "160.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "spawn_edge": "top",
+            "formation": "line",
+            "formation_config": { "spacing": 120 },
+            "spawn_position": 0.5,
+            "spawn_offset_y": -50,
+            "count": 7,
+            "enemy_params": {
+              "hp": 24,
+              "exp": 300,
+              "speed": 100,
+              "fire_rate": 1.0,
+              "waypoints": [
+                [1080, 150],
+                [200, 150],
+                [200, 570],
+                [1080, 570]
+              ]
+            }
+          }
+        ],
+        "170.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "spawn_edge": "top",
+            "formation": "line",
+            "formation_config": { "spacing": 120 },
+            "spawn_position": 0.5,
+            "spawn_offset_y": -50,
+            "count": 8,
+            "enemy_params": {
+              "hp": 26,
+              "exp": 320,
+              "speed": 105,
+              "fire_rate": 0.95,
+              "waypoints": [
+                [1080, 150],
+                [200, 150],
+                [200, 570],
+                [1080, 570]
+              ]
+            }
+          }
+        ],
+        "180.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "spawn_edge": "top",
+            "formation": "line",
+            "formation_config": { "spacing": 110 },
+            "spawn_position": 0.5,
+            "spawn_offset_y": -50,
+            "count": 8,
+            "enemy_params": {
+              "hp": 28,
+              "exp": 340,
+              "speed": 110,
+              "fire_rate": 0.9,
+              "waypoints": [
+                [1080, 150],
+                [200, 150],
+                [200, 570],
+                [1080, 570]
+              ]
+            }
+          }
+        ],
+        "190.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "spawn_edge": "top",
+            "formation": "line",
+            "formation_config": { "spacing": 110 },
+            "spawn_position": 0.5,
+            "spawn_offset_y": -50,
+            "count": 8,
+            "enemy_params": {
+              "hp": 30,
+              "exp": 360,
+              "speed": 115,
+              "fire_rate": 0.85,
+              "waypoints": [
+                [1080, 150],
+                [200, 150],
+                [200, 570],
+                [1080, 570]
+              ]
+            }
+          }
+        ],
+        "200.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "spawn_edge": "top",
+            "formation": "line",
+            "formation_config": { "spacing": 100 },
+            "spawn_position": 0.5,
+            "spawn_offset_y": -50,
+            "count": 8,
+            "enemy_params": {
+              "hp": 32,
+              "exp": 380,
+              "speed": 120,
+              "fire_rate": 0.8,
+              "waypoints": [
+                [1080, 150],
+                [200, 150],
+                [200, 570],
+                [1080, 570]
+              ]
+            }
+          }
+        ],
+        "210.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "spawn_edge": "top",
+            "formation": "line",
+            "formation_config": { "spacing": 100 },
+            "spawn_position": 0.5,
+            "spawn_offset_y": -50,
+            "count": 8,
+            "enemy_params": {
+              "hp": 34,
+              "exp": 400,
+              "speed": 125,
+              "fire_rate": 0.75,
+              "waypoints": [
+                [1080, 150],
+                [200, 150],
+                [200, 570],
+                [1080, 570]
+              ]
+            }
+          }
+        ],
+        "220.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "spawn_edge": "top",
+            "formation": "line",
+            "formation_config": { "spacing": 90 },
+            "spawn_position": 0.5,
+            "spawn_offset_y": -50,
+            "count": 8,
+            "enemy_params": {
+              "hp": 36,
+              "exp": 420,
+              "speed": 130,
+              "fire_rate": 0.7,
+              "waypoints": [
+                [1080, 150],
+                [200, 150],
+                [200, 570],
+                [1080, 570]
+              ]
+            }
+          }
+        ],
+        "230.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "spawn_edge": "top",
+            "formation": "line",
+            "formation_config": { "spacing": 90 },
+            "spawn_position": 0.5,
+            "spawn_offset_y": -50,
+            "count": 8,
+            "enemy_params": {
+              "hp": 38,
+              "exp": 440,
+              "speed": 135,
+              "fire_rate": 0.65,
+              "waypoints": [
+                [1080, 150],
+                [200, 150],
+                [200, 570],
+                [1080, 570]
+              ]
+            }
+          }
+        ],
+        "240.0": [
+          {
+            "enemy": "waypoint_shooter",
+            "spawn_edge": "top",
+            "formation": "line",
+            "formation_config": { "spacing": 80 },
+            "spawn_position": 0.5,
+            "spawn_offset_y": -50,
+            "count": 8,
+            "enemy_params": {
+              "hp": 40,
+              "exp": 460,
+              "speed": 140,
+              "fire_rate": 0.6,
+              "waypoints": [
+                [1080, 150],
+                [200, 150],
+                [200, 570],
+                [1080, 570]
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

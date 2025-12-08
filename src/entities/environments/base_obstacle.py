@@ -18,8 +18,11 @@ class BaseObstacle(BaseEntity):
     """
 
     __slots__ = (
-        'is_destructible', 'blocks_bullets', 'blocks_movement',
-        'health', 'max_health'
+        "is_destructible",
+        "blocks_bullets",
+        "blocks_movement",
+        "health",
+        "max_health",
     )
 
     def __init__(self, x, y, is_destructible=False, **kwargs):

@@ -19,25 +19,27 @@ import os
 from src.core.services.event_manager import get_events, EnemyDiedEvent
 from src.core.services.config_manager import load_config
 from src.core.debug.debug_logger import DebugLogger
-from src.entities.base_entity import BaseEntity
-from src.entities.items.base_item import BaseItem
 
 
 # ===========================================================
 # Item Type Registry
 # ===========================================================
 
+
 class ItemType(Enum):
     """Enum for all available item types."""
+
     HEAL = "heal"
     QUICK_FIRE = "quick_fire"
     NUKE = "nuke"
     SPEED_BOOST = "speed_boost"
+    SHIELD = "shield"
 
 
 # ===========================================================
 # Item Manager
 # ===========================================================
+
 
 class ItemManager:
     """Manages item definitions and spawning logic."""
@@ -83,7 +85,7 @@ class ItemManager:
                     item_data["size"] = self.DEFAULT_ITEM_SIZE
                     DebugLogger.trace(
                         f"Item '{item_id}' missing size/scale, auto-setting to {self.DEFAULT_ITEM_SIZE}",
-                        category="item"
+                        category="item",
                     )
 
             DebugLogger.init_sub(
@@ -106,9 +108,7 @@ class ItemManager:
                 except ValueError:
                     DebugLogger.warn(f"Unknown item type: {item_id}")
 
-        DebugLogger.init_sub(
-            f"Loot table built with {len(self._loot_table_ids)} items"
-        )
+        DebugLogger.init_sub(f"Loot table built with {len(self._loot_table_ids)} items")
 
     def _subscribe_to_events(self) -> None:
         """Subscribe to game events for item spawning."""
@@ -120,7 +120,7 @@ class ItemManager:
         if os.path.exists(fallback_path):
             try:
                 self._fallback_image = pygame.image.load(fallback_path).convert_alpha()
-                DebugLogger.init_sub(f"Loaded fallback image")
+                DebugLogger.init_sub("Loaded fallback image")
             except Exception as e:
                 DebugLogger.warn(f"Failed loading fallback: {e}")
 
@@ -131,10 +131,7 @@ class ItemManager:
     def on_enemy_died(self, event: EnemyDiedEvent) -> None:
         """Handle enemy death event - try to spawn item."""
         # For now, use hardcoded 15% drop chance
-        self.try_spawn_random_item(
-            position=event.position,
-            drop_chance=0.35
-        )
+        self.try_spawn_random_item(position=event.position, drop_chance=0.35)
 
     # ===========================================================
     # Spawning Logic
@@ -153,9 +150,7 @@ class ItemManager:
 
         # Select random item using weights
         selected_item = random.choices(
-            self._loot_table_ids,
-            weights=self._loot_table_weights,
-            k=1
+            self._loot_table_ids, weights=self._loot_table_weights, k=1
         )[0]
 
         # Spawn the item
@@ -179,16 +174,11 @@ class ItemManager:
         # Spawn via SpawnManager
         x, y = position
         self.spawn_manager.spawn(
-            "pickup",
-            "default",
-            x, y,
-            item_data=item_data,
-            image=image
+            "pickup", "default", x, y, item_data=item_data, image=image
         )
 
         DebugLogger.action(
-            f"Spawned item '{item_id.value}' at ({x:.0f}, {y:.0f})",
-            category="item"
+            f"Spawned item '{item_id.value}' at ({x:.0f}, {y:.0f})", category="item"
         )
 
     def _load_item_image(self, item_id: str, asset_path: str) -> pygame.Surface:

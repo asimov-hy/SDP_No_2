@@ -1,0 +1,31 @@
+{
+  "music": "BossTheme.wav",
+  "background": {
+    "layers": [
+      {
+        "image": "snow_map.png"
+      }
+    ]
+  },
+  "stages": [
+    {
+      "name": "Boss Debug",
+      "exit_trigger": "all_waves_cleared",
+      "timeline": {
+        "0.0": [
+          {
+            "enemy": "boss",
+            "spawn_edge": "top",
+            "spawn_position": 0.5,
+            "spawn_offset_y": -300,
+            "count": 1,
+            "enemy_params": {
+              "boss_type": "boss_juggernaut",
+              "direction": [0, 0]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

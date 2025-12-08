@@ -50,7 +50,7 @@ class BindingSystem:
 
         # Use cached path parts
         if path not in self._path_cache:
-            self._path_cache[path] = path.split('.')
+            self._path_cache[path] = path.split(".")
         parts = self._path_cache[path]
 
         # Get root object
@@ -85,35 +85,35 @@ class BindingSystem:
         condition = condition.strip()
 
         # Simple comparison operators
-        if condition.startswith('<='):
+        if condition.startswith("<="):
             threshold = float(condition[2:].strip())
             return value <= threshold
-        elif condition.startswith('>='):
+        elif condition.startswith(">="):
             threshold = float(condition[2:].strip())
             return value >= threshold
-        elif condition.startswith('<'):
+        elif condition.startswith("<"):
             threshold = float(condition[1:].strip())
             return value < threshold
-        elif condition.startswith('>'):
+        elif condition.startswith(">"):
             threshold = float(condition[1:].strip())
             return value > threshold
-        elif condition.startswith('=='):
+        elif condition.startswith("=="):
             target = condition[2:].strip()
             # Handle boolean strings
-            if target.lower() == 'true':
+            if target.lower() == "true":
                 return bool(value)
-            elif target.lower() == 'false':
+            elif target.lower() == "false":
                 return not bool(value)
             # Handle numeric comparison
             try:
                 return value == float(target)
             except ValueError:
                 return str(value) == target
-        elif condition.startswith('!='):
+        elif condition.startswith("!="):
             target = condition[2:].strip()
-            if target.lower() == 'true':
+            if target.lower() == "true":
                 return not bool(value)
-            elif target.lower() == 'false':
+            elif target.lower() == "false":
                 return bool(value)
             try:
                 return value != float(target)

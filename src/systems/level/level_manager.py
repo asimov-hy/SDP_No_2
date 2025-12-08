@@ -17,8 +17,6 @@ Responsibilities
 """
 
 from src.core.debug.debug_logger import DebugLogger
-from src.systems.level.stage_loader import StageLoader
-from src.systems.level.wave_scheduler import WaveScheduler
 
 
 class LevelManager:
@@ -28,25 +26,23 @@ class LevelManager:
     Delegates heavy lifting to StageLoader and WaveScheduler.
     """
 
-    def __init__(self, spawn_manager, player_ref=None):
+    def __init__(self, stage_loader, wave_scheduler):
         """
         Initialize level manager and subsystems.
 
         Args:
             spawn_manager: SpawnManager instance for entity creation
             player_ref: Player entity reference for targeting
+            bullet_manager: BulletManager for shooting enemies
         """
         DebugLogger.init_entry("LevelManager Initialized")
 
-        if player_ref is None:
-            DebugLogger.warn(
-                "[LevelManager] No player_ref provided - homing enemies will default to center targeting",
-                category="level"
-            )
-
         # Initialize subsystems
-        self.stage_loader = StageLoader(spawn_manager)
-        self.wave_scheduler = WaveScheduler(spawn_manager, player_ref)
+        self.stage_loader = stage_loader
+        self.wave_scheduler = wave_scheduler
+
+        # Level data storage (for background config, etc.)
+        self.current_level_data = {}
 
         # Callback
         self.on_level_complete = None
@@ -64,17 +60,29 @@ class LevelManager:
         """
         if not level_path or not isinstance(level_path, str):
             DebugLogger.warn(
-                f"[LevelManager] Invalid level_path: {level_path}",
-                category="level"
+                f"[LevelManager] Invalid level_path: {level_path}", category="level"
             )
             return
 
+        # Load and store level data for background/config access
+        import json
+
+        try:
+            with open(level_path, "r") as f:
+                self.current_level_data = json.load(f)
+        except Exception as e:
+            DebugLogger.warn(
+                f"Failed to load level data from {level_path}: {e}", category="level"
+            )
+            self.current_level_data = {}
+            return
+
+        # Load stages into stage_loader
         self.stage_loader.load(level_path)
 
         if not self.stage_loader.stages:
             DebugLogger.warn(
-                f"[LevelManager] No stages loaded from {level_path}",
-                category="level"
+                f"[LevelManager] No stages loaded from {level_path}", category="level"
             )
             return
 
@@ -171,6 +179,15 @@ class LevelManager:
 
             if self.on_level_complete:
                 self.on_level_complete()
+
+    def get_current_level_data(self):
+        """
+        Get the current level's full data dictionary.
+
+        Returns:
+            dict: Level data including waves, background, etc.
+        """
+        return self.current_level_data
 
     # ===========================================================
     # Properties (for backward compatibility)

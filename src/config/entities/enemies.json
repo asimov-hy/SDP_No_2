@@ -1,42 +1,63 @@
 {
   "straight": {
-    "image": "assets/images/sprites/enemies/missile.png",
-    "scale": 0.1,
+    "image": "assets/images/sprites/enemies/sky_mine.png",
+    "scale": 0.3,
     "hp": 1,
-    "speed": 200,
+    "speed": 400,
     "exp": 50,
     "hitbox": {
       "scale": 0.85
     }
   },
-  "homing": {
-    "image": null,
-    "hp": 1,
-    "speed": 150,
-    "exp": 75,
-    "size": 52,
-    "color": [0, 128, 255],
-    "turn_rate": 180,
+  "homing_slow": {
+    "image": "assets/images/sprites/enemies/slow_homing.png",
+    "scale": 0.2,
+    "hp": 3,
+    "speed": 250,
+    "exp": 60,
+    "turn_rate": 90,
+    "update_delay": 0,
     "hitbox": {
       "scale": 0.9
     }
   },
-  "shooter": {
-    "image": null,
+  "homing_fast": {
+    "image": "assets/images/sprites/enemies/fast_homing.png",
+    "scale": 0.2,
     "hp": 3,
-    "speed": 100,
-    "size": 60,
-    "color": [255, 128, 0],
-    "exp": 100,
-    "movement_type": "linear",
-    "waypoint_speed": 120,
-    "shoot_interval": 1.25,
-    "bullet_speed": 300,
-    "bullet_color": [255, 200, 0],
-    "bullet_radius": 5,
-    "aim_at_player": true,
+    "speed": 300,
+    "exp": 75,
+    "turn_rate": 180,
+    "update_delay": 0,
     "hitbox": {
       "scale": 0.9
+    }
+  },
+  "homing_smart": {
+    "image": "assets/images/sprites/enemies/smart_homing.png",
+    "scale": 0.5,
+    "hp": 3,
+    "speed": 350,
+    "exp": 100,
+    "turn_rate": 9999,
+    "update_delay": 1.0,
+    "hitbox": {
+      "scale": 0.9
+    }
+  },
+  "waypoint_shooter": {
+    "image": "assets/images/sprites/enemies/waypoint_shooter.png",
+    "scale": 0.5,
+    "hp": 5,
+    "speed": 100,
+    "exp": 100,
+    "waypoint_speed": 120,
+    "shoot_interval": 1.5,
+    "bullet_speed": 300,
+    "bullet_image": "assets/images/sprites/projectiles/plasma_green.png",
+    "bullet_scale": 0.1,
+    "hitbox": {
+      "scale": 0.5
     }
   }
 }

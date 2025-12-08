@@ -1,3 +1,6 @@
+# User-specific settings (not for version control)
+settings.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -205,3 +208,6 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Mac OS
+.DS_Store

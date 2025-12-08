@@ -12,21 +12,34 @@ Responsibilities
 
 import pygame
 import random
+
 from src.core.runtime.game_settings import Display, Layers
 from src.core.debug.debug_logger import DebugLogger
+
 from src.entities.base_entity import BaseEntity
 from src.entities.entity_state import LifecycleState, InteractionState
 from src.entities.entity_types import CollisionTags, EntityCategory
+
+from src.graphics.particles.particle_manager import ParticleEmitter
+
 from src.systems.entity_management.entity_registry import EntityRegistry
-from src.core.services.event_manager import get_events, EnemyDiedEvent, NukeUsedEvent
+
+from src.core.services.event_manager import get_events, EnemyDiedEvent
 
 
 class BaseEnemy(BaseEntity):
     """Base class providing shared logic for all enemy entities_animation."""
 
     __slots__ = (
-        'speed', 'health', 'max_health', 'exp_value',
-        'velocity', '_last_rot_velocity', 'state', '_nuke_subscribed'
+        "speed",
+        "health",
+        "max_health",
+        "exp_value",
+        "velocity",
+        "_last_rot_velocity",
+        "state",
+        "spawn_time",
+        "spawn_grace_period",
     )
 
     @staticmethod
@@ -46,29 +59,29 @@ class BaseEnemy(BaseEntity):
             "edge_top": [(0, 1), (1, 1)],
             "center": [(0, 1), (-1, 1), (1, 1)],
             "edge_bottom": [(0, 1), (-1, 1)],
-            "corner_bottom": [(-1, 1)]
+            "corner_bottom": [(-1, 1)],
         },
         "bottom": {
             "corner_top": [(1, -1)],
             "edge_top": [(0, -1), (1, -1)],
             "center": [(0, -1), (-1, -1), (1, -1)],
             "edge_bottom": [(0, -1), (-1, -1)],
-            "corner_bottom": [(-1, -1)]
+            "corner_bottom": [(-1, -1)],
         },
         "left": {
             "corner_top": [(1, 1)],
             "edge_top": [(1, 0), (1, 1)],
             "center": [(1, 0), (1, -1), (1, 1)],
             "edge_bottom": [(1, 0), (1, -1)],
-            "corner_bottom": [(1, -1)]
+            "corner_bottom": [(1, -1)],
         },
         "right": {
             "corner_top": [(-1, 1)],
             "edge_top": [(-1, 0), (-1, 1)],
             "center": [(-1, 0), (-1, -1), (-1, 1)],
             "edge_bottom": [(-1, 0), (-1, -1)],
-            "corner_bottom": [(-1, -1)]
-        }
+            "corner_bottom": [(-1, -1)],
+        },
     }
 
     def __init_subclass__(cls, **kwargs):
@@ -79,8 +92,19 @@ class BaseEnemy(BaseEntity):
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(self, x, y, image=None, shape_data=None, draw_manager=None,
-                 speed=100, health=None, direction=None, spawn_edge=None, **kwargs):
+    def __init__(
+        self,
+        x,
+        y,
+        image=None,
+        shape_data=None,
+        draw_manager=None,
+        speed=100,
+        health=None,
+        direction=None,
+        spawn_edge=None,
+        **kwargs,
+    ):
         """
         Args:
             x, y: Position
@@ -90,10 +114,16 @@ class BaseEnemy(BaseEntity):
             speed: Movement speed
             health: HP
         """
-        hitbox_config = kwargs.get('hitbox_config', {})
+        hitbox_config = kwargs.get("hitbox_config", {})
 
-        super().__init__(x, y, image=image, shape_data=shape_data,
-                         draw_manager=draw_manager, hitbox_config=hitbox_config)
+        super().__init__(
+            x,
+            y,
+            image=image,
+            shape_data=shape_data,
+            draw_manager=draw_manager,
+            hitbox_config=hitbox_config,
+        )
         self.speed = speed
         self.health = health if health is not None else 1
         self.max_health = self.health
@@ -127,13 +157,9 @@ class BaseEnemy(BaseEntity):
 
         self.update_rotation()
 
-        self._nuke_subscribed = False
-        self._subscribe_nuke()
-
-    def _subscribe_nuke(self):
-        if not self._nuke_subscribed:
-            get_events().subscribe(NukeUsedEvent, self.on_nuke_used)
-            self._nuke_subscribed = True
+        # Spawn grace period to prevent instant death from bounds
+        self.spawn_time = 0.0
+        self.spawn_grace_period = 1.0  # 1 second grace period
 
     # ===========================================================
     # Damage and State Handling
@@ -143,7 +169,7 @@ class BaseEnemy(BaseEntity):
         Optional visual or behavioral response when the enemy takes damage.
         Override in subclasses for hit flash, particles, etc.
         """
-        pass
+        ParticleEmitter.burst("damage", self.pos, count=6)
 
     def _on_anim_complete(self, entity, anim_name):
         """Callback for animation completion."""
@@ -155,7 +181,7 @@ class BaseEnemy(BaseEntity):
     # Update Logic
     # ===========================================================
     def update(self, dt: float):
-        """Default downward movement for enemies."""
+        """Main update - handles state checks, then delegates to _update_behavior."""
         if self.death_state == LifecycleState.DYING:
             if self.anim_manager.update(dt):
                 self.mark_dead(immediate=True)
@@ -164,9 +190,20 @@ class BaseEnemy(BaseEntity):
         if self.death_state != LifecycleState.ALIVE:
             return
 
+        # Frozen by effect - skip ALL behavior
+        if self.state == InteractionState.FROZEN:
+            return
+
+        # Track spawn time for grace period
+        self.spawn_time += dt
+
         # Ensure animations (like damage blink) update while alive
         self.anim_manager.update(dt)
 
+        # Subclass behavior hook
+        self._update_behavior(dt)
+
+        # Base movement
         self.pos.x += self.velocity.x * dt
         self.pos.y += self.velocity.y * dt
         self.sync_rect()
@@ -176,9 +213,13 @@ class BaseEnemy(BaseEntity):
             self.update_rotation()
             self._last_rot_velocity.xy = self.velocity.xy
 
-        # Mark dead if off-screen
-        if self.is_offscreen():
+        # Mark dead if off-screen (only after grace period)
+        if self.spawn_time > self.spawn_grace_period and self.is_offscreen():
             self.mark_dead(immediate=True)
+
+    def _update_behavior(self, dt: float):
+        """Override in subclasses for custom behavior (shooting, homing, etc.)."""
+        pass
 
     def take_damage(self, amount: int, source: str = "unknown"):
         """
@@ -188,11 +229,13 @@ class BaseEnemy(BaseEntity):
         if self.death_state != LifecycleState.ALIVE:
             return
 
+        print(f"{self.health} -> {self.health - amount}")
         self.health = max(0, self.health - amount)
 
         if self.health > 0:
-            # Set INTANGIBLE during damage animation so we don't hurt player
-            self.state = InteractionState.INTANGIBLE
+            # Only go INTANGIBLE for contact damage (not bullets)
+            if source == "player_contact":
+                self.state = InteractionState.INTANGIBLE
 
             # Re-bind callback because stop() clears it
             self.anim_manager.on_complete = self._on_anim_complete
@@ -201,20 +244,28 @@ class BaseEnemy(BaseEntity):
             self.anim_manager.play("damage", duration=0.15)
             self.on_damage(amount)
 
-        if self.health <= 0:
+        if self.health <= 0 and self.death_state == LifecycleState.ALIVE:
             self.mark_dead(immediate=False)
             self.on_death(source)
 
     def on_death(self, source):
+        self.death_state = LifecycleState.DYING
+        self.layer = Layers.PARTICLES  # TODO: temporary measure -> later replace with seperate layer and death animation
         self.anim_manager.play("death")
 
-        get_events().dispatch(EnemyDiedEvent(
-            position=(self.rect.centerx, self.rect.centery),
-            enemy_type_tag=self.__class__.__name__,
-            exp=self.exp_value
-        ))
+        exp_to_award = 0
+        if source in ("player_bullet", "nuke"):
+            exp_to_award = self.exp_value
 
-        if hasattr(self, 'hitbox') and self.hitbox:
+        get_events().dispatch(
+            EnemyDiedEvent(
+                position=(self.rect.centerx, self.rect.centery),
+                enemy_type_tag=self.__class__.__name__,
+                exp=exp_to_award,
+            )
+        )
+
+        if hasattr(self, "hitbox") and self.hitbox:
             self.hitbox.set_active(False)
 
         self.collision_tag = CollisionTags.NEUTRAL
@@ -222,36 +273,45 @@ class BaseEnemy(BaseEntity):
     # ===========================================================
     # Rendering
     # ===========================================================
-    def draw(self, draw_manager):
-        """Render the enemy sprite to the screen."""
-        draw_manager.draw_entity(self, layer=self.layer)
+    # def draw(self, draw_manager):
+    #     """Render the enemy sprite to the screen."""
+    #     draw_manager.draw_entity(self, layer=self.layer)
 
     # ===========================================================
     # Collision Handling
     # ===========================================================
     def on_collision(self, other, collision_tag=None):
         """Default collision response for enemies."""
-        tag = collision_tag if collision_tag is not None else getattr(other, "collision_tag", "unknown")
+        tag = (
+            collision_tag
+            if collision_tag is not None
+            else getattr(other, "collision_tag", "unknown")
+        )
 
         if tag == "player_bullet":
-            self.take_damage(1, source="player_bullet")
+            self.take_damage(getattr(other, "damage", 1), source="player_bullet")
 
         elif tag == "player":
-            self.take_damage(1, source="player_contact")
+            self.take_damage(getattr(other, "damage", 1), source="player_contact")
 
         else:
-            DebugLogger.trace(f"[CollisionIgnored] {type(self).__name__} vs {tag}")
+            DebugLogger.trace(f"CollisionIgnored: {type(self).__name__} vs {tag}")
 
     def _auto_direction_from_edge(self, edge):
         """Auto-calculate direction based on spawn edge and position."""
 
         # Validate/detect edge
         if edge is None:
-            if self.pos.x < 0: edge = "left"
-            elif self.pos.x > Display.WIDTH: edge = "right"
-            elif self.pos.y < 0: edge = "top"
-            elif self.pos.y > Display.HEIGHT: edge = "bottom"
-            else: edge = "top"  # fallback
+            if self.pos.x < 0:
+                edge = "left"
+            elif self.pos.x > Display.WIDTH:
+                edge = "right"
+            elif self.pos.y < 0:
+                edge = "top"
+            elif self.pos.y > Display.HEIGHT:
+                edge = "bottom"
+            else:
+                edge = "top"  # fallback
 
         edge = edge.lower()
 
@@ -288,11 +348,21 @@ class BaseEnemy(BaseEntity):
 
         return pygame.Vector2(chosen)
 
-    def reset(self, x, y, direction=None, speed=None, health=None, spawn_edge=None, **kwargs):
+    def reset(
+        self, x, y, direction=None, speed=None, health=None, spawn_edge=None, **kwargs
+    ):
         super().reset(x, y)
 
         # Reset state to DEFAULT in case it was pooled while blinking
         self.state = InteractionState.DEFAULT
+
+        # Re-enable hitbox and collision tag (disabled on death)
+        self.collision_tag = CollisionTags.ENEMY
+        if hasattr(self, "hitbox") and self.hitbox:
+            self.hitbox.set_active(True)
+
+        # Reset spawn grace period
+        self.spawn_time = 0.0
 
         if speed is not None:
             self.speed = speed
@@ -311,21 +381,14 @@ class BaseEnemy(BaseEntity):
             self.velocity *= self.speed
 
         self.update_rotation()
-        self._subscribe_nuke()
 
     def cleanup(self):
         """Explicitly unsubscribe to prevent zombie processing."""
-        if hasattr(self, '_nuke_subscribed') and self._nuke_subscribed:
-            get_events().unsubscribe(NukeUsedEvent, self.on_nuke_used)
-            self._nuke_subscribed = False
-
-    def on_nuke_used(self, event: NukeUsedEvent):
-        """Kill enemy instantly when nuke is used."""
-        self.take_damage(self.max_health + 1, source="nuke")
+        pass
 
     def _reload_image_cached(self, image_path, scale):
         """Reload image only if not cached, or scale changed."""
-        if hasattr(self, '_base_image') and self._base_image:
+        if hasattr(self, "_base_image") and self._base_image:
             # Reuse cached image
             self.image = self._base_image
             self.rect = self.image.get_rect(center=self.pos)

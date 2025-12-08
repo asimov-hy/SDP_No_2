@@ -31,6 +31,7 @@ Directional attacks: hitbox.set_offset(8, 0) for forward extension
 
 import pygame
 import math
+
 from src.core.debug.debug_logger import DebugLogger
 from src.core.runtime.game_settings import Debug
 
@@ -39,19 +40,30 @@ class CollisionHitbox:
     """Represents a rectangular collision boundary tied to an entity."""
 
     __slots__ = (
-        "owner", "scale", "offset", "rect",
-        "_size_cache", "_color_cache", "active",
+        "owner",
+        "scale",
+        "offset",
+        "rect",
+        "_size_cache",
+        "_color_cache",
+        "active",
         "_manual_size",
-        "shape", "shape_params",
-        "_shape_width", "_shape_height", "_shape_radius",
+        "shape",
+        "shape_params",
+        "_shape_width",
+        "_shape_height",
+        "_shape_radius",
         "_rotation",  # Cached entity rotation
-        "use_obb", "_obb_corners"  # OBB support
+        "use_obb",
+        "_obb_corners",  # OBB support
     )
 
     # ===========================================================
     # Initialization
     # ===========================================================
-    def __init__(self, owner, scale: float = 1.0, offset=(0, 0), shape='rect', shape_params=None):
+    def __init__(
+        self, owner, scale: float = 1.0, offset=(0, 0), shape="rect", shape_params=None
+    ):
         """
         Initialize a hitbox for the given entity.
 
@@ -104,11 +116,11 @@ class CollisionHitbox:
         """Initialize hitbox dimensions based on shape type."""
         rect = self.owner.rect
 
-        if self.shape == 'rect':
+        if self.shape == "rect":
             self._init_rect_hitbox(rect)
-        elif self.shape == 'circle':
+        elif self.shape == "circle":
             self._init_circle_hitbox(rect)
-        elif self.shape == 'polygon':
+        elif self.shape == "polygon":
             self._init_polygon_hitbox(rect)
         else:
             DebugLogger.warn(f"Unknown hitbox shape '{self.shape}', defaulting to rect")
@@ -117,8 +129,12 @@ class CollisionHitbox:
     def _init_rect_hitbox(self, rect):
         """Initialize rectangular hitbox with manual width/height override support."""
         # Manual overrides take priority over scale
-        w = self.shape_params.get('width')
-        h = self.shape_params.get('height')
+        size = self.shape_params.get("size")
+        if size and len(size) == 2:
+            w, h = size
+        else:
+            w = self.shape_params.get("width")
+            h = self.shape_params.get("height")
 
         if w is not None and h is not None:
             # Both manual dimensions provided
@@ -147,7 +163,7 @@ class CollisionHitbox:
     def _init_circle_hitbox(self, rect):
         """Initialize circular hitbox (stored as bounding rect)."""
         # Manual radius or auto-calculate from smallest dimension
-        radius = self.shape_params.get('radius')
+        radius = self.shape_params.get("radius")
 
         if radius is not None:
             self._shape_radius = radius
@@ -163,7 +179,7 @@ class CollisionHitbox:
 
     def _init_polygon_hitbox(self, rect):
         """Initialize polygon hitbox (bounding box for now)."""
-        points = self.shape_params.get('points', [])
+        points = self.shape_params.get("points", [])
 
         if not points:
             DebugLogger.warn("Polygon hitbox missing 'points', falling back to rect")
@@ -234,19 +250,19 @@ class CollisionHitbox:
 
         # Update rotation from entity and check if OBB needed
         old_rotation = self._rotation
-        self._rotation = getattr(self.owner, 'rotation_angle', 0.0)
+        self._rotation = getattr(self.owner, "rotation_angle", 0.0)
 
         # Detect rotation change and update OBB state
         if abs(self._rotation - old_rotation) > 0.1:
             rotation_mod = self._rotation % 90
-            self.use_obb = (rotation_mod > 0.1 and rotation_mod < 89.9)
+            self.use_obb = rotation_mod > 0.1 and rotation_mod < 89.9
             self._obb_corners = None  # Invalidate cache
 
         # Only recalculate size if in automatic mode
         if not self._manual_size:
-            if self.shape == 'rect':
+            if self.shape == "rect":
                 self._update_rect_size(rect)
-            elif self.shape == 'circle':
+            elif self.shape == "circle":
                 self._update_circle_size(rect)
             # Polygon doesn't auto-resize
 
@@ -257,7 +273,9 @@ class CollisionHitbox:
             self.rect.centerx = rect.centerx + self.offset.x
             self.rect.centery = rect.centery + self.offset.y
         else:
-            rotated_offset = self._rotate_offset(self.offset.x, self.offset.y, self._rotation)
+            rotated_offset = self._rotate_offset(
+                self.offset.x, self.offset.y, self._rotation
+            )
             self.rect.centerx = rect.centerx + rotated_offset[0]
             self.rect.centery = rect.centery + rotated_offset[1]
 
@@ -324,7 +342,7 @@ class CollisionHitbox:
 
         # Use base image dimensions if available (unrotated size)
         # Otherwise fall back to current rect (which may be enlarged by rotation)
-        if hasattr(self.owner, '_base_image') and self.owner._base_image:
+        if hasattr(self.owner, "_base_image") and self.owner._base_image:
             base_rect = self.owner._base_image.get_rect()
             half_w = (base_rect.width * self.scale) / 2
             half_h = (base_rect.height * self.scale) / 2
@@ -338,7 +356,7 @@ class CollisionHitbox:
                 (cx - half_w, cy - half_h),  # Top-left
                 (cx + half_w, cy - half_h),  # Top-right
                 (cx + half_w, cy + half_h),  # Bottom-right
-                (cx - half_w, cy + half_h)  # Bottom-left
+                (cx - half_w, cy + half_h),  # Bottom-left
             ]
             return self._obb_corners
 
@@ -352,7 +370,7 @@ class CollisionHitbox:
             (-half_w, -half_h),  # Top-left
             (half_w, -half_h),  # Top-right
             (half_w, half_h),  # Bottom-right
-            (-half_w, half_h)  # Bottom-left
+            (-half_w, half_h),  # Bottom-left
         ]
 
         # Rotate each corner and translate to world space
@@ -388,7 +406,7 @@ class CollisionHitbox:
         # Preserve center position
         self.rect.center = (
             self.owner.rect.centerx + self.offset.x,
-            self.owner.rect.centery + self.offset.y
+            self.owner.rect.centery + self.offset.y,
         )
 
     def set_offset(self, x: float, y: float):
@@ -403,10 +421,12 @@ class CollisionHitbox:
         self.offset.y = y
 
         # Apply rotation to new offset
-        rotated_offset = self._rotate_offset(self.offset.x, self.offset.y, self._rotation)
+        rotated_offset = self._rotate_offset(
+            self.offset.x, self.offset.y, self._rotation
+        )
         self.rect.center = (
             self.owner.rect.centerx + rotated_offset[0],
-            self.owner.rect.centery + rotated_offset[1]
+            self.owner.rect.centery + rotated_offset[1],
         )
 
     def set_scale(self, scale: float):
@@ -432,7 +452,7 @@ class CollisionHitbox:
             self._size_cache = (scaled_w, scaled_h)
             self.rect.center = (
                 rect.centerx + self.offset.x,
-                rect.centery + self.offset.y
+                rect.centery + self.offset.y,
             )
 
     def reset(self):
@@ -477,7 +497,10 @@ class CollisionHitbox:
         """
         self.active = active
         state = "enabled" if active else "disabled"
-        DebugLogger.state(f"Hitbox {state} for {type(self.owner).__name__}", category="animation_effects")
+        DebugLogger.state(
+            f"Hitbox {state} for {type(self.owner).__name__}",
+            category="animation_effects",
+        )
 
     # ===========================================================
     # Debug Visualization
@@ -492,14 +515,18 @@ class CollisionHitbox:
         """
         # Draw AABB - use DrawManager queue if available
         if hasattr(surface, "queue_hitbox"):
-            surface.queue_hitbox(self.rect, color=self._color_cache, width=Debug.HITBOX_LINE_WIDTH)
+            surface.queue_hitbox(
+                self.rect, color=self._color_cache, width=Debug.HITBOX_LINE_WIDTH
+            )
             # Queue OBB lines through DrawManager
             if self.use_obb:
                 corners = self.get_obb_corners()
                 surface.queue_obb(corners, color=(255, 0, 0), width=2)
         # Fallback – direct draw to pygame.Surface
         elif isinstance(surface, pygame.Surface):
-            pygame.draw.rect(surface, self._color_cache, self.rect, Debug.HITBOX_LINE_WIDTH)
+            pygame.draw.rect(
+                surface, self._color_cache, self.rect, Debug.HITBOX_LINE_WIDTH
+            )
             # Draw OBB
             if self.use_obb:
                 corners = self.get_obb_corners()

@@ -1,16 +1,7 @@
 {
   "enemy": {
     "death": {
-      "straight": {
-        "frames": [
-          "assets/images/effects/explosions/explosion01.png",
-          "assets/images/effects/explosions/explosion02.png",
-          "assets/images/effects/explosions/explosion03.png"
-        ],
-        "scale": 0.5,
-        "duration": 0.45
-      },
-      "homing": {
+      "default": {
         "frames": [
           "assets/images/effects/explosions/explosion01.png",
           "assets/images/effects/explosions/explosion02.png",
@@ -18,10 +9,6 @@
         ],
         "scale": 0.5,
         "duration": 0.5
-      },
-      "default": {
-        "type": "fade",
-        "duration": 0.3
       }
     },
     "damage": {

@@ -1,0 +1,102 @@
+game_over:
+  type: container
+  size: [ 1280, 720 ]
+  parent_anchor: center
+  self_anchor: center
+  background: [ 20, 20, 30, 100 ]
+
+  children:
+    - type: container
+      anchor: center
+      size: [1600, 400]
+      layer: Layers.UI + 1
+      style:
+        background_color: [20, 20, 20, 230]
+        border_color: [200, 200, 200]
+        border_width: 2
+
+      children:
+        # Title (GAME OVER or MISSION ACCOMPLISHED)
+        - type: label
+          id: "title_label"
+          text: "GAME OVER"
+          size: [1000, 40]
+          parent_anchor: top_center
+          self_anchor: top_center
+          offset: [0, 20]
+          font_size: 48
+          color: [255, 100, 100]
+          font_bold: true
+
+        # Stats container
+        - type: container
+          id: "stats_container"
+          size: [500, 200]
+          parent_anchor: "#title_label:bottom"
+          self_anchor: top_center
+          offset: [0, 80]
+          background_color: [30, 30, 30, 180]
+
+          children:
+            # Score
+            - type: label
+              id: "score_label"
+              size: [500, 200]
+              parent_anchor: "#stats_container:top_center"
+              self_anchor: top_center
+              offset: [0, 30]
+              text: "Score: 0"
+              style:
+                font_size: 24
+                color: [255, 255, 100]
+
+            # Enemies Killed
+            - type: label
+              id: "kills_label"
+              size: [500, 200]
+              parent_anchor: "#score_label:top_center"
+              self_anchor: top_center
+              offset: [0, 30]
+              text: "Enemies Killed: 0"
+              style:
+                font_size: 20
+                color: [200, 200, 200]
+
+            # Items Collected
+            - type: label
+              id: "items_label"
+              size: [500, 200]
+              parent_anchor: "#kills_label:top_center"
+              self_anchor: top_center
+              offset: [0, 30]
+              text: "Items Collected: 0"
+              style:
+                font_size: 20
+                color: [200, 200, 200]
+
+            # Time
+            - type: label
+              id: "time_label"
+              size: [500, 200]
+              parent_anchor: "#items_label:top_center"
+              self_anchor: top_center
+              offset: [0, 30]
+              text: "Time: 0:00"
+              style:
+                font_size: 20
+                color: [200, 200, 200]
+
+        # Return button
+        - type: button
+          id: return_button
+          parent_anchor: bottom_center
+          self_anchor: bottom_center
+          offset: [0, -40]
+          size: [200, 50]
+          text: "Return to Menu"
+          action: return_to_menu
+          style:
+            font_size: 20
+            color: [255, 255, 255]
+            background_color: [60, 60, 80]
+            hover_color: [80, 80, 100]

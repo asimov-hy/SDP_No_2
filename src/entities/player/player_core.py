@@ -5,9 +5,12 @@ Defines the minimal Player entity core used to coordinate all components.
 """
 
 import pygame
+import random
 import os
 
 from src.core.runtime.game_settings import Display, Layers
+from src.core.runtime.session_stats import get_session_stats
+
 from src.core.debug.debug_logger import DebugLogger
 from src.core.services.config_manager import load_config
 from src.core.services.event_manager import get_events, EnemyDiedEvent
@@ -16,18 +19,20 @@ from src.entities.base_entity import BaseEntity
 from src.entities.state_manager import StateManager
 from src.entities.entity_state import LifecycleState, InteractionState
 from src.entities.entity_types import CollisionTags, EntityCategory
-from .player_movement import update_movement
-from . import player_ability
-from .player_logic import damage_collision
+from src.entities.items.shield import Shield
+
+from src.entities.player.player_movement import update_movement
+from src.entities.player import player_ability
+from src.entities.player.player_logic import damage_collision
+from src.entities.player.player_state import PlayerEffectState
+
+from src.graphics.particles.particle_manager import ParticleEmitter
 
 
-# ===========================================================
-# Action Query Wrapper
-# ===========================================================
 class PlayerInput:
     """Wrapper to simplify action queries without explicit imports."""
 
-    __slots__ = ('input_manager',)
+    __slots__ = ("input_manager",)
 
     def __init__(self, input_manager):
         self.input_manager = input_manager
@@ -52,8 +57,9 @@ class PlayerInput:
 class Player(BaseEntity):
     """Represents the controllable player entity."""
 
-    def __init__(self, x=None, y=None, image=None,
-                 draw_manager=None, input_manager=None):
+    def __init__(
+        self, x=None, y=None, image=None, draw_manager=None, input_manager=None
+    ):
         """Initialize the player entity."""
 
         # ========================================
@@ -62,8 +68,13 @@ class Player(BaseEntity):
         cfg = load_config("player.json", {})
         self.cfg = cfg
 
-        if "core_attributes" not in cfg or "render" not in cfg or "health_states" not in cfg:
-            raise ValueError("Invalid player.json: missing required sections")
+        _REQUIRED_SECTIONS = ("core_attributes", "render", "health_states")
+        missing = [s for s in _REQUIRED_SECTIONS if s not in cfg]
+        if missing:
+            DebugLogger.fail(
+                f"player.json missing required sections: {missing}", category="loading"
+            )
+            raise ValueError(f"Invalid player.json: missing {missing}")
 
         core = cfg["core_attributes"]
         render = cfg["render"]
@@ -79,12 +90,10 @@ class Player(BaseEntity):
         if self.render_mode == "image":
             if image is None:
                 sprite_path = render.get("sprite", {}).get("path")
-                scale = (size[0], size[1])  # tuple scale for target dimensions
                 # Calculate scale factor from original image size
                 if sprite_path and os.path.exists(sprite_path):
                     temp_img = pygame.image.load(sprite_path).convert_alpha()
-                    scale = (size[0] / temp_img.get_width(), size[1] / temp_img.get_height())
-                    image = BaseEntity.load_and_scale_image(sprite_path, scale)
+                    image = pygame.transform.scale(temp_img, size)
 
                 else:
                     DebugLogger.warn(f"Missing sprite: {sprite_path}, using fallback.")
@@ -98,7 +107,7 @@ class Player(BaseEntity):
                 "type": default_state["shape_type"],
                 "color": tuple(default_state["color"]),
                 "size": size,
-                "kwargs": {}
+                "kwargs": {},
             }
 
         # Spawn position
@@ -108,10 +117,16 @@ class Player(BaseEntity):
         # 3. Base Entity Init
         # ========================================
         # Build hitbox config from player config
-        hitbox_config = {'scale': core["hitbox_scale"]}
+        hitbox_config = {"scale": core["hitbox_scale"]}
 
-        super().__init__(x, y, image=image, shape_data=shape_data,
-                         draw_manager=draw_manager, hitbox_config=hitbox_config)
+        super().__init__(
+            x,
+            y,
+            image=image,
+            shape_data=shape_data,
+            draw_manager=draw_manager,
+            hitbox_config=hitbox_config,
+        )
 
         if self.render_mode == "shape":
             self.shape_data = shape_data
@@ -120,14 +135,25 @@ class Player(BaseEntity):
         # 4. Core Stats
         # ========================================
         self.velocity = pygame.Vector2(0, 0)
+        self.virtual_pos = pygame.Vector2(x, y)
+        self.clamped_x = False
+        self.clamped_y = False
+
+        # Cutscene control
+        self.input_locked = False
+
         self.base_speed = core["speed"]
         self.health = core["health"]
         self.max_health = self.health
 
-        # Player stats
+        # Buff particle emitters (stat_name -> ParticleEmitter)
+        self._buff_emitters = {}
+
+        # Player stats - load from progression config
         self.exp = 0
         self.level = 1
-        self.exp_required = 30
+        self._exp_table = self._build_exp_table()
+        self.exp_required = self._exp_table[self.level]
 
         self.visible = True
         self.layer = Layers.PLAYER
@@ -135,9 +161,17 @@ class Player(BaseEntity):
         self.category = EntityCategory.PLAYER
         self.state = InteractionState.DEFAULT
 
-        # ========================================
+        # Stress system
+        stress_cfg = cfg.get("stress", {})
+        self.stress = 0.0
+        self.stress_max = stress_cfg.get("max", 10.0)
+        self.stress_threshold = stress_cfg.get("threshold", 8.0)
+        self.stress_decay_rate = stress_cfg.get("decay_rate", 4.0)
+        self.stress_grace_period = stress_cfg.get("grace_period", 1.0)
+        self.stress_per_damage = stress_cfg.get("per_damage", 1.0)
+        self._time_since_damage = 0.0
+
         # 5. Visual State System
-        # ========================================
         self.health_thresholds = health_cfg["thresholds"]
         self._threshold_moderate = self.health_thresholds["moderate"]
         self._threshold_critical = self.health_thresholds["critical"]
@@ -148,7 +182,9 @@ class Player(BaseEntity):
             images = {}
             for state_key, path in health_cfg["image_states"].items():
                 # Reuse initial image for normal state if same path
-                if state_key == "normal" and path == render.get("sprite", {}).get("path"):
+                if state_key == "normal" and path == render.get("sprite", {}).get(
+                    "path"
+                ):
                     images[state_key] = image  # Reuse already loaded
                 else:
                     images[state_key] = self._load_and_scale(path, size)
@@ -159,7 +195,7 @@ class Player(BaseEntity):
             thresholds_dict=self.health_thresholds,
             color_states={k: tuple(v) for k, v in health_cfg["color_states"].items()},
             image_states=images,
-            render_mode=self.render_mode
+            render_mode=self.render_mode,
         )
 
         # ========================================
@@ -177,21 +213,34 @@ class Player(BaseEntity):
 
         self._bullet_manager = None
         self._shooting_enabled = False
-        self.base_shoot_cooldown = 0.1
+
+        combat_cfg = cfg.get("combat", {})
+
+        # Primary attack
+        primary = combat_cfg.get("primary", {})
+        self.base_shoot_cooldown = primary.get("cooldown", 0.2)
+        self.bullet_speed = primary.get("speed", 900)
+        self.bullet_damage = primary.get("damage", 1)
         self.shoot_timer = 0.0
 
-        # ========================================
-        # Load Player Bullet Sprite
-        # ========================================
-        bullet_path = "assets/images/sprites/projectiles/100H.png"
-        temp_img = pygame.image.load(bullet_path).convert_alpha() if os.path.exists(bullet_path) else None
-        if temp_img:
-            scale = (16 / temp_img.get_width(), 32 / temp_img.get_height())
-            self.bullet_image = BaseEntity.load_and_scale_image(bullet_path, scale)
-        else:
-            DebugLogger.warn(f"Missing bullet sprite: {bullet_path}")
-            self.bullet_image = pygame.Surface((8, 16), pygame.SRCALPHA)
-            pygame.draw.rect(self.bullet_image, (255, 255, 100), (0, 0, 8, 16))
+        # Secondary attack (spread shot)
+        secondary = combat_cfg.get("secondary", {})
+        self.spread_cooldown = secondary.get("cooldown", 1.5)
+        self.spread_damage = secondary.get("damage", 0.5)
+        self.spread_speed = secondary.get("speed", 700)
+        self.spread_charge_levels = secondary.get(
+            "charge_levels", [{"time": 0.0, "count": 3, "angle": 15}]
+        )
+        self.spread_timer = self.spread_cooldown
+        self.spread_charge = 0.0
+        self.spread_charging = False
+        self._spread_max_reached = False
+        self._charge_emit_timer = 0.0
+
+        # Collision
+        collision = combat_cfg.get("collision", {})
+        self.damage = collision.get("damage", 1)
+        self.knockback = collision.get("knockback", 200)
 
         # ========================================
         # 7. Global Ref & Status
@@ -199,6 +248,13 @@ class Player(BaseEntity):
         self._rotation_enabled = False  # Players don't rotate
         self._death_frames = []  # No death animation frames for player
         self.state_manager = StateManager(self, cfg.get("state_effects", {}))
+        self._shield = None
+        self._item_shield = None
+        self._item_shield_timer = 0.0
+        self._item_shield_duration = 0.0
+
+        self._collision_manager = None
+        self._spawn_manager = None
 
         get_events().subscribe(EnemyDiedEvent, self._on_enemy_died)
 
@@ -232,6 +288,20 @@ class Player(BaseEntity):
         scale = (size[0] / temp_img.get_width(), size[1] / temp_img.get_height())
         return BaseEntity.load_and_scale_image(path, scale)
 
+    @staticmethod
+    def _build_exp_table():
+        """Build exp lookup table once at init."""
+        base_exp = 1000
+        multiplier = 1.5
+        max_level = 200
+        max_exp_cap = 999999
+
+        table = [0]
+        for lvl in range(1, max_level + 2):
+            exp = min(int(base_exp * (multiplier ** (lvl - 1))), max_exp_cap)
+            table.append(exp)
+        return table
+
     # ===========================================================
     # Frame Cycle
     # ===========================================================
@@ -239,9 +309,7 @@ class Player(BaseEntity):
         """Update player components."""
 
         if self.death_state == LifecycleState.DYING:
-            # Update animation; returns True when finished
             if self.anim_manager.update(dt):
-                # Finalize death
                 self.mark_dead(immediate=True)
                 DebugLogger.state("Player death animation complete", category="player")
             return
@@ -249,31 +317,242 @@ class Player(BaseEntity):
         if self.death_state != LifecycleState.ALIVE:
             return
 
+        # Track STUN state before update
+        was_stunned = self.state_manager.has_state(PlayerEffectState.STUN)
+        self.state_manager.has_state(PlayerEffectState.RECOVERY)
+
         self.anim_manager.update(dt)
         self.state_manager.update(dt)
+        self._update_stress(dt)
+        self._update_buff_emitters(dt)
 
-        # self.input_manager.update()
-        update_movement(self, dt)
+        # Detect STUN → RECOVERY transition
+        if was_stunned and not self.state_manager.has_state(PlayerEffectState.STUN):
+            if self.state_manager.has_state(PlayerEffectState.RECOVERY):
+                recovery_cfg = self.state_manager.state_config.get("recovery", {})
+                self.anim_manager.play(
+                    "recovery", duration=recovery_cfg.get("duration", 2.5)
+                )
+                self._spawn_shield()  # ADD
 
-        # 4. Ability logic
-        if self._bullet_manager:
-            player_ability.update_shooting(self, dt)
+        # Update shield state
+        self._update_shield(dt)
+        self._update_item_shield(dt)
+
+        if not self.input_locked:
+            update_movement(self, dt)
+
+            if self._bullet_manager:
+                player_ability.update_shooting(self, dt)
+                player_ability.update_spread_shot(self, dt)
+        else:
+            # Still update animation during cutscenes
+            pass
+
+    def _spawn_shield(
+        self,
+        slot="recovery",
+        duration=None,
+        radius=56,
+        knockback=350,
+        can_damage=False,
+        damage=0,
+        color=(100, 200, 255),
+    ):
+        """Spawn shield to specified slot."""
+        # Check slot
+        if slot == "recovery":
+            if self._shield is not None:
+                return
+        elif slot == "item":
+            if self._item_shield is not None:
+                return
+
+        shield = Shield(
+            self,
+            radius=radius,
+            color=color,
+            knockback_strength=knockback,
+            can_damage=can_damage,
+            damage_amount=damage,
+        )
+
+        # Register
+        if self._collision_manager:
+            self._collision_manager.register_hitbox(shield, shape="circle")
+        if self._spawn_manager:
+            self._spawn_manager.entities.append(shield)
+
+        # Assign to slot
+        if slot == "recovery":
+            self._shield = shield
+        else:
+            self._item_shield = shield
+            self._item_shield_timer = 0.0
+            self._item_shield_duration = duration or 5.0
+
+        DebugLogger.state(f"{slot.capitalize()} shield spawned", category="player")
+
+    def spawn_item_shield(
+        self, duration, radius=56, knockback=150, damage=1, color=(100, 255, 150)
+    ):
+        """Spawn item-based shield with damage capability."""
+        self._spawn_shield(
+            slot="item",
+            duration=duration,
+            radius=radius,
+            knockback=knockback,
+            can_damage=True,
+            damage=damage,
+            color=color,
+        )
+
+    def _despawn_shield(self):
+        """Remove shield entity."""
+        if self._shield is None:
+            return
+
+        # Unregister hitbox
+        if self._collision_manager:
+            self._collision_manager.unregister_hitbox(self._shield)
+
+        # # Remove from spawn_manager
+        # if self._spawn_manager and self._shield in self._spawn_manager.entities:
+        #     self._spawn_manager.entities.remove(self._shield)
+
+        self._shield.kill()
+        self._shield = None
+        DebugLogger.state("Shield despawned", category="player")
+
+    def _update_shield(self, dt):
+        """Update shield lifecycle and state."""
+        in_recovery = self.state_manager.has_state(PlayerEffectState.RECOVERY)
+
+        if in_recovery and self._shield is not None:
+            self._shield.update(dt)
+
+            # Warning blink in last 30% of recovery
+            remaining = self.state_manager.get_remaining_time(
+                PlayerEffectState.RECOVERY
+            )
+            recovery_cfg = self.state_manager.state_config.get("recovery", {})
+            duration = recovery_cfg.get("duration", 2.5)
+
+            if remaining < duration * 0.3:
+                self._shield.set_warning_blink(True)
+            else:
+                self._shield.set_warning_blink(False)
+
+        elif not in_recovery and self._shield is not None:
+            self._despawn_shield()
+
+    def extend_item_shield(self, extra_duration):
+        """Extend active item shield duration."""
+        if self._item_shield is not None:
+            self._item_shield_duration += extra_duration
+
+    def _despawn_item_shield(self):
+        """Remove item shield entity."""
+        if self._item_shield is None:
+            return
+
+        if self._collision_manager:
+            self._collision_manager.unregister_hitbox(self._item_shield)
+
+        self._item_shield.kill()
+        self._item_shield = None
+        self._item_shield_timer = 0.0
+        self._item_shield_duration = 0.0
+        DebugLogger.state("Item shield despawned", category="player")
+
+    def _update_item_shield(self, dt):
+        """Update item shield lifecycle."""
+        if self._item_shield is None:
+            return
+
+        self._item_shield_timer += dt
+        self._item_shield.update(dt)
+
+        remaining = self._item_shield_duration - self._item_shield_timer
+
+        # Warning blink in last 30%
+        if remaining < self._item_shield_duration * 0.3:
+            self._item_shield.set_warning_blink(True)
+        else:
+            self._item_shield.set_warning_blink(False)
+
+        # Expired
+        if self._item_shield_timer >= self._item_shield_duration:
+            self._despawn_item_shield()
+
+    def _update_stress(self, dt):
+        """Decay stress after grace period."""
+        self._time_since_damage += dt
+
+        if self._time_since_damage >= self.stress_grace_period and self.stress > 0:
+            self.stress = max(0.0, self.stress - self.stress_decay_rate * dt)
+
+    def _update_buff_emitters(self, dt):
+        """Update and cleanup buff particle emitters."""
+
+        expired = []
+        for stat_name, emitter in self._buff_emitters.items():
+            # Check if modifier still active
+            if self.state_manager.stat_modifiers.has_modifier(stat_name):
+                if stat_name == "speed":
+                    # Trail effect: below player, more particles
+                    pos = (self.pos.x, self.pos.y + 20)
+                    emitter.emit_continuous(pos, dt)
+                else:
+                    # Sparkle box effect for fire_rate and others
+                    offset_x = random.uniform(-24, 24)
+                    offset_y = random.uniform(-24, 24)
+                    pos = (self.pos.x + offset_x, self.pos.y + offset_y)
+                    emitter.emit_continuous(pos, dt)
+            else:
+                expired.append(stat_name)
+
+        for stat_name in expired:
+            del self._buff_emitters[stat_name]
+
+    def add_buff_emitter(self, stat_name: str, preset_name: str):
+        """Add a particle emitter for an active buff."""
+        # Higher emit rate for speed trail effect
+        emit_rate = 40 if stat_name == "speed" else 20
+        self._buff_emitters[stat_name] = ParticleEmitter(
+            preset_name, emit_rate=emit_rate
+        )
 
     def draw(self, draw_manager):
         """Render player if visible."""
         if not self.visible:
             return
+
+        # Draw shields behind player
+        if self._shield is not None:
+            self._shield.draw(draw_manager)
+        if self._item_shield is not None:
+            self._item_shield.draw(draw_manager)
+
         super().draw(draw_manager)
 
     def on_collision(self, other, collision_tag=None):
         """Handle collision events."""
 
-        tag = collision_tag if collision_tag is not None else getattr(other, "collision_tag", None)
+        tag = (
+            collision_tag
+            if collision_tag is not None
+            else getattr(other, "collision_tag", None)
+        )
         if tag is None:
             return
 
         # damaging collisions
-        if tag in (CollisionTags.ENEMY, CollisionTags.ENEMY_BULLET):
+        if tag in (
+            CollisionTags.ENEMY,
+            CollisionTags.ENEMY_BULLET,
+            CollisionTags.HAZARD,
+        ):
             damage_collision(self, other)
 
     # ===========================================================
@@ -281,26 +560,34 @@ class Player(BaseEntity):
     # ===========================================================
     def _on_enemy_died(self, event):
         """Receive EXP from dead enemies."""
-        self.exp += event.exp
+        exp_gain = max(0, event.exp)  # Prevent negative exp
+        if exp_gain == 0:
+            return
 
-        DebugLogger.state(
-            f"Experience: {event.exp} ({self.exp}/{self.exp_required})",
-            category="exp"
-        )
+        self.exp += exp_gain
 
-        if self.exp >= self.exp_required:
+        stats = get_session_stats()
+        stats.total_exp_gained += exp_gain
+
+        # Handle multiple level-ups
+        while self.exp >= self.exp_required:
             self._level_up()
 
-    def _level_up(self):
-        self.level += 1
-        self.exp = 0
+        DebugLogger.state(
+            f"Experience: +{exp_gain} ({self.exp}/{self.exp_required})", category="exp"
+        )
 
-        # Smooth EXP curve
-        self.exp_required = int(30 * (1.15 ** (self.level - 1)))
+    def _level_up(self):
+        overflow = self.exp - self.exp_required
+        self.level += 1
+        self.exp_required = self._exp_table[min(self.level, len(self._exp_table) - 1)]
+        self.exp = overflow
+
+        stats = get_session_stats()
+        stats.max_level_reached = max(stats.max_level_reached, self.level)
 
         DebugLogger.state(
-            f"Level: {self.level}, Next={self.exp_required}",
-            category="exp"
+            f"Level: {self.level}, Next={self.exp_required}", category="exp"
         )
 
     # ===========================================================
@@ -326,3 +613,27 @@ class Player(BaseEntity):
         """Set manager and synchronize shooting state."""
         self._bullet_manager = manager
         self._shooting_enabled = manager is not None
+
+    def get_bullet_config(self) -> dict:
+        """Return bullet configuration for BulletManager registration."""
+        render = self.cfg.get("render", {})
+        bullet_cfg = render.get("bullet", {})
+        primary = self.cfg.get("combat", {}).get("primary", {})
+
+        return {
+            "path": bullet_cfg.get("path"),
+            "size": bullet_cfg.get("size", [16, 32]),
+            "damage": primary.get("damage", 1),
+            "color": (255, 255, 100),
+            "radius": 4,
+        }
+
+    @property
+    def exp_ratio(self):
+        return float(self.exp) / float(self.exp_required)
+
+    @property
+    def health_ratio(self):
+        if self.max_health <= 0:
+            return 0.0
+        return float(self.health) / float(self.max_health)

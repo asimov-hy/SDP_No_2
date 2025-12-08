@@ -11,6 +11,7 @@ class EntityCategory:
             __registry_category__ = EntityCategory.ENEMY
             __registry_name__ = "new"
     """
+
     PLAYER = "player"
     ENEMY = "enemy"
     PROJECTILE = "projectile"  # Used for bullets (both player and enemy)
@@ -22,7 +23,9 @@ class EntityCategory:
 
     # Valid categories for EntityRegistry registration
     # (PLAYER excluded - not spawnable via registry)
-    REGISTRY_VALID = frozenset({ENEMY, PROJECTILE, PICKUP, OBSTACLE, HAZARD, ENVIRONMENT, PARTICLE})
+    REGISTRY_VALID = frozenset(
+        {ENEMY, PROJECTILE, PICKUP, OBSTACLE, HAZARD, ENVIRONMENT, PARTICLE}
+    )
 
 
 # ===========================================================
@@ -33,6 +36,7 @@ class CollisionTags:
     Standard collision tags for entity.collision_tag.
     Prevents typos and enables IDE autocomplete.
     """
+
     NEUTRAL = "neutral"
 
     PLAYER = "player"
@@ -42,5 +46,8 @@ class CollisionTags:
     ENEMY_BULLET = "enemy_bullet"
 
     PICKUP = "pickup"
+
     HAZARD = "hazard"
     ENVIRONMENT = "environment"
+
+    SHIELD = "shield"
